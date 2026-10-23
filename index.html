@@ -2456,18 +2456,19 @@
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
+const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
       for (let i = 0; i < 110; i++) {
         const t = i / 110;
         const pt = trackCurve.getPointAt(t);
-        const tan = trackCurve.getTangentAt(t).normalize();
-        const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
+        const tan = trackCurve.getTangentAt(t).normalize(); // 切線方向（車行方向）
 
-        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.22), tieMat);
+        // 🌟 1. 將寬度（X軸）與深度（Z軸）對調：寬度設為 0.22（短邊），深度設為 1.15（長邊跨越兩軌）
+        const tie = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 1.15), tieMat);
         tie.position.copy(pt);
         tie.position.y -= 0.04;
         
-        const lookTarget = pt.clone().add(normal);
+        // 🌟 2. 讓長邊朝向法向量（與軌道法線對齊），或直接朝向切線方向（Tan）
+        const lookTarget = pt.clone().add(tan);
         tie.lookAt(lookTarget);
         system.add(tie);
       }
