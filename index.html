@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>班級學習島冒險平台</title>
 
-  <!-- 3D 渲染庫 -->
+  <!-- 3D 庫與工具 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- Firebase 即時資料庫 SDK -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -34,10 +34,10 @@
       transform: translateX(-50%);
       background: linear-gradient(135deg, #f59e0b, #d97706);
       color: #fff;
-      padding: 12px 24px;
+      padding: 10px 22px;
       border-radius: 30px;
       font-weight: 800;
-      font-size: 1rem;
+      font-size: 0.95rem;
       box-shadow: 0 10px 25px rgba(217, 119, 6, 0.4);
       z-index: 10000;
       transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -60,7 +60,7 @@
     }
     .hud-header > * { pointer-events: auto; }
 
-    /* 全班協作能量條 */
+    /* 全班協作能量條（上限 5000） */
     .energy-card {
       background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(8px);
@@ -74,7 +74,7 @@
     }
     .energy-label { font-weight: 800; color: #ea580c; font-size: 0.9rem; }
     .energy-track {
-      width: 150px;
+      width: 140px;
       height: 14px;
       background: #fed7aa;
       border-radius: 10px;
@@ -88,7 +88,7 @@
     }
     .energy-text { font-size: 0.85rem; font-weight: bold; color: #7c2d12; }
 
-    /* 學生個人身分卡片 */
+    /* 學生身分卡片 */
     .profile-card {
       background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(8px);
@@ -100,29 +100,48 @@
       gap: 10px;
       cursor: pointer;
       border: 2px solid #bae6fd;
-      transition: transform 0.2s;
     }
-    .profile-card:hover { transform: scale(1.05); }
     .user-avatar { font-size: 1.5rem; }
     .user-name { font-weight: 800; color: #0369a1; font-size: 0.95rem; }
 
-    /* 底部引導提示文字 */
+    /* 底部操作引導與時間段顯示 */
     .hud-hint {
       position: absolute;
-      bottom: 24px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(15, 23, 42, 0.75);
       color: #ffffff;
-      padding: 10px 20px;
+      padding: 8px 18px;
       border-radius: 30px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
-      letter-spacing: 0.5px;
       pointer-events: none;
       z-index: 10;
       backdrop-filter: blur(6px);
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
+
+    /* 鎖定島嶼全螢幕提示 */
+    .lock-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9000;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    .lock-overlay.hidden { display: none; }
+    .lock-overlay h1 { font-size: 2.2rem; margin-bottom: 12px; color: #facc15; }
+    .lock-overlay p { font-size: 1.1rem; color: #cbd5e1; max-width: 480px; line-height: 1.6; }
 
     /* 通用彈窗樣式 */
     .modal-overlay {
@@ -144,29 +163,29 @@
       border-radius: 24px;
       width: 100%;
       max-width: 480px;
-      padding: 24px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 22px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.25);
       border: 4px solid #fef08a;
-      animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    @keyframes pop {
-      0% { transform: scale(0.9); }
-      100% { transform: scale(1); }
-    }
+    @keyframes pop { 0% { transform: scale(0.9); } 100% { transform: scale(1); } }
 
     .modal-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
     }
-    .modal-title { font-size: 1.4rem; font-weight: 800; color: #1e293b; }
+    .modal-title { font-size: 1.3rem; font-weight: 800; color: #1e293b; }
+    .modal-subtitle { font-size: 0.85rem; font-weight: bold; color: #0284c7; margin-top: 3px; }
     .modal-close {
       background: #f1f5f9;
       border: none;
       border-radius: 50%;
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       font-size: 1.2rem;
       cursor: pointer;
       display: flex;
@@ -174,23 +193,46 @@
       align-items: center;
     }
 
-    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 0.9rem; font-weight: bold; color: #475569; }
-    .form-group input, .form-group textarea {
-      padding: 12px;
+    .form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.85rem; font-weight: bold; color: #475569; }
+    .form-group input, .form-group textarea, .form-group select {
+      padding: 10px 12px;
       border: 2px solid #e2e8f0;
-      border-radius: 14px;
-      font-size: 1rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
       outline: none;
       font-family: inherit;
     }
     .form-group input:focus, .form-group textarea:focus { border-color: #3b82f6; }
 
+    .char-count { font-size: 0.75rem; text-align: right; color: #64748b; }
+    .char-count.valid { color: #10b981; font-weight: bold; }
+
+    /* 檢查方框群組 */
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 14px;
+      border: 2px dashed #cbd5e1;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+    }
+    .checkbox-item input { width: 18px; height: 18px; }
+
     .avatar-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      margin-top: 6px;
     }
     .avatar-opt {
       display: flex;
@@ -198,29 +240,29 @@
       align-items: center;
       background: #f8fafc;
       border: 2px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 8px 4px;
-      font-size: 1.8rem;
+      border-radius: 12px;
+      padding: 6px 2px;
+      font-size: 1.6rem;
       cursor: pointer;
     }
     .avatar-opt.selected { border-color: #3b82f6; background: #eff6ff; }
-    .avatar-opt span { font-size: 0.75rem; color: #475569; font-weight: bold; margin-top: 4px; }
+    .avatar-opt span { font-size: 0.7rem; color: #475569; font-weight: bold; margin-top: 3px; }
 
     .btn-action {
       width: 100%;
-      padding: 14px;
+      padding: 13px;
       border: none;
       border-radius: 16px;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 800;
       cursor: pointer;
       color: #ffffff;
-      box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+      box-shadow: 0 4px 0 rgba(0,0,0,0.15);
       transition: transform 0.1s;
     }
-    .btn-action:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
-    .btn-blue { background: #3b82f6; box-shadow: 0 5px 0 #1d4ed8; }
-    .btn-green { background: #10b981; box-shadow: 0 5px 0 #047857; }
+    .btn-action:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+    .btn-blue { background: #3b82f6; box-shadow: 0 4px 0 #1d4ed8; }
+    .btn-green { background: #10b981; box-shadow: 0 4px 0 #047857; }
   </style>
 </head>
 <body>
@@ -228,14 +270,14 @@
   <div id="canvas-container"></div>
   <div id="live-banner" class="live-banner"></div>
 
-  <!-- 頂部 HUD -->
+  <!-- 頂部資訊列 -->
   <div class="hud-header">
     <div class="energy-card">
       <span class="energy-label">⚡ 全班共創能量</span>
       <div class="energy-track">
         <div id="class-energy-bar" class="energy-fill"></div>
       </div>
-      <span id="class-energy-text" class="energy-text">0 / 1000</span>
+      <span id="class-energy-text" class="energy-text">0 / 5000</span>
     </div>
 
     <div class="profile-card" id="profile-btn">
@@ -244,9 +286,21 @@
     </div>
   </div>
 
-  <div class="hud-hint">👆 點擊島嶼探索任務，單指滑動旋轉視角</div>
+  <div class="hud-hint">
+    <span id="time-badge">🕒 檢測時段中...</span>
+    <span>| 俯視視角：雙指縮放與單指平移地圖</span>
+  </div>
 
-  <!-- 學生開場身分設定彈窗 -->
+  <!-- 鎖島全螢幕畫面（滿 5000 點觸發） -->
+  <div id="lock-overlay" class="lock-overlay hidden">
+    <h1>🎉 太神了！全班達成 5000 能量！</h1>
+    <p>大家齊心協力完成了冒險里程碑！目前島嶼進入休息狀態，請等待老師確認解鎖後，才能展開下一輪挑戰！</p>
+    <button class="btn-action btn-blue" id="teacher-unlock-btn" style="max-width:240px; margin-top:20px;">
+      🔑 老師專用解鎖
+    </button>
+  </div>
+
+  <!-- 學生開場設定彈窗 -->
   <div id="login-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
@@ -255,7 +309,7 @@
       <div style="display:flex; gap:10px;">
         <div class="form-group" style="flex:1;">
           <label>座號</label>
-          <input type="number" id="input-seat" placeholder="例如: 12" min="1" max="50">
+          <input type="number" id="input-seat" placeholder="座號" min="1" max="50">
         </div>
         <div class="form-group" style="flex:2;">
           <label>姓名 / 暱稱</label>
@@ -263,62 +317,127 @@
         </div>
       </div>
       <div class="form-group">
-        <label>挑選你的探險夥伴</label>
+        <label>挑選探險夥伴</label>
         <div class="avatar-grid">
           <button type="button" class="avatar-opt selected" data-avatar="🦊">🦊<span>小狐</span></button>
           <button type="button" class="avatar-opt" data-avatar="🐻">🐻<span>大熊</span></button>
           <button type="button" class="avatar-opt" data-avatar="🐰">🐰<span>飛兔</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🦉">🦉<span>貓頭鷹</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🦉">🦉<span>智慧鴞</span></button>
           <button type="button" class="avatar-opt" data-avatar="🐼">🐼<span>熊貓</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🦁">🦁<span>獅子</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🦁">🦁<span>小獅</span></button>
           <button type="button" class="avatar-opt" data-avatar="🐬">🐬<span>海豚</span></button>
           <button type="button" class="avatar-opt" data-avatar="🚀">🚀<span>火箭客</span></button>
         </div>
       </div>
-      <button class="btn-action btn-blue" id="btn-save-profile">✨ 進入學習島！</button>
+      <button class="btn-action btn-blue" id="btn-save-profile">✨ 進入冒險！</button>
     </div>
   </div>
 
-  <!-- 一般任務打卡彈窗 -->
-  <div id="task-modal" class="modal-overlay hidden">
+  <!-- 1. 生態科學島彈窗 -->
+  <div id="modal-nature" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 class="modal-title" id="task-island-title">島嶼任務</h2>
-        <button class="modal-close" onclick="closeModal('task-modal')">×</button>
+        <div>
+          <h2 class="modal-title">🌿 生態科學島</h2>
+          <div class="modal-subtitle">校園昆蟲與植物探索</div>
+        </div>
+        <button class="modal-close" onclick="closeAllModals()">×</button>
       </div>
-      <div style="margin-bottom:18px;">
-        <h3 id="task-name" style="color:#2563eb; margin-bottom:6px;"></h3>
-        <p id="task-desc" style="color:#64748b; line-height:1.5;"></p>
+      <div class="form-group">
+        <label>觀察到的植物 / 昆蟲名稱</label>
+        <input type="text" id="nature-name" placeholder="例如: 馬利筋、鳳蝶毛毛蟲">
       </div>
-      <button class="btn-action btn-green" id="btn-complete-task">🌟 完成挑戰並打卡 (+50 能量)</button>
+      <div class="form-group">
+        <label>外觀特徵或特別之處描述</label>
+        <textarea id="nature-feature" rows="3" placeholder="例如: 葉子對生、花朵橘紅，上面有黑黃相間的毛毛蟲正在吃葉子..."></textarea>
+      </div>
+      <button class="btn-action btn-green" onclick="submitNature()">🌟 完成打卡 (+5 能量)</button>
     </div>
   </div>
 
-  <!-- 閱讀島專用：閱讀心得與想法彈窗 -->
-  <div id="reading-modal" class="modal-overlay hidden">
+  <!-- 2. 運動健身島彈窗 -->
+  <div id="modal-sport" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 class="modal-title">📖 閱讀心得與想法紀錄</h2>
-        <button class="modal-close" onclick="closeModal('reading-modal')">×</button>
+        <div>
+          <h2 class="modal-title">🏃 運動健身島</h2>
+          <div class="modal-subtitle">個人增肌減脂</div>
+        </div>
+        <button class="modal-close" onclick="closeAllModals()">×</button>
+      </div>
+      <p style="color:#64748b; font-size:0.9rem; margin-bottom:12px;">
+        目標：跑操場5圈、跳繩500下 或 打羽毛球50球。
+      </p>
+      <div class="form-group">
+        <label>今天進行的運動項目與達成量</label>
+        <input type="text" id="sport-item" placeholder="例如: 跑操場 5 圈、跳繩 500 下">
       </div>
       <div class="form-group">
-        <label>閱讀書名或文章主題</label>
-        <input type="text" id="input-book-title" placeholder="例如: 昆蟲記、夏之庭...">
+        <label>見證認證者（老師或同學姓名）</label>
+        <input type="text" id="sport-verifier" placeholder="請填寫幫你確認的同學座號或老師">
+      </div>
+      <button class="btn-action btn-green" onclick="submitSport()">🌟 完成打卡 (+5 能量)</button>
+    </div>
+  </div>
+
+  <!-- 3. 優良公民島彈窗 -->
+  <div id="modal-civics" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">🏛️ 優良公民島</h2>
+          <div class="modal-subtitle">個人整潔生活達成</div>
+        </div>
+        <button class="modal-close" onclick="closeAllModals()">×</button>
+      </div>
+      <p style="color:#64748b; font-size:0.9rem; margin-bottom:10px;">
+        內容：維持個人衛生習慣，環境乾淨。請同學協助檢查並勾選以下全部項目：
+      </p>
+      <div class="checkbox-group">
+        <label class="checkbox-item"><input type="checkbox" id="chk-desk"> 桌面整齊</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-drawer"> 抽屜乾淨</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-bottom"> 桌底無碎屑</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-trash"> 垃圾袋清空</label>
+      </div>
+      <div class="form-group" style="margin-top:14px;">
+        <label>檢查認證者（座號/姓名）</label>
+        <input type="text" id="civics-verifier" placeholder="例如: 5號 小安">
+      </div>
+      <button class="btn-action btn-green" onclick="submitCivics()">🌟 認證完成打卡 (+5 能量)</button>
+    </div>
+  </div>
+
+  <!-- 4. 閱讀島專用彈窗 -->
+  <div id="modal-reading" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">📖 閱讀島</h2>
+          <div class="modal-subtitle">每日閱讀分享（每天可打卡 3 次）</div>
+        </div>
+        <button class="modal-close" onclick="closeAllModals()">×</button>
       </div>
       <div class="form-group">
-        <label>我的閱讀心得與收穫想法</label>
-        <textarea id="input-reflection" rows="4" placeholder="寫下一句最讓你印象深刻的話，或你的發現..."></textarea>
+        <label>閱讀書名或文章標題</label>
+        <input type="text" id="read-title" placeholder="例如: 魔法校車：穿越颶風">
       </div>
-      <button class="btn-action btn-blue" id="btn-submit-reading">📝 送出心得 (+50 能量)</button>
+      <div class="form-group">
+        <label>節錄文章重要段落</label>
+        <textarea id="read-quote" rows="2" placeholder="抄寫或節錄書中最吸引你的一句話或段落..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>個人心得與收穫（至少需 20 個中文字）</label>
+        <textarea id="read-reflection" rows="3" placeholder="寫下讀完這段後的啟發、想法或疑問..."></textarea>
+        <div id="reflection-count" class="char-count">目前字數：0 / 20 字</div>
+      </div>
+      <button class="btn-action btn-blue" id="btn-submit-reading" onclick="submitReading()">📝 送出閱讀心得 (+5 能量)</button>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // 1. 金鑰與雲端設定區（請在此處填入你的設定）
+    // 1. 金鑰與雲端設定
     // ==========================================
-
-    // (A) Firebase 設定（貼上你在 Firebase 專案設定複製的內容）
     const firebaseConfig = {
       apiKey: "AIzaSyAiQtbWb4ewd3322xfMo5eKQ3S-rG4Xfmg",
       authDomain: "gseslearning-island.firebaseapp.com",
@@ -330,30 +449,67 @@
       measurementId: "G-JX7MR06NHW"
     };
 
-    // (B) Google Apps Script Web App 網址
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxpgYPXZQAyR2Qn1OLejnUMekxvOW1Bf9-U6DyBwFoaw-st0tkQT7K8yxsU3zyXhrGj/exec";
 
-    // 初始化 Firebase
-    let db = null;
-    let totalEnergyRef = null;
-    let liveFeedRef = null;
+    let db = null, totalEnergyRef = null, liveFeedRef = null, lockStatusRef = null;
+    let isIslandLocked = false;
 
     try {
       firebase.initializeApp(firebaseConfig);
       db = firebase.database();
       totalEnergyRef = db.ref('island_stats/total_energy');
       liveFeedRef = db.ref('island_stats/recent_activity');
+      lockStatusRef = db.ref('island_stats/is_locked');
     } catch(err) {
-      console.warn("Firebase 初始化提示：請確認金鑰已正確填入！", err);
+      console.warn("Firebase 未配置或金鑰不完整", err);
     }
 
     // ==========================================
-    // 2. 學生身分與狀態管理 (LocalStorage)
+    // 2. 每日打卡次數限制邏輯
+    // ==========================================
+    function getTodayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    }
+
+    function getDailyCount(islandId) {
+      const today = getTodayKey();
+      const raw = localStorage.getItem(`island_checkin_${today}`);
+      const data = raw ? JSON.parse(raw) : {};
+      return data[islandId] || 0;
+    }
+
+    function addDailyCount(islandId) {
+      const today = getTodayKey();
+      const raw = localStorage.getItem(`island_checkin_${today}`);
+      const data = raw ? JSON.parse(raw) : {};
+      data[islandId] = (data[islandId] || 0) + 1;
+      localStorage.setItem(`island_checkin_${today}`, JSON.stringify(data));
+    }
+
+    function checkDailyLimit(islandId) {
+      const count = getDailyCount(islandId);
+      if (islandId === 'reading') {
+        if (count >= 3) {
+          alert('📖 閱讀島今天已經打卡 3 次囉！明天再繼續加油！');
+          return false;
+        }
+      } else {
+        if (count >= 1) {
+          alert('⭐ 這座島嶼今天已經打卡過囉！把機會留給其他島嶼吧！');
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // ==========================================
+    // 3. 學生身分與狀態
     // ==========================================
     let currentStudent = { seatNumber: '', name: '小探險家', avatar: '🦊' };
 
     function initStudent() {
-      const saved = localStorage.getItem('learning_island_student');
+      const saved = localStorage.getItem('island_student_data');
       if (saved) {
         try {
           currentStudent = JSON.parse(saved);
@@ -368,7 +524,6 @@
       document.getElementById('hud-name').textContent = `${currentStudent.seatNumber}號 ${currentStudent.name}`;
     }
 
-    // 頭像切換
     document.querySelectorAll('.avatar-opt').forEach(opt => {
       opt.addEventListener('click', () => {
         document.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
@@ -377,7 +532,6 @@
       });
     });
 
-    // 儲存身分
     document.getElementById('btn-save-profile').addEventListener('click', () => {
       const seat = document.getElementById('input-seat').value.trim();
       const name = document.getElementById('input-name').value.trim();
@@ -387,7 +541,7 @@
       }
       currentStudent.seatNumber = seat;
       currentStudent.name = name;
-      localStorage.setItem('learning_island_student', JSON.stringify(currentStudent));
+      localStorage.setItem('island_student_data', JSON.stringify(currentStudent));
       updateHudProfile();
       document.getElementById('login-modal').classList.add('hidden');
     });
@@ -399,10 +553,26 @@
     });
 
     // ==========================================
-    // 3. 雙軌雲端發送：Firebase 即時 + Google 試算表存檔
+    // 4. 閱讀字數即時計算 (需 20 中文字以上)
     // ==========================================
+    const reflectionInput = document.getElementById('read-reflection');
+    const reflectionCountText = document.getElementById('reflection-count');
 
-    // 發送至 Google Apps Script
+    reflectionInput.addEventListener('input', () => {
+      // 計算中文字與英數總長
+      const text = reflectionInput.value.trim();
+      const len = text.length;
+      reflectionCountText.textContent = `目前字數：${len} / 20 字`;
+      if (len >= 20) {
+        reflectionCountText.classList.add('valid');
+      } else {
+        reflectionCountText.classList.remove('valid');
+      }
+    });
+
+    // ==========================================
+    // 5. 雲端同步與能量管理（上限 5000 滿分鎖島機制）
+    // ==========================================
     async function sendToGAS(payload) {
       if (!GAS_API_URL || GAS_API_URL.includes("請替換")) return;
       try {
@@ -412,95 +582,81 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload)
         });
-      } catch(e) {
-        console.error("GAS 寫入失敗", e);
-      }
+      } catch(e) {}
     }
 
-    // 發送任務打卡
-    function completeTask(island) {
-      confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
-      closeModal('task-modal');
+    function rewardCheckin(islandId, islandTitle, message, gasData) {
+      addDailyCount(islandId);
+      confetti({ particleCount: 75, spread: 70, origin: { y: 0.7 } });
+      closeAllModals();
 
-      // 1. Firebase 即時累加能量與廣播
+      // 每次打卡固定 5 點
+      const gainPoints = 5;
+
       if (totalEnergyRef) {
-        totalEnergyRef.transaction(val => (val || 0) + 50);
+        totalEnergyRef.transaction(current => {
+          let next = (current || 0) + gainPoints;
+          if (next >= 5000) {
+            // 超過 5000 點歸零並觸發全班鎖定
+            if (lockStatusRef) lockStatusRef.set(true);
+            return 0;
+          }
+          return next;
+        });
+
         liveFeedRef.push({
-          studentName: `${currentStudent.seatNumber}號 ${currentStudent.avatar} ${currentStudent.name}`,
-          message: `完成【${island.title}】的任務！`,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
+          student: `${currentStudent.seatNumber}號 ${currentStudent.avatar} ${currentStudent.name}`,
+          msg: `${message} (+5 能量)`,
+          time: firebase.database.ServerValue.TIMESTAMP
         });
       }
 
-      // 2. 存入 Google 試算表（任務打卡分頁）
-      sendToGAS({
-        type: 'task_complete',
-        seatNumber: currentStudent.seatNumber,
-        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-        islandTitle: island.title,
-        taskTitle: island.taskTitle,
-        points: 50
-      });
+      sendToGAS(gasData);
     }
 
-    // 發送閱讀心得
-    function submitReadingReflection() {
-      const book = document.getElementById('input-book-title').value.trim();
-      const reflection = document.getElementById('input-reflection').value.trim();
-      if (!book || !reflection) {
-        alert('請先輸入閱讀的書名與簡短心得喔！');
-        return;
-      }
-
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.7 } });
-      closeModal('reading-modal');
-
-      // 1. Firebase 即時動態廣播
-      if (totalEnergyRef) {
-        totalEnergyRef.transaction(val => (val || 0) + 50);
-        liveFeedRef.push({
-          studentName: `${currentStudent.seatNumber}號 ${currentStudent.avatar} ${currentStudent.name}`,
-          message: `分享了《${book}》的閱讀心得！`,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-      }
-
-      // 2. 存入 Google 試算表（閱讀心得與想法分頁）
-      sendToGAS({
-        type: 'reading_reflection',
-        seatNumber: currentStudent.seatNumber,
-        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-        bookTitle: book,
-        reflection: reflection
-      });
-
-      document.getElementById('input-book-title').value = '';
-      document.getElementById('input-reflection').value = '';
-    }
-
-    document.getElementById('btn-submit-reading').addEventListener('click', submitReadingReflection);
-
-    // ==========================================
-    // 4. Firebase 監聽：全班連動能量條與跑馬燈
-    // ==========================================
+    // 監聽能量條與鎖定狀態
     if (totalEnergyRef) {
       totalEnergyRef.on('value', snap => {
-        const energy = snap.val() || 0;
-        const max = 1000;
-        const pct = Math.min((energy / max) * 100, 100);
+        const val = snap.val() || 0;
+        const max = 5000;
+        const pct = Math.min((val / max) * 100, 100);
         document.getElementById('class-energy-bar').style.width = `${pct}%`;
-        document.getElementById('class-energy-text').textContent = `${energy} / ${max}`;
+        document.getElementById('class-energy-text').textContent = `${val} / ${max}`;
+      });
+    }
+
+    if (lockStatusRef) {
+      lockStatusRef.on('value', snap => {
+        isIslandLocked = !!snap.val();
+        const lockUI = document.getElementById('lock-overlay');
+        if (isIslandLocked) {
+          lockUI.classList.remove('hidden');
+        } else {
+          lockUI.classList.add('hidden');
+        }
       });
     }
 
     if (liveFeedRef) {
-      let isFirstLoad = true;
+      let isFirst = true;
       liveFeedRef.limitToLast(1).on('child_added', snap => {
-        if (isFirstLoad) { isFirstLoad = false; return; }
-        const data = snap.val();
-        if (data) showLiveBanner(`🎉 ${data.studentName} ${data.message} (+50 能量)`);
+        if (isFirst) { isFirst = false; return; }
+        const item = snap.val();
+        if (item) showLiveBanner(`🎉 ${item.student} ${item.msg}`);
       });
     }
+
+    // 老師專用解鎖按鈕
+    document.getElementById('teacher-unlock-btn').addEventListener('click', () => {
+      const pwd = prompt('請輸入教師重置密碼 (預設: 1234)：');
+      if (pwd === '1234') {
+        if (lockStatusRef) lockStatusRef.set(false);
+        if (totalEnergyRef) totalEnergyRef.set(0);
+        alert('島嶼已重新解鎖開放！');
+      } else {
+        alert('密碼錯誤！');
+      }
+    });
 
     function showLiveBanner(text) {
       const banner = document.getElementById('live-banner');
@@ -509,84 +665,274 @@
       setTimeout(() => banner.classList.remove('show'), 4000);
     }
 
-    function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
+    function closeAllModals() {
+      document.querySelectorAll('.modal-overlay').forEach(m => {
+        if (m.id !== 'login-modal') m.classList.add('hidden');
+      });
     }
 
     // ==========================================
-    // 5. Three.js 3D 島嶼場景建構
+    // 6. 各島嶼專屬送出函式
+    // ==========================================
+    function submitNature() {
+      if (!checkDailyLimit('nature')) return;
+      const name = document.getElementById('nature-name').value.trim();
+      const feature = document.getElementById('nature-feature').value.trim();
+      if (!name || !feature) { alert('請填寫觀察到的名稱與外觀特徵喔！'); return; }
+
+      rewardCheckin('nature', '生態科學島', `記錄了植物/昆蟲【${name}】`, {
+        type: 'task_complete',
+        seatNumber: currentStudent.seatNumber,
+        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+        islandTitle: '生態科學島',
+        taskTitle: '昆蟲植物觀察',
+        points: 5,
+        detail1: name,
+        detail2: feature,
+        verifier: '自行觀察'
+      });
+      document.getElementById('nature-name').value = '';
+      document.getElementById('nature-feature').value = '';
+    }
+
+    function submitSport() {
+      if (!checkDailyLimit('sport')) return;
+      const item = document.getElementById('sport-item').value.trim();
+      const verifier = document.getElementById('sport-verifier').value.trim();
+      if (!item || !verifier) { alert('請填寫運動項目與見證認證者！'); return; }
+
+      rewardCheckin('sport', '運動健身島', `完成了運動【${item}】`, {
+        type: 'task_complete',
+        seatNumber: currentStudent.seatNumber,
+        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+        islandTitle: '運動健身島',
+        taskTitle: '個人增肌減脂',
+        points: 5,
+        detail1: item,
+        verifier: verifier
+      });
+      document.getElementById('sport-item').value = '';
+      document.getElementById('sport-verifier').value = '';
+    }
+
+    function submitCivics() {
+      if (!checkDailyLimit('civics')) return;
+      const c1 = document.getElementById('chk-desk').checked;
+      const c2 = document.getElementById('chk-drawer').checked;
+      const c3 = document.getElementById('chk-bottom').checked;
+      const c4 = document.getElementById('chk-trash').checked;
+      const verifier = document.getElementById('civics-verifier').value.trim();
+
+      if (!c1 || !c2 || !c3 || !c4) {
+        alert('請先將【桌面、抽屜、桌底、垃圾袋】四個項目全部達成並勾選！');
+        return;
+      }
+      if (!verifier) {
+        alert('請填寫檢查確認的同學座號或老師姓名！');
+        return;
+      }
+
+      rewardCheckin('civics', '優良公民島', `達成了個人整潔生活檢查`, {
+        type: 'task_complete',
+        seatNumber: currentStudent.seatNumber,
+        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+        islandTitle: '優良公民島',
+        taskTitle: '個人整潔生活達成',
+        points: 5,
+        detail1: '桌面/抽屜/桌底/垃圾袋 全數合格',
+        verifier: verifier
+      });
+      document.getElementById('chk-desk').checked = false;
+      document.getElementById('chk-drawer').checked = false;
+      document.getElementById('chk-bottom').checked = false;
+      document.getElementById('chk-trash').checked = false;
+      document.getElementById('civics-verifier').value = '';
+    }
+
+    function submitReading() {
+      if (!checkDailyLimit('reading')) return;
+      const title = document.getElementById('read-title').value.trim();
+      const quote = document.getElementById('read-quote').value.trim();
+      const reflection = document.getElementById('read-reflection').value.trim();
+
+      if (!title || !quote) { alert('請填寫書名與節錄段落！'); return; }
+      if (reflection.length < 20) {
+        alert(`個人心得目前只有 ${reflection.length} 個字，還需要再補充一些（需滿 20 字）喔！`);
+        return;
+      }
+
+      rewardCheckin('reading', '閱讀島', `分享了《${title}》的閱讀心得`, {
+        type: 'reading_reflection',
+        seatNumber: currentStudent.seatNumber,
+        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+        bookTitle: title,
+        quote: quote,
+        reflection: reflection
+      });
+      document.getElementById('read-title').value = '';
+      document.getElementById('read-quote').value = '';
+      document.getElementById('read-reflection').value = '';
+      reflectionCountText.textContent = `目前字數：0 / 20 字`;
+      reflectionCountText.classList.remove('valid');
+    }
+
+    // ==========================================
+    // 7. 四階段時段光影環境判定 (06-11, 11-13, 13-16, 16-06)
+    // ==========================================
+    function getTimePhase() {
+      const hour = new Date().getHours();
+      if (hour >= 6 && hour < 11) {
+        return { name: '晨曦早晨', bg: 0xe0f2fe, light: 1.1, sun: 0xffedd5, hemi: 0xffffff };
+      } else if (hour >= 11 && hour < 13) {
+        return { name: '明亮正午', bg: 0xbfdbfe, light: 1.4, sun: 0xffffff, hemi: 0xf0fdf4 };
+      } else if (hour >= 13 && hour < 16) {
+        return { name: '溫暖午後', bg: 0xfef3c7, light: 1.0, sun: 0xfed7aa, hemi: 0xffedd5 };
+      } else {
+        return { name: '靜謐夜晚', bg: 0x0f172a, light: 0.45, sun: 0x64748b, hemi: 0x1e293b };
+      }
+    }
+
+    // ==========================================
+    // 8. Three.js 俯視視角、島嶼與走動島民建構
     // ==========================================
     const ISLAND_CONFIG = [
-      { id: 'nature', title: '生態科學島', taskTitle: '校園昆蟲與植物觀察', taskDesc: '在校園花圃中找到一種特別的葉子或昆蟲，並記錄特徵！', color: 0x4ade80, pos: [-14, 0, -8], type: 'task' },
-      { id: 'space', title: '探索宇宙島', taskTitle: '八大行星小知識挑戰', taskDesc: '說出離太陽最近的一顆行星，以及它有什麼特別之處！', color: 0x38bdf8, pos: [14, 2, -10], type: 'task' },
-      { id: 'reading', title: '閱讀魔法島', taskTitle: '閱讀心得記錄', taskDesc: '寫下你今天閱讀的一本書或一篇文章，把收穫分享給大家！', color: 0xf472b6, pos: [-8, -2, 12], type: 'reading' },
-      { id: 'civics', title: '班級公民島', taskTitle: '班級整潔生活提案', taskDesc: '提出一個讓走廊保持乾淨、大家玩得更安全的好點子！', color: 0xfbbf24, pos: [10, -1, 10], type: 'task' }
+      { id: 'nature', title: '生態科學島', color: 0x4ade80, pos: [-15, 0, -12] },
+      { id: 'sport', title: '運動健身島', color: 0x38bdf8, pos: [15, 0, -12] },
+      { id: 'reading', title: '閱讀島', color: 0xf472b6, pos: [-15, 0, 12] },
+      { id: 'civics', title: '優良公民島', color: 0xfbbf24, pos: [15, 0, 12] }
     ];
 
     let scene, camera, renderer, controls;
-    let islandMeshes = [];
-    let currentActiveIsland = null;
+    let islandGroups = [];
+    let villagers = []; // 儲存隨機走動小島民
 
     function init3D() {
       const container = document.getElementById('canvas-container');
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xdbeafe);
-      scene.fog = new THREE.FogExp2(0xdbeafe, 0.02);
+      const timePhase = getTimePhase();
+      document.getElementById('time-badge').textContent = `🕒 目前時段：${timePhase.name}`;
 
-      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 32, 42);
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(timePhase.bg);
+      scene.fog = new THREE.FogExp2(timePhase.bg, 0.015);
+
+      // 固定為俯視視角 (Top-down Isometric View)
+      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
+      camera.position.set(0, 52, 28);
+      camera.lookAt(0, 0, 0);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       container.appendChild(renderer.domElement);
 
+      // 視角控制：僅允許縮放與平移，禁止旋轉以鎖定俯視
       controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-      controls.maxPolarAngle = Math.PI / 2.1;
-      controls.minDistance = 15;
-      controls.maxDistance = 65;
+      controls.enableRotate = false; // 🔒 鎖定旋轉
+      controls.enableZoom = true;   // 允許縮放
+      controls.enablePan = true;    // 允許平移拖曳
+      controls.minDistance = 25;
+      controls.maxDistance = 85;
+      controls.target.set(0, 0, 0);
 
-      // 燈光
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x93c5fd, 0.9);
+      // 依時段配置燈光
+      const hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x334155, timePhase.light);
       scene.add(hemiLight);
 
-      const dirLight = new THREE.DirectionalLight(0xffedd5, 1.2);
-      dirLight.position.set(20, 40, 20);
+      const dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 1.2);
+      dirLight.position.set(10, 40, 20);
       scene.add(dirLight);
 
-      // 產生 4 座島嶼
+      // 建立島嶼與走動島民
       ISLAND_CONFIG.forEach(cfg => {
         const group = new THREE.Group();
         group.position.set(...cfg.pos);
 
-        // 基座
-        const baseGeo = new THREE.CylinderGeometry(5.5, 3.2, 4.5, 7);
+        // 基底島面
+        const baseGeo = new THREE.CylinderGeometry(6.2, 4.5, 4, 8);
         const baseMat = new THREE.MeshStandardMaterial({ color: cfg.color, flatShading: true });
         const base = new THREE.Mesh(baseGeo, baseMat);
         base.position.y = -2;
         group.add(base);
 
-        // 島上裝飾地標
-        const decoGeo = cfg.id === 'reading' 
-          ? new THREE.BoxGeometry(3, 2, 2)
-          : new THREE.ConeGeometry(2, 4, 5);
-        const decoMat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true });
+        // 各島代表建築地標
+        let decoGeo, decoMat;
+        if (cfg.id === 'reading') {
+          decoGeo = new THREE.BoxGeometry(3, 2, 2);
+          decoMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        } else if (cfg.id === 'civics') {
+          decoGeo = new THREE.CylinderGeometry(2, 2, 2.5, 6);
+          decoMat = new THREE.MeshStandardMaterial({ color: 0xffedd5 });
+        } else if (cfg.id === 'sport') {
+          decoGeo = new THREE.TorusGeometry(1.6, 0.5, 8, 16);
+          decoMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+        } else {
+          decoGeo = new THREE.ConeGeometry(2, 4.5, 6);
+          decoMat = new THREE.MeshStandardMaterial({ color: 0x15803d });
+        }
         const deco = new THREE.Mesh(decoGeo, decoMat);
-        deco.position.y = 2;
+        deco.position.y = 1.6;
+        if (cfg.id === 'sport') deco.rotation.x = Math.PI / 2;
         group.add(deco);
+
+        // 在島上生成 3~5 位隨機漫步島民
+        const villagerCount = Math.floor(Math.random() * 3) + 3; // 3~5位
+        const clothesColors = [0xef4444, 0x3b82f6, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xec4899];
+
+        for (let i = 0; i < villagerCount; i++) {
+          const person = new THREE.Group();
+
+          // 身體
+          const bodyColor = clothesColors[Math.floor(Math.random() * clothesColors.length)];
+          const bodyGeo = new THREE.CylinderGeometry(0.3, 0.4, 0.8, 6);
+          const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, flatShading: true });
+          const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+          bodyMesh.position.y = 0.4;
+          person.add(bodyMesh);
+
+          // 頭部
+          const headGeo = new THREE.SphereGeometry(0.3, 6, 6);
+          const headMat = new THREE.MeshStandardMaterial({ color: 0xffedd5 });
+          const headMesh = new THREE.Mesh(headGeo, headMat);
+          headMesh.position.y = 1.0;
+          person.add(headMesh);
+
+          // 帽子（造型各異）
+          if (Math.random() > 0.4) {
+            const hatGeo = new THREE.ConeGeometry(0.35, 0.4, 5);
+            const hatMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+            const hatMesh = new THREE.Mesh(hatGeo, hatMat);
+            hatMesh.position.y = 1.35;
+            person.add(hatMesh);
+          }
+
+          // 隨機初始位置與行進角度
+          const radius = Math.random() * 3.5 + 0.8;
+          const angle = Math.random() * Math.PI * 2;
+          person.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+
+          group.add(person);
+
+          villagers.push({
+            obj: person,
+            islandPos: cfg.pos,
+            angle: angle,
+            speed: (Math.random() * 0.008) + 0.005,
+            radius: radius
+          });
+        }
 
         group.userData = cfg;
         scene.add(group);
-        islandMeshes.push(group);
+        islandGroups.push(group);
       });
 
-      // 點擊島嶼射線偵測
+      // 點擊島嶼偵測
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
       function onPointerDown(e) {
+        if (isIslandLocked) return; // 鎖島期間不可點擊
+
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
         if (!clientX || !clientY) return;
@@ -595,15 +941,13 @@
         mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(islandMeshes, true);
+        const intersects = raycaster.intersectObjects(islandGroups, true);
 
         if (intersects.length > 0) {
-          let target = intersects[0].object;
-          while (target.parent && target.parent !== scene) {
-            target = target.parent;
-          }
-          if (target.userData && target.userData.id) {
-            handleIslandClick(target.userData);
+          let root = intersects[0].object;
+          while (root.parent && root.parent !== scene) root = root.parent;
+          if (root.userData && root.userData.id) {
+            openIslandModal(root.userData.id);
           }
         }
       }
@@ -615,38 +959,40 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
-      // 動畫迴圈（浮動呼吸效果）
+      // 動畫迴圈
       let clock = new THREE.Clock();
       function animate() {
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
-        islandMeshes.forEach((island, i) => {
-          island.position.y = ISLAND_CONFIG[i].pos[1] + Math.sin(time * 1.5 + i) * 0.4;
-          island.rotation.y += 0.003;
+
+        // 島嶼輕微浮動
+        islandGroups.forEach((g, i) => {
+          g.position.y = Math.sin(time * 1.5 + i) * 0.25;
         });
+
+        // 小島民在島上繞圈漫步
+        villagers.forEach(v => {
+          v.angle += v.speed;
+          v.obj.position.x = Math.cos(v.angle) * v.radius;
+          v.obj.position.z = Math.sin(v.angle) * v.radius;
+          v.obj.rotation.y = -v.angle + Math.PI / 2;
+        });
+
         controls.update();
         renderer.render(scene, camera);
       }
       animate();
     }
 
-    function handleIslandClick(cfg) {
-      currentActiveIsland = cfg;
-      if (cfg.type === 'reading') {
-        document.getElementById('reading-modal').classList.remove('hidden');
-      } else {
-        document.getElementById('task-island-title').textContent = cfg.title;
-        document.getElementById('task-name').textContent = cfg.taskTitle;
-        document.getElementById('task-desc').textContent = cfg.taskDesc;
-        document.getElementById('task-modal').classList.remove('hidden');
-      }
+    function openIslandModal(id) {
+      closeAllModals();
+      if (id === 'nature') document.getElementById('modal-nature').classList.remove('hidden');
+      if (id === 'sport') document.getElementById('modal-sport').classList.remove('hidden');
+      if (id === 'civics') document.getElementById('modal-civics').classList.remove('hidden');
+      if (id === 'reading') document.getElementById('modal-reading').classList.remove('hidden');
     }
 
-    document.getElementById('btn-complete-task').addEventListener('click', () => {
-      if (currentActiveIsland) completeTask(currentActiveIsland);
-    });
-
-    // 啟動程序
+    // 啟動
     initStudent();
     init3D();
   </script>
