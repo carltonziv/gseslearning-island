@@ -19,7 +19,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
       overflow: hidden;
-      background-color: #0284c7;
+      background-color: #101662;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
@@ -165,7 +165,7 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.8);
+      background: rgba(15, 23, 42, 0.85);
       color: #ffffff;
       padding: 8px 20px;
       border-radius: 30px;
@@ -1246,16 +1246,13 @@
         return { phase: 'afternoon', name: '溫暖午後', bg: '#f59e0b', light: 1.15, sun: 0xfed7aa, hemi: 0xffedd5 };
       } else {
         const nightBg = getNightColor();
-        // 夜晚提高環境補光，避免黑屏
-        return { phase: 'night', name: '靜謐夜晚', bg: nightBg, light: 0.9, sun: 0x94a3b8, hemi: 0x64748b };
+        return { phase: 'night', name: '靜謐夜晚', bg: nightBg, light: 1.1, sun: 0xffffff, hemi: 0x94a3b8 };
       }
     }
 
     // ==========================================
-    // 9. 地標模型建構工廠 (陀螺、啞鈴、書本、書桌)
+    // 9. 地標模型建構工廠
     // ==========================================
-
-    // 1) 戰鬥陀螺 (墨綠色金屬風)
     function createBeybladeModel() {
       const bb = new THREE.Group();
 
@@ -1298,7 +1295,6 @@
       return bb;
     }
 
-    // 2) 運動健身島地標：鑄鐵啞鈴
     function createDumbbellModel() {
       const dbGroup = new THREE.Group();
 
@@ -1344,7 +1340,6 @@
       return dbGroup;
     }
 
-    // 3) 閱讀島地標：翻開的書本
     function createOpenBookModel() {
       const book = new THREE.Group();
 
@@ -1388,7 +1383,6 @@
       return book;
     }
 
-    // 4) 優良公民島地標：實木書桌
     function createDeskModel() {
       const desk = new THREE.Group();
 
@@ -1493,7 +1487,7 @@
       bulb.position.y = 2.05;
       lamp.add(bulb);
 
-      const pointLight = new THREE.PointLight(0xfef08a, 2.4, 18);
+      const pointLight = new THREE.PointLight(0xfef08a, 2.8, 22);
       pointLight.position.set(0, 2.1, 0);
       lamp.add(pointLight);
 
@@ -1562,8 +1556,21 @@
     }
 
     // ==========================================
-    // 10. Three.js 場景建構與渲染 (修復黑畫面)
+    // 10. Three.js 場景建構與修正視角
     // ==========================================
+    const ISLAND_CONFIG = [
+      { id: 'nature', title: '生態科學島', color: 0x059669, pos: [-16, 0, -12] },
+      { id: 'sport', title: '運動健身島', color: 0x0284c7, pos: [16, 0, -12] },
+      { id: 'reading', title: '閱讀島', color: 0x7c3aed, pos: [-16, 0, 12] },
+      { id: 'civics', title: '優良公民島', color: 0xd97706, pos: [16, 0, 12] },
+      { id: 'beyblade', title: '戰鬥陀螺島', color: 0xdc2626, pos: [0, 0, 0] }
+    ];
+
+    let scene, camera, renderer, controls;
+    let islandGroups = [];
+    let villagers = [];
+    let skyCreatures = [];
+    let nextSkyEventTime = 0;
     let lastNightBg = null;
 
     function init3D() {
@@ -1573,16 +1580,14 @@
       document.getElementById('time-badge').textContent = `🕒 時段：${timePhase.name}`;
 
       scene = new THREE.Scene();
-      // 使用 set() 支援字串色彩 (如 #101662)
-      scene.background = new THREE.Color();
-      scene.background.set(timePhase.bg);
+      scene.background = new THREE.Color(timePhase.bg);
 
-      scene.fog = new THREE.FogExp2(0x000000, 0.012);
-      scene.fog.color.set(timePhase.bg);
+      // 使用線性霧，確保近距離 40~140 米內島嶼完全清晰，不被黑霧吞沒
+      scene.fog = new THREE.Fog(timePhase.bg, 40, 140);
 
-      // 視角高度 (Y: 37, Z: 42)
-      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-      camera.position.set(0, 37, 42);
+      // 穩定微俯視角相機 (Y: 38, Z: 44)
+      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 1000);
+      camera.position.set(0, 38, 44);
       camera.lookAt(0, 0, 0);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -1595,16 +1600,19 @@
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableRotate = false;
+      controls.enableRotate = false; // 🔒 鎖定旋轉保持俯視
       controls.enableZoom = true;
       controls.enablePan = true;
-      controls.minDistance = 22;
-      controls.maxDistance = 90;
+      controls.minDistance = 20;
+      controls.maxDistance = 95;
       controls.target.set(0, 0, 0);
+      controls.update(); // 啟動重算視點
 
+      // 環境光（HemisphereLight）
       const hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x1e293b, timePhase.light);
       scene.add(hemiLight);
 
+      // 太陽光（DirectionalLight）
       const dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 1.3);
       dirLight.position.set(15, 48, 25);
       dirLight.castShadow = true;
@@ -1803,7 +1811,7 @@
         const time = clock.getElapsedTime();
         const now = Date.now();
 
-        // 夜晚時段每 3 分鐘平滑切換背景
+        // 夜晚時段每 3 分鐘色票輪替
         const currentPhase = getTimePhase();
         if (currentPhase.phase === 'night') {
           if (currentPhase.bg !== lastNightBg) {
@@ -1813,7 +1821,7 @@
           }
         }
 
-        // 島嶼輕微浮動
+        // 島嶼浮動
         islandGroups.forEach((g, i) => {
           g.position.y = Math.sin(time * 1.5 + i) * 0.25;
         });
