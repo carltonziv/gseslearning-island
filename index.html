@@ -2457,22 +2457,22 @@
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
 const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
-      for (let i = 0; i < 110; i++) {
-        const t = i / 110;
-        const pt = trackCurve.getPointAt(t);
-        const tan = trackCurve.getTangentAt(t).normalize(); // 軌道行進切線方向
+      const tieCount = 220; // 🌟 枕木總數（可依喜好調整，如 200~260）
 
-        // 🌟 1. 寬度 X = 1.15（長邊，橫跨內外雙軌）、高度 Y = 0.06、深度 Z = 0.22（短邊，順著行進方向）
-        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.22), tieMat);
+      for (let i = 0; i < tieCount; i++) {
+        const t = i / tieCount;
+        const pt = trackCurve.getPointAt(t);
+        const tan = trackCurve.getTangentAt(t).normalize();
+
+        // 寬度 1.15（橫跨雙軌），厚度 Z 設為 0.16（更加細緻勻稱）
+        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.16), tieMat);
         tie.position.copy(pt);
         tie.position.y -= 0.04;
         
-        // 🌟 2. 讓 Z 軸（短邊 0.22）朝向行進切線方向，X 軸（長邊 1.15）便會精準 90 度橫向跨在軌道兩側
         const lookTarget = pt.clone().add(tan);
         tie.lookAt(lookTarget);
         system.add(tie);
       }
-
       const tunnelHoleLocations = [
         { pos: new THREE.Vector3(5.8, TRACK_Y, -4.0), dir: new THREE.Vector3(1, 0, -1).normalize() },
         { pos: new THREE.Vector3(5.8, TRACK_Y, 4.0),  dir: new THREE.Vector3(1, 0, 1).normalize() },
