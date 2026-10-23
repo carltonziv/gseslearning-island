@@ -155,7 +155,6 @@
     .hud-btn-card:active { transform: scale(0.95); }
     .hud-btn-teacher { border-color: #f43f5e; color: #be123c; }
 
-    /* 底部操作提示 */
     .hud-hint {
       position: absolute;
       bottom: 20px;
@@ -175,7 +174,6 @@
       align-items: center;
     }
 
-    /* 鎖定提示 */
     .lock-overlay {
       position: fixed;
       inset: 0;
@@ -194,7 +192,6 @@
     .lock-overlay h1 { font-size: 2.2rem; margin-bottom: 12px; color: #facc15; }
     .lock-overlay p { font-size: 1.1rem; color: #cbd5e1; max-width: 500px; line-height: 1.6; }
 
-    /* 彈窗樣式 */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -1013,7 +1010,7 @@
     // ==========================================
     // 6. 戰鬥陀螺大賽系統
     // ==========================================
-    let beybladeBaseMesh = null; // 儲存陀螺島底盤參照以動態變色
+    let beybladeBaseMesh = null;
 
     if (bbRef) {
       bbRef.on('value', snap => {
@@ -1025,7 +1022,6 @@
 
     function updateBeybladeIslandColor() {
       if (!beybladeBaseMesh) return;
-      // 8) 有比賽/報名為 #B7410E，無比賽為 #6E451F
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
       const targetColor = isTournamentActive ? 0xB7410E : 0x6E451F;
       beybladeBaseMesh.material.color.setHex(targetColor);
@@ -1239,7 +1235,6 @@
     // 9. 地標模型工廠
     // ==========================================
 
-    // 0) 生態科技島地標
     let windTurbineBlades = [];
     function createNatureLandmark() {
       const group = new THREE.Group();
@@ -1317,12 +1312,10 @@
       return group;
     }
 
-    // 1) 戰鬥陀螺島地標 + 6) 3 顆旋轉小陀螺
     let spinningMiniTops = [];
     function createBeybladeModel() {
       const bb = new THREE.Group();
 
-      // 主陀螺
       const tip = new THREE.Mesh(
         new THREE.ConeGeometry(0.7, 1.2, 10),
         new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 })
@@ -1358,7 +1351,6 @@
 
       bb.scale.setScalar(1.2);
 
-      // 6) 新增 3 顆小陀螺
       const miniColors = [0xef4444, 0x3b82f6, 0xeab308];
       const miniPositions = [
         [2.6, 0, 1.5],
@@ -1394,7 +1386,6 @@
       return bb;
     }
 
-    // 2) 健身運動島地標
     let jumpRopeGroup = null;
     let jumperMan = null;
     let ropeMesh = null;
@@ -1469,15 +1460,13 @@
       return group;
     }
 
-    // 3) 閱讀島地標：7) 增加模糊文字意象 + 4) 書車彩虹相間車廂
     function createReadingLandmark() {
       const group = new THREE.Group();
 
-      // 主地標：翻開的書
       const book = new THREE.Group();
       const pageMat = new THREE.MeshStandardMaterial({ color: 0xfffbeb, roughness: 0.6 });
       const coverMat = new THREE.MeshStandardMaterial({ color: 0x581c87, roughness: 0.4 });
-      const textMat = new THREE.MeshBasicMaterial({ color: 0xD3D3D3 }); // #D3D3D3 文字意象
+      const textMat = new THREE.MeshBasicMaterial({ color: 0xD3D3D3 });
 
       const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.4, 8), coverMat);
       spine.position.set(0, 0.4, 0);
@@ -1492,7 +1481,6 @@
         page.castShadow = true;
         book.add(page);
 
-        // 7) 書頁上增加模糊文字線條意象
         for (let l = 0; l < 4; l++) {
           const textLine = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.02, 0.12), textMat);
           textLine.position.set(x, 0.67, -0.65 + l * 0.45);
@@ -1510,9 +1498,7 @@
       book.scale.setScalar(1.1);
       group.add(book);
 
-      // 4) 天下希望閱讀書車（彩虹相間車廂）
       const van = new THREE.Group();
-
       const cabin = new THREE.Mesh(
         new THREE.BoxGeometry(1.4, 1.1, 1.2),
         new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.3 })
@@ -1528,7 +1514,6 @@
       windshield.position.set(0, 1.05, 2.0);
       van.add(windshield);
 
-      // 彩虹車廂（7 道彩色相間垂直條紋）
       const rainbowColors = [0xef4444, 0xf97316, 0xfacc15, 0x22c55e, 0x06b6d4, 0x3b82f6, 0x8b5cf6];
       const stripeWidth = 2.0 / rainbowColors.length;
       rainbowColors.forEach((col, idx) => {
@@ -1541,7 +1526,6 @@
         van.add(stripe);
       });
 
-      // 展開的鷗翼頂篷
       const wingL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 1.9), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
       wingL.position.set(-1.0, 1.8, -0.2);
       wingL.rotation.z = -0.6;
@@ -1554,7 +1538,6 @@
       wingR.castShadow = true;
       van.add(wingR);
 
-      // 4 個輪子
       const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
       [[-0.8, 0.3, 1.2], [0.8, 0.3, 1.2], [-0.8, 0.3, -0.6], [0.8, 0.3, -0.6]].forEach(pos => {
         const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.25, 12), wheelMat);
@@ -1571,7 +1554,6 @@
       return group;
     }
 
-    // 4) 優良公民島：古典羅馬神殿 + 5) 掃地人物
     let sweeperMan = null;
     let broomMesh = null;
     function createCivicsLandmark() {
@@ -1615,7 +1597,6 @@
       temple.scale.setScalar(1.1);
       group.add(temple);
 
-      // 5) 增加掃地人物與掃把
       sweeperMan = new THREE.Group();
       sweeperMan.position.set(2.4, 0, 1.5);
 
@@ -1658,6 +1639,7 @@
       return group;
     }
 
+    // 4) 名稱標籤縮小 10% (原 7.5 x 2.2 -> 縮小為 6.75 x 1.98)
     function createIslandTitleSprite(text) {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
@@ -1681,7 +1663,7 @@
       const texture = new THREE.CanvasTexture(canvas);
       const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
       const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(7.5, 2.2, 1);
+      sprite.scale.set(6.75, 1.98, 1); // 縮小 10%
       return sprite;
     }
 
@@ -1810,11 +1792,11 @@
     // 10. 群島配置（依指示更新四島地面顏色）
     // ==========================================
     const ISLAND_CONFIG = [
-      { id: 'beyblade', title: '戰鬥陀螺島', color: 0x6E451F, pos: [0, 0, 0] }, // 預設無比賽為 #6E451F
-      { id: 'nature',   title: '生態科技島', color: 0x326500, pos: [-10.5, 0, -8.5] }, // 1) #326500
-      { id: 'sport',    title: '健身運動島', color: 0xCFB53B, pos: [10.5, 0, -8.5] },  // 1) #CFB53B
-      { id: 'reading',  title: '閱讀島',     color: 0x006666, pos: [-10.5, 0, 8.5] },  // 1) #006666
-      { id: 'civics',   title: '優良公民島', color: 0x745C40, pos: [10.5, 0, 8.5] }   // 1) #745C40
+      { id: 'beyblade', title: '戰鬥陀螺島', color: 0x6E451F, pos: [0, 0, 0] },
+      { id: 'nature',   title: '生態科技島', color: 0x003E2B, pos: [-10.5, 0, -8.5] }, // 1) #003E2B
+      { id: 'sport',    title: '健身運動島', color: 0x7C6D23, pos: [10.5, 0, -8.5] },  // 1) #7C6D23
+      { id: 'reading',  title: '閱讀島',     color: 0x004A64, pos: [-10.5, 0, 8.5] },  // 1) #004A64
+      { id: 'civics',   title: '優良公民島', color: 0x443423, pos: [10.5, 0, 8.5] }   // 1) #443423
     ];
 
     let scene, camera, renderer, controls;
@@ -1824,7 +1806,7 @@
     let nextSkyEventTime = 0;
     let lastNightBg = null;
 
-    // 2) 水泥橋，顏色為 #808080
+    // 2) 水泥橋，顏色改為 #5A6165
     function createConcreteBridge(p1, p2) {
       const bridge = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
@@ -1835,16 +1817,14 @@
       bridge.position.copy(mid);
       bridge.lookAt(v2);
 
-      const concreteMat = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.55 });
+      const concreteMat = new THREE.MeshStandardMaterial({ color: 0x5A6165, roughness: 0.55 }); // #5A6165
 
-      // 水泥橋面
       const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, length - 4.5), concreteMat);
       deck.position.set(0, -0.05, 0);
       deck.castShadow = true;
       deck.receiveShadow = true;
       bridge.add(deck);
 
-      // 兩側水泥護欄
       [-0.75, 0.75].forEach(x => {
         const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, length - 4.5), concreteMat);
         rail.position.set(x, 0.2, 0);
@@ -1855,69 +1835,58 @@
       return bridge;
     }
 
-    // 3) 軌道與行駛台車
+    // 3) & 5) 穿梭於島嶼間的封閉軌道與平行行駛台車
     let cartGroup = null;
-    let cartAngle = 0;
-    const TRACK_RADIUS = 22.0;
+    let cartProgress = 0;
+    let trackCurve = null;
 
-    function createTrackAndCart() {
+    function createIslandTraversingTrackAndCart() {
       const system = new THREE.Group();
 
-      // 圓形軌道 (#A6A6A6)
-      const trackMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.5 });
-      const trackR1 = new THREE.Mesh(new THREE.TorusGeometry(TRACK_RADIUS - 0.35, 0.08, 8, 80), trackMat);
-      trackR1.rotation.x = Math.PI / 2;
-      trackR1.position.y = -0.1;
-      system.add(trackR1);
+      // 穿梭於各島間空隙的封閉路徑，高度低於橋樑與島嶼 (y = -0.8)
+      const points = [
+        new THREE.Vector3(0, -0.8, -13.5),
+        new THREE.Vector3(6.5, -0.8, -4.5),
+        new THREE.Vector3(14.5, -0.8, 0),
+        new THREE.Vector3(6.5, -0.8, 4.5),
+        new THREE.Vector3(0, -0.8, 13.5),
+        new THREE.Vector3(-6.5, -0.8, 4.5),
+        new THREE.Vector3(-14.5, -0.8, 0),
+        new THREE.Vector3(-6.5, -0.8, -4.5)
+      ];
 
-      const trackR2 = new THREE.Mesh(new THREE.TorusGeometry(TRACK_RADIUS + 0.35, 0.08, 8, 80), trackMat);
-      trackR2.rotation.x = Math.PI / 2;
-      trackR2.position.y = -0.1;
-      system.add(trackR2);
+      trackCurve = new THREE.CatmullRomCurve3(points, true, 'catmullrom', 0.2);
 
-      // 軌道枕木
-      const tieMat = new THREE.MeshStandardMaterial({ color: 0x525252, roughness: 0.8 });
-      for (let i = 0; i < 72; i++) {
-        const ang = (i / 72) * Math.PI * 2;
-        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.06, 0.22), tieMat);
-        tie.position.set(Math.cos(ang) * TRACK_RADIUS, -0.12, Math.sin(ang) * TRACK_RADIUS);
-        tie.rotation.y = -ang;
-        system.add(tie);
-      }
+      const tubeGeo = new THREE.TubeGeometry(trackCurve, 120, 0.12, 8, true);
+      const trackMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
+      const trackMesh = new THREE.Mesh(tubeGeo, trackMat);
+      system.add(trackMesh);
 
-      // 台車 (#C3B091)
+      // 台車 (#5A452F)
       cartGroup = new THREE.Group();
-      const cartBody = new THREE.Mesh(
-        new THREE.BoxGeometry(1.6, 0.65, 2.4),
-        new THREE.MeshStandardMaterial({ color: 0xC3B091, roughness: 0.4 })
-      );
-      cartBody.position.y = 0.5;
+      const cartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.5 }); // #5A452F
+
+      const cartBody = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.6, 2.0), cartMat);
+      cartBody.position.y = 0.45;
       cartBody.castShadow = true;
       cartGroup.add(cartBody);
 
-      // 台車頂棚
-      const roof = new THREE.Mesh(
-        new THREE.BoxGeometry(1.7, 0.1, 2.5),
-        new THREE.MeshStandardMaterial({ color: 0x8C7853 })
-      );
-      roof.position.y = 1.4;
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 2.1), cartMat);
+      roof.position.y = 1.35;
       roof.castShadow = true;
       cartGroup.add(roof);
 
-      // 頂棚立柱
-      const pMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7 });
-      [[-0.7, 0.95, -1.0], [0.7, 0.95, -1.0], [-0.7, 0.95, 1.0], [0.7, 0.95, 1.0]].forEach(pos => {
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.9, 6), pMat);
+      [[-0.6, 0.9, -0.8], [0.6, 0.9, -0.8], [-0.6, 0.9, 0.8], [0.6, 0.9, 0.8]].forEach(pos => {
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.9, 6), cartMat);
         pillar.position.set(...pos);
         cartGroup.add(pillar);
       });
 
-      // 4 個輪子
-      const wMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 });
-      [[-0.8, 0.15, -0.7], [0.8, 0.15, -0.7], [-0.8, 0.15, 0.7], [0.8, 0.15, 0.7]].forEach(pos => {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.12, 10), wMat);
+      [[-0.7, 0.15, -0.6], [0.7, 0.15, -0.6], [-0.7, 0.15, 0.6], [0.7, 0.15, 0.6]].forEach(pos => {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.1, 10), cartMat);
         wheel.rotation.z = Math.PI / 2;
         wheel.position.set(...pos);
+        wheel.castShadow = true;
         cartGroup.add(wheel);
       });
 
@@ -1970,7 +1939,6 @@
       dirLight.shadow.bias = -0.0005;
       scene.add(dirLight);
 
-      // 背景 5 顆透明星球
       const planetConfigs = [
         { radius: 6.5, pos: [-42, 28, -60], opacity: 0.28, color: 0x60a5fa },
         { radius: 4.2, pos: [38, 34, -55],  opacity: 0.40, color: 0xa78bfa },
@@ -2007,7 +1975,7 @@
         scene.add(moon);
       }
 
-      // 2) 水泥橋梁架設 (#808080)
+      // 橋梁架設 (#5A6165)
       for (let i = 1; i < ISLAND_CONFIG.length; i++) {
         scene.add(createConcreteBridge(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
       }
@@ -2016,8 +1984,8 @@
       scene.add(createConcreteBridge(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
       scene.add(createConcreteBridge(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
 
-      // 3) 加入外圍圓形軌道與行駛台車
-      scene.add(createTrackAndCart());
+      // 穿梭封閉軌道與台車
+      scene.add(createIslandTraversingTrackAndCart());
 
       // 產生 5 座島嶼
       ISLAND_CONFIG.forEach(cfg => {
@@ -2034,7 +2002,7 @@
         group.add(base);
 
         if (cfg.id === 'beyblade') {
-          beybladeBaseMesh = base; // 儲存陀螺島參照以切換比賽顏色
+          beybladeBaseMesh = base;
         }
 
         let landmark;
@@ -2079,7 +2047,7 @@
         islandGroups.push(group);
       });
 
-      // 島民建立
+      // 6) 島民建立：減慢移動速度，增加過橋中線錨點與步伐彈跳
       const totalVillagers = 18;
       const clothesColors = [0xef4444, 0x2563eb, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xffffff];
 
@@ -2116,13 +2084,15 @@
           obj: person,
           currentIslandIdx: currentIslandIdx,
           targetIslandIdx: currentIslandIdx,
-          state: 'wander',
+          state: 'wander', // 'wander', 'bridge_start', 'bridge_end', 'arrive'
           currentX: initX,
           currentZ: initZ,
           targetX: initX,
           targetZ: initZ,
+          bridgeEndTarget: null,
+          walkCycle: Math.random() * 10,
           waitTimer: Math.random() * 80,
-          speed: 0.024 + Math.random() * 0.012
+          speed: 0.014 + Math.random() * 0.006 // 速度調慢更優雅自然
         });
       }
 
@@ -2187,35 +2157,41 @@
           blade.rotation.z += 0.04;
         });
 
-        // 6) 戰鬥陀螺島 3 顆小陀螺高速自轉
+        // 3 顆小陀螺旋轉
         spinningMiniTops.forEach((mini, idx) => {
           mini.rotation.y += 0.15 + idx * 0.03;
           mini.position.y = Math.sin(time * 3.0 + idx) * 0.05;
         });
 
-        // 5) 優良公民島掃地動作動畫
+        // 掃地動畫
         if (broomMesh && sweeperMan) {
           broomMesh.rotation.y = Math.sin(time * 3.5) * 0.4;
           sweeperMan.rotation.y = Math.sin(time * 3.5) * 0.2;
         }
 
-        // 3) 巡迴台車在圓形軌道上平滑行駛
-        if (cartGroup) {
-          cartAngle += 0.005;
-          cartGroup.position.set(Math.cos(cartAngle) * TRACK_RADIUS, 0, Math.sin(cartAngle) * TRACK_RADIUS);
-          cartGroup.rotation.y = -cartAngle + Math.PI / 2;
+        // 3) 台車在軌道上平行切線行駛
+        if (cartGroup && trackCurve) {
+          cartProgress = (cartProgress + 0.001) % 1.0;
+          const pos = trackCurve.getPointAt(cartProgress);
+          const tangent = trackCurve.getTangentAt(cartProgress);
+
+          cartGroup.position.copy(pos);
+          cartGroup.position.y += 0.05; // 落在鋼軌正上方
+          const lookTarget = pos.clone().add(tangent);
+          cartGroup.lookAt(lookTarget);
         }
 
-        // 雙人甩繩跳繩動畫
+        // 跳繩動畫
         if (ropeMesh && jumperMan) {
           ropeMesh.rotation.x = time * 5.0;
           jumperMan.position.y = Math.max(0, Math.sin(time * 5.0 - Math.PI / 2) * 0.55);
         }
 
-        // 島民自由路網 AI
+        // 6) 人物走動速度減慢、過橋走橋中線、增加上下微震動真實動態
         villagers.forEach(v => {
           if (v.waitTimer > 0) {
             v.waitTimer--;
+            v.obj.position.y = 0; // 靜止時平穩站在地面
             if (v.waitTimer <= 0) {
               if (Math.random() < 0.4) {
                 let candidates = [];
@@ -2227,10 +2203,22 @@
                 }
                 const nextIsland = candidates[Math.floor(Math.random() * candidates.length)];
                 v.targetIslandIdx = nextIsland;
-                const dest = ISLAND_CONFIG[nextIsland].pos;
-                v.targetX = dest[0] + (Math.random() - 0.5) * 3.8;
-                v.targetZ = dest[2] + (Math.random() - 0.5) * 3.8;
-                v.state = 'cross_bridge';
+
+                // 精確計算過橋路線：起點島邊緣中點 -> 目標島邊緣中點 -> 島內散步
+                const pStart = ISLAND_CONFIG[v.currentIslandIdx].pos;
+                const pEnd = ISLAND_CONFIG[nextIsland].pos;
+                const dir = new THREE.Vector3(pEnd[0] - pStart[0], 0, pEnd[2] - pStart[2]).normalize();
+
+                // 橋頭起點與終點 (維持在橋樑中心線上)
+                v.targetX = pStart[0] + dir.x * 4.6;
+                v.targetZ = pStart[2] + dir.z * 4.6;
+                v.bridgeEndTarget = {
+                  x: pEnd[0] - dir.x * 4.6,
+                  z: pEnd[2] - dir.z * 4.6,
+                  finalX: pEnd[0] + (Math.random() - 0.5) * 3.5,
+                  finalZ: pEnd[2] + (Math.random() - 0.5) * 3.5
+                };
+                v.state = 'bridge_start';
               } else {
                 const curCenter = ISLAND_CONFIG[v.currentIslandIdx].pos;
                 const a = Math.random() * Math.PI * 2;
@@ -2245,15 +2233,34 @@
             const dz = v.targetZ - v.currentZ;
             const dist = Math.hypot(dx, dz);
 
-            if (dist < 0.2) {
-              v.currentIslandIdx = v.targetIslandIdx;
-              v.waitTimer = Math.floor(Math.random() * 100) + 40;
+            if (dist < 0.15) {
+              if (v.state === 'bridge_start' && v.bridgeEndTarget) {
+                // 走上橋頭後，精準筆直走過橋中央到對向橋頭
+                v.targetX = v.bridgeEndTarget.x;
+                v.targetZ = v.bridgeEndTarget.z;
+                v.state = 'bridge_crossing';
+              } else if (v.state === 'bridge_crossing' && v.bridgeEndTarget) {
+                // 通過橋中央抵達對向橋頭，走向島內目標
+                v.targetX = v.bridgeEndTarget.finalX;
+                v.targetZ = v.bridgeEndTarget.finalZ;
+                v.state = 'bridge_enter';
+              } else {
+                // 抵達目標島嶼
+                v.currentIslandIdx = v.targetIslandIdx;
+                v.bridgeEndTarget = null;
+                v.state = 'wander';
+                v.waitTimer = Math.floor(Math.random() * 100) + 50;
+              }
             } else {
               v.currentX += (dx / dist) * v.speed;
               v.currentZ += (dz / dist) * v.speed;
               v.obj.position.x = v.currentX;
               v.obj.position.z = v.currentZ;
               v.obj.rotation.y = Math.atan2(dx, dz);
+
+              // 移動中步態上下微震幅 (Bobbing 走路動態)
+              v.walkCycle += 0.22;
+              v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * 0.08;
             }
           }
         });
