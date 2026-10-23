@@ -659,7 +659,7 @@
     }
 
     // ==========================================
-    // 2. 學生身分與名冊管理
+    // 2. 學生身分與名冊管理 (3) 重新整理需重新登入)
     // ==========================================
     let currentStudent = { 
       seatNumber: '', 
@@ -709,17 +709,11 @@
       document.getElementById('guest-name-group').style.display = e.target.value === 'guest' ? 'block' : 'none';
     });
 
+    // 3) 改為每次重新整理必須重新登入 (清空暫存並強制顯示彈窗)
     function initStudent() {
-      const saved = localStorage.getItem('island_student_data_v2');
-      if (saved) {
-        try {
-          currentStudent = JSON.parse(saved);
-          updateHudProfile();
-          document.getElementById('login-modal').classList.add('hidden');
-        } catch(e){}
-      } else {
-        document.getElementById('login-modal').classList.remove('hidden');
-      }
+      sessionStorage.removeItem('island_student_data_session');
+      currentStudent = { seatNumber: '', name: '小探險家', avatar: '🦊', myPoints: 0, beybladeRank: '' };
+      document.getElementById('login-modal').classList.remove('hidden');
       loadStudentRoster();
     }
 
@@ -772,7 +766,7 @@
         }
       }
 
-      localStorage.setItem('island_student_data_v2', JSON.stringify(currentStudent));
+      sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
       document.getElementById('login-modal').classList.add('hidden');
     });
@@ -845,7 +839,7 @@
 
       const gainPoints = 5;
       currentStudent.myPoints = (currentStudent.myPoints || 0) + gainPoints;
-      localStorage.setItem('island_student_data_v2', JSON.stringify(currentStudent));
+      sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
 
       if (totalEnergyRef) {
@@ -1235,16 +1229,16 @@
     }
 
     // ==========================================
-    // 2) 人物配色定義 (髮色與服裝色)
+    // 1) 人物配色定義 (暗色調衣服與指定髮色)
     // ==========================================
     const HAIR_COLORS = [0x3A3B3C, 0x483C32, 0x72376A, 0xEBA937];
-    const CLOTHES_COLORS = [0xA0522D, 0xC04000, 0xFFC512, 0x006A4E, 0x084C61];
+    // 衣服顏色調暗，展現沉穩暗色系
+    const CLOTHES_COLORS = [0x64321A, 0x782800, 0x997305, 0x004230, 0x052E3B];
 
     function getRandomItem(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    // 建立帶有立體頭髮的人物
     function createCharacterMesh(clothesColor, hairColor) {
       const person = new THREE.Group();
 
@@ -1254,7 +1248,7 @@
       // 身體
       const body = new THREE.Mesh(
         new THREE.CylinderGeometry(0.28, 0.38, 0.75, 6),
-        new THREE.MeshStandardMaterial({ color: cColor, roughness: 0.5 })
+        new THREE.MeshStandardMaterial({ color: cColor, roughness: 0.7 })
       );
       body.position.y = 0.38;
       body.castShadow = true;
@@ -1270,16 +1264,35 @@
       head.castShadow = true;
       person.add(head);
 
-      // 頭髮 (髮型半球蓋在頭頂)
+      // 頭髮
       const hair = new THREE.Mesh(
         new THREE.SphereGeometry(0.29, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.6),
-        new THREE.MeshStandardMaterial({ color: hColor, roughness: 0.4 })
+        new THREE.MeshStandardMaterial({ color: hColor, roughness: 0.6 })
       );
       hair.position.y = 0.97;
       hair.castShadow = true;
       person.add(hair);
 
       return person;
+    }
+
+    // 1) 閱讀島專屬高斯混色紋理生成 (#00322F 與 #36454F 徑向高斯模糊)
+    function createGaussianReadingTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(256, 256, 10, 256, 256, 256);
+      grad.addColorStop(0.0, '#36454F');
+      grad.addColorStop(0.45, '#1B3B3F');
+      grad.addColorStop(1.0, '#00322F');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 512);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      return texture;
     }
 
     // ==========================================
@@ -1469,18 +1482,15 @@
       jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.6);
 
-      // 甩繩者 A (左)
-      const swingerA = createCharacterMesh(0xA0522D, 0x3A3B3C);
+      const swingerA = createCharacterMesh(0x64321A, 0x3A3B3C);
       swingerA.position.set(-1.8, 0, 0);
       jumpRopeGroup.add(swingerA);
 
-      // 甩繩者 B (右)
-      const swingerB = createCharacterMesh(0x084C61, 0x483C32);
+      const swingerB = createCharacterMesh(0x052E3B, 0x483C32);
       swingerB.position.set(1.8, 0, 0);
       jumpRopeGroup.add(swingerB);
 
-      // 中間跳躍者
-      jumperMan = createCharacterMesh(0xFFC512, 0xEBA937);
+      jumperMan = createCharacterMesh(0x997305, 0xEBA937);
       jumperMan.position.set(0, 0, 0);
       jumpRopeGroup.add(jumperMan);
 
@@ -1631,8 +1641,7 @@
       temple.scale.setScalar(1.1);
       group.add(temple);
 
-      // 掃地人物 (套用指定服飾與髮色)
-      sweeperMan = createCharacterMesh(0x006A4E, 0x483C32);
+      sweeperMan = createCharacterMesh(0x004230, 0x483C32);
       sweeperMan.position.set(2.4, 0, 1.5);
 
       broomMesh = new THREE.Group();
@@ -1807,13 +1816,13 @@
     }
 
     // ==========================================
-    // 10. 群島配置（1) 地面顏色更換）
+    // 10. 群島配置（1) 地面顏色更新）
     // ==========================================
     const ISLAND_CONFIG = [
       { id: 'beyblade', title: '戰鬥陀螺島', color: 0x6E451F, pos: [0, 0, 0] },
       { id: 'nature',   title: '生態科技島', color: 0x3C421A, pos: [-10.5, 0, -8.5] }, // 1) #3C421A
-      { id: 'sport',    title: '健身運動島', color: 0x7C6D23, pos: [10.5, 0, -8.5] },  // 1) #7C6D23
-      { id: 'reading',  title: '閱讀島',     color: 0x004A64, pos: [-10.5, 0, 8.5] },  // 1) #004A64
+      { id: 'sport',    title: '健身運動島', color: 0x534818, pos: [10.5, 0, -8.5] },  // 1) #534818
+      { id: 'reading',  title: '閱讀島',     isGaussian: true, pos: [-10.5, 0, 8.5] }, // 1) #00322F & #36454F 高斯混和
       { id: 'civics',   title: '優良公民島', color: 0x4D3E2B, pos: [10.5, 0, 8.5] }   // 1) #4D3E2B
     ];
 
@@ -1824,7 +1833,7 @@
     let nextSkyEventTime = 0;
     let lastNightBg = null;
 
-    // 1) 水泥橋，顏色更換為 #4D4D4D
+    // 1) 水泥橋樑，顏色更新為 #3A3B3C
     function createConcreteBridge(p1, p2) {
       const bridge = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
@@ -1835,7 +1844,7 @@
       bridge.position.copy(mid);
       bridge.lookAt(v2);
 
-      const concreteMat = new THREE.MeshStandardMaterial({ color: 0x4D4D4D, roughness: 0.55 }); // #4D4D4D
+      const concreteMat = new THREE.MeshStandardMaterial({ color: 0x3A3B3C, roughness: 0.6 }); // #3A3B3C
 
       const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, length - 4.5), concreteMat);
       deck.position.set(0, -0.05, 0);
@@ -1853,7 +1862,7 @@
       return bridge;
     }
 
-    // 3) 穿梭於各島間的封閉雙軌道與平行台車（高度降至 y = -1.6）
+    // 2) 穿梭於各島間的封閉雙軌道（枕木精確垂直於軌道切線方向）
     let cartGroup = null;
     let cartProgress = 0;
     let trackCurve = null;
@@ -1861,7 +1870,6 @@
     function createIslandTraversingTrackAndCart() {
       const system = new THREE.Group();
 
-      // 穿梭於各島間空隙的封閉路徑，高度調降至 y = -1.6，確保遠低於橋面
       const TRACK_Y = -1.6;
       const points = [
         new THREE.Vector3(0, TRACK_Y, -13.5),
@@ -1876,12 +1884,11 @@
 
       trackCurve = new THREE.CatmullRomCurve3(points, true, 'catmullrom', 0.2);
 
-      // 雙軌系統 (內軌與外軌)
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
       const divisions = 140;
       const innerPts = [];
       const outerPts = [];
-      const railGauge = 0.35; // 軌距偏移
+      const railGauge = 0.35;
 
       for (let i = 0; i <= divisions; i++) {
         const t = i / divisions;
@@ -1896,13 +1903,12 @@
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      // 產生兩條平行鋼軌
       const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 120, 0.05, 6, true);
       const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 120, 0.05, 6, true);
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      // 軌道枕木
+      // 2) 枕木鋪設：方向旋轉 90 度，確保精確「垂直」跨越軌道切線
       const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
       for (let i = 0; i < 90; i++) {
         const t = i / 90;
@@ -1912,13 +1918,12 @@
         tie.position.copy(pt);
         tie.position.y -= 0.04;
         tie.lookAt(pt.clone().add(tan));
-        tie.rotation.y += Math.PI / 2;
+        tie.rotateY(Math.PI / 2); // 旋轉 90 度保持垂直
         system.add(tie);
       }
 
-      // 台車 (#5A452F)
       cartGroup = new THREE.Group();
-      const cartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.5 }); // #5A452F
+      const cartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.5 });
 
       const cartBody = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.55, 1.9), cartMat);
       cartBody.position.y = 0.45;
@@ -2029,7 +2034,7 @@
         scene.add(moon);
       }
 
-      // 橋梁架設 (#4D4D4D)
+      // 橋梁架設 (#3A3B3C)
       for (let i = 1; i < ISLAND_CONFIG.length; i++) {
         scene.add(createConcreteBridge(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
       }
@@ -2047,9 +2052,28 @@
         group.position.set(...cfg.pos);
 
         const baseRadius = cfg.id === 'beyblade' ? 5.8 : 5.0;
+        let baseMat;
+
+        // 1) 閱讀島採用高斯混色紋理
+        if (cfg.isGaussian) {
+          baseMat = new THREE.MeshStandardMaterial({ 
+            map: createGaussianReadingTexture(), 
+            flatShading: true, 
+            roughness: 0.55, 
+            metalness: 0.1 
+          });
+        } else {
+          baseMat = new THREE.MeshStandardMaterial({ 
+            color: cfg.color, 
+            flatShading: true, 
+            roughness: 0.45, 
+            metalness: 0.1 
+          });
+        }
+
         const base = new THREE.Mesh(
           new THREE.CylinderGeometry(baseRadius, baseRadius * 0.75, 4, 8),
-          new THREE.MeshStandardMaterial({ color: cfg.color, flatShading: true, roughness: 0.45, metalness: 0.1 })
+          baseMat
         );
         base.position.y = -2;
         base.receiveShadow = true;
@@ -2101,7 +2125,7 @@
         islandGroups.push(group);
       });
 
-      // 2) 島民建立：隨機套用指定髮色與衣服顏色
+      // 1) 島民建立：暗色調服裝與隨機髮色
       const totalVillagers = 18;
 
       for (let i = 0; i < totalVillagers; i++) {
@@ -2129,7 +2153,7 @@
           bridgeEndTarget: null,
           walkCycle: Math.random() * 10,
           waitTimer: Math.random() * 80,
-          speed: 0.014 + Math.random() * 0.006 // 速度調慢更優雅自然
+          speed: 0.014 + Math.random() * 0.006
         });
       }
 
@@ -2206,14 +2230,14 @@
           sweeperMan.rotation.y = Math.sin(time * 3.5) * 0.2;
         }
 
-        // 3) 台車在封閉雙軌道上平行切線行駛
+        // 台車平行切線行駛
         if (cartGroup && trackCurve) {
           cartProgress = (cartProgress + 0.0008) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
 
           cartGroup.position.copy(pos);
-          cartGroup.position.y += 0.02; // 落在鋼軌正上方
+          cartGroup.position.y += 0.02;
           const lookTarget = pos.clone().add(tangent);
           cartGroup.lookAt(lookTarget);
         }
@@ -2224,7 +2248,7 @@
           jumperMan.position.y = Math.max(0, Math.sin(time * 5.0 - Math.PI / 2) * 0.55);
         }
 
-        // 6) 人物走動速度減慢、過橋走橋中線、增加上下微震動真實動態
+        // 島民走路步態微振動與過橋中心線
         villagers.forEach(v => {
           if (v.waitTimer > 0) {
             v.waitTimer--;
@@ -2249,7 +2273,7 @@
                 v.targetZ = pStart[2] + dir.z * 4.6;
                 v.bridgeEndTarget = {
                   x: pEnd[0] - dir.x * 4.6,
-                  z: pEnd[0] ? (pEnd[2] - dir.z * 4.6) : (pEnd[2] - dir.z * 4.6),
+                  z: pEnd[2] - dir.z * 4.6,
                   finalX: pEnd[0] + (Math.random() - 0.5) * 3.5,
                   finalZ: pEnd[2] + (Math.random() - 0.5) * 3.5
                 };
@@ -2290,7 +2314,6 @@
               v.obj.position.z = v.currentZ;
               v.obj.rotation.y = Math.atan2(dx, dz);
 
-              // 移動中步態微震動 (Bobbing 動態)
               v.walkCycle += 0.22;
               v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * 0.08;
             }
