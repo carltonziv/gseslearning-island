@@ -1742,6 +1742,8 @@
       return false;
     }
 
+    let islandFlowers = []; // 🌸 儲存所有花朵以供微風搖曳計算
+    
     let windTurbineBlades = [];
     function createNatureLandmark() {
       const group = new THREE.Group();
@@ -2779,13 +2781,23 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
           registerObstacle(cfg.id, tx, tz, obsRadius);
         }
 
+// 小花生成
         const flowerCount = Math.floor(Math.random() * 4) + 4;
         for (let f = 0; f < flowerCount; f++) {
           const flower = createFlower();
           const angle = Math.random() * Math.PI * 2;
           const dist = 1.6 + Math.random() * (baseRadius - 2.2);
-          flower.position.set(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
+          const fx = Math.cos(angle) * dist;
+          const fz = Math.sin(angle) * dist;
+          flower.position.set(fx, 0, fz);
+          
+          // 記錄每朵花的位置與專屬擺動時間差
+          flower.userData.swayPhase = Math.random() * Math.PI * 2;
+          flower.userData.swaySpeed = 1.8 + Math.random() * 0.8; // 微風頻率
+          
           group.add(flower);
+          islandFlowers.push(flower); // 🌸 加入動態清單
+          
           if (cfg.id === 'beyblade') beybladeDecorations.push(flower);
         }
 
@@ -2945,6 +2957,15 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
           blade.rotation.z += 0.04;
         });
 
+        // 🌸 花朵隨微風自然搖曳
+        islandFlowers.forEach(fl => {
+          const phase = time * fl.userData.swaySpeed + fl.userData.swayPhase;
+          // Z 軸微幅前後傾斜（約 0.08 弧度，約 4.5 度）
+          fl.rotation.z = Math.sin(phase) * 0.08;
+          // X 軸搭配微幅交錯傾斜，讓擺動更圓滑有機
+          fl.rotation.x = Math.cos(phase * 0.8) * 0.05;
+        });
+        
         spinningMiniTops.forEach((mini, idx) => {
           mini.rotation.y += 0.15 + idx * 0.03;
           mini.position.y = Math.sin(time * 3.0 + idx) * 0.04;
