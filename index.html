@@ -464,7 +464,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title">🌿 生態科學島</h2>
+          <h2 class="modal-title">🌿 生態科技島</h2>
           <div class="modal-subtitle">校園昆蟲與植物探索</div>
         </div>
         <button class="modal-close" onclick="closeAllModals()">×</button>
@@ -486,7 +486,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title">🏃 運動健身島</h2>
+          <h2 class="modal-title">🏃 健身運動島</h2>
           <div class="modal-subtitle">個人增肌減脂</div>
         </div>
         <button class="modal-close" onclick="closeAllModals()">×</button>
@@ -920,11 +920,11 @@
       const feature = document.getElementById('nature-feature').value.trim();
       if (!name || !feature) { alert('請填寫觀察名稱與外觀特徵！'); return; }
 
-      rewardCheckin('nature', '生態科學島', `記錄了植物/昆蟲【${name}】`, {
+      rewardCheckin('nature', '生態科技島', `記錄了植物/昆蟲【${name}】`, {
         type: 'task_complete',
         seatNumber: currentStudent.seatNumber,
         studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-        islandTitle: '生態科學島',
+        islandTitle: '生態科技島',
         taskTitle: '昆蟲植物觀察',
         points: 5,
         detail1: name,
@@ -941,11 +941,11 @@
       const verifier = document.getElementById('sport-verifier').value.trim();
       if (!item || !verifier) { alert('請填寫運動項目與見證認證者！'); return; }
 
-      rewardCheckin('sport', '運動健身島', `完成了運動【${item}】`, {
+      rewardCheckin('sport', '健身運動島', `完成了運動【${item}】`, {
         type: 'task_complete',
         seatNumber: currentStudent.seatNumber,
         studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-        islandTitle: '運動健身島',
+        islandTitle: '健身運動島',
         taskTitle: '個人增肌減脂',
         points: 5,
         detail1: item,
@@ -1228,7 +1228,7 @@
     // 9. 地標模型工廠
     // ==========================================
 
-    // 0) 生態科學島地標
+    // 0) 生態科技島地標
     let windTurbineBlades = [];
     function createNatureLandmark() {
       const group = new THREE.Group();
@@ -1346,7 +1346,7 @@
       return bb;
     }
 
-    // 2) 運動健身島地標
+    // 2) 健身運動島地標
     let jumpRopeGroup = null;
     let jumperMan = null;
     let ropeMesh = null;
@@ -1511,10 +1511,10 @@
       return group;
     }
 
-    // 4) 優良公民島：古典羅馬神殿（改為 #f5f5dc 雅致米白色）
+    // 4) 優良公民島：古典羅馬神殿（#f5f5dc 米白色）
     function createRomanTempleModel() {
       const temple = new THREE.Group();
-      const marbleMat = new THREE.MeshStandardMaterial({ color: 0xf5f5dc, roughness: 0.4 }); // #f5f5dc 米白色
+      const marbleMat = new THREE.MeshStandardMaterial({ color: 0xf5f5dc, roughness: 0.4 });
 
       [3.8, 3.4, 3.0].forEach((w, i) => {
         const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, w * 0.8), marbleMat);
@@ -1702,14 +1702,14 @@
     }
 
     // ==========================================
-    // 10. 群島配置（外圍四島彩度降低、莫蘭迪柔和色調）
+    // 10. 群島配置（依指示更新四島地面顏色）
     // ==========================================
     const ISLAND_CONFIG = [
       { id: 'beyblade', title: '戰鬥陀螺島', color: 0xdc2626, pos: [0, 0, 0] },
-      { id: 'nature',   title: '生態科學島', color: 0x4a7c59, pos: [-10.5, 0, -8.5] }, // 降低彩度：莫蘭迪鼠尾草灰綠
-      { id: 'sport',    title: '運動健身島', color: 0x4682b4, pos: [10.5, 0, -8.5] },  // 降低彩度：霧灰鋼鐵藍
-      { id: 'reading',  title: '閱讀島',     color: 0x6b5b95, pos: [-10.5, 0, 8.5] },  // 降低彩度：暮光灰紫
-      { id: 'civics',   title: '優良公民島', color: 0x8c7b64, pos: [10.5, 0, 8.5] }   // 降低彩度：雅致暖褐灰
+      { id: 'nature',   title: '生態科技島', color: 0xB66A50, pos: [-10.5, 0, -8.5] }, // ✅ 地面顏色改為 #B66A50
+      { id: 'sport',    title: '健身運動島', color: 0x888C8D, pos: [10.5, 0, -8.5] },  // ✅ 地面顏色改為 #888C8D
+      { id: 'reading',  title: '閱讀島',     color: 0x231F20, pos: [-10.5, 0, 8.5] },  // ✅ 地面顏色改為 #231F20
+      { id: 'civics',   title: '優良公民島', color: 0xC7CBD2, pos: [10.5, 0, 8.5] }   // ✅ 地面顏色改為 #C7CBD2
     ];
 
     let scene, camera, renderer, controls;
@@ -1719,7 +1719,6 @@
     let nextSkyEventTime = 0;
     let lastNightBg = null;
 
-    // 建立連接兩點的立體木棧吊橋
     function createSuspensionBridge(p1, p2) {
       const bridge = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
@@ -1773,14 +1772,13 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
-      // 視角旋轉阻力調控（阻尼感增強、旋轉速度平緩調慢）
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableRotate = true;
       controls.enableZoom = true;
       controls.enablePan = true;
-      controls.enableDamping = true;      // ✅ 開啟慣性阻尼
-      controls.dampingFactor = 0.04;       // ✅ 阻尼係數提高，帶出滑順阻力手感
-      controls.rotateSpeed = 0.45;         // ✅ 旋轉靈敏度調慢，避免旋轉過快
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.04;
+      controls.rotateSpeed = 0.45;
       controls.minDistance = 15;
       controls.maxDistance = 110;
       controls.maxPolarAngle = Math.PI / 2.05;
@@ -1835,20 +1833,14 @@
         scene.add(moon);
       }
 
-      // ------------------------------------------------
-      // 橋梁架設：
-      // A) 4 座連接到中央島
-      // B) 4 座外圍島嶼相鄰互連 (生態↔運動、運動↔公民、公民↔閱讀、閱讀↔生態)
-      // ------------------------------------------------
-      // A: 連接中央
+      // 橋梁架設：中央連通 + 外圈四島互連
       for (let i = 1; i < ISLAND_CONFIG.length; i++) {
         scene.add(createSuspensionBridge(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
       }
-      // B: 外圍四島互相連通
-      scene.add(createSuspensionBridge(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos)); // 生態 ↔ 運動
-      scene.add(createSuspensionBridge(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos)); // 運動 ↔ 公民
-      scene.add(createSuspensionBridge(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos)); // 公民 ↔ 閱讀
-      scene.add(createSuspensionBridge(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos)); // 閱讀 ↔ 生態
+      scene.add(createSuspensionBridge(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos));
+      scene.add(createSuspensionBridge(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos));
+      scene.add(createSuspensionBridge(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
+      scene.add(createSuspensionBridge(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
 
       // 產生 5 座島嶼
       ISLAND_CONFIG.forEach(cfg => {
@@ -1906,7 +1898,7 @@
         islandGroups.push(group);
       });
 
-      // 島民建立（支援全地圖漫步與多向過橋 AI）
+      // 島民建立
       const totalVillagers = 18;
       const clothesColors = [0xef4444, 0x2563eb, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xffffff];
 
@@ -2020,18 +2012,16 @@
           jumperMan.position.y = Math.max(0, Math.sin(time * 5.0 - Math.PI / 2) * 0.55);
         }
 
-        // 島民自由路網 AI（可往中央或外環相鄰島走橋）
+        // 島民自由路網 AI
         villagers.forEach(v => {
           if (v.waitTimer > 0) {
             v.waitTimer--;
             if (v.waitTimer <= 0) {
               if (Math.random() < 0.4) {
-                // 決定過橋至相鄰或中央島嶼
                 let candidates = [];
                 if (v.currentIslandIdx === 0) {
                   candidates = [1, 2, 3, 4];
                 } else {
-                  // 外圍島嶼可去中央(0)，也可去順時針/逆時針相鄰島
                   const ringNeighbors = { 1: [0, 2, 3], 2: [0, 1, 4], 3: [0, 1, 4], 4: [0, 2, 3] };
                   candidates = ringNeighbors[v.currentIslandIdx] || [0];
                 }
@@ -2088,7 +2078,7 @@
           }
         }
 
-        controls.update(); // 執行阻尼平滑更新
+        controls.update();
         renderer.render(scene, camera);
       }
       animate();
