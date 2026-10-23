@@ -31,7 +31,6 @@
       touch-action: none;
     }
 
-    /* 頂端即時廣播跑馬燈 */
     .live-banner {
       position: fixed;
       top: -70px;
@@ -51,7 +50,6 @@
     }
     .live-banner.show { top: 20px; }
 
-    /* 頂部 HUD */
     .hud-header {
       position: absolute;
       top: 16px;
@@ -154,6 +152,7 @@
     }
     .hud-btn-card:active { transform: scale(0.95); }
     .hud-btn-teacher { border-color: #f43f5e; color: #be123c; }
+    .hud-btn-bracket { border-color: #f59e0b; color: #d97706; }
 
     .hud-hint {
       position: absolute;
@@ -174,15 +173,15 @@
       align-items: center;
     }
 
-    /* 右側滑出抽屜 */
+    /* 右側抽屜面板 */
     .side-drawer-container {
       position: fixed;
       top: 0;
-      right: -460px;
-      width: 440px;
+      right: -480px;
+      width: 450px;
       max-width: 92vw;
       height: 100vh;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(20px);
       box-shadow: -10px 0 35px rgba(0, 0, 0, 0.25);
       border-left: 3px solid rgba(253, 224, 71, 0.8);
@@ -194,6 +193,45 @@
       overflow-y: auto;
     }
     .side-drawer-container.open { right: 0; }
+
+    /* 左側即時賽事晉級圖側欄 */
+    .bracket-sidebar-container {
+      position: fixed;
+      top: 0;
+      left: -500px;
+      width: 480px;
+      max-width: 95vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(25px);
+      box-shadow: 10px 0 35px rgba(0, 0, 0, 0.4);
+      border-right: 3px solid #f59e0b;
+      z-index: 1050;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+      transition: left 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      color: #fff;
+    }
+    .bracket-sidebar-container.open { left: 0; }
+
+    .bracket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 12px;
+    }
+    .bracket-header-title {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     .drawer-header {
       display: flex;
@@ -218,7 +256,6 @@
     }
     .drawer-close:hover { background: #e2e8f0; }
 
-    /* 運動島分頁標籤 */
     .tab-header {
       display: flex;
       gap: 8px;
@@ -244,7 +281,6 @@
       box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
     }
 
-    /* 錦標賽期間暫停提示標籤 */
     .paused-banner {
       background: #fef2f2;
       border: 2px dashed #ef4444;
@@ -257,7 +293,6 @@
       line-height: 1.5;
     }
 
-    /* 通用彈窗樣式 */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -272,7 +307,7 @@
     }
     .modal-overlay.hidden { 
       opacity: 0; 
-      visibility: hidden;
+      visibility: hidden; 
       pointer-events: none !important; 
     }
     .modal-card {
@@ -357,56 +392,75 @@
     .btn-red { background: #dc2626; box-shadow: 0 4px 0 #991b1b; }
     .btn-purple { background: #7c3aed; box-shadow: 0 4px 0 #5b21b6; }
 
-    .bracket-container {
-      background: #0f172a;
-      border-radius: 16px;
-      padding: 14px;
-      color: #fff;
-      margin-top: 10px;
-      max-height: 380px;
-      overflow-x: auto;
-      overflow-y: auto;
-    }
-    .bracket-section-title {
-      font-size: 0.9rem;
-      color: #f59e0b;
-      font-weight: 800;
-      margin-bottom: 8px;
-      border-bottom: 1px dashed #334155;
-      padding-bottom: 4px;
-    }
-    .match-box {
-      background: #1e293b;
-      border: 1px solid #475569;
-      border-radius: 10px;
-      padding: 8px 12px;
-      margin-bottom: 10px;
+    /* 樹狀對抗賽階梯卡片樣式 */
+    .bracket-tree-container {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 16px;
+      padding-bottom: 24px;
     }
-    .match-player {
+    .bracket-round-block {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .bracket-round-title {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #38bdf8;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-left: 4px solid #38bdf8;
+      padding-left: 8px;
+    }
+    .bracket-card {
+      background: #0f172a;
+      border: 1.5px solid #475569;
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .bracket-card.active { border-color: #f59e0b; }
+    .bracket-card.finished { border-color: #22c55e; }
+    .bracket-card-stage {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .bracket-slot {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #334155;
-      padding: 6px 10px;
-      border-radius: 6px;
+      background: #1e293b;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 4px;
       font-size: 0.85rem;
     }
-    .match-player.winner {
-      background: #15803d;
-      font-weight: 800;
+    .bracket-slot.winner {
+      background: #14532d;
       border: 1px solid #4ade80;
+      font-weight: 900;
+      color: #dcfce7;
     }
-    .btn-win {
+    .bracket-slot .slot-name { font-weight: 700; }
+    .bracket-slot .slot-blade { font-size: 0.75rem; color: #94a3b8; margin-left: 4px; }
+    .btn-win-sm {
       background: #f59e0b;
       border: none;
       color: #000;
       font-weight: bold;
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 4px;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 6px;
       cursor: pointer;
     }
   </style>
@@ -439,6 +493,9 @@
     </div>
 
     <div class="header-actions">
+      <div class="hud-btn-card hud-btn-bracket" id="toggle-bracket-btn" onclick="toggleBracketSidebar()">
+        <span>🏆 即時賽程表</span>
+      </div>
       <div class="hud-btn-card" id="profile-btn">
         <span class="user-avatar" id="hud-avatar">🐺</span>
         <span class="user-name" id="hud-name">學生設定</span>
@@ -452,6 +509,20 @@
   <div class="hud-hint">
     <span id="time-badge">🕒 檢測時段中...</span>
     <span>| 點擊島嶼鏡頭聚焦、單指旋轉、雙指縮放</span>
+  </div>
+
+  <!-- 左側即時賽事晉級圖側邊欄 (Tournament Bracket Sidebar) -->
+  <div id="bracket-sidebar" class="bracket-sidebar-container">
+    <div class="bracket-header">
+      <div class="bracket-header-title">
+        <span>⚔️</span>
+        <span>戰鬥陀螺即時錦標賽程</span>
+      </div>
+      <button class="drawer-close" style="background:#334155; color:#fff;" onclick="toggleBracketSidebar(false)">×</button>
+    </div>
+    <div id="bracket-tree-root" class="bracket-tree-container">
+      <!-- 動態載入對陣圖卡片 -->
+    </div>
   </div>
 
   <!-- 登入設定彈窗 -->
@@ -503,7 +574,7 @@
     <!-- 1. 生態科技島內容 -->
     <div id="panel-nature" style="display:none;">
       <div id="pause-notice-nature" class="paused-banner" style="display:none;">
-        ⚔️ 戰鬥陀螺大賽進行中！本島任務暫停，請前往中央陀螺島共襄盛舉！
+        ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
       </div>
       <div id="task-content-nature">
         <div class="form-group">
@@ -518,10 +589,10 @@
       </div>
     </div>
 
-    <!-- 2. 健身運動島內容 (新增健康生活分頁) -->
+    <!-- 2. 健身運動島內容 -->
     <div id="panel-sport" style="display:none;">
       <div id="pause-notice-sport" class="paused-banner" style="display:none;">
-        ⚔️ 戰鬥陀螺大賽進行中！本島任務暫停，請前往中央陀螺島共襄盛舉！
+        ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
       </div>
 
       <div id="task-content-sport">
@@ -530,7 +601,6 @@
           <button class="tab-btn" id="tab-btn-sport2" onclick="switchSportTab('health')">🌙 健康生活 (18-22點)</button>
         </div>
 
-        <!-- 子分頁 1：增肌減脂 -->
         <div id="subtab-sport-exercise">
           <p style="color:#64748b; font-size:0.9rem; margin-bottom:12px;">
             目標：跑操場5圈、跳繩500下 或 打羽毛球50球。
@@ -546,7 +616,6 @@
           <button class="btn-action btn-green" onclick="submitSportExercise()">🌟 完成打卡 (+5 能量)</button>
         </div>
 
-        <!-- 子分頁 2：健康生活 (勾選三項) -->
         <div id="subtab-sport-health" style="display:none;">
           <p style="color:#d97706; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">
             ⏰ 開放時段：每天 18:00 - 22:00（勾選3項+5，2項+4，1項+3）
@@ -568,7 +637,7 @@
     <!-- 3. 優良公民島內容 -->
     <div id="panel-civics" style="display:none;">
       <div id="pause-notice-civics" class="paused-banner" style="display:none;">
-        ⚔️ 戰鬥陀螺大賽進行中！本島任務暫停，請前往中央陀螺島共襄盛舉！
+        ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
       </div>
       <div id="task-content-civics">
         <p style="color:#64748b; font-size:0.9rem; margin-bottom:12px;">
@@ -591,7 +660,7 @@
     <!-- 4. 閱讀島內容 -->
     <div id="panel-reading" style="display:none;">
       <div id="pause-notice-reading" class="paused-banner" style="display:none;">
-        ⚔️ 戰鬥陀螺大賽進行中！本島任務暫停，請前往中央陀螺島共襄盛舉！
+        ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
       </div>
       <div id="task-content-reading">
         <div class="form-group">
@@ -628,11 +697,11 @@
       </div>
 
       <div id="bb-bracket-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <h3 style="color:#dc2626;">🏆 雙淘汰大賽進行中</h3>
-          <span style="font-size:0.75rem; color:#94a3b8;">（點擊贏家晉級）</span>
+          <button class="btn-win" style="padding:4px 10px;" onclick="toggleBracketSidebar(true)">開啟全螢幕晉級圖</button>
         </div>
-        <div class="bracket-container" id="bb-bracket-content"></div>
+        <p style="font-size:0.85rem; color:#64748b;">賽程對陣與勝負判定已整合至左側晉級圖面板。</p>
       </div>
     </div>
   </div>
@@ -698,18 +767,15 @@
       console.warn("Firebase 初始化提示", err);
     }
 
-    // 計算下週一晚上 23:00 的 ISO 時間格式
     function getNextMondayNightDeadline() {
       const now = new Date();
-      const day = now.getDay(); // 0 是週日, 1 是週一
+      const day = now.getDay();
       let daysUntilNextMonday = (8 - day) % 7;
-      if (daysUntilNextMonday === 0) daysUntilNextMonday = 7; // 如果今天剛好是週一，算到下週一
-      
+      if (daysUntilNextMonday === 0) daysUntilNextMonday = 7;
       const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilNextMonday, 23, 0, 0, 0);
       return target.toISOString();
     }
 
-    // 觸發 5000 滿額自動大賽機制
     function triggerTournamentMode() {
       if (!bbRef) return;
       const dl = getNextMondayNightDeadline();
@@ -724,7 +790,6 @@
       confetti({ particleCount: 120, spread: 90 });
     }
 
-    // 結束大賽並開啟四周四島
     function adminEndTournament() {
       if (!bbRef) return;
       bbRef.set({
@@ -847,6 +912,13 @@
       sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
       document.getElementById('login-modal').classList.add('hidden');
+
+      // 8) 學生登入後若錦標賽大賽進行中，自動滑出左側晉級側邊欄
+      if (bbState.isOpen || bbState.status === 'bracket_ready') {
+        setTimeout(() => {
+          toggleBracketSidebar(true);
+        }, 600);
+      }
     });
 
     document.getElementById('profile-btn').addEventListener('click', () => {
@@ -877,7 +949,6 @@
     }
 
     function checkDailyLimit(islandId) {
-      // 錦標賽期間暫停四周 4 座島嶼任務
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
       if (isTournamentActive && islandId !== 'beyblade') {
         alert('⚔️ 目前為戰鬥陀螺大賽期間，本島任務暫停，請前往戰鬥陀螺島！');
@@ -934,7 +1005,6 @@
       });
     }
 
-    // 核心給獎與累積能量判定
     function rewardCheckin(islandId, islandTitle, message, gasData, customPoints = 5) {
       addDailyCount(islandId);
       confetti({ particleCount: 75, spread: 70, origin: { y: 0.7 } });
@@ -950,13 +1020,12 @@
       sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
 
-      // 5) 能量累加至 5000 自動歸零並開啟戰鬥陀螺大賽錦標賽
       if (totalEnergyRef) {
         totalEnergyRef.transaction(current => {
           let next = (current || 0) + customPoints;
           if (next >= 5000) {
             triggerTournamentMode();
-            return 0; // 自動重新歸零
+            return 0;
           }
           return next;
         });
@@ -1002,7 +1071,7 @@
     }
 
     // ==========================================
-    // 5. 各島送出函式 (新增健身運動島健康生活分頁)
+    // 5. 各島送出函式
     // ==========================================
     function submitNature() {
       if (!checkDailyLimit('nature')) return;
@@ -1025,7 +1094,6 @@
       document.getElementById('nature-feature').value = '';
     }
 
-    // 運動島子分頁切換
     function switchSportTab(tab) {
       document.getElementById('tab-btn-sport1').classList.toggle('active', tab === 'exercise');
       document.getElementById('tab-btn-sport2').classList.toggle('active', tab === 'health');
@@ -1033,7 +1101,6 @@
       document.getElementById('subtab-sport-health').style.display = tab === 'health' ? 'block' : 'none';
     }
 
-    // 運動島任務 1：增肌減脂
     function submitSportExercise() {
       if (!checkDailyLimit('sport_exercise')) return;
       const item = document.getElementById('sport-item').value.trim();
@@ -1054,7 +1121,6 @@
       document.getElementById('sport-verifier').value = '';
     }
 
-    // 6) 運動島任務 2：健康生活 (18:00 - 22:00，3項+5，2項+4，1項+3)
     function submitSportHealth() {
       const nowHour = new Date().getHours();
       if (nowHour < 18 || nowHour >= 22) {
@@ -1159,7 +1225,7 @@
     }
 
     // ==========================================
-    // 6. 戰鬥陀螺大賽系統
+    // 6. 戰鬥陀螺大賽系統與晉級側邊欄 (Tournament Bracket Sidebar)
     // ==========================================
     let beybladeBaseMesh = null;
     let beybladeLandmarkGroup = null;
@@ -1173,10 +1239,19 @@
         renderBeybladeUI();
         updateBeybladeIslandDormancy();
         updateSurroundingIslandsPauseState();
+        renderBracketSidebarContent();
       });
     }
 
-    // 錦標賽期間暫停周圍四島
+    function toggleBracketSidebar(forceOpen) {
+      const sb = document.getElementById('bracket-sidebar');
+      if (typeof forceOpen === 'boolean') {
+        sb.classList.toggle('open', forceOpen);
+      } else {
+        sb.classList.toggle('open');
+      }
+    }
+
     function updateSurroundingIslandsPauseState() {
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
       
@@ -1251,7 +1326,6 @@
           pArr.map(p => `• ${p.seatNumber}號 ${p.studentName}（${p.bladeName}）`).join('<br>');
       } else {
         bracketView.style.display = 'block';
-        renderBracketContent();
       }
     }
 
@@ -1279,33 +1353,86 @@
       document.getElementById('bb-blade-name').value = '';
     }
 
-    function renderBracketContent() {
-      const container = document.getElementById('bb-bracket-content');
+    // 8) 渲染左側樹狀階梯對抗賽晉級圖
+    function renderBracketSidebarContent() {
+      const root = document.getElementById('bracket-tree-root');
       if (!bbState.matches || bbState.matches.length === 0) {
-        container.innerHTML = '<p style="color:#94a3b8; text-align:center;">賽程尚未生成，請等待老師抽籤產生雙淘汰圖！</p>';
+        root.innerHTML = `
+          <div style="text-align:center; padding:40px 10px; color:#94a3b8;">
+            <p style="font-size:2rem; margin-bottom:10px;">🎲</p>
+            <p style="font-weight:bold;">賽程尚未生成</p>
+            <p style="font-size:0.8rem; margin-top:6px;">目前處於報名或籌備階段，待老師截止後抽籤產生對陣樹狀圖！</p>
+          </div>
+        `;
         return;
       }
 
-      let html = '<div class="bracket-section-title">⚔️ 雙淘汰賽事對戰列表</div>';
+      // 依階段分類賽程
+      const rounds = {
+        '首輪爭霸賽': [],
+        '準決賽階段': [],
+        '復活晉級賽': [],
+        '總決賽': []
+      };
+
       bbState.matches.forEach((m, idx) => {
-        html += `
-          <div class="match-box">
-            <div style="font-size:0.75rem; color:#94a3b8; display:flex; justify-content:space-between;">
-              <span>${m.stageName || `第 ${idx+1} 場對決`}</span>
-              <span>${m.winner ? '🏆 已分勝負' : '進行中'}</span>
-            </div>
-            <div class="match-player ${m.winner === m.p1?.seatNumber ? 'winner' : ''}">
-              <span>${m.p1 ? `${m.p1.seatNumber}號 ${m.p1.studentName} (${m.p1.bladeName})` : '待定'}</span>
-              ${!m.winner && m.p1 && m.p2 ? `<button class="btn-win" onclick="adminPickWinner(${idx}, 1)">選為勝者</button>` : ''}
-            </div>
-            <div class="match-player ${m.winner === m.p2?.seatNumber ? 'winner' : ''}">
-              <span>${m.p2 ? `${m.p2.seatNumber}號 ${m.p2.studentName} (${m.p2.bladeName})` : '待定'}</span>
-              ${!m.winner && m.p1 && m.p2 ? `<button class="btn-win" onclick="adminPickWinner(${idx}, 2)">選為勝者</button>` : ''}
-            </div>
-          </div>
-        `;
+        m.index = idx;
+        const s = m.stageName || '';
+        if (s.includes('首輪')) rounds['首輪爭霸賽'].push(m);
+        else if (s.includes('準決賽')) rounds['準決賽階段'].push(m);
+        else if (s.includes('復活')) rounds['復活晉級賽'].push(m);
+        else rounds['總決賽'].push(m);
       });
-      container.innerHTML = html;
+
+      let html = '';
+      for (const [roundName, matchList] of Object.entries(rounds)) {
+        if (matchList.length === 0) continue;
+        html += `
+          <div class="bracket-round-block">
+            <div class="bracket-round-title">
+              <span>⚡</span>
+              <span>${roundName}</span>
+            </div>
+        `;
+
+        matchList.forEach(m => {
+          const isFinished = !!m.winner;
+          const isActive = !isFinished && m.p1 && m.p2;
+
+          html += `
+            <div class="bracket-card ${isFinished ? 'finished' : (isActive ? 'active' : '')}">
+              <div class="bracket-card-stage">
+                <span>${m.stageName || `第 ${m.index+1} 場`}</span>
+                <span style="color:${isFinished ? '#4ade80' : (isActive ? '#f59e0b' : '#94a3b8')};">
+                  ${isFinished ? '✓ 已完賽' : (isActive ? '🔥 進行中' : '⏳ 等待晉級者')}
+                </span>
+              </div>
+
+              <!-- 選手1 -->
+              <div class="bracket-slot ${m.winner && m.p1 && m.winner === m.p1.seatNumber ? 'winner' : ''}">
+                <div>
+                  <span class="slot-name">${m.p1 ? `${m.p1.seatNumber}號 ${m.p1.studentName}` : '（虛位待定）'}</span>
+                  ${m.p1 ? `<span class="slot-blade">【${m.p1.bladeName}】</span>` : ''}
+                </div>
+                ${!m.winner && m.p1 && m.p2 ? `<button class="btn-win-sm" onclick="adminPickWinner(${m.index}, 1)">勝</button>` : ''}
+              </div>
+
+              <!-- 選手2 -->
+              <div class="bracket-slot ${m.winner && m.p2 && m.winner === m.p2.seatNumber ? 'winner' : ''}">
+                <div>
+                  <span class="slot-name">${m.p2 ? `${m.p2.seatNumber}號 ${m.p2.studentName}` : '（虛位待定）'}</span>
+                  ${m.p2 ? `<span class="slot-blade">【${m.p2.bladeName}】</span>` : ''}
+                </div>
+                ${!m.winner && m.p1 && m.p2 ? `<button class="btn-win-sm" onclick="adminPickWinner(${m.index}, 2)">勝</button>` : ''}
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+      }
+
+      root.innerHTML = html;
     }
 
     function adminPickWinner(matchIdx, playerNum) {
@@ -1322,7 +1449,6 @@
         else if (!nextM.p2) nextM.p2 = winner;
       }
 
-      // 如果這是總冠軍戰
       if (match.stageName && match.stageName.includes('總冠軍')) {
         alert(`🎉 狂賀！${winner.studentName} 奪得本屆戰鬥陀螺大賽總冠軍！錦標賽圓滿結束，四周島嶼即將重啟！`);
         adminEndTournament();
@@ -1381,7 +1507,7 @@
 
       for (let i = 0; i < playerList.length; i += 2) {
         matches.push({
-          stageName: `勝者組 首輪 第 ${Math.floor(i/2)+1} 場`,
+          stageName: `首輪 第 ${Math.floor(i/2)+1} 場`,
           p1: playerList[i],
           p2: playerList[i+1] || null,
           winner: playerList[i+1] ? null : playerList[i].seatNumber,
@@ -1389,13 +1515,14 @@
         });
       }
 
-      matches.push({ stageName: '勝者組 準決賽', p1: null, p2: null, winner: null, nextWinMatch: matches.length + 1 });
-      matches.push({ stageName: '敗者組 復活決賽', p1: null, p2: null, winner: null, nextWinMatch: matches.length + 1 });
-      matches.push({ stageName: '🏆 總冠軍爭霸賽', p1: null, p2: null, winner: null });
+      matches.push({ stageName: '準決賽階段 第 1 組', p1: null, p2: null, winner: null, nextWinMatch: matches.length + 1 });
+      matches.push({ stageName: '敗者復活決賽', p1: null, p2: null, winner: null, nextWinMatch: matches.length + 1 });
+      matches.push({ stageName: '🏆 總決賽爭霸', p1: null, p2: null, winner: null });
 
       bbRef.child('matches').set(matches);
       bbRef.child('status').set('bracket_ready');
-      alert('🎲 雙淘汰賽程圖已隨機抽籤產生完成！');
+      alert('🎲 雙淘汰賽程圖已隨機抽籤產生完成！即時晉級圖側邊欄已同步更新！');
+      toggleBracketSidebar(true);
     }
 
     // ==========================================
@@ -1425,37 +1552,46 @@
     }
 
     // ==========================================
-    // 鉸接式多關節立體人物架構
+    // 9. 人物模型生成（黃/棕/白膚色、服裝褲裝隨機、5人百褶裙與擺動骨架）
     // ==========================================
-    const HAIR_COLORS = [0x3A3B3C, 0x483C32, 0x72376A, 0xEBA937];
-    const CLOTHES_COLORS = [0x64321A, 0x782800, 0x997305, 0x004230, 0x052E3B];
+    const HAIR_COLORS = [0x3A3B3C, 0x483C32, 0x72376A, 0xEBA937, 0x1f2937];
+    // 3) 膚色分配包含黃色、棕色、白色
+    const SKIN_COLORS = [0xF5D0A9, 0x8D5524, 0xFFE0BD];
+    // 4) 衣服與褲裝配色庫
+    const CLOTHES_PALETTE = [0xA0522D, 0xC04000, 0xD97706, 0x006A4E, 0x084C61, 0x4338CA, 0xBE185D, 0x047857, 0x2563eb, 0x7c3aed];
+    const BOTTOM_PALETTE = [0x1E293B, 0x334155, 0x475569, 0x1F2937, 0x0F172A, 0x3F3F46, 0x27272A, 0x374151];
 
     function getRandomItem(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function createCharacterMesh(clothesColor, hairColor) {
+    function createCharacterMesh(isSkirt = false, customSkin, customClothes, customHair) {
       const person = new THREE.Group();
 
-      const cColor = clothesColor !== undefined ? clothesColor : getRandomItem(CLOTHES_COLORS);
-      const hColor = hairColor !== undefined ? hairColor : getRandomItem(HAIR_COLORS);
+      const skinColor = customSkin !== undefined ? customSkin : getRandomItem(SKIN_COLORS);
+      const cColor = customClothes !== undefined ? customClothes : getRandomItem(CLOTHES_PALETTE);
+      const bColor = getRandomItem(BOTTOM_PALETTE);
+      const hColor = customHair !== undefined ? customHair : getRandomItem(HAIR_COLORS);
 
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffedd5, roughness: 0.6 });
+      const skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.65 });
       const clothMat = new THREE.MeshStandardMaterial({ color: cColor, roughness: 0.7 });
-      const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+      const bottomMat = new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.75 });
       const hairMat = new THREE.MeshStandardMaterial({ color: hColor, roughness: 0.6 });
 
+      // 軀幹
       const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.52, 0.24), clothMat);
       torso.position.y = 0.62;
       torso.castShadow = true;
       torso.receiveShadow = true;
       person.add(torso);
 
+      // 頭部
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), skinMat);
       head.position.y = 1.02;
       head.castShadow = true;
       person.add(head);
 
+      // 頭髮
       const hair = new THREE.Mesh(
         new THREE.SphereGeometry(0.215, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.6),
         hairMat
@@ -1464,6 +1600,7 @@
       hair.castShadow = true;
       person.add(hair);
 
+      // 手臂結構
       const armGeo = new THREE.BoxGeometry(0.11, 0.45, 0.11);
 
       const leftArmPivot = new THREE.Group();
@@ -1482,29 +1619,61 @@
       rightArmPivot.add(rightArmMesh);
       person.add(rightArmPivot);
 
-      const legGeo = new THREE.BoxGeometry(0.13, 0.48, 0.13);
+      let leftLegPivot, rightLegPivot, skirtPivot = null;
 
-      const leftLegPivot = new THREE.Group();
-      leftLegPivot.position.set(-0.12, 0.42, 0);
-      const leftLegMesh = new THREE.Mesh(legGeo, pantsMat);
-      leftLegMesh.position.y = -0.24;
-      leftLegMesh.castShadow = true;
-      leftLegPivot.add(leftLegMesh);
-      person.add(leftLegPivot);
+      if (isSkirt) {
+        // 5) 百褶傘狀裙，具備獨立旋轉關節以便步態晃動
+        skirtPivot = new THREE.Group();
+        skirtPivot.position.set(0, 0.46, 0);
+        const skirtMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.24, 0.42, 0.38, 14),
+          bottomMat
+        );
+        skirtMesh.position.y = -0.17;
+        skirtMesh.castShadow = true;
+        skirtPivot.add(skirtMesh);
+        person.add(skirtPivot);
 
-      const rightLegPivot = new THREE.Group();
-      rightLegPivot.position.set(0.12, 0.42, 0);
-      const rightLegMesh = new THREE.Mesh(legGeo, pantsMat);
-      rightLegMesh.position.y = -0.24;
-      rightLegMesh.castShadow = true;
-      rightLegPivot.add(rightLegMesh);
-      person.add(rightLegPivot);
+        const legGeo = new THREE.BoxGeometry(0.1, 0.36, 0.1);
+        leftLegPivot = new THREE.Group();
+        leftLegPivot.position.set(-0.11, 0.36, 0);
+        const leftLegMesh = new THREE.Mesh(legGeo, skinMat);
+        leftLegMesh.position.y = -0.18;
+        leftLegPivot.add(leftLegMesh);
+        person.add(leftLegPivot);
+
+        rightLegPivot = new THREE.Group();
+        rightLegPivot.position.set(0.11, 0.36, 0);
+        const rightLegMesh = new THREE.Mesh(legGeo, skinMat);
+        rightLegMesh.position.y = -0.18;
+        rightLegPivot.add(rightLegMesh);
+        person.add(rightLegPivot);
+      } else {
+        const legGeo = new THREE.BoxGeometry(0.13, 0.48, 0.13);
+
+        leftLegPivot = new THREE.Group();
+        leftLegPivot.position.set(-0.12, 0.42, 0);
+        const leftLegMesh = new THREE.Mesh(legGeo, bottomMat);
+        leftLegMesh.position.y = -0.24;
+        leftLegMesh.castShadow = true;
+        leftLegPivot.add(leftLegMesh);
+        person.add(leftLegPivot);
+
+        rightLegPivot = new THREE.Group();
+        rightLegPivot.position.set(0.12, 0.42, 0);
+        const rightLegMesh = new THREE.Mesh(legGeo, bottomMat);
+        rightLegMesh.position.y = -0.24;
+        rightLegMesh.castShadow = true;
+        rightLegPivot.add(rightLegMesh);
+        person.add(rightLegPivot);
+      }
 
       person.userData.limbs = {
         leftArm: leftArmPivot,
         rightArm: rightArmPivot,
         leftLeg: leftLegPivot,
-        rightLeg: rightLegPivot
+        rightLeg: rightLegPivot,
+        skirt: skirtPivot
       };
 
       return person;
@@ -1529,11 +1698,11 @@
     }
 
     // ==========================================
-    // 9. 地標模型工廠與障礙物管理
+    // 10. 地標模型工廠與多重硬阻擋演算法
     // ==========================================
     let islandObstacles = {}; 
 
-    // 2) 障礙物登記 (全面加強各島地標防禦半徑)
+    // 6) 註冊障礙物硬性半徑
     function registerObstacle(islandId, localX, localZ, radius) {
       if (!islandObstacles[islandId]) islandObstacles[islandId] = [];
       islandObstacles[islandId].push({ x: localX, z: localZ, r: radius });
@@ -1649,7 +1818,7 @@
         windTurbineBlades.push(rotor);
 
         group.add(wt);
-        registerObstacle('nature', pos[0], pos[1], 1.0);
+        registerObstacle('nature', pos[0], pos[1], 1.1);
       });
 
       return group;
@@ -1697,6 +1866,7 @@
       mainBeybladeTop.scale.setScalar(1.2);
       bb.add(mainBeybladeTop);
 
+      // 6) 中央戰鬥擂台半徑設為 2.8
       registerObstacle('beyblade', 0, 0, 2.8);
 
       const miniColors = [0xef4444, 0x3b82f6, 0xeab308];
@@ -1776,20 +1946,20 @@
       dbGroup.position.set(0, 0, -1.5);
       dbGroup.rotation.y = 0.3;
       group.add(dbGroup);
-      registerObstacle('sport', 0, -1.5, 1.7);
+      registerObstacle('sport', 0, -1.5, 1.8);
 
       jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.6);
 
-      const swingerA = createCharacterMesh(0x64321A, 0x3A3B3C);
+      const swingerA = createCharacterMesh(false, 0xF5D0A9, 0x64321A, 0x3A3B3C);
       swingerA.position.set(-1.8, 0, 0);
       jumpRopeGroup.add(swingerA);
 
-      const swingerB = createCharacterMesh(0x052E3B, 0x483C32);
+      const swingerB = createCharacterMesh(false, 0x8D5524, 0x052E3B, 0x483C32);
       swingerB.position.set(1.8, 0, 0);
       jumpRopeGroup.add(swingerB);
 
-      jumperMan = createCharacterMesh(0x997305, 0xEBA937);
+      jumperMan = createCharacterMesh(true, 0xFFE0BD, 0xBE185D, 0xEBA937);
       jumperMan.position.set(0, 0, 0);
       jumpRopeGroup.add(jumperMan);
 
@@ -1800,7 +1970,7 @@
       jumpRopeGroup.add(ropeMesh);
 
       group.add(jumpRopeGroup);
-      registerObstacle('sport', 0, 1.6, 2.2);
+      registerObstacle('sport', 0, 1.6, 2.3);
 
       return group;
     }
@@ -1847,6 +2017,7 @@
       book.position.set(0, 0.2, -1.2);
       book.scale.setScalar(1.1);
       group.add(book);
+      // 6) 閱讀島魔法書半徑設為 1.8
       registerObstacle('reading', 0, -1.2, 1.8);
 
       const van = new THREE.Group();
@@ -1939,11 +2110,13 @@
       van.position.set(0, 0, 1.4);
       van.scale.setScalar(0.9);
       group.add(van);
+      // 6) 閱讀島書車半徑設為 1.8
       registerObstacle('reading', 0, 1.4, 1.8);
 
       return group;
     }
 
+    // 2) 優良公民島平頂古典神殿：取消錐形山牆，改以古典石砌樑盤搭配雙層大理石平頂石板
     function createCivicsLandmark() {
       const group = new THREE.Group();
 
@@ -1951,6 +2124,7 @@
       const marbleMat = new THREE.MeshStandardMaterial({ color: 0x928E85, roughness: 0.45 });
       const trimMat = new THREE.MeshStandardMaterial({ color: 0xA8A49B, roughness: 0.35 });
 
+      // 階梯基座
       [4.0, 3.6, 3.2].forEach((w, i) => {
         const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, w * 0.8), marbleMat);
         baseStep.position.y = 0.1 + i * 0.2;
@@ -1959,6 +2133,7 @@
         temple.add(baseStep);
       });
 
+      // 6 根石柱
       const colPositions = [
         [-1.2, 0.7, -0.9], [0, 0.7, -0.9], [1.2, 0.7, -0.9],
         [-1.2, 0.7,  0.9], [0, 0.7,  0.9], [1.2, 0.7,  0.9]
@@ -1974,27 +2149,30 @@
         temple.add(capital);
       });
 
+      // 古典石砌樑盤 (Architrave & Entablature)
       const architrave = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.22, 2.3), marbleMat);
       architrave.position.y = 2.7;
       architrave.castShadow = true;
       temple.add(architrave);
 
-      const pediment = new THREE.Mesh(new THREE.ConeGeometry(2.0, 1.0, 4), marbleMat);
-      pediment.position.y = 3.32;
-      pediment.rotation.y = Math.PI / 4;
-      pediment.scale.set(1.12, 0.8, 0.82);
-      pediment.castShadow = true;
-      temple.add(pediment);
+      // 第一層大理石外凸簷線 (Cornice)
+      const flatCornice = new THREE.Mesh(new THREE.BoxGeometry(3.35, 0.16, 2.5), trimMat);
+      flatCornice.position.y = 2.89;
+      flatCornice.castShadow = true;
+      flatCornice.receiveShadow = true;
+      temple.add(flatCornice);
 
-      const acroterion = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.24), trimMat);
-      acroterion.position.y = 3.82;
-      temple.add(acroterion);
+      // 第二層大理石厚重平頂封板 (Flat Roof Slab)
+      const flatRoofPlate = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.14, 2.3), marbleMat);
+      flatRoofPlate.position.y = 3.04;
+      flatRoofPlate.castShadow = true;
+      temple.add(flatRoofPlate);
 
       temple.scale.setScalar(1.1);
       group.add(temple);
 
-      // 2) 嚴格保護公民島地標神殿，半徑設為 2.8 杜絕走入
-      registerObstacle('civics', 0, 0, 2.8);
+      // 6) 公民島神殿防護半徑設定為 2.9，徹底防範穿模走入
+      registerObstacle('civics', 0, 0, 2.9);
 
       return group;
     }
@@ -2010,13 +2188,13 @@
       log.castShadow = true;
       boxGroup.add(log);
 
-      mascotLeader = createCharacterMesh(0xd97706, 0xEBA937);
+      mascotLeader = createCharacterMesh(false, 0xF5D0A9, 0xd97706, 0xEBA937);
       mascotLeader.position.set(0, 0.3, 0);
       mascotLeader.userData = { isMascot: true };
       boxGroup.add(mascotLeader);
 
       boxGroup.position.set(-2.2, 0, -1.8);
-      registerObstacle('sport', -2.2, -1.8, 0.9);
+      registerObstacle('sport', -2.2, -1.8, 1.0);
       return boxGroup;
     }
 
@@ -2047,7 +2225,6 @@
       return sprite;
     }
 
-    // 3) 優化樹木質感
     const TREE_LEAF_COLORS = [0x003C00, 0x145314, 0x014943];
 
     function createTree() {
@@ -2095,7 +2272,6 @@
       return flower;
     }
 
-    // 3) 優化路燈質感
     function createStreetLamp() {
       const lamp = new THREE.Group();
       const metalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.3 });
@@ -2133,89 +2309,20 @@
       return lamp;
     }
 
-    function createBirdMesh() {
-      const bird = new THREE.Group();
-      const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true });
-      const body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.8, 4), mat);
-      body.rotation.x = Math.PI / 2;
-      body.castShadow = true;
-      bird.add(body);
-
-      const wings = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.05, 0.4), mat);
-      wings.position.set(0, 0.1, 0);
-      wings.castShadow = true;
-      bird.add(wings);
-      bird.userData = { wings: wings, type: 'bird' };
-      return bird;
-    }
-
-    function createBatMesh() {
-      const bat = new THREE.Group();
-      const mat = new THREE.MeshStandardMaterial({ color: 0x18181b, flatShading: true });
-      const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 5, 5), mat);
-      body.castShadow = true;
-      bat.add(body);
-
-      const wings = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.04, 0.5), mat);
-      wings.position.set(0, 0.05, 0);
-      wings.castShadow = true;
-      bat.add(wings);
-      bat.userData = { wings: wings, type: 'bat' };
-      return bat;
-    }
-
-    function spawnSkyFlock(type) {
-      skyCreatures.forEach(c => scene.remove(c.mesh));
-      skyCreatures = [];
-      const count = Math.floor(Math.random() * 3) + 3;
-
-      let fromLeft = true;
-      if (type === 'bat') {
-        fromLeft = Math.random() > 0.5;
-      }
-
-      const startX = fromLeft ? -45 : 45;
-      const moveDirection = fromLeft ? 1 : -1;
-      const startZ = (Math.random() - 0.5) * 40;
-      const altitude = 24 + Math.random() * 8;
-
-      for (let i = 0; i < count; i++) {
-        const mesh = type === 'bird' ? createBirdMesh() : createBatMesh();
-        mesh.position.set(
-          startX + (Math.random() - 0.5) * 6 - i * 3 * moveDirection, 
-          altitude + (Math.random() - 0.5) * 3, 
-          startZ + (Math.random() - 0.5) * 6
-        );
-
-        mesh.rotation.y = fromLeft ? Math.PI / 2 : -Math.PI / 2;
-        scene.add(mesh);
-
-        skyCreatures.push({
-          mesh: mesh,
-          speed: (0.16 + Math.random() * 0.04) * moveDirection,
-          wingSpeed: type === 'bird' ? 0.25 : 0.4,
-          wingPhase: Math.random() * Math.PI,
-          direction: moveDirection
-        });
-      }
-    }
-
     // ==========================================
-    // 10. 群島配置
+    // 11. 群島配置與精準邊緣截短橋樑
     // ==========================================
     const ISLAND_CONFIG = [
-      { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0x443423, pos: [0, 0, 0] },
-      { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0x3C421A, pos: [-10.5, 0, -8.5] },
-      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0x534818, pos: [10.5, 0, -8.5] },
-      { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', isGaussian: true, pos: [-10.5, 0, 8.5] },
-      { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0x4D3E2B, pos: [10.5, 0, 8.5] }
+      { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0x443423, pos: [0, 0, 0], radius: 5.8 },
+      { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0x3C421A, pos: [-10.5, 0, -8.5], radius: 5.0 },
+      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0x534818, pos: [10.5, 0, -8.5], radius: 5.0 },
+      { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', isGaussian: true, pos: [-10.5, 0, 8.5], radius: 5.0 },
+      { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0x4D3E2B, pos: [10.5, 0, 8.5], radius: 5.0 }
     ];
 
     let scene, camera, renderer, controls;
     let islandGroups = [];
     let villagers = [];
-    let skyCreatures = [];
-    let nextSkyEventTime = 0;
     let lastPhaseName = '';
     let dirLight, hemiLight;
 
@@ -2223,26 +2330,34 @@
     let targetCameraPos = new THREE.Vector3(0, 36, 40);
     let targetLookAt = new THREE.Vector3(0, 0, 0);
 
-    function createConcreteBridge(p1, p2) {
+    // 1) 橋梁長度精準截短：重新精準計算兩島半徑，橋面長度嚴格縮短為島緣至島緣
+    function createPreciseBridge(p1, p2, r1, r2) {
       const bridge = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
       const v2 = new THREE.Vector3(...p2);
-      const mid = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
-      const length = v1.distanceTo(v2);
+      const dist = v1.distanceTo(v2);
 
-      bridge.position.copy(mid);
+      // 橋長精確為兩端半徑之差（預留0.05微幅咬合避免縫隙，但絕不延伸至島面）
+      const bridgeLength = Math.max(0.5, dist - (r1 + r2) + 0.05);
+
+      const dir = new THREE.Vector3().subVectors(v2, v1).normalize();
+      // 中心點定於兩島外緣的中點
+      const startEdge = v1.clone().add(dir.clone().multiplyScalar(r1 - 0.025));
+      const midPoint = startEdge.clone().add(dir.clone().multiplyScalar(bridgeLength / 2));
+
+      bridge.position.copy(midPoint);
       bridge.lookAt(v2);
 
       const concreteMat = new THREE.MeshStandardMaterial({ color: 0x4D4D4D, roughness: 0.6 });
 
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, length - 4.5), concreteMat);
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, bridgeLength), concreteMat);
       deck.position.set(0, -0.05, 0);
       deck.castShadow = true;
       deck.receiveShadow = true;
       bridge.add(deck);
 
       [-0.75, 0.75].forEach(x => {
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, length - 4.5), concreteMat);
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, bridgeLength), concreteMat);
         rail.position.set(x, 0.2, 0);
         rail.castShadow = true;
         bridge.add(rail);
@@ -2271,7 +2386,6 @@
       return portal;
     }
 
-    // 3) 優化台車質感
     let cartGroup = null;
     let cartProgress = 0;
     let trackCurve = null;
@@ -2431,7 +2545,6 @@
       controls.enableRotate = true;
       controls.enableZoom = true;
       controls.enablePan = true;
-      controls.enableDamping = true;
       controls.dampingFactor = 0.04;
       controls.rotateSpeed = 0.45;
       controls.minDistance = 12;
@@ -2487,14 +2600,15 @@
         scene.add(moon);
       }
 
-      // 橋梁架設
+      // 1) 橋梁架設：使用精確半徑邊緣對接函式
+      const cR = ISLAND_CONFIG[0].radius;
       for (let i = 1; i < ISLAND_CONFIG.length; i++) {
-        scene.add(createConcreteBridge(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
+        scene.add(createPreciseBridge(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos, cR, ISLAND_CONFIG[i].radius));
       }
-      scene.add(createConcreteBridge(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos));
-      scene.add(createConcreteBridge(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos));
-      scene.add(createConcreteBridge(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
-      scene.add(createConcreteBridge(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
+      scene.add(createPreciseBridge(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos, 5.0, 5.0));
+      scene.add(createPreciseBridge(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos, 5.0, 5.0));
+      scene.add(createPreciseBridge(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos, 5.0, 5.0));
+      scene.add(createPreciseBridge(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos, 5.0, 5.0));
 
       scene.add(createFigureEightTrackAndCart());
 
@@ -2503,7 +2617,7 @@
         const group = new THREE.Group();
         group.position.set(...cfg.pos);
 
-        const baseRadius = cfg.id === 'beyblade' ? 5.8 : 5.0;
+        const baseRadius = cfg.radius;
         let baseMat;
 
         if (cfg.isGaussian) {
@@ -2593,21 +2707,44 @@
 
       updateBeybladeIslandDormancy();
 
-      // 島民建立
-      const totalVillagers = 18;
+      // ==========================================
+      // 12. 建立 20 位島民與熱血應援動作分配
+      // ==========================================
+      const totalVillagers = 20;
 
       for (let i = 0; i < totalVillagers; i++) {
-        const person = createCharacterMesh();
+        // 5) 固定 5 位穿百褶傘狀裙 (i < 5)
+        const isSkirt = (i < 5);
+        
+        // 3) 膚色分配包含黃色、棕色、白色
+        let assignedSkin;
+        if (i % 3 === 0) assignedSkin = 0xF5D0A9;      // 黃色
+        else if (i % 3 === 1) assignedSkin = 0x8D5524; // 棕色
+        else assignedSkin = 0xFFE0BD;                 // 白色
 
-        const currentIslandIdx = i % ISLAND_CONFIG.length;
+        const person = createCharacterMesh(isSkirt, assignedSkin);
+
+        // 7) 平時僅在周圍 4 個島活動 (1: 生態, 2: 運動, 3: 閱讀, 4: 公民)
+        const currentIslandIdx = (i % 4) + 1;
         const curIsland = ISLAND_CONFIG[currentIslandIdx];
         const ang = Math.random() * Math.PI * 2;
-        const rad = Math.random() * 3.5;
+        const rad = 2.4 + Math.random() * (curIsland.radius - 2.8);
         const initX = curIsland.pos[0] + Math.cos(ang) * rad;
         const initZ = curIsland.pos[2] + Math.sin(ang) * rad;
 
         person.position.set(initX, 0, initZ);
         scene.add(person);
+
+        // 7) 觀賽應援動作分配：50% 舉雙手跳起、40% 嘴旁呼喊、10% 重複舉單手
+        let cheerType = 'jump_both'; // 50% (10人)
+        if (i >= 10 && i < 18) cheerType = 'shout_mouth'; // 40% (8人)
+        else if (i >= 18) cheerType = 'raise_single'; // 10% (2人)
+
+        // 中央陀螺島外環圍繞座標 (半徑 3.3 ~ 4.2 環狀均勻排列)
+        const cheerAngle = (i / totalVillagers) * Math.PI * 2 + (Math.random() - 0.5) * 0.15;
+        const cheerRadius = 3.3 + Math.random() * 0.8;
+        const stadiumX = Math.cos(cheerAngle) * cheerRadius;
+        const stadiumZ = Math.sin(cheerAngle) * cheerRadius;
 
         villagers.push({
           obj: person,
@@ -2621,7 +2758,12 @@
           bridgeEndTarget: null,
           walkCycle: Math.random() * 10,
           waitTimer: Math.random() * 80,
-          speed: 0.016 + Math.random() * 0.006
+          speed: (Math.random() > 0.4 ? 0.016 : 0.026),
+          isJogging: Math.random() > 0.4,
+          isSkirt: isSkirt,
+          cheerType: cheerType,
+          stadiumPos: { x: stadiumX, z: stadiumZ },
+          cheerPhase: Math.random() * Math.PI * 2
         });
       }
 
@@ -2684,9 +2826,8 @@
       });
 
       let clock = new THREE.Clock();
-      nextSkyEventTime = Date.now() + 5000;
 
-      // 2) 障礙物阻擋判定：嚴格確認新目標點或行走路徑不會踏入地標範圍
+      // 6) 障礙物硬阻擋與向量外推力場
       function isPositionBlocked(islandId, localX, localZ) {
         const obsList = islandObstacles[islandId];
         if (!obsList) return false;
@@ -2698,10 +2839,46 @@
         return false;
       }
 
+      function applyRepulsionForce(islandId, localPos) {
+        const obsList = islandObstacles[islandId];
+        if (!obsList) return;
+        for (let i = 0; i < obsList.length; i++) {
+          const obs = obsList[i];
+          const dx = localPos.x - obs.x;
+          const dz = localPos.z - obs.z;
+          const dist = Math.hypot(dx, dz);
+          if (dist < obs.r && dist > 0.001) {
+            // 向外推斥至半徑安全邊界
+            const pushDist = (obs.r - dist) + 0.05;
+            localPos.x += (dx / dist) * pushDist;
+            localPos.z += (dz / dist) * pushDist;
+          }
+        }
+      }
+
+      function isPathBlocked(islandId, x1, z1, x2, z2) {
+        const obsList = islandObstacles[islandId];
+        if (!obsList) return false;
+        const dx = x2 - x1;
+        const dz = z2 - z1;
+        const lenSq = dx * dx + dz * dz;
+        if (lenSq === 0) return isPositionBlocked(islandId, x1, z1);
+
+        for (let i = 0; i < obsList.length; i++) {
+          const obs = obsList[i];
+          const t = Math.max(0, Math.min(1, ((obs.x - x1) * dx + (obs.z - z1) * dz) / lenSq));
+          const projX = x1 + t * dx;
+          const projZ = z1 + t * dz;
+          if (Math.hypot(projX - obs.x, projZ - obs.z) < obs.r) {
+            return true;
+          }
+        }
+        return false;
+      }
+
       function animate() {
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
-        const now = Date.now();
 
         if (isFocusing) {
           camera.position.lerp(targetCameraPos, 0.05);
@@ -2714,7 +2891,7 @@
         const currentPhase = getTimePhase();
         if (currentPhase.name !== lastPhaseName) {
           lastPhaseName = currentPhase.name;
-          document.getElementById('time-badge').textContent = `🕒 時段：${timePhase.name}`;
+          document.getElementById('time-badge').textContent = `🕒 時段：${currentPhase.name}`;
           scene.background.set(currentPhase.bg);
           scene.fog.color.set(currentPhase.bg);
 
@@ -2733,7 +2910,7 @@
           blade.rotation.z += 0.04;
         });
 
-        // 3 顆小陀螺旋轉
+        // 小陀螺旋轉
         spinningMiniTops.forEach((mini, idx) => {
           mini.rotation.y += 0.15 + idx * 0.03;
           mini.position.y = Math.sin(time * 3.0 + idx) * 0.04;
@@ -2765,7 +2942,7 @@
           }
         }
 
-        // 台車在 8 字形軌道上平行切線行駛
+        // 台車行駛
         if (cartGroup && trackCurve) {
           cartProgress = (cartProgress + 0.0006) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
@@ -2783,185 +2960,247 @@
           jumperMan.position.y = Math.max(0, Math.sin(time * 5.0 - Math.PI / 2) * 0.55);
         }
 
-        // 陀螺島休眠島民顏色反灰
-        villagers.forEach(v => {
-          if (v.currentIslandIdx === 0 && !isTournamentActive) {
-            v.obj.traverse(c => {
-              if (c.isMesh && c.material) c.material.color.setHex(COLOR_GRAY_DORMANT);
-            });
-          }
-        });
-
-        // 1) & 2) 人物四肢交錯擺動 (手臂與雙腳對角交叉) + 避開障礙物
-        villagers.forEach(v => {
+        // 7) 20 位島民行動管理
+        villagers.forEach((v, idx) => {
           const limbs = v.obj.userData.limbs;
 
-          if (v.waitTimer > 0) {
-            v.waitTimer--;
-            if (limbs) {
-              limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
-              limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
-              limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
-              limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
-            }
-            if (v.waitTimer <= 0) {
-              if (Math.random() < 0.4) {
-                let candidates = [];
-                if (v.currentIslandIdx === 0) {
-                  candidates = [1, 2, 3, 4];
-                } else {
-                  const ringNeighbors = { 1: [0, 2, 3], 2: [0, 1, 4], 3: [0, 1, 4], 4: [0, 2, 3] };
-                  candidates = ringNeighbors[v.currentIslandIdx] || [0];
-                }
-                const nextIsland = candidates[Math.floor(Math.random() * candidates.length)];
-                v.targetIslandIdx = nextIsland;
+          if (isTournamentActive) {
+            // === 比賽期間：全員集合中央陀螺島，面朝擂台熱血應援 ===
+            v.currentIslandIdx = 0;
+            const destX = v.stadiumPos.x;
+            const destZ = v.stadiumPos.z;
 
-                const pStart = ISLAND_CONFIG[v.currentIslandIdx].pos;
-                const pEnd = ISLAND_CONFIG[nextIsland].pos;
-                const dir = new THREE.Vector3(pEnd[0] - pStart[0], 0, pEnd[2] - pStart[2]).normalize();
+            const tdx = destX - v.currentX;
+            const tdz = destZ - v.currentZ;
+            const tdist = Math.hypot(tdx, tdz);
 
-                v.targetX = pStart[0] + dir.x * 4.6;
-                v.targetZ = pStart[2] + dir.z * 4.6;
-                v.bridgeEndTarget = {
-                  x: pEnd[0] - dir.x * 4.6,
-                  z: pEnd[2] - dir.z * 4.6,
-                  finalX: pEnd[0] + (Math.random() - 0.5) * 3.2,
-                  finalZ: pEnd[2] + (Math.random() - 0.5) * 3.2
-                };
-                v.state = 'bridge_start';
-              } else {
-                // 2) 障礙物安全尋徑檢測
-                const curIslandCfg = ISLAND_CONFIG[v.currentIslandIdx];
-                const curCenter = curIslandCfg.pos;
-                let foundValid = false;
-                let tx = 0, tz = 0;
-
-                for (let attempt = 0; attempt < 10; attempt++) {
-                  const a = Math.random() * Math.PI * 2;
-                  const r = Math.random() * 3.4;
-                  const lx = Math.cos(a) * r;
-                  const lz = Math.sin(a) * r;
-                  // 檢查是否侵入任何地標或樹木半徑
-                  if (!isPositionBlocked(curIslandCfg.id, lx, lz)) {
-                    tx = curCenter[0] + lx;
-                    tz = curCenter[2] + lz;
-                    foundValid = true;
-                    break;
-                  }
-                }
-                if (foundValid) {
-                  v.targetX = tx;
-                  v.targetZ = tz;
-                  v.state = 'wander';
-                } else {
-                  v.waitTimer = 30;
-                }
-              }
-            }
-          } else {
-            const dx = v.targetX - v.currentX;
-            const dz = v.targetZ - v.currentZ;
-            const dist = Math.hypot(dx, dz);
-
-            if (dist < 0.15) {
-              if (v.state === 'bridge_start' && v.bridgeEndTarget) {
-                v.targetX = v.bridgeEndTarget.x;
-                v.targetZ = v.bridgeEndTarget.z;
-                v.state = 'bridge_crossing';
-              } else if (v.state === 'bridge_crossing' && v.bridgeEndTarget) {
-                v.targetX = v.bridgeEndTarget.finalX;
-                v.targetZ = v.bridgeEndTarget.finalZ;
-                v.state = 'bridge_enter';
-              } else {
-                v.currentIslandIdx = v.targetIslandIdx;
-                v.bridgeEndTarget = null;
-                v.state = 'wander';
-                v.waitTimer = Math.floor(Math.random() * 100) + 50;
-              }
-            } else {
-              v.currentX += (dx / dist) * v.speed;
-              v.currentZ += (dz / dist) * v.speed;
+            if (tdist > 0.15) {
+              v.currentX += (tdx / tdist) * 0.035;
+              v.currentZ += (tdz / tdist) * 0.035;
               v.obj.position.x = v.currentX;
               v.obj.position.z = v.currentZ;
-              v.obj.rotation.y = Math.atan2(dx, dz);
+              v.obj.rotation.y = Math.atan2(tdx, tdz);
+            } else {
+              // 抵達位置，面向中央擂台 (0,0)
+              v.obj.position.x = destX;
+              v.obj.position.z = destZ;
+              v.obj.rotation.y = Math.atan2(-destX, -destZ);
 
-              // 1) 雙手與雙腳交錯擺動 (左手與右腳向前，右手與左腳向前，絕不同手同腳)
-              v.walkCycle += 0.18;
-              const swingAngle = Math.sin(v.walkCycle) * 0.45;
+              // 執行 3 種指定應援動作
+              v.cheerPhase += 0.09;
+              const wave = Math.sin(v.cheerPhase * 2.2);
 
               if (limbs) {
-                limbs.leftArm.rotation.x = -swingAngle;
-                limbs.rightArm.rotation.x = swingAngle;
-                limbs.leftLeg.rotation.x = swingAngle;
-                limbs.rightLeg.rotation.x = -swingAngle;
+                if (v.cheerType === 'jump_both') {
+                  // 50% 舉雙手開心跳起
+                  v.obj.position.y = Math.max(0, Math.sin(v.cheerPhase * 2.2) * 0.32);
+                  limbs.leftArm.rotation.x = -2.7 + wave * 0.3;
+                  limbs.rightArm.rotation.x = -2.7 + wave * 0.3;
+                  limbs.leftLeg.rotation.x = 0;
+                  limbs.rightLeg.rotation.x = 0;
+                  if (limbs.skirt) limbs.skirt.rotation.x = wave * 0.12;
+                } 
+                else if (v.cheerType === 'shout_mouth') {
+                  // 40% 雙手放嘴旁前傾吶喊
+                  v.obj.position.y = 0;
+                  limbs.leftArm.rotation.x = -1.8 + Math.sin(v.cheerPhase * 1.5) * 0.15;
+                  limbs.rightArm.rotation.x = -1.8 + Math.sin(v.cheerPhase * 1.5) * 0.15;
+                  v.obj.rotation.x = 0.14; // 身體微前傾
+                } 
+                else if (v.cheerType === 'raise_single') {
+                  // 10% 單手反覆舉起揮動再放下
+                  v.obj.position.y = 0;
+                  const singleArmWave = Math.sin(v.cheerPhase * 1.8);
+                  limbs.rightArm.rotation.x = -1.4 + singleArmWave * 1.2;
+                  limbs.leftArm.rotation.x = 0.2;
+                }
+              }
+            }
+          } 
+          else {
+            // === 平時無比賽：完全不踏入中央島，僅在周圍 4 島活動 ===
+            v.obj.rotation.x = 0;
+
+            if (v.currentIslandIdx === 0) {
+              v.currentIslandIdx = (idx % 4) + 1;
+              const resetIsland = ISLAND_CONFIG[v.currentIslandIdx];
+              v.currentX = resetIsland.pos[0] + (Math.random() - 0.5) * 3.0;
+              v.currentZ = resetIsland.pos[2] + (Math.random() - 0.5) * 3.0;
+              v.targetX = v.currentX;
+              v.targetZ = v.currentZ;
+              v.waitTimer = 40;
+            }
+
+            const curIslandCfg = ISLAND_CONFIG[v.currentIslandIdx];
+
+            if (v.waitTimer > 0) {
+              v.waitTimer--;
+              if (limbs) {
+                limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
+                limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
+                limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
+                limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
+                if (limbs.skirt) limbs.skirt.rotation.x = 0;
+              }
+              // 停駐時微幅擺頭（模擬交談）
+              v.obj.rotation.y += Math.sin(time * 2.0 + idx) * 0.005;
+
+              if (v.waitTimer <= 0) {
+                // 決定下一步：外環相鄰島過橋 (25%) 或 本地島內漫步 (75%)
+                if (Math.random() < 0.25) {
+                  const ringNeighbors = { 1: [2, 3], 2: [1, 4], 3: [1, 4], 4: [2, 3] };
+                  const nextIsland = ringNeighbors[v.currentIslandIdx][Math.floor(Math.random() * 2)];
+                  v.targetIslandIdx = nextIsland;
+
+                  const pStart = ISLAND_CONFIG[v.currentIslandIdx].pos;
+                  const pEnd = ISLAND_CONFIG[nextIsland].pos;
+                  const dir = new THREE.Vector3(pEnd[0] - pStart[0], 0, pEnd[2] - pStart[2]).normalize();
+
+                  v.targetX = pStart[0] + dir.x * 4.8;
+                  v.targetZ = pStart[2] + dir.z * 4.8;
+                  v.bridgeEndTarget = {
+                    x: pEnd[0] - dir.x * 4.8,
+                    z: pEnd[2] - dir.z * 4.8,
+                    finalX: pEnd[0] + (Math.random() - 0.5) * 2.6,
+                    finalZ: pEnd[2] + (Math.random() - 0.5) * 2.6
+                  };
+                  v.state = 'bridge_start';
+                } else {
+                  // 本島內尋求無障礙目標點
+                  const curCenter = curIslandCfg.pos;
+                  const startLocalX = v.currentX - curCenter[0];
+                  const startLocalZ = v.currentZ - curCenter[2];
+                  let foundValid = false;
+                  let tx = 0, tz = 0;
+
+                  for (let attempt = 0; attempt < 12; attempt++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const r = 2.4 + Math.random() * (curIslandCfg.radius - 2.8);
+                    const lx = Math.cos(a) * r;
+                    const lz = Math.sin(a) * r;
+
+                    if (!isPositionBlocked(curIslandCfg.id, lx, lz) &&
+                        !isPathBlocked(curIslandCfg.id, startLocalX, startLocalZ, lx, lz)) {
+                      tx = curCenter[0] + lx;
+                      tz = curCenter[2] + lz;
+                      foundValid = true;
+                      break;
+                    }
+                  }
+                  if (foundValid) {
+                    v.targetX = tx;
+                    v.targetZ = tz;
+                    v.state = 'wander';
+                  } else {
+                    v.waitTimer = 30;
+                  }
+                }
+              }
+            } else {
+              // 移動中
+              const dx = v.targetX - v.currentX;
+              const dz = v.targetZ - v.currentZ;
+              const dist = Math.hypot(dx, dz);
+
+              if (dist > 0.08) {
+                const moveStep = v.speed;
+                v.currentX += (dx / dist) * moveStep;
+                v.currentZ += (dz / dist) * moveStep;
+
+                // 6) 向量外推力場：保證即使微步前進也不穿透地標防護半徑
+                const localPos = {
+                  x: v.currentX - curIslandCfg.pos[0],
+                  z: v.currentZ - curIslandCfg.pos[2]
+                };
+                applyRepulsionForce(curIslandCfg.id, localPos);
+                v.currentX = curIslandCfg.pos[0] + localPos.x;
+                v.currentZ = curIslandCfg.pos[2] + localPos.z;
+
+                v.obj.position.x = v.currentX;
+                v.obj.position.z = v.currentZ;
+                v.obj.rotation.y = Math.atan2(dx, dz);
+
+                // 步態與百褶裙動態擺動
+                v.walkCycle += v.isJogging ? 0.28 : 0.16;
+                const legSwing = Math.sin(v.walkCycle) * (v.isJogging ? 0.65 : 0.45);
+                const armSwing = Math.sin(v.walkCycle) * (v.isJogging ? 0.65 : 0.45);
+
+                if (limbs) {
+                  limbs.leftLeg.rotation.x = legSwing;
+                  limbs.rightLeg.rotation.x = -legSwing;
+                  limbs.leftArm.rotation.x = -armSwing;
+                  limbs.rightArm.rotation.x = armSwing;
+                  if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(v.walkCycle * 2) * 0.12;
+                }
+                v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * (v.isJogging ? 0.08 : 0.04);
+              } else {
+                // 抵達目標點狀態切換
+                if (v.state === 'bridge_start' && v.bridgeEndTarget) {
+                  v.targetX = v.bridgeEndTarget.x;
+                  v.targetZ = v.bridgeEndTarget.z;
+                  v.state = 'bridge_crossing';
+                } else if (v.state === 'bridge_crossing' && v.bridgeEndTarget) {
+                  v.currentIslandIdx = v.targetIslandIdx;
+                  v.targetX = v.bridgeEndTarget.finalX;
+                  v.targetZ = v.bridgeEndTarget.finalZ;
+                  v.bridgeEndTarget = null;
+                  v.state = 'wander';
+                } else {
+                  v.waitTimer = Math.floor(Math.random() * 80) + 40;
+                }
               }
             }
           }
         });
 
-        // 天空生物排程
-        if (now >= nextSkyEventTime) {
-          if (currentPhase.phase === 'morning') spawnSkyFlock('bird');
-          else if (currentPhase.phase === 'night' || currentPhase.phase === 'midnight') spawnSkyFlock('bat');
-          nextSkyEventTime = now + (7 * 60 * 1000);
-        }
-
-        for (let i = skyCreatures.length - 1; i >= 0; i--) {
-          const c = skyCreatures[i];
-          c.mesh.position.x += c.speed;
-          if (c.mesh.userData && c.mesh.userData.wings) {
-            c.wingPhase += c.wingSpeed;
-            c.mesh.userData.wings.rotation.z = Math.sin(c.wingPhase) * 0.45;
-          }
-
-          const outOfBounds = c.direction > 0 ? c.mesh.position.x > 50 : c.mesh.position.x < -50;
-          if (outOfBounds) {
-            scene.remove(c.mesh);
-            skyCreatures.splice(i, 1);
-          }
-        }
-
-        controls.update();
         renderer.render(scene, camera);
       }
       animate();
     }
 
     // ==========================================
-    // 鏡頭聚焦運鏡與右側滑出抽屜控制
+    // 13. 島嶼點擊焦點運鏡
     // ==========================================
     function focusOnIsland(islandData) {
+      isFocusing = true;
+      targetLookAt.set(islandData.pos[0], islandData.pos[1], islandData.pos[2]);
+
+      const offsetDist = islandData.radius * 2.8;
+      targetCameraPos.set(
+        islandData.pos[0],
+        islandData.pos[1] + 13.0,
+        islandData.pos[2] + offsetDist
+      );
+
+      openDrawer(islandData);
+    }
+
+    function openDrawer(islandData) {
       document.getElementById('drawer-title').textContent = islandData.title;
-      document.getElementById('drawer-subtitle').textContent = islandData.subtitle || '';
+      document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
 
       ['nature', 'sport', 'civics', 'reading', 'beyblade'].forEach(id => {
-        const p = document.getElementById(`panel-${id}`);
-        if (p) p.style.display = (id === islandData.id) ? 'block' : 'none';
+        document.getElementById(`panel-${id}`).style.display = 'none';
       });
 
-      // 如果點開運動島，預設切回增肌減脂第一頁
-      if (islandData.id === 'sport') {
-        switchSportTab('exercise');
-      }
+      const p = document.getElementById(`panel-${islandData.id}`);
+      if (p) p.style.display = 'block';
 
       document.getElementById('side-drawer').classList.add('open');
-
-      const ip = islandData.pos;
-      targetLookAt.set(ip[0], 1.2, ip[2]);
-      targetCameraPos.set(ip[0] - 2.5, 14, ip[2] + 16);
-      isFocusing = true;
     }
 
     function closeDrawer() {
       document.getElementById('side-drawer').classList.remove('open');
+      isFocusing = true;
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 36, 40);
-      isFocusing = true;
     }
 
-    // 啟動程序
-    initStudent();
-    init3D();
+    // 初始化啟動
+    window.addEventListener('DOMContentLoaded', () => {
+      init3D();
+      initStudent();
+    });
   </script>
 </body>
 </html>
