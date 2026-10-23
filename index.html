@@ -922,22 +922,32 @@
       }
     }
 
-    function registerBeyblade() {
-      const bname = document.getElementById('bb-blade-name').value.trim();
-      if (!bname) { alert('請填寫你的陀螺名稱！'); return; }
-      if (!bbRef) return;
+function registerBeyblade() {
+  const bname = document.getElementById('bb-blade-name').value.trim();
+  if (!bname) { alert('請填寫你的陀螺名稱！'); return; }
+  if (!bbRef) return;
 
-      const pKey = `seat_${currentStudent.seatNumber}`;
-      bbRef.child('players').child(pKey).set({
-        seatNumber: currentStudent.seatNumber,
-        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-        bladeName: bname,
-        registeredAt: firebase.database.ServerValue.TIMESTAMP
-      });
+  const pKey = `seat_${currentStudent.seatNumber}`;
+  
+  // 1. 寫入 Firebase（供網頁即時排賽程、顯示已報名清單）
+  bbRef.child('players').child(pKey).set({
+    seatNumber: currentStudent.seatNumber,
+    studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+    bladeName: bname,
+    registeredAt: firebase.database.ServerValue.TIMESTAMP
+  });
 
-      alert(`✅ 報名成功！期待你的【${bname}】在大賽大放異彩！`);
-      document.getElementById('bb-blade-name').value = '';
-    }
+  // 2. 同步備份寫入 Google 試算表（戰鬥陀螺報名分頁）
+  sendToGAS({
+    type: 'beyblade_registration',
+    seatNumber: currentStudent.seatNumber,
+    studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+    bladeName: bname
+  });
+
+  alert(`✅ 報名成功！期待你的【${bname}】在大賽大放異彩！`);
+  document.getElementById('bb-blade-name').value = '';
+}
 
     // 渲染雙淘汰賽程樹
     function renderBracketContent() {
