@@ -174,25 +174,6 @@
       align-items: center;
     }
 
-    /* 滿 5000 鎖定提示 */
-    .lock-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(10px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 9000;
-      color: white;
-      text-align: center;
-      padding: 24px;
-    }
-    .lock-overlay.hidden { display: none !important; }
-    .lock-overlay h1 { font-size: 2.2rem; margin-bottom: 12px; color: #facc15; }
-    .lock-overlay p { font-size: 1.1rem; color: #cbd5e1; max-width: 500px; line-height: 1.6; }
-
     /* 右側滑出抽屜 */
     .side-drawer-container {
       position: fixed;
@@ -201,7 +182,7 @@
       width: 440px;
       max-width: 92vw;
       height: 100vh;
-      background: rgba(255, 255, 255, 0.88);
+      background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(20px);
       box-shadow: -10px 0 35px rgba(0, 0, 0, 0.25);
       border-left: 3px solid rgba(253, 224, 71, 0.8);
@@ -218,10 +199,10 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
     .drawer-title { font-size: 1.45rem; font-weight: 800; color: #1e293b; }
-    .drawer-subtitle { font-size: 0.9rem; font-weight: bold; color: #0284c7; margin-top: 4px; }
+    .drawer-subtitle { font-size: 0.88rem; font-weight: bold; color: #0284c7; margin-top: 3px; }
     .drawer-close {
       background: #f1f5f9;
       border: none;
@@ -236,6 +217,45 @@
       transition: background 0.15s;
     }
     .drawer-close:hover { background: #e2e8f0; }
+
+    /* 運動島分頁標籤 */
+    .tab-header {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: none;
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 800;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+    }
+
+    /* 錦標賽期間暫停提示標籤 */
+    .paused-banner {
+      background: #fef2f2;
+      border: 2px dashed #ef4444;
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      color: #991b1b;
+      margin-bottom: 14px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
 
     /* 通用彈窗樣式 */
     .modal-overlay {
@@ -286,7 +306,7 @@
 
     .checkbox-group {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(1, 1fr);
       gap: 10px;
       background: rgba(248, 250, 252, 0.8);
       padding: 12px;
@@ -434,15 +454,6 @@
     <span>| 點擊島嶼鏡頭聚焦、單指旋轉、雙指縮放</span>
   </div>
 
-  <!-- 滿 5000 鎖定提示 -->
-  <div id="lock-overlay" class="lock-overlay hidden">
-    <h1>🏆 全班榮譽達成 5000 能量！</h1>
-    <p>太棒了！全班齊心合力達成了目標！目前全島進行能量整裝，請等待老師確認後歸零重啟下一輪冒險！</p>
-    <button class="btn-action btn-blue" id="teacher-reset-lock-btn" style="max-width:260px; margin-top:20px;">
-      🔑 老師手動重置並開啟
-    </button>
-  </div>
-
   <!-- 登入設定彈窗 -->
   <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-card">
@@ -491,73 +502,119 @@
 
     <!-- 1. 生態科技島內容 -->
     <div id="panel-nature" style="display:none;">
-      <div class="form-group">
-        <label>觀察到的植物 / 昆蟲名稱</label>
-        <input type="text" id="nature-name" placeholder="例如: 馬利筋、鳳蝶毛毛蟲">
+      <div id="pause-notice-nature" class="paused-banner" style="display:none;">
+        ⚔️ 戰鬥陀螺大賽進行中！本島任務暫停，請前往中央陀螺島共襄盛舉！
       </div>
-      <div class="form-group">
-        <label>外觀特徵或特別之處描述</label>
-        <textarea id="nature-feature" rows="4" placeholder="葉片對生、紅橘色小花，上方有黑色斑紋幼蟲..."></textarea>
+      <div id="task-content-nature">
+        <div class="form-group">
+          <label>觀察到的植物 / 昆蟲名稱</label>
+          <input type="text" id="nature-name" placeholder="例如: 馬利筋、鳳蝶毛毛蟲">
+        </div>
+        <div class="form-group">
+          <label>外觀特徵或特別之處描述</label>
+          <textarea id="nature-feature" rows="4" placeholder="葉片對生、紅橘色小花，上方有黑色斑紋幼蟲..."></textarea>
+        </div>
+        <button class="btn-action btn-green" onclick="submitNature()">🌟 完成打卡 (+5 能量)</button>
       </div>
-      <button class="btn-action btn-green" onclick="submitNature()">🌟 完成打卡 (+5 能量)</button>
     </div>
 
-    <!-- 2. 健身運動島內容 -->
+    <!-- 2. 健身運動島內容 (新增健康生活分頁) -->
     <div id="panel-sport" style="display:none;">
-      <p style="color:#64748b; font-size:0.9rem; margin-bottom:12px;">
-        目標：跑操場5圈、跳繩500下 或 打羽毛球50球。
-      </p>
-      <div class="form-group">
-        <label>今天進行的運動項目與達成量</label>
-        <input type="text" id="sport-item" placeholder="例如: 跳繩 500 下">
+      <div id="pause-notice-sport" class="paused-banner" style="display:none;">
+        ⚔️ 戰鬥陀螺大賽進行中！本島任務暫停，請前往中央陀螺島共襄盛舉！
       </div>
-      <div class="form-group">
-        <label>見證認證者（老師或同學姓名）</label>
-        <input type="text" id="sport-verifier" placeholder="請填寫幫你確認的同學座號或老師">
+
+      <div id="task-content-sport">
+        <div class="tab-header">
+          <button class="tab-btn active" id="tab-btn-sport1" onclick="switchSportTab('exercise')">🏃 增肌減脂</button>
+          <button class="tab-btn" id="tab-btn-sport2" onclick="switchSportTab('health')">🌙 健康生活 (18-22點)</button>
+        </div>
+
+        <!-- 子分頁 1：增肌減脂 -->
+        <div id="subtab-sport-exercise">
+          <p style="color:#64748b; font-size:0.9rem; margin-bottom:12px;">
+            目標：跑操場5圈、跳繩500下 或 打羽毛球50球。
+          </p>
+          <div class="form-group">
+            <label>今天進行的運動項目與達成量</label>
+            <input type="text" id="sport-item" placeholder="例如: 跳繩 500 下">
+          </div>
+          <div class="form-group">
+            <label>見證認證者（老師或同學姓名）</label>
+            <input type="text" id="sport-verifier" placeholder="請填寫幫你確認的同學座號或老師">
+          </div>
+          <button class="btn-action btn-green" onclick="submitSportExercise()">🌟 完成打卡 (+5 能量)</button>
+        </div>
+
+        <!-- 子分頁 2：健康生活 (勾選三項) -->
+        <div id="subtab-sport-health" style="display:none;">
+          <p style="color:#d97706; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">
+            ⏰ 開放時段：每天 18:00 - 22:00（勾選3項+5，2項+4，1項+3）
+          </p>
+          <div class="checkbox-group">
+            <label class="checkbox-item"><input type="checkbox" id="chk-brush"> 🪥 睡前刷牙</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-snack"> 🥗 少吃零食</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-screen"> 📱 3C少於1小時</label>
+          </div>
+          <div class="form-group" style="margin-top:14px;">
+            <label>見證認證者（家長、老師或同學）</label>
+            <input type="text" id="health-verifier" placeholder="請填寫協助確認的認證者">
+          </div>
+          <button class="btn-action btn-green" onclick="submitSportHealth()">🌟 認證生活打卡</button>
+        </div>
       </div>
-      <button class="btn-action btn-green" onclick="submitSport()">🌟 完成打卡 (+5 能量)</button>
     </div>
 
     <!-- 3. 優良公民島內容 -->
     <div id="panel-civics" style="display:none;">
-      <p style="color:#64748b; font-size:0.9rem; margin-bottom:12px;">
-        維持個人衛生習慣，環境整潔。請同學協助檢查並勾選全部項目：
-      </p>
-      <div class="checkbox-group">
-        <label class="checkbox-item"><input type="checkbox" id="chk-desk"> 桌面整齊</label>
-        <label class="checkbox-item"><input type="checkbox" id="chk-drawer"> 抽屜乾淨</label>
-        <label class="checkbox-item"><input type="checkbox" id="chk-bottom"> 桌底無碎屑</label>
-        <label class="checkbox-item"><input type="checkbox" id="chk-trash"> 垃圾袋清空</label>
+      <div id="pause-notice-civics" class="paused-banner" style="display:none;">
+        ⚔️ 戰鬥陀螺大賽進行中！本島任務暫停，請前往中央陀螺島共襄盛舉！
       </div>
-      <div class="form-group" style="margin-top:14px;">
-        <label>檢查認證者（座號/姓名）</label>
-        <input type="text" id="civics-verifier" placeholder="例如: 8號 小宣">
+      <div id="task-content-civics">
+        <p style="color:#64748b; font-size:0.9rem; margin-bottom:12px;">
+          維持個人衛生習慣，環境整潔。請同學協助檢查並勾選全部項目：
+        </p>
+        <div class="checkbox-group">
+          <label class="checkbox-item"><input type="checkbox" id="chk-desk"> 桌面整齊</label>
+          <label class="checkbox-item"><input type="checkbox" id="chk-drawer"> 抽屜乾淨</label>
+          <label class="checkbox-item"><input type="checkbox" id="chk-bottom"> 桌底無碎屑</label>
+          <label class="checkbox-item"><input type="checkbox" id="chk-trash"> 垃圾袋清空</label>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+          <label>檢查認證者（座號/姓名）</label>
+          <input type="text" id="civics-verifier" placeholder="例如: 8號 小宣">
+        </div>
+        <button class="btn-action btn-green" onclick="submitCivics()">🌟 認證完成打卡 (+5 能量)</button>
       </div>
-      <button class="btn-action btn-green" onclick="submitCivics()">🌟 認證完成打卡 (+5 能量)</button>
     </div>
 
     <!-- 4. 閱讀島內容 -->
     <div id="panel-reading" style="display:none;">
-      <div class="form-group">
-        <label>閱讀書名或文章標題</label>
-        <input type="text" id="read-title" placeholder="例如: 達克比辦案系列">
+      <div id="pause-notice-reading" class="paused-banner" style="display:none;">
+        ⚔️ 戰鬥陀螺大賽進行中！本島任務暫停，請前往中央陀螺島共襄盛舉！
       </div>
-      <div class="form-group">
-        <label>節錄文章重要段落</label>
-        <textarea id="read-quote" rows="2" placeholder="抄寫或節錄書中一句精采段落..."></textarea>
+      <div id="task-content-reading">
+        <div class="form-group">
+          <label>閱讀書名或文章標題</label>
+          <input type="text" id="read-title" placeholder="例如: 達克比辦案系列">
+        </div>
+        <div class="form-group">
+          <label>節錄文章重要段落</label>
+          <textarea id="read-quote" rows="2" placeholder="抄寫或節錄書中一句精采段落..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>個人心得與收穫（至少需滿 20 個中文字）</label>
+          <textarea id="read-reflection" rows="4" placeholder="寫下讀完這段後的想法與啟發..."></textarea>
+          <div id="reflection-count" class="char-count">目前字數：0 / 20 字</div>
+        </div>
+        <button class="btn-action btn-purple" id="btn-submit-reading" onclick="submitReading()">📝 送出心得 (+5 能量)</button>
       </div>
-      <div class="form-group">
-        <label>個人心得與收穫（至少需滿 20 個中文字）</label>
-        <textarea id="read-reflection" rows="4" placeholder="寫下讀完這段後的想法與啟發..."></textarea>
-        <div id="reflection-count" class="char-count">目前字數：0 / 20 字</div>
-      </div>
-      <button class="btn-action btn-purple" id="btn-submit-reading" onclick="submitReading()">📝 送出心得 (+5 能量)</button>
     </div>
 
     <!-- 5. 戰鬥陀螺島內容 -->
     <div id="panel-beyblade" style="display:none;">
       <div id="bb-closed-view" style="display:none; text-align:center; padding:20px;">
-        <p style="font-size:1.1rem; color:#64748b; font-weight:bold;">⚔️ 本島目前休息中，敬請期待老師發布下一屆大賽日程！</p>
+        <p style="font-size:1.1rem; color:#64748b; font-weight:bold;">⚔️ 本島目前休息中，當全班累積達 5000 能量時將盛大開啟下一屆錦標賽！</p>
       </div>
 
       <div id="bb-register-view" style="display:none;">
@@ -590,7 +647,7 @@
 
       <div class="form-group">
         <label>⚡ 全班共創能量控制</label>
-        <button class="btn-action btn-red" onclick="adminResetEnergy()">將全班能量歸零重置 (重啟島嶼)</button>
+        <button class="btn-action btn-red" onclick="adminResetEnergy()">手動將全班能量歸零</button>
       </div>
 
       <hr style="margin:16px 0; border:0; border-top:1px solid #e2e8f0;">
@@ -598,12 +655,12 @@
       <div class="form-group">
         <label>🌪️ 戰鬥陀螺島賽事管理</label>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
-          <button class="btn-action btn-green" onclick="adminSetBeybladeState(true)">開啟陀螺島報名</button>
-          <button class="btn-action btn-red" onclick="adminSetBeybladeState(false)">關閉陀螺島</button>
+          <button class="btn-action btn-green" onclick="adminSetBeybladeState(true)">強制開啟陀螺島錦標賽</button>
+          <button class="btn-action btn-red" onclick="adminEndTournament()">結束錦標賽並恢復四島</button>
         </div>
         <label>設定報名截止日期時間</label>
         <input type="datetime-local" id="admin-bb-deadline">
-        <button class="btn-action btn-blue" style="margin-top:8px;" onclick="adminSaveDeadline()">儲存報名截止時間</button>
+        <button class="btn-action btn-blue" style="margin-top:8px;" onclick="adminSaveDeadline()">儲存截止時間</button>
         <button class="btn-action btn-purple" style="margin-top:8px;" onclick="adminGenerateBracket()">🎲 截止報名並生成雙淘汰賽程</button>
       </div>
     </div>
@@ -627,8 +684,7 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxpgYPXZQAyR2Qn1OLejnUMekxvOW1Bf9-U6DyBwFoaw-st0tkQT7K8yxsU3zyXhrGj/exec";
     const TEACHER_PASSWORD = "4840";
 
-    let db = null, totalEnergyRef = null, liveFeedRef = null, lockStatusRef = null, bbRef = null;
-    let isIslandLocked = false;
+    let db = null, totalEnergyRef = null, liveFeedRef = null, bbRef = null;
     let bbState = { isOpen: false, deadline: '', status: 'closed', players: {}, matches: [] };
     let rosterList = [];
 
@@ -637,14 +693,52 @@
       db = firebase.database();
       totalEnergyRef = db.ref('island_stats/total_energy');
       liveFeedRef = db.ref('island_stats/recent_activity');
-      lockStatusRef = db.ref('island_stats/is_locked');
       bbRef = db.ref('beyblade_championship');
     } catch(err) {
       console.warn("Firebase 初始化提示", err);
     }
 
+    // 計算下週一晚上 23:00 的 ISO 時間格式
+    function getNextMondayNightDeadline() {
+      const now = new Date();
+      const day = now.getDay(); // 0 是週日, 1 是週一
+      let daysUntilNextMonday = (8 - day) % 7;
+      if (daysUntilNextMonday === 0) daysUntilNextMonday = 7; // 如果今天剛好是週一，算到下週一
+      
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilNextMonday, 23, 0, 0, 0);
+      return target.toISOString();
+    }
+
+    // 觸發 5000 滿額自動大賽機制
+    function triggerTournamentMode() {
+      if (!bbRef) return;
+      const dl = getNextMondayNightDeadline();
+      bbRef.set({
+        isOpen: true,
+        deadline: dl,
+        status: 'registering',
+        players: {},
+        matches: []
+      });
+      showLiveBanner("🏆 全班榮譽達成 5000 能量！戰鬥陀螺島正式開放報名！");
+      confetti({ particleCount: 120, spread: 90 });
+    }
+
+    // 結束大賽並開啟四周四島
+    function adminEndTournament() {
+      if (!bbRef) return;
+      bbRef.set({
+        isOpen: false,
+        deadline: '',
+        status: 'closed',
+        players: {},
+        matches: []
+      });
+      alert('戰鬥陀螺大賽已圓滿落幕！周圍四島任務已重新開放，能量開始重新累積！');
+    }
+
     // ==========================================
-    // 2. 學生身分與名冊管理 (每次重整需重新登入)
+    // 2. 學生身分與名冊管理
     // ==========================================
     let currentStudent = { 
       seatNumber: '', 
@@ -783,11 +877,18 @@
     }
 
     function checkDailyLimit(islandId) {
+      // 錦標賽期間暫停四周 4 座島嶼任務
+      const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
+      if (isTournamentActive && islandId !== 'beyblade') {
+        alert('⚔️ 目前為戰鬥陀螺大賽期間，本島任務暫停，請前往戰鬥陀螺島！');
+        return false;
+      }
+
       const count = getDailyCount(islandId);
       if (islandId === 'reading') {
         if (count >= 3) { alert('📖 閱讀島今天已經打卡 3 次囉！明天再繼續加油！'); return false; }
       } else {
-        if (count >= 1) { alert('⭐ 這座島嶼今天已經打卡過囉！把機會留給其他島嶼吧！'); return false; }
+        if (count >= 1) { alert('⭐ 這項任務今天已經打卡過囉！把機會留給其他任務吧！'); return false; }
       }
       return true;
     }
@@ -802,7 +903,7 @@
     });
 
     // ==========================================
-    // 4. 能量光球發射與打卡
+    // 4. 能量光球發射、5000滿額歸零與打卡
     // ==========================================
     async function sendToGAS(payload) {
       if (!GAS_API_URL || GAS_API_URL.includes("請替換")) return;
@@ -833,7 +934,8 @@
       });
     }
 
-    function rewardCheckin(islandId, islandTitle, message, gasData) {
+    // 核心給獎與累積能量判定
+    function rewardCheckin(islandId, islandTitle, message, gasData, customPoints = 5) {
       addDailyCount(islandId);
       confetti({ particleCount: 75, spread: 70, origin: { y: 0.7 } });
 
@@ -844,24 +946,24 @@
 
       closeDrawer();
 
-      const gainPoints = 5;
-      currentStudent.myPoints = (currentStudent.myPoints || 0) + gainPoints;
+      currentStudent.myPoints = (currentStudent.myPoints || 0) + customPoints;
       sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
 
+      // 5) 能量累加至 5000 自動歸零並開啟戰鬥陀螺大賽錦標賽
       if (totalEnergyRef) {
         totalEnergyRef.transaction(current => {
-          let next = (current || 0) + gainPoints;
+          let next = (current || 0) + customPoints;
           if (next >= 5000) {
-            if (lockStatusRef) lockStatusRef.set(true);
-            return 5000;
+            triggerTournamentMode();
+            return 0; // 自動重新歸零
           }
           return next;
         });
 
         liveFeedRef.push({
           student: `${currentStudent.seatNumber}號 ${currentStudent.avatar} ${currentStudent.name}`,
-          msg: `${message} (+5 能量)`,
+          msg: `${message} (+${customPoints} 能量)`,
           time: firebase.database.ServerValue.TIMESTAMP
         });
       }
@@ -876,13 +978,6 @@
         const pct = Math.min((val / max) * 100, 100);
         document.getElementById('class-energy-bar').style.width = `${pct}%`;
         document.getElementById('class-energy-text').textContent = `${val} / ${max}`;
-      });
-    }
-
-    if (lockStatusRef) {
-      lockStatusRef.on('value', snap => {
-        isIslandLocked = !!snap.val();
-        document.getElementById('lock-overlay').classList.toggle('hidden', !isIslandLocked);
       });
     }
 
@@ -907,7 +1002,7 @@
     }
 
     // ==========================================
-    // 5. 各島送出函式
+    // 5. 各島送出函式 (新增健身運動島健康生活分頁)
     // ==========================================
     function submitNature() {
       if (!checkDailyLimit('nature')) return;
@@ -925,18 +1020,27 @@
         detail1: name,
         detail2: feature,
         verifier: '自行觀察'
-      });
+      }, 5);
       document.getElementById('nature-name').value = '';
       document.getElementById('nature-feature').value = '';
     }
 
-    function submitSport() {
-      if (!checkDailyLimit('sport')) return;
+    // 運動島子分頁切換
+    function switchSportTab(tab) {
+      document.getElementById('tab-btn-sport1').classList.toggle('active', tab === 'exercise');
+      document.getElementById('tab-btn-sport2').classList.toggle('active', tab === 'health');
+      document.getElementById('subtab-sport-exercise').style.display = tab === 'exercise' ? 'block' : 'none';
+      document.getElementById('subtab-sport-health').style.display = tab === 'health' ? 'block' : 'none';
+    }
+
+    // 運動島任務 1：增肌減脂
+    function submitSportExercise() {
+      if (!checkDailyLimit('sport_exercise')) return;
       const item = document.getElementById('sport-item').value.trim();
       const verifier = document.getElementById('sport-verifier').value.trim();
       if (!item || !verifier) { alert('請填寫運動項目與見證認證者！'); return; }
 
-      rewardCheckin('sport', '健身運動島', `完成了運動【${item}】`, {
+      rewardCheckin('sport_exercise', '健身運動島', `完成了運動【${item}】`, {
         type: 'task_complete',
         seatNumber: currentStudent.seatNumber,
         studentName: `${currentStudent.avatar} ${currentStudent.name}`,
@@ -945,9 +1049,58 @@
         points: 5,
         detail1: item,
         verifier: verifier
-      });
+      }, 5);
       document.getElementById('sport-item').value = '';
       document.getElementById('sport-verifier').value = '';
+    }
+
+    // 6) 運動島任務 2：健康生活 (18:00 - 22:00，3項+5，2項+4，1項+3)
+    function submitSportHealth() {
+      const nowHour = new Date().getHours();
+      if (nowHour < 18 || nowHour >= 22) {
+        alert('🌙 健康生活任務的開放認證時段為每天 18:00 至 22:00 喔！請於該時段再來打卡！');
+        return;
+      }
+
+      if (!checkDailyLimit('sport_health')) return;
+
+      const c1 = document.getElementById('chk-brush').checked;
+      const c2 = document.getElementById('chk-snack').checked;
+      const c3 = document.getElementById('chk-screen').checked;
+      const verifier = document.getElementById('health-verifier').value.trim();
+
+      const checkedCount = (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0);
+
+      if (checkedCount === 0) {
+        alert('請至少勾選一項達成的健康生活習慣！');
+        return;
+      }
+      if (!verifier) {
+        alert('請填寫見證認證者姓名！');
+        return;
+      }
+
+      let pts = 3;
+      if (checkedCount === 3) pts = 5;
+      else if (checkedCount === 2) pts = 4;
+
+      const itemsDesc = [c1 ? '睡前刷牙' : '', c2 ? '少吃零食' : '', c3 ? '3C<1h' : ''].filter(Boolean).join('、');
+
+      rewardCheckin('sport_health', '健身運動島', `達成了健康生活(${itemsDesc})`, {
+        type: 'task_complete',
+        seatNumber: currentStudent.seatNumber,
+        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+        islandTitle: '健身運動島',
+        taskTitle: '健康生活習慣',
+        points: pts,
+        detail1: `達成 ${checkedCount} 項：${itemsDesc}`,
+        verifier: verifier
+      }, pts);
+
+      document.getElementById('chk-brush').checked = false;
+      document.getElementById('chk-snack').checked = false;
+      document.getElementById('chk-screen').checked = false;
+      document.getElementById('health-verifier').value = '';
     }
 
     function submitCivics() {
@@ -970,7 +1123,7 @@
         points: 5,
         detail1: '四項整潔全數合格',
         verifier: verifier
-      });
+      }, 5);
       document.getElementById('chk-desk').checked = false;
       document.getElementById('chk-drawer').checked = false;
       document.getElementById('chk-bottom').checked = false;
@@ -997,7 +1150,7 @@
         bookTitle: title,
         quote: quote,
         reflection: reflection
-      });
+      }, 5);
       document.getElementById('read-title').value = '';
       document.getElementById('read-quote').value = '';
       document.getElementById('read-reflection').value = '';
@@ -1010,7 +1163,7 @@
     // ==========================================
     let beybladeBaseMesh = null;
     let beybladeLandmarkGroup = null;
-    let mainBeybladeTop = null; // 保存中央主陀螺模型實體以供原地自轉
+    let mainBeybladeTop = null;
     let beybladeDecorations = [];
     const COLOR_GRAY_DORMANT = 0xD1D0CE;
 
@@ -1019,6 +1172,21 @@
         bbState = snap.val() || { isOpen: false, deadline: '', status: 'closed', players: {}, matches: [] };
         renderBeybladeUI();
         updateBeybladeIslandDormancy();
+        updateSurroundingIslandsPauseState();
+      });
+    }
+
+    // 錦標賽期間暫停周圍四島
+    function updateSurroundingIslandsPauseState() {
+      const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
+      
+      ['nature', 'sport', 'civics', 'reading'].forEach(id => {
+        const pauseNotice = document.getElementById(`pause-notice-${id}`);
+        const taskContent = document.getElementById(`task-content-${id}`);
+        if (pauseNotice && taskContent) {
+          pauseNotice.style.display = isTournamentActive ? 'block' : 'none';
+          taskContent.style.display = isTournamentActive ? 'none' : 'block';
+        }
       });
     }
 
@@ -1154,13 +1322,20 @@
         else if (!nextM.p2) nextM.p2 = winner;
       }
 
+      // 如果這是總冠軍戰
+      if (match.stageName && match.stageName.includes('總冠軍')) {
+        alert(`🎉 狂賀！${winner.studentName} 奪得本屆戰鬥陀螺大賽總冠軍！錦標賽圓滿結束，四周島嶼即將重啟！`);
+        adminEndTournament();
+        return;
+      }
+
       bbRef.child('matches').set(bbState.matches);
       confetti({ particleCount: 100, spread: 80 });
       alert(`🎉 恭喜 ${winner.studentName} 獲勝晉級！`);
     }
 
     // ==========================================
-    // 7. 教師後台控制邏輯 (密碼 4840)
+    // 7. 教師後台控制邏輯
     // ==========================================
     document.getElementById('teacher-menu-btn').addEventListener('click', () => {
       const pwd = prompt('請輸入教師管理密碼：');
@@ -1171,29 +1346,20 @@
       }
     });
 
-    document.getElementById('teacher-reset-lock-btn').addEventListener('click', () => {
-      const pwd = prompt('請輸入教師管理密碼：');
-      if (pwd === TEACHER_PASSWORD) {
-        if (lockStatusRef) lockStatusRef.set(false);
-        if (totalEnergyRef) totalEnergyRef.set(0);
-        alert('全班能量已歸零，島嶼重新解鎖開放！');
-      } else if (pwd !== null) {
-        alert('密碼錯誤！');
-      }
-    });
-
     function adminResetEnergy() {
       if (confirm('確定要將全班能量手動歸零重置嗎？')) {
         if (totalEnergyRef) totalEnergyRef.set(0);
-        if (lockStatusRef) lockStatusRef.set(false);
         alert('全班共創能量已成功歸零！');
       }
     }
 
     function adminSetBeybladeState(isOpen) {
       if (!bbRef) return;
-      bbRef.child('isOpen').set(isOpen);
-      alert(isOpen ? '戰鬥陀螺島已開啟！' : '戰鬥陀螺島已關閉！');
+      if (isOpen) {
+        triggerTournamentMode();
+      } else {
+        adminEndTournament();
+      }
     }
 
     function adminSaveDeadline() {
@@ -1363,22 +1529,21 @@
     }
 
     // ==========================================
-    // 9. 地標模型工廠（質感精緻化全面升級）
+    // 9. 地標模型工廠與障礙物管理
     // ==========================================
     let islandObstacles = {}; 
 
+    // 2) 障礙物登記 (全面加強各島地標防禦半徑)
     function registerObstacle(islandId, localX, localZ, radius) {
       if (!islandObstacles[islandId]) islandObstacles[islandId] = [];
       islandObstacles[islandId].push({ x: localX, z: localZ, r: radius });
     }
 
     let windTurbineBlades = [];
-    // 1. 生態科技島：高工藝金屬倒角放大鏡 + 雙渦輪風機
     function createNatureLandmark() {
       const group = new THREE.Group();
 
       const mag = new THREE.Group();
-      // 外層電鍍綠金屬環
       const ring = new THREE.Mesh(
         new THREE.TorusGeometry(1.3, 0.16, 16, 40),
         new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.85, roughness: 0.15 })
@@ -1386,14 +1551,12 @@
       ring.castShadow = true;
       mag.add(ring);
 
-      // 內嵌金色倒角刻度環
       const innerBevel = new THREE.Mesh(
         new THREE.TorusGeometry(1.18, 0.05, 12, 36),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 })
       );
       mag.add(innerBevel);
 
-      // 雙凸透鏡物理高折射玻璃
       const lens = new THREE.Mesh(
         new THREE.CylinderGeometry(1.24, 1.24, 0.1, 36),
         new THREE.MeshPhysicalMaterial({
@@ -1408,7 +1571,6 @@
       lens.rotation.x = Math.PI / 2;
       mag.add(lens);
 
-      // 金屬銜接頸箍
       const neckJoint = new THREE.Mesh(
         new THREE.CylinderGeometry(0.24, 0.2, 0.35, 16),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.25 })
@@ -1416,7 +1578,6 @@
       neckJoint.position.set(0, -1.45, 0);
       mag.add(neckJoint);
 
-      // 雕花木質防滑把手
       const handle = new THREE.Mesh(
         new THREE.CylinderGeometry(0.18, 0.22, 1.8, 20),
         new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.65 })
@@ -1425,7 +1586,6 @@
       handle.castShadow = true;
       mag.add(handle);
 
-      // 黃銅配重球塞
       const pommel = new THREE.Mesh(
         new THREE.SphereGeometry(0.26, 16, 16),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.25 })
@@ -1438,15 +1598,13 @@
       mag.rotation.z = -0.3;
       group.add(mag);
 
-      registerObstacle('nature', 0, 0, 1.6);
+      registerObstacle('nature', 0, 0, 1.8);
 
-      // 2 支風力發電機（流線機艙與精密渦輪罩）
       const turbineCoords = [[-2.8, -2.2], [2.8, 2.2]];
       turbineCoords.forEach(pos => {
         const wt = new THREE.Group();
         wt.position.set(pos[0], 0, pos[1]);
 
-        // 錐形漸縮塔柱
         const pole = new THREE.Mesh(
           new THREE.CylinderGeometry(0.1, 0.24, 4.4, 16),
           new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.25, metalness: 0.2 })
@@ -1455,7 +1613,6 @@
         pole.castShadow = true;
         wt.add(pole);
 
-        // 流線散熱機艙
         const nacelle = new THREE.Mesh(
           new THREE.CylinderGeometry(0.22, 0.25, 0.8, 12),
           new THREE.MeshStandardMaterial({ color: 0xf5f5f4, roughness: 0.3 })
@@ -1465,7 +1622,6 @@
         nacelle.castShadow = true;
         wt.add(nacelle);
 
-        // 前導整流錐 (Nose Cone)
         const noseCone = new THREE.Mesh(
           new THREE.ConeGeometry(0.18, 0.35, 16),
           new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.6, roughness: 0.3 })
@@ -1474,7 +1630,6 @@
         noseCone.position.set(0, 4.4, 0.52);
         wt.add(noseCone);
 
-        // 三葉風扇組
         const rotor = new THREE.Group();
         rotor.position.set(0, 4.4, 0.45);
 
@@ -1494,18 +1649,16 @@
         windTurbineBlades.push(rotor);
 
         group.add(wt);
-        registerObstacle('nature', pos[0], pos[1], 0.8);
+        registerObstacle('nature', pos[0], pos[1], 1.0);
       });
 
       return group;
     }
 
     let spinningMiniTops = [];
-    // 2. 戰鬥陀螺島：大陀螺（原地自轉） + 3 顆小陀螺
     function createBeybladeModel() {
       const bb = new THREE.Group();
 
-      // 中央主戰鬥陀螺
       mainBeybladeTop = new THREE.Group();
 
       const tip = new THREE.Mesh(
@@ -1544,9 +1697,8 @@
       mainBeybladeTop.scale.setScalar(1.2);
       bb.add(mainBeybladeTop);
 
-      registerObstacle('beyblade', 0, 0, 2.6);
+      registerObstacle('beyblade', 0, 0, 2.8);
 
-      // 3 顆精準避讓的小陀螺
       const miniColors = [0xef4444, 0x3b82f6, 0xeab308];
       const safeMiniPositions = [
         [0.0, 0, 2.3],
@@ -1577,7 +1729,7 @@
 
         bb.add(mini);
         spinningMiniTops.push(mini);
-        registerObstacle('beyblade', pos[0], pos[2], 0.6);
+        registerObstacle('beyblade', pos[0], pos[2], 0.7);
       });
 
       return bb;
@@ -1586,12 +1738,10 @@
     let jumpRopeGroup = null;
     let jumperMan = null;
     let ropeMesh = null;
-    // 3. 健身運動島：專業防滑電鍍啞鈴 + 甩繩跳繩動態
     function createSportLandmark() {
       const group = new THREE.Group();
 
       const dbGroup = new THREE.Group();
-      // 電鍍滾花手柄
       const bar = new THREE.Mesh(
         new THREE.CylinderGeometry(0.16, 0.16, 2.9, 16),
         new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 })
@@ -1601,27 +1751,22 @@
       bar.castShadow = true;
       dbGroup.add(bar);
 
-      // 鑄鐵烤漆六角槓片材質
       const plateMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
       const collarMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
 
-      // 左右兩組多層槓片與安全夾扣
       [-1.0, 1.0].forEach((side) => {
-        // 大槓片 (帶倒角外圈)
         const pBig = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.35, 8), plateMat);
         pBig.rotation.z = Math.PI / 2;
         pBig.position.set(side * 0.95, 0.8, 0);
         pBig.castShadow = true;
         dbGroup.add(pBig);
 
-        // 中槓片
         const pMed = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.3, 8), plateMat);
         pMed.rotation.z = Math.PI / 2;
         pMed.position.set(side * 1.3, 0.8, 0);
         pMed.castShadow = true;
         dbGroup.add(pMed);
 
-        // 外部安全卡扣
         const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.15, 12), collarMat);
         collar.rotation.z = Math.PI / 2;
         collar.position.set(side * 1.48, 0.8, 0);
@@ -1631,9 +1776,8 @@
       dbGroup.position.set(0, 0, -1.5);
       dbGroup.rotation.y = 0.3;
       group.add(dbGroup);
-      registerObstacle('sport', 0, -1.5, 1.5);
+      registerObstacle('sport', 0, -1.5, 1.7);
 
-      // 三人跳繩組
       jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.6);
 
@@ -1656,22 +1800,20 @@
       jumpRopeGroup.add(ropeMesh);
 
       group.add(jumpRopeGroup);
-      registerObstacle('sport', 0, 1.6, 2.0);
+      registerObstacle('sport', 0, 1.6, 2.2);
 
       return group;
     }
 
-    // 4. 閱讀島：燙金包角立體書 + 天下希望閱讀書車
     function createReadingLandmark() {
       const group = new THREE.Group();
 
       const book = new THREE.Group();
       const pageMat = new THREE.MeshStandardMaterial({ color: 0xfffbeb, roughness: 0.65 });
-      const coverMat = new THREE.MeshStandardMaterial({ color: 0x4c1d95, roughness: 0.4 }); // 精裝深紫
+      const coverMat = new THREE.MeshStandardMaterial({ color: 0x4c1d95, roughness: 0.4 });
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
       const textMat = new THREE.MeshBasicMaterial({ color: 0xD3D3D3 });
 
-      // 書脊與圓柱軸套
       const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.4, 12), coverMat);
       spine.position.set(0, 0.4, 0);
       spine.rotation.x = Math.PI / 2;
@@ -1679,14 +1821,12 @@
 
       [-0.75, 0.75].forEach((x, i) => {
         const rot = i === 0 ? 0.25 : -0.25;
-        // 書頁
         const page = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.22, 2.2), pageMat);
         page.position.set(x, 0.55, 0);
         page.rotation.z = rot;
         page.castShadow = true;
         book.add(page);
 
-        // 文字線條
         for (let l = 0; l < 4; l++) {
           const textLine = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.02, 0.12), textMat);
           textLine.position.set(x, 0.67, -0.65 + l * 0.45);
@@ -1694,14 +1834,12 @@
           book.add(textLine);
         }
 
-        // 精裝封面
         const cov = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.08, 2.3), coverMat);
         cov.position.set(x * 1.02, 0.42, 0);
         cov.rotation.z = rot;
         cov.castShadow = true;
         book.add(cov);
 
-        // 書角金屬燙金包角護片 (Corner Protectors)
         const cornerProtector = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.18), goldMat);
         cornerProtector.position.set(x * 1.7, 0.44, 1.1);
         book.add(cornerProtector);
@@ -1709,65 +1847,82 @@
       book.position.set(0, 0.2, -1.2);
       book.scale.setScalar(1.1);
       group.add(book);
-      registerObstacle('reading', 0, -1.2, 1.6);
+      registerObstacle('reading', 0, -1.2, 1.8);
 
-      // 天下希望閱讀書車（彩虹展開式車廂）
       const van = new THREE.Group();
 
-      // 車頭
       const cabin = new THREE.Mesh(
-        new THREE.BoxGeometry(1.4, 1.1, 1.2),
-        new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.3 })
+        new THREE.BoxGeometry(1.45, 1.1, 1.25),
+        new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.25, metalness: 0.1 })
       );
       cabin.position.set(0, 0.8, 1.4);
       cabin.castShadow = true;
       van.add(cabin);
 
-      // 擋風玻璃與雨刷
-      const windshield = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 0.5, 0.2),
-        new THREE.MeshStandardMaterial({ color: 0xbae6fd, roughness: 0.1, metalness: 0.3 })
+      const bumper = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 0.2, 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 })
       );
-      windshield.position.set(0, 1.05, 2.0);
+      bumper.position.set(0, 0.35, 2.05);
+      van.add(bumper);
+
+      const windshield = new THREE.Mesh(
+        new THREE.BoxGeometry(1.22, 0.52, 0.1),
+        new THREE.MeshPhysicalMaterial({ color: 0xbae6fd, roughness: 0.1, transmission: 0.7, opacity: 0.85, transparent: true })
+      );
+      windshield.position.set(0, 1.05, 2.02);
       van.add(windshield);
 
-      // 車頭鍍鉻水箱護罩
+      [-0.55, 0.55].forEach(lx => {
+        const headlight = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12),
+          new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 0.5 })
+        );
+        headlight.rotation.x = Math.PI / 2;
+        headlight.position.set(lx, 0.65, 2.04);
+        van.add(headlight);
+      });
+
       const grille = new THREE.Mesh(
-        new THREE.BoxGeometry(0.9, 0.25, 0.08),
-        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.2 })
+        new THREE.BoxGeometry(0.7, 0.26, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 })
       );
-      grille.position.set(0, 0.55, 2.02);
+      grille.position.set(0, 0.62, 2.03);
       van.add(grille);
 
-      // 彩虹車廂條紋
       const rainbowColors = [0xef4444, 0xf97316, 0xfacc15, 0x22c55e, 0x06b6d4, 0x3b82f6, 0x8b5cf6];
       const stripeWidth = 2.0 / rainbowColors.length;
       rainbowColors.forEach((col, idx) => {
         const stripe = new THREE.Mesh(
-          new THREE.BoxGeometry(1.62, 1.3, stripeWidth),
-          new THREE.MeshStandardMaterial({ color: col, roughness: 0.4 })
+          new THREE.BoxGeometry(1.65, 1.3, stripeWidth),
+          new THREE.MeshStandardMaterial({ color: col, roughness: 0.35 })
         );
         stripe.position.set(0, 1.0, -1.2 + (idx + 0.5) * stripeWidth);
         stripe.castShadow = true;
         van.add(stripe);
       });
 
-      // 展開的鷗翼頂篷
-      const wingL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 1.9), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
-      wingL.position.set(-1.0, 1.8, -0.2);
-      wingL.rotation.z = -0.6;
-      wingL.castShadow = true;
-      van.add(wingL);
+      [-1, 1].forEach(side => {
+        const wing = new THREE.Mesh(
+          new THREE.BoxGeometry(0.08, 1.05, 1.95),
+          new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.3 })
+        );
+        wing.position.set(side * 1.05, 1.85, -0.2);
+        wing.rotation.z = side * -0.6;
+        wing.castShadow = true;
+        van.add(wing);
 
-      const wingR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 1.9), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
-      wingR.position.set(1.0, 1.8, -0.2);
-      wingR.rotation.z = 0.6;
-      wingR.castShadow = true;
-      van.add(wingR);
+        const strut = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.02, 0.02, 0.75, 8),
+          new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 })
+        );
+        strut.position.set(side * 0.9, 1.45, -0.2);
+        strut.rotation.z = side * 0.45;
+        van.add(strut);
+      });
 
-      // 4 個立體輪胎與輪框
       const tireMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
-      const rimMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.8 });
+      const rimMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.85, roughness: 0.2 });
       [[-0.8, 0.3, 1.2], [0.8, 0.3, 1.2], [-0.8, 0.3, -0.6], [0.8, 0.3, -0.6]].forEach(pos => {
         const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.25, 16), tireMat);
         tire.rotation.z = Math.PI / 2;
@@ -1775,7 +1930,7 @@
         tire.castShadow = true;
         van.add(tire);
 
-        const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.26, 12), rimMat);
+        const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.27, 12), rimMat);
         hubCap.rotation.z = Math.PI / 2;
         hubCap.position.set(...pos);
         van.add(hubCap);
@@ -1784,14 +1939,11 @@
       van.position.set(0, 0, 1.4);
       van.scale.setScalar(0.9);
       group.add(van);
-      registerObstacle('reading', 0, 1.4, 1.5);
+      registerObstacle('reading', 0, 1.4, 1.8);
 
       return group;
     }
 
-    // 5. 優良公民島：莊嚴多立克羅馬神殿（多層柱頭、凹槽浮雕帶）
-    let sweeperMan = null;
-    let broomMesh = null;
     function createCivicsLandmark() {
       const group = new THREE.Group();
 
@@ -1799,7 +1951,6 @@
       const marbleMat = new THREE.MeshStandardMaterial({ color: 0x928E85, roughness: 0.45 });
       const trimMat = new THREE.MeshStandardMaterial({ color: 0xA8A49B, roughness: 0.35 });
 
-      // 三層台基 (Stereobate & Stylobate)
       [4.0, 3.6, 3.2].forEach((w, i) => {
         const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, w * 0.8), marbleMat);
         baseStep.position.y = 0.1 + i * 0.2;
@@ -1808,31 +1959,26 @@
         temple.add(baseStep);
       });
 
-      // 6 支多立克石柱（柱底托盤、柱身與雙層多立克柱頭）
       const colPositions = [
         [-1.2, 0.7, -0.9], [0, 0.7, -0.9], [1.2, 0.7, -0.9],
         [-1.2, 0.7,  0.9], [0, 0.7,  0.9], [1.2, 0.7,  0.9]
       ];
       colPositions.forEach(p => {
-        // 柱身
         const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.17, 1.8, 14), marbleMat);
         shaft.position.set(p[0], p[1] + 0.9, p[2]);
         shaft.castShadow = true;
         temple.add(shaft);
 
-        // 柱頭飾板 (Capital Abacus)
         const capital = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.12, 0.38), trimMat);
         capital.position.set(p[0], p[1] + 1.85, p[2]);
         temple.add(capital);
       });
 
-      // 楣樑柱頂盤 (Architrave)
       const architrave = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.22, 2.3), marbleMat);
       architrave.position.y = 2.7;
       architrave.castShadow = true;
       temple.add(architrave);
 
-      // 三角山牆楣飾浮雕屋頂 (Pediment & Tympanum)
       const pediment = new THREE.Mesh(new THREE.ConeGeometry(2.0, 1.0, 4), marbleMat);
       pediment.position.y = 3.32;
       pediment.rotation.y = Math.PI / 4;
@@ -1840,41 +1986,15 @@
       pediment.castShadow = true;
       temple.add(pediment);
 
-      // 山牆頂角端飾 (Acroterion)
       const acroterion = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.24), trimMat);
       acroterion.position.y = 3.82;
       temple.add(acroterion);
 
       temple.scale.setScalar(1.1);
       group.add(temple);
-      registerObstacle('civics', 0, 0, 2.2);
 
-      // 掃地島民與完整斜握竹掃把
-      sweeperMan = createCharacterMesh(0x004230, 0x483C32);
-      sweeperMan.position.set(2.4, 0, 1.5);
-
-      broomMesh = new THREE.Group();
-      const bHandle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.035, 0.035, 1.6, 8),
-        new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.6 })
-      );
-      bHandle.position.set(0, 0.6, 0.45);
-      bHandle.rotation.x = 0.55;
-      bHandle.castShadow = true;
-      broomMesh.add(bHandle);
-
-      const bHead = new THREE.Mesh(
-        new THREE.ConeGeometry(0.24, 0.5, 8),
-        new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.8 })
-      );
-      bHead.position.set(0, 0.12, 0.8);
-      bHead.rotation.x = 0.55;
-      bHead.castShadow = true;
-      broomMesh.add(bHead);
-
-      sweeperMan.add(broomMesh);
-      group.add(sweeperMan);
-      registerObstacle('civics', 2.4, 1.5, 0.8);
+      // 2) 嚴格保護公民島地標神殿，半徑設為 2.8 杜絕走入
+      registerObstacle('civics', 0, 0, 2.8);
 
       return group;
     }
@@ -1896,7 +2016,7 @@
       boxGroup.add(mascotLeader);
 
       boxGroup.position.set(-2.2, 0, -1.8);
-      registerObstacle('sport', -2.2, -1.8, 0.8);
+      registerObstacle('sport', -2.2, -1.8, 0.9);
       return boxGroup;
     }
 
@@ -1927,27 +2047,34 @@
       return sprite;
     }
 
+    // 3) 優化樹木質感
     const TREE_LEAF_COLORS = [0x003C00, 0x145314, 0x014943];
 
     function createTree() {
       const tree = new THREE.Group();
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c2b0c, roughness: 0.85 });
+
       const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.12, 0.16, 0.8, 5),
-        new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 })
+        new THREE.CylinderGeometry(0.12, 0.22, 1.1, 8),
+        trunkMat
       );
-      trunk.position.y = 0.4;
+      trunk.position.y = 0.55;
       trunk.castShadow = true;
       tree.add(trunk);
 
-      const isCone = Math.random() > 0.5;
       const leafColor = getRandomItem(TREE_LEAF_COLORS);
-      const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, flatShading: true, roughness: 0.7 });
-      const crown = isCone 
-        ? new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.4, 5), leafMat)
-        : new THREE.Mesh(new THREE.DodecahedronGeometry(0.65), leafMat);
-      crown.position.y = isCone ? 1.3 : 1.1;
-      crown.castShadow = true;
-      tree.add(crown);
+      const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, flatShading: true, roughness: 0.75 });
+
+      const crownLower = new THREE.Mesh(new THREE.DodecahedronGeometry(0.72, 1), leafMat);
+      crownLower.position.y = 1.25;
+      crownLower.castShadow = true;
+      tree.add(crownLower);
+
+      const crownUpper = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 1), leafMat);
+      crownUpper.position.y = 1.7;
+      crownUpper.castShadow = true;
+      tree.add(crownUpper);
+
       return tree;
     }
 
@@ -1968,30 +2095,40 @@
       return flower;
     }
 
+    // 3) 優化路燈質感
     function createStreetLamp() {
       const lamp = new THREE.Group();
-      const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.12, 2.2, 6),
-        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.5 })
-      );
-      pole.position.y = 1.1;
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.3 });
+
+      const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.3, 8), metalMat);
+      lampBase.position.y = 0.15;
+      lampBase.castShadow = true;
+      lamp.add(lampBase);
+
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 2.2, 8), metalMat);
+      pole.position.y = 1.25;
       pole.castShadow = true;
       lamp.add(pole);
 
-      const head = new THREE.Mesh(
-        new THREE.ConeGeometry(0.35, 0.3, 5),
-        new THREE.MeshStandardMaterial({ color: 0x0f172a })
-      );
-      head.position.y = 2.25;
-      head.castShadow = true;
-      lamp.add(head);
+      const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.08, 0.2, 6), metalMat);
+      bracket.position.y = 2.35;
+      lamp.add(bracket);
 
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
-      bulb.position.y = 2.05;
+      const bulb = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xfef08a })
+      );
+      bulb.position.y = 2.5;
       lamp.add(bulb);
 
+      const lampCap = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.22, 4), metalMat);
+      lampCap.position.y = 2.72;
+      lampCap.rotation.y = Math.PI / 4;
+      lampCap.castShadow = true;
+      lamp.add(lampCap);
+
       const pointLight = new THREE.PointLight(0xfef08a, 0.9, 11);
-      pointLight.position.set(0, 2.1, 0);
+      pointLight.position.set(0, 2.5, 0);
       lamp.add(pointLight);
       return lamp;
     }
@@ -2069,7 +2206,7 @@
     const ISLAND_CONFIG = [
       { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0x443423, pos: [0, 0, 0] },
       { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0x3C421A, pos: [-10.5, 0, -8.5] },
-      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂', color: 0x534818, pos: [10.5, 0, -8.5] },
+      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0x534818, pos: [10.5, 0, -8.5] },
       { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', isGaussian: true, pos: [-10.5, 0, 8.5] },
       { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0x4D3E2B, pos: [10.5, 0, 8.5] }
     ];
@@ -2114,7 +2251,6 @@
       return bridge;
     }
 
-    // 穿透式島嶼側洞入口裝飾 (直接開洞穿透，不阻擋視線)
     function createIslandTunnelHole() {
       const portal = new THREE.Group();
       const darkCaveMat = new THREE.MeshBasicMaterial({ color: 0x05050b });
@@ -2135,6 +2271,7 @@
       return portal;
     }
 
+    // 3) 優化台車質感
     let cartGroup = null;
     let cartProgress = 0;
     let trackCurve = null;
@@ -2219,30 +2356,50 @@
       });
 
       cartGroup = new THREE.Group();
-      const cartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.5 });
+      const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
+      const ironFrameMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.85, roughness: 0.25 });
+      const brassMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 });
 
-      const cartBody = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.55, 1.9), cartMat);
+      const cartBody = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.55, 1.9), woodCartMat);
       cartBody.position.y = 0.45;
       cartBody.castShadow = true;
       cartGroup.add(cartBody);
 
-      const roof = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 2.0), cartMat);
+      const frameBottom = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.08, 1.94), ironFrameMat);
+      frameBottom.position.y = 0.2;
+      cartGroup.add(frameBottom);
+
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.08, 2.05), woodCartMat);
       roof.position.y = 1.3;
       roof.castShadow = true;
       cartGroup.add(roof);
 
       [[-0.55, 0.88, -0.75], [0.55, 0.88, -0.75], [-0.55, 0.88, 0.75], [0.55, 0.88, 0.75]].forEach(pos => {
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.85, 6), cartMat);
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.85, 8), ironFrameMat);
         pillar.position.set(...pos);
         cartGroup.add(pillar);
       });
 
+      const headLight = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.16, 12), brassMat);
+      headLight.rotation.x = Math.PI / 2;
+      headLight.position.set(0, 0.75, 1.0);
+      cartGroup.add(headLight);
+
+      const bulbLight = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+      bulbLight.position.set(0, 0.75, 1.08);
+      cartGroup.add(bulbLight);
+
       [[-0.6, 0.15, -0.55], [0.6, 0.15, -0.55], [-0.6, 0.15, 0.55], [0.6, 0.15, 0.55]].forEach(pos => {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.1, 10), cartMat);
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.12, 12), ironFrameMat);
         wheel.rotation.z = Math.PI / 2;
         wheel.position.set(...pos);
         wheel.castShadow = true;
         cartGroup.add(wheel);
+
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.14, 8), brassMat);
+        hub.rotation.z = Math.PI / 2;
+        hub.position.set(...pos);
+        cartGroup.add(hub);
       });
 
       system.add(cartGroup);
@@ -2479,8 +2636,6 @@
       });
 
       renderer.domElement.addEventListener('pointerup', (e) => {
-        if (isIslandLocked) return;
-
         if (Math.hypot(e.clientX - startX, e.clientY - startY) > 8) return;
 
         const rect = renderer.domElement.getBoundingClientRect();
@@ -2531,6 +2686,7 @@
       let clock = new THREE.Clock();
       nextSkyEventTime = Date.now() + 5000;
 
+      // 2) 障礙物阻擋判定：嚴格確認新目標點或行走路徑不會踏入地標範圍
       function isPositionBlocked(islandId, localX, localZ) {
         const obsList = islandObstacles[islandId];
         if (!obsList) return false;
@@ -2586,13 +2742,7 @@
         // 大陀螺比賽時原地自轉
         const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
         if (mainBeybladeTop && isTournamentActive) {
-          mainBeybladeTop.rotation.y += 0.015; // 比賽進行中緩慢平滑原地自轉
-        }
-
-        // 掃地動畫
-        if (broomMesh && sweeperMan) {
-          broomMesh.rotation.y = Math.sin(time * 3.5) * 0.35;
-          sweeperMan.rotation.y = Math.sin(time * 3.5) * 0.18;
+          mainBeybladeTop.rotation.y += 0.015;
         }
 
         // 吉祥物招呼
@@ -2642,7 +2792,7 @@
           }
         });
 
-        // 人物交叉步態擺動與避開障礙物
+        // 1) & 2) 人物四肢交錯擺動 (手臂與雙腳對角交叉) + 避開障礙物
         villagers.forEach(v => {
           const limbs = v.obj.userData.limbs;
 
@@ -2680,16 +2830,18 @@
                 };
                 v.state = 'bridge_start';
               } else {
+                // 2) 障礙物安全尋徑檢測
                 const curIslandCfg = ISLAND_CONFIG[v.currentIslandIdx];
                 const curCenter = curIslandCfg.pos;
                 let foundValid = false;
                 let tx = 0, tz = 0;
 
-                for (let attempt = 0; attempt < 8; attempt++) {
+                for (let attempt = 0; attempt < 10; attempt++) {
                   const a = Math.random() * Math.PI * 2;
                   const r = Math.random() * 3.4;
                   const lx = Math.cos(a) * r;
                   const lz = Math.sin(a) * r;
+                  // 檢查是否侵入任何地標或樹木半徑
                   if (!isPositionBlocked(curIslandCfg.id, lx, lz)) {
                     tx = curCenter[0] + lx;
                     tz = curCenter[2] + lz;
@@ -2733,6 +2885,7 @@
               v.obj.position.z = v.currentZ;
               v.obj.rotation.y = Math.atan2(dx, dz);
 
+              // 1) 雙手與雙腳交錯擺動 (左手與右腳向前，右手與左腳向前，絕不同手同腳)
               v.walkCycle += 0.18;
               const swingAngle = Math.sin(v.walkCycle) * 0.45;
 
@@ -2785,6 +2938,11 @@
         const p = document.getElementById(`panel-${id}`);
         if (p) p.style.display = (id === islandData.id) ? 'block' : 'none';
       });
+
+      // 如果點開運動島，預設切回增肌減脂第一頁
+      if (islandData.id === 'sport') {
+        switchSportTab('exercise');
+      }
 
       document.getElementById('side-drawer').classList.add('open');
 
