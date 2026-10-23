@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>班級學習島冒險平台</title>
+  <title>三年一班學習島</title>
 
   <!-- 3D 庫與工具 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -19,7 +19,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
       overflow: hidden;
-      background-color: #2E3B48;
+      background-color: #0F0F43;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
@@ -400,7 +400,7 @@
 
     <div class="header-actions">
       <div class="hud-btn-card" id="profile-btn">
-        <span class="user-avatar" id="hud-avatar">🦊</span>
+        <span class="user-avatar" id="hud-avatar">🐺</span>
         <span class="user-name" id="hud-name">學生設定</span>
       </div>
       <div class="hud-btn-card hud-btn-teacher" id="teacher-menu-btn">
@@ -423,7 +423,7 @@
     </button>
   </div>
 
-  <!-- 登入彈窗 -->
+  <!-- 登入彈窗：童軍探險夥伴頭像 -->
   <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -445,14 +445,14 @@
       <div class="form-group">
         <label>挑選探險夥伴頭像</label>
         <div class="avatar-grid">
-          <button type="button" class="avatar-opt selected" data-avatar="🦊">🦊<span>小狐</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🐻">🐻<span>大熊</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🐰">🐰<span>飛兔</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🦉">🦉<span>智慧鴞</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🐼">🐼<span>熊貓</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🦁">🦁<span>小獅</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🐬">🐬<span>海豚</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🚀">🚀<span>火箭客</span></button>
+          <button type="button" class="avatar-opt selected" data-avatar="🐺">🐺<span>狼</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🐻">🐻<span>熊</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🐍">🐍<span>蛇</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🐘">🐘<span>象</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🦅">🦅<span>鳥</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🦍">🦍<span>猩猩</span></button>
+          <button type="button" class="avatar-opt" data-avatar="👦">👦<span>毛克力</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🦁">🦁<span>獅</span></button>
         </div>
       </div>
       <button class="btn-action btn-blue" id="btn-save-profile">✨ 進入冒險！</button>
@@ -659,12 +659,12 @@
     }
 
     // ==========================================
-    // 2. 學生身分與名冊管理 (3) 重新整理需重新登入)
+    // 2. 學生身分與名冊管理 (每次重整需重新登入)
     // ==========================================
     let currentStudent = { 
       seatNumber: '', 
       name: '小探險家', 
-      avatar: '🦊', 
+      avatar: '🐺', 
       myPoints: 0, 
       beybladeRank: '' 
     };
@@ -709,10 +709,9 @@
       document.getElementById('guest-name-group').style.display = e.target.value === 'guest' ? 'block' : 'none';
     });
 
-    // 3) 改為每次重新整理必須重新登入 (清空暫存並強制顯示彈窗)
     function initStudent() {
       sessionStorage.removeItem('island_student_data_session');
-      currentStudent = { seatNumber: '', name: '小探險家', avatar: '🦊', myPoints: 0, beybladeRank: '' };
+      currentStudent = { seatNumber: '', name: '小探險家', avatar: '🐺', myPoints: 0, beybladeRank: '' };
       document.getElementById('login-modal').classList.remove('hidden');
       loadStudentRoster();
     }
@@ -1008,20 +1007,58 @@
     // 6. 戰鬥陀螺大賽系統
     // ==========================================
     let beybladeBaseMesh = null;
+    let beybladeLandmarkGroup = null;
+    let beybladeDecorations = [];
+    const COLOR_GRAY_DORMANT = 0xD1D0CE;
 
     if (bbRef) {
       bbRef.on('value', snap => {
         bbState = snap.val() || { isOpen: false, deadline: '', status: 'closed', players: {}, matches: [] };
         renderBeybladeUI();
-        updateBeybladeIslandColor();
+        updateBeybladeIslandDormancy();
       });
     }
 
-    function updateBeybladeIslandColor() {
-      if (!beybladeBaseMesh) return;
+    function updateBeybladeIslandDormancy() {
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
-      const targetColor = isTournamentActive ? 0xB7410E : 0x6E451F;
-      beybladeBaseMesh.material.color.setHex(targetColor);
+
+      if (beybladeBaseMesh) {
+        if (isTournamentActive) {
+          beybladeBaseMesh.material.color.setHex(0xCD7F32);
+        } else {
+          beybladeBaseMesh.material.color.setHex(COLOR_GRAY_DORMANT);
+        }
+      }
+
+      if (beybladeLandmarkGroup) {
+        beybladeLandmarkGroup.traverse(child => {
+          if (child.isMesh && child.material) {
+            if (!child.userData.origColor) {
+              child.userData.origColor = child.material.color.getHex();
+            }
+            if (isTournamentActive) {
+              child.material.color.setHex(child.userData.origColor);
+            } else {
+              child.material.color.setHex(COLOR_GRAY_DORMANT);
+            }
+          }
+        });
+      }
+
+      beybladeDecorations.forEach(obj => {
+        obj.traverse(child => {
+          if (child.isMesh && child.material) {
+            if (!child.userData.origColor) {
+              child.userData.origColor = child.material.color.getHex();
+            }
+            if (isTournamentActive) {
+              child.material.color.setHex(child.userData.origColor);
+            } else {
+              child.material.color.setHex(COLOR_GRAY_DORMANT);
+            }
+          }
+        });
+      });
     }
 
     function renderBeybladeUI() {
@@ -1205,34 +1242,41 @@
     }
 
     // ==========================================
-    // 8. 四階段時段判定與夜間新色輪替 (#36525E, #464F53, #2D004E, #2E3B48)
+    // 8. 6 個時段背景色彩精準判定 (清晨, 上午, 中午, 下午, 夜晚, 午夜)
     // ==========================================
-    const NIGHT_PALETTE = ['#36525E', '#464F53', '#2D004E', '#2E3B48'];
-
-    function getNightColor() {
-      const cycleIndex = Math.floor(Date.now() / (3 * 60 * 1000)) % NIGHT_PALETTE.length;
-      return NIGHT_PALETTE[cycleIndex];
-    }
-
     function getTimePhase() {
       const hour = new Date().getHours();
-      if (hour >= 6 && hour < 11) {
-        return { phase: 'morning', name: '晨曦早晨', bg: '#38bdf8', light: 1.2, sun: 0xffedd5, hemi: 0xffffff };
-      } else if (hour >= 11 && hour < 13) {
-        return { phase: 'noon', name: '明亮正午', bg: '#0284c7', light: 1.45, sun: 0xffffff, hemi: 0xf0fdf4 };
-      } else if (hour >= 13 && hour < 16) {
-        return { phase: 'afternoon', name: '溫暖午後', bg: '#f59e0b', light: 1.15, sun: 0xfed7aa, hemi: 0xffedd5 };
-      } else {
-        const nightBg = getNightColor();
-        return { phase: 'night', name: '靜謐夜晚', bg: nightBg, light: 1.1, sun: 0xffffff, hemi: 0x94a3b8 };
+      
+      // 1) 清晨 (03:00 - 06:00): #F7EDC4
+      if (hour >= 3 && hour < 6) {
+        return { phase: 'dawn', name: '晨光微曦', bg: '#F7EDC4', light: 1.05, sun: 0xffedd5, hemi: 0xfffbeb };
+      } 
+      // 2) 上午 (06:00 - 11:00): #F8E8CA
+      else if (hour >= 6 && hour < 11) {
+        return { phase: 'morning', name: '溫煦上午', bg: '#F8E8CA', light: 1.25, sun: 0xfff7ed, hemi: 0xffffff };
+      } 
+      // 3) 中午 (11:00 - 13:00): #FFEB80
+      else if (hour >= 11 && hour < 13) {
+        return { phase: 'noon', name: '耀眼正午', bg: '#FFEB80', light: 1.45, sun: 0xffffff, hemi: 0xfef08a };
+      } 
+      // 4) 下午 (13:00 - 17:00): #CFB53B
+      else if (hour >= 13 && hour < 17) {
+        return { phase: 'afternoon', name: '金黃午後', bg: '#CFB53B', light: 1.2, sun: 0xfde68a, hemi: 0xfef3c7 };
+      } 
+      // 5) 夜晚 (17:00 - 23:00): #0F0F43
+      else if (hour >= 17 && hour < 23) {
+        return { phase: 'night', name: '靜謐夜晚', bg: '#0F0F43', light: 0.95, sun: 0x93c5fd, hemi: 0x1e1b4b };
+      } 
+      // 6) 午夜 (23:00 - 03:00): #001343
+      else {
+        return { phase: 'midnight', name: '幽深午夜', bg: '#001343', light: 0.8, sun: 0x60a5fa, hemi: 0x0f172a };
       }
     }
 
     // ==========================================
-    // 1) 人物配色定義 (暗色調衣服與指定髮色)
+    // 人物配色定義 (暗色調衣服與指定髮色)
     // ==========================================
     const HAIR_COLORS = [0x3A3B3C, 0x483C32, 0x72376A, 0xEBA937];
-    // 衣服顏色調暗，展現沉穩暗色系
     const CLOTHES_COLORS = [0x64321A, 0x782800, 0x997305, 0x004230, 0x052E3B];
 
     function getRandomItem(arr) {
@@ -1245,7 +1289,6 @@
       const cColor = clothesColor !== undefined ? clothesColor : getRandomItem(CLOTHES_COLORS);
       const hColor = hairColor !== undefined ? hairColor : getRandomItem(HAIR_COLORS);
 
-      // 身體
       const body = new THREE.Mesh(
         new THREE.CylinderGeometry(0.28, 0.38, 0.75, 6),
         new THREE.MeshStandardMaterial({ color: cColor, roughness: 0.7 })
@@ -1255,7 +1298,6 @@
       body.receiveShadow = true;
       person.add(body);
 
-      // 頭部
       const head = new THREE.Mesh(
         new THREE.SphereGeometry(0.28, 8, 8),
         new THREE.MeshStandardMaterial({ color: 0xffedd5, roughness: 0.6 })
@@ -1264,7 +1306,6 @@
       head.castShadow = true;
       person.add(head);
 
-      // 頭髮
       const hair = new THREE.Mesh(
         new THREE.SphereGeometry(0.29, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.6),
         new THREE.MeshStandardMaterial({ color: hColor, roughness: 0.6 })
@@ -1276,7 +1317,6 @@
       return person;
     }
 
-    // 1) 閱讀島專屬高斯混色紋理生成 (#00322F 與 #36454F 徑向高斯模糊)
     function createGaussianReadingTexture() {
       const canvas = document.createElement('canvas');
       canvas.width = 512;
@@ -1416,30 +1456,30 @@
       bb.scale.setScalar(1.2);
 
       const miniColors = [0xef4444, 0x3b82f6, 0xeab308];
-      const miniPositions = [
-        [2.6, 0, 1.5],
-        [-2.4, 0, 2.0],
-        [0.2, 0, -2.8]
+      const safeMiniPositions = [
+        [0.0, 0, 2.3],
+        [-2.0, 0, -1.2],
+        [2.0, 0, -1.2]
       ];
 
-      miniPositions.forEach((pos, i) => {
+      safeMiniPositions.forEach((pos, i) => {
         const mini = new THREE.Group();
         mini.position.set(...pos);
 
         const mTip = new THREE.Mesh(
-          new THREE.ConeGeometry(0.25, 0.4, 8),
+          new THREE.ConeGeometry(0.13, 0.2, 8),
           new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 })
         );
         mTip.rotation.x = Math.PI;
-        mTip.position.y = 0.2;
+        mTip.position.y = 0.1;
         mTip.castShadow = true;
         mini.add(mTip);
 
         const mRing = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.7, 0.5, 0.2, 8),
+          new THREE.CylinderGeometry(0.35, 0.25, 0.1, 8),
           new THREE.MeshStandardMaterial({ color: miniColors[i], metalness: 0.6, roughness: 0.3 })
         );
-        mRing.position.y = 0.45;
+        mRing.position.y = 0.22;
         mRing.castShadow = true;
         mini.add(mRing);
 
@@ -1604,7 +1644,7 @@
       const group = new THREE.Group();
 
       const temple = new THREE.Group();
-      const marbleMat = new THREE.MeshStandardMaterial({ color: 0xf5f5dc, roughness: 0.4 });
+      const marbleMat = new THREE.MeshStandardMaterial({ color: 0x928E85, roughness: 0.45 });
 
       [3.8, 3.4, 3.0].forEach((w, i) => {
         const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, w * 0.8), marbleMat);
@@ -1646,19 +1686,21 @@
 
       broomMesh = new THREE.Group();
       const bHandle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.04, 1.2, 6),
-        new THREE.MeshStandardMaterial({ color: 0x78350f })
+        new THREE.CylinderGeometry(0.035, 0.035, 1.6, 6),
+        new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.6 })
       );
-      bHandle.position.set(0, 0.6, 0.2);
-      bHandle.rotation.x = 0.4;
+      bHandle.position.set(0, 0.6, 0.45);
+      bHandle.rotation.x = 0.55;
+      bHandle.castShadow = true;
       broomMesh.add(bHandle);
 
       const bHead = new THREE.Mesh(
-        new THREE.ConeGeometry(0.22, 0.35, 6),
-        new THREE.MeshStandardMaterial({ color: 0xd97706 })
+        new THREE.ConeGeometry(0.24, 0.5, 6),
+        new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.8 })
       );
-      bHead.position.set(0, 0.15, 0.42);
-      bHead.rotation.x = 0.4;
+      bHead.position.set(0, 0.12, 0.8);
+      bHead.rotation.x = 0.55;
+      bHead.castShadow = true;
       broomMesh.add(bHead);
 
       sweeperMan.add(broomMesh);
@@ -1694,6 +1736,8 @@
       return sprite;
     }
 
+    const TREE_LEAF_COLORS = [0x003C00, 0x145314, 0x014943];
+
     function createTree() {
       const tree = new THREE.Group();
       const trunk = new THREE.Mesh(
@@ -1705,8 +1749,8 @@
       tree.add(trunk);
 
       const isCone = Math.random() > 0.5;
-      const leafColor = [0x166534, 0x15803d, 0x22c55e, 0x14532d][Math.floor(Math.random() * 4)];
-      const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, flatShading: true });
+      const leafColor = getRandomItem(TREE_LEAF_COLORS);
+      const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, flatShading: true, roughness: 0.7 });
       const crown = isCone 
         ? new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.4, 5), leafMat)
         : new THREE.Mesh(new THREE.DodecahedronGeometry(0.65), leafMat);
@@ -1751,11 +1795,11 @@
       head.castShadow = true;
       lamp.add(head);
 
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
       bulb.position.y = 2.05;
       lamp.add(bulb);
 
-      const pointLight = new THREE.PointLight(0xfef08a, 2.8, 22);
+      const pointLight = new THREE.PointLight(0xfef08a, 0.9, 11);
       pointLight.position.set(0, 2.1, 0);
       lamp.add(pointLight);
       return lamp;
@@ -1796,34 +1840,47 @@
       skyCreatures.forEach(c => scene.remove(c.mesh));
       skyCreatures = [];
       const count = Math.floor(Math.random() * 3) + 3;
-      const startX = -45;
+
+      let fromLeft = true;
+      if (type === 'bat') {
+        fromLeft = Math.random() > 0.5;
+      }
+
+      const startX = fromLeft ? -45 : 45;
+      const moveDirection = fromLeft ? 1 : -1;
       const startZ = (Math.random() - 0.5) * 40;
       const altitude = 24 + Math.random() * 8;
 
       for (let i = 0; i < count; i++) {
         const mesh = type === 'bird' ? createBirdMesh() : createBatMesh();
-        mesh.position.set(startX + (Math.random() - 0.5) * 6 - i * 3, altitude + (Math.random() - 0.5) * 3, startZ + (Math.random() - 0.5) * 6);
-        mesh.rotation.y = Math.PI / 2;
+        mesh.position.set(
+          startX + (Math.random() - 0.5) * 6 - i * 3 * moveDirection, 
+          altitude + (Math.random() - 0.5) * 3, 
+          startZ + (Math.random() - 0.5) * 6
+        );
+
+        mesh.rotation.y = fromLeft ? Math.PI / 2 : -Math.PI / 2;
         scene.add(mesh);
 
         skyCreatures.push({
           mesh: mesh,
-          speed: 0.16 + Math.random() * 0.04,
+          speed: (0.16 + Math.random() * 0.04) * moveDirection,
           wingSpeed: type === 'bird' ? 0.25 : 0.4,
-          wingPhase: Math.random() * Math.PI
+          wingPhase: Math.random() * Math.PI,
+          direction: moveDirection
         });
       }
     }
 
     // ==========================================
-    // 10. 群島配置（1) 地面顏色更新）
+    // 10. 群島配置
     // ==========================================
     const ISLAND_CONFIG = [
-      { id: 'beyblade', title: '戰鬥陀螺島', color: 0x6E451F, pos: [0, 0, 0] },
-      { id: 'nature',   title: '生態科技島', color: 0x3C421A, pos: [-10.5, 0, -8.5] }, // 1) #3C421A
-      { id: 'sport',    title: '健身運動島', color: 0x534818, pos: [10.5, 0, -8.5] },  // 1) #534818
-      { id: 'reading',  title: '閱讀島',     isGaussian: true, pos: [-10.5, 0, 8.5] }, // 1) #00322F & #36454F 高斯混和
-      { id: 'civics',   title: '優良公民島', color: 0x4D3E2B, pos: [10.5, 0, 8.5] }   // 1) #4D3E2B
+      { id: 'beyblade', title: '戰鬥陀螺島', color: 0x443423, pos: [0, 0, 0] },
+      { id: 'nature',   title: '生態科技島', color: 0x3C421A, pos: [-10.5, 0, -8.5] },
+      { id: 'sport',    title: '健身運動島', color: 0x534818, pos: [10.5, 0, -8.5] },
+      { id: 'reading',  title: '閱讀島',     isGaussian: true, pos: [-10.5, 0, 8.5] },
+      { id: 'civics',   title: '優良公民島', color: 0x4D3E2B, pos: [10.5, 0, 8.5] }
     ];
 
     let scene, camera, renderer, controls;
@@ -1831,9 +1888,9 @@
     let villagers = [];
     let skyCreatures = [];
     let nextSkyEventTime = 0;
-    let lastNightBg = null;
+    let lastPhaseName = '';
+    let dirLight, hemiLight;
 
-    // 1) 水泥橋樑，顏色更新為 #3A3B3C
     function createConcreteBridge(p1, p2) {
       const bridge = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
@@ -1844,7 +1901,7 @@
       bridge.position.copy(mid);
       bridge.lookAt(v2);
 
-      const concreteMat = new THREE.MeshStandardMaterial({ color: 0x3A3B3C, roughness: 0.6 }); // #3A3B3C
+      const concreteMat = new THREE.MeshStandardMaterial({ color: 0x4D4D4D, roughness: 0.6 });
 
       const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, length - 4.5), concreteMat);
       deck.position.set(0, -0.05, 0);
@@ -1862,30 +1919,37 @@
       return bridge;
     }
 
-    // 2) 穿梭於各島間的封閉雙軌道（枕木精確垂直於軌道切線方向）
     let cartGroup = null;
     let cartProgress = 0;
     let trackCurve = null;
 
-    function createIslandTraversingTrackAndCart() {
+    function createFigureEightTrackAndCart() {
       const system = new THREE.Group();
-
       const TRACK_Y = -1.6;
+
       const points = [
-        new THREE.Vector3(0, TRACK_Y, -13.5),
+        new THREE.Vector3(0, TRACK_Y, 0),
         new THREE.Vector3(6.5, TRACK_Y, -4.5),
-        new THREE.Vector3(14.5, TRACK_Y, 0),
+        new THREE.Vector3(12.5, TRACK_Y, -9.5),
+        new THREE.Vector3(14.5, TRACK_Y, -4.5),
         new THREE.Vector3(6.5, TRACK_Y, 4.5),
-        new THREE.Vector3(0, TRACK_Y, 13.5),
+        new THREE.Vector3(12.5, TRACK_Y, 9.5),
+        new THREE.Vector3(10.5, TRACK_Y, 13.5),
+        new THREE.Vector3(0, TRACK_Y, 7.5),
+        new THREE.Vector3(0, TRACK_Y, 0),
+        new THREE.Vector3(-6.5, TRACK_Y, -4.5),
+        new THREE.Vector3(-12.5, TRACK_Y, -9.5),
+        new THREE.Vector3(-14.5, TRACK_Y, -4.5),
         new THREE.Vector3(-6.5, TRACK_Y, 4.5),
-        new THREE.Vector3(-14.5, TRACK_Y, 0),
-        new THREE.Vector3(-6.5, TRACK_Y, -4.5)
+        new THREE.Vector3(-12.5, TRACK_Y, 9.5),
+        new THREE.Vector3(-10.5, TRACK_Y, 13.5),
+        new THREE.Vector3(0, TRACK_Y, 7.5)
       ];
 
-      trackCurve = new THREE.CatmullRomCurve3(points, true, 'catmullrom', 0.2);
+      trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.2);
 
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
-      const divisions = 140;
+      const divisions = 200;
       const innerPts = [];
       const outerPts = [];
       const railGauge = 0.35;
@@ -1903,22 +1967,21 @@
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 120, 0.05, 6, true);
-      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 120, 0.05, 6, true);
+      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 160, 0.05, 6, true);
+      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 160, 0.05, 6, true);
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      // 2) 枕木鋪設：方向旋轉 90 度，確保精確「垂直」跨越軌道切線
       const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
-      for (let i = 0; i < 90; i++) {
-        const t = i / 90;
+      for (let i = 0; i < 110; i++) {
+        const t = i / 110;
         const pt = trackCurve.getPointAt(t);
         const tan = trackCurve.getTangentAt(t);
         const tie = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.2), tieMat);
         tie.position.copy(pt);
         tie.position.y -= 0.04;
         tie.lookAt(pt.clone().add(tan));
-        tie.rotateY(Math.PI / 2); // 旋轉 90 度保持垂直
+        tie.rotateY(Math.PI / 2);
         system.add(tie);
       }
 
@@ -1956,7 +2019,7 @@
     function init3D() {
       const container = document.getElementById('canvas-container');
       const timePhase = getTimePhase();
-      lastNightBg = timePhase.bg;
+      lastPhaseName = timePhase.name;
       document.getElementById('time-badge').textContent = `🕒 時段：${timePhase.name}`;
 
       scene = new THREE.Scene();
@@ -1987,10 +2050,10 @@
       controls.target.set(0, 0, 0);
       controls.update();
 
-      const hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x1e293b, timePhase.light);
+      hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x1e293b, timePhase.light);
       scene.add(hemiLight);
 
-      const dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 1.3);
+      dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 1.3);
       dirLight.position.set(15, 48, 25);
       dirLight.castShadow = true;
       dirLight.shadow.mapSize.width = 1024;
@@ -2025,7 +2088,7 @@
         );
         sun.position.set(0, 38, -25);
         scene.add(sun);
-      } else if (timePhase.phase === 'night') {
+      } else if (timePhase.phase === 'night' || timePhase.phase === 'midnight') {
         const moon = new THREE.Mesh(
           new THREE.SphereGeometry(3.2, 16, 16),
           new THREE.MeshBasicMaterial({ color: 0xfef9c3 })
@@ -2034,7 +2097,7 @@
         scene.add(moon);
       }
 
-      // 橋梁架設 (#3A3B3C)
+      // 橋梁架設
       for (let i = 1; i < ISLAND_CONFIG.length; i++) {
         scene.add(createConcreteBridge(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
       }
@@ -2043,8 +2106,8 @@
       scene.add(createConcreteBridge(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
       scene.add(createConcreteBridge(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
 
-      // 穿梭封閉雙軌道與台車
-      scene.add(createIslandTraversingTrackAndCart());
+      // 8字形穿梭軌道
+      scene.add(createFigureEightTrackAndCart());
 
       // 產生 5 座島嶼
       ISLAND_CONFIG.forEach(cfg => {
@@ -2054,7 +2117,6 @@
         const baseRadius = cfg.id === 'beyblade' ? 5.8 : 5.0;
         let baseMat;
 
-        // 1) 閱讀島採用高斯混色紋理
         if (cfg.isGaussian) {
           baseMat = new THREE.MeshStandardMaterial({ 
             map: createGaussianReadingTexture(), 
@@ -2079,13 +2141,13 @@
         base.receiveShadow = true;
         group.add(base);
 
-        if (cfg.id === 'beyblade') {
-          beybladeBaseMesh = base;
-        }
-
         let landmark;
         if (cfg.id === 'nature') landmark = createNatureLandmark();
-        else if (cfg.id === 'beyblade') landmark = createBeybladeModel();
+        else if (cfg.id === 'beyblade') {
+          landmark = createBeybladeModel();
+          beybladeBaseMesh = base;
+          beybladeLandmarkGroup = landmark;
+        }
         else if (cfg.id === 'sport') landmark = createSportLandmark();
         else if (cfg.id === 'reading') landmark = createReadingLandmark();
         else if (cfg.id === 'civics') landmark = createCivicsLandmark();
@@ -2095,6 +2157,7 @@
         labelSprite.position.set(0, 5.8, 0);
         group.add(labelSprite);
 
+        // 樹木
         const treeCount = Math.floor(Math.random() * 3) + 3;
         for (let t = 0; t < treeCount; t++) {
           const tree = createTree();
@@ -2103,8 +2166,10 @@
           tree.position.set(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
           tree.scale.setScalar(0.7 + Math.random() * 0.4);
           group.add(tree);
+          if (cfg.id === 'beyblade') beybladeDecorations.push(tree);
         }
 
+        // 小花
         const flowerCount = Math.floor(Math.random() * 4) + 4;
         for (let f = 0; f < flowerCount; f++) {
           const flower = createFlower();
@@ -2112,12 +2177,15 @@
           const dist = 1.6 + Math.random() * (baseRadius - 2.2);
           flower.position.set(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
           group.add(flower);
+          if (cfg.id === 'beyblade') beybladeDecorations.push(flower);
         }
 
-        if (timePhase.phase === 'night') {
+        // 夜晚或午夜亮起路燈
+        if (timePhase.phase === 'night' || timePhase.phase === 'midnight') {
           const lamp = createStreetLamp();
           lamp.position.set(Math.cos(0.8) * (baseRadius - 1.0), 0, Math.sin(0.8) * (baseRadius - 1.0));
           group.add(lamp);
+          if (cfg.id === 'beyblade') beybladeDecorations.push(lamp);
         }
 
         group.userData = cfg;
@@ -2125,7 +2193,9 @@
         islandGroups.push(group);
       });
 
-      // 1) 島民建立：暗色調服裝與隨機髮色
+      updateBeybladeIslandDormancy();
+
+      // 島民建立
       const totalVillagers = 18;
 
       for (let i = 0; i < totalVillagers; i++) {
@@ -2203,13 +2273,21 @@
         const time = clock.getElapsedTime();
         const now = Date.now();
 
-        // 4) 夜間 3 分鐘色票輪替 (#36525E, #464F53, #2D004E, #2E3B48)
+        // 時段顏色檢測與平滑變更
         const currentPhase = getTimePhase();
-        if (currentPhase.phase === 'night') {
-          if (currentPhase.bg !== lastNightBg) {
-            lastNightBg = currentPhase.bg;
-            scene.background.set(currentPhase.bg);
-            scene.fog.color.set(currentPhase.bg);
+        if (currentPhase.name !== lastPhaseName) {
+          lastPhaseName = currentPhase.name;
+          document.getElementById('time-badge').textContent = `🕒 時段：${currentPhase.name}`;
+          scene.background.set(currentPhase.bg);
+          scene.fog.color.set(currentPhase.bg);
+
+          if (hemiLight) {
+            hemiLight.color.set(currentPhase.hemi);
+            hemiLight.intensity = currentPhase.light;
+          }
+          if (dirLight) {
+            dirLight.color.set(currentPhase.sun);
+            dirLight.intensity = currentPhase.light * 1.3;
           }
         }
 
@@ -2221,18 +2299,18 @@
         // 3 顆小陀螺旋轉
         spinningMiniTops.forEach((mini, idx) => {
           mini.rotation.y += 0.15 + idx * 0.03;
-          mini.position.y = Math.sin(time * 3.0 + idx) * 0.05;
+          mini.position.y = Math.sin(time * 3.0 + idx) * 0.04;
         });
 
         // 掃地動畫
         if (broomMesh && sweeperMan) {
-          broomMesh.rotation.y = Math.sin(time * 3.5) * 0.4;
-          sweeperMan.rotation.y = Math.sin(time * 3.5) * 0.2;
+          broomMesh.rotation.y = Math.sin(time * 3.5) * 0.35;
+          sweeperMan.rotation.y = Math.sin(time * 3.5) * 0.18;
         }
 
-        // 台車平行切線行駛
+        // 台車在 8 字形軌道上平行切線行駛
         if (cartGroup && trackCurve) {
-          cartProgress = (cartProgress + 0.0008) % 1.0;
+          cartProgress = (cartProgress + 0.0006) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
 
@@ -2247,6 +2325,16 @@
           ropeMesh.rotation.x = time * 5.0;
           jumperMan.position.y = Math.max(0, Math.sin(time * 5.0 - Math.PI / 2) * 0.55);
         }
+
+        // 陀螺島休眠島民顏色反灰
+        const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
+        villagers.forEach(v => {
+          if (v.currentIslandIdx === 0 && !isTournamentActive) {
+            v.obj.traverse(c => {
+              if (c.isMesh && c.material) c.material.color.setHex(COLOR_GRAY_DORMANT);
+            });
+          }
+        });
 
         // 島民走路步態微振動與過橋中心線
         villagers.forEach(v => {
@@ -2320,13 +2408,14 @@
           }
         });
 
-        // 天空生物排程
+        // 天空生物排程 (上午白鳥飛掠、夜晚/午夜蝙蝠出沒)
         if (now >= nextSkyEventTime) {
           if (currentPhase.phase === 'morning') spawnSkyFlock('bird');
-          else if (currentPhase.phase === 'night') spawnSkyFlock('bat');
+          else if (currentPhase.phase === 'night' || currentPhase.phase === 'midnight') spawnSkyFlock('bat');
           nextSkyEventTime = now + (7 * 60 * 1000);
         }
 
+        // 飛行生物左右進出回收
         for (let i = skyCreatures.length - 1; i >= 0; i--) {
           const c = skyCreatures[i];
           c.mesh.position.x += c.speed;
@@ -2334,7 +2423,9 @@
             c.wingPhase += c.wingSpeed;
             c.mesh.userData.wings.rotation.z = Math.sin(c.wingPhase) * 0.45;
           }
-          if (c.mesh.position.x > 50) {
+
+          const outOfBounds = c.direction > 0 ? c.mesh.position.x > 50 : c.mesh.position.x < -50;
+          if (outOfBounds) {
             scene.remove(c.mesh);
             skyCreatures.splice(i, 1);
           }
