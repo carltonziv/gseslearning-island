@@ -1229,44 +1229,41 @@ function registerBeyblade() {
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
-// 點擊島嶼偵測（已加入防點擊穿透機制）
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+// 點擊島嶼偵測（畫布專屬綁定 + 拖曳防誤觸機制）
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      let pointerDownPos = { x: 0, y: 0 };
 
-function onPointerDown(e) {
-  if (isIslandLocked) return;
+      // 1. 記錄按下的起點座標
+      renderer.domElement.addEventListener('pointerdown', (e) => {
+        pointerDownPos.x = e.clientX;
+        pointerDownPos.y = e.clientY;
+      });
 
-  // -----------------------------------------------------------
-  // 防穿透第 1 道：如果有任何彈窗開啟中，絕對不判定點擊島嶼
-  // -----------------------------------------------------------
-  const anyModalOpen = Array.from(document.querySelectorAll('.modal-overlay'))
-    .some(modal => !modal.classList.contains('hidden'));
-  if (anyModalOpen) return;
+      // 2. 只有在「放開」且「沒有大幅滑動拖曳（位移小於 6px）」時才判定為點擊島嶼
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        if (isIslandLocked) return;
 
-  // -----------------------------------------------------------
-  // 防穿透第 2 道：若點擊目標不是 3D 畫布本體（例如點到頂部 HUD、按鈕），直接略過
-  // -----------------------------------------------------------
-  if (e.target.tagName !== 'CANVAS') return;
+        // 計算手指或滑鼠移動距離（若是拖曳平移地圖，則不觸發點擊）
+        const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+        if (dist > 6) return;
 
-  const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-  if (clientX === undefined || clientY === undefined) return;
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-  mouse.x = (clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(islandGroups, true);
 
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(islandGroups, true);
+        if (intersects.length > 0) {
+          let root = intersects[0].object;
+          while (root.parent && root.parent !== scene) root = root.parent;
+          if (root.userData && root.userData.id) {
+            openIslandModal(root.userData.id);
+          }
+        }
+      });
 
-  if (intersects.length > 0) {
-    let root = intersects[0].object;
-    while (root.parent && root.parent !== scene) root = root.parent;
-    if (root.userData && root.userData.id) openIslandModal(root.userData.id);
-  }
-}
-
-      window.addEventListener('pointerdown', onPointerDown);
-      window.addEventListener('resize', () => {
+        window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1305,7 +1302,12 @@ function onPointerDown(e) {
       if (id === 'reading') document.getElementById('modal-reading').classList.remove('hidden');
       if (id === 'beyblade') document.getElementById('modal-beyblade').classList.remove('hidden');
     }
-
+// 防止彈窗內部的任何點擊穿透到底層 3D 畫布
+document.querySelectorAll('.modal-card').forEach(card => {
+  card.addEventListener('pointerdown', e => e.stopPropagation());
+  card.addEventListener('pointerup', e => e.stopPropagation());
+  card.addEventListener('click', e => e.stopPropagation());
+});
     // 啟動程序
     initStudent();
     init3D();
