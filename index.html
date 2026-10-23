@@ -1982,16 +1982,34 @@
       group.add(dbGroup);
       registerObstacle('sport', 0, -1.5, 1.8);
 
-      jumpRopeGroup = new THREE.Group();
+jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.6);
 
+      // 左側甩繩者：面向中央（旋轉 +90 度），伸出右手（靠近跳繩端點）
       const swingerA = createCharacterMesh(false, 0xF5D0A9, 0x64321A, 0x3A3B3C);
       swingerA.position.set(-1.8, 0, 0);
+      swingerA.rotation.y = Math.PI / 2; // 🌟 面向中央 (+X)
+      // 右手抬起向前握住跳繩端點
+      if (swingerA.userData.limbs) {
+        swingerA.userData.limbs.rightArm.rotation.x = -1.2; // 抬臂向前
+        swingerA.userData.limbs.rightArm.rotation.z = -0.3; // 微朝內扣
+      }
       jumpRopeGroup.add(swingerA);
 
+      // 右側甩繩者：面向中央（旋轉 -90 度），伸出左手（靠近跳繩端點）
       const swingerB = createCharacterMesh(false, 0x8D5524, 0x052E3B, 0x483C32);
       swingerB.position.set(1.8, 0, 0);
+      swingerB.rotation.y = -Math.PI / 2; // 🌟 面向中央 (-X)
+      // 左手抬起向前握住跳繩端點
+      if (swingerB.userData.limbs) {
+        swingerB.userData.limbs.leftArm.rotation.x = -1.2; // 抬臂向前
+        swingerB.userData.limbs.leftArm.rotation.z = 0.3; // 微朝內扣
+      }
       jumpRopeGroup.add(swingerB);
+
+      // 將兩位甩繩者儲存至全域或 jumpRopeGroup 供動畫調用
+      jumpRopeGroup.userData.swingerA = swingerA;
+      jumpRopeGroup.userData.swingerB = swingerB;
 
       jumperMan = createCharacterMesh(true, 0xFFE0BD, 0xBE185D, 0xEBA937);
       jumperMan.position.set(0, 0, 0);
@@ -3006,8 +3024,30 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
         }
 
         if (ropeMesh && jumperMan) {
-          ropeMesh.rotation.x = time * 5.0;
-          jumperMan.position.y = Math.max(0, Math.sin(time * 5.0 - Math.PI / 2) * 0.55);
+          const ropeAngle = time * 5.0;
+          ropeMesh.rotation.x = ropeAngle;
+          jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
+
+          // 🌟 兩側甩繩者的手臂跟隨繩索旋轉節奏同步畫圓搖動
+          if (jumpRopeGroup && jumpRopeGroup.userData.swingerA && jumpRopeGroup.userData.swingerB) {
+            const swingerA = jumpRopeGroup.userData.swingerA;
+            const swingerB = jumpRopeGroup.userData.swingerB;
+
+            // 圓周甩動偏移量
+            const circleY = Math.sin(ropeAngle) * 0.22;
+            const circleZ = Math.cos(ropeAngle) * 0.22;
+
+            // 左側選手 (右手握繩)
+            if (swingerA.userData.limbs) {
+              swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
+              swingerA.userData.limbs.rightArm.rotation.y = circleY;
+            }
+            // 右側選手 (左手握繩)
+            if (swingerB.userData.limbs) {
+              swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
+              swingerB.userData.limbs.leftArm.rotation.y = -circleY;
+            }
+          }
         }
 
         villagers.forEach((v, idx) => {
