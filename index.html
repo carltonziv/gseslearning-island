@@ -2276,20 +2276,72 @@
       return tree;
     }
 
-    function createFlower() {
+function createFlower() {
       const flower = new THREE.Group();
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.3, 4), new THREE.MeshBasicMaterial({ color: 0x15803d }));
-      stem.position.y = 0.15;
+
+      // 1. 綠色花莖
+      const stemMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 });
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.35, 6), stemMat);
+      stem.position.y = 0.175;
+      stem.castShadow = true;
       flower.add(stem);
 
-      const flowerColors = [0xfef08a, 0xffffff, 0xf87171, 0xfb923c, 0xc084fc];
-      const petal = new THREE.Mesh(
-        new THREE.SphereGeometry(0.12, 5, 5),
-        new THREE.MeshStandardMaterial({ color: flowerColors[Math.floor(Math.random() * flowerColors.length)], roughness: 0.4 })
-      );
-      petal.position.y = 0.32;
-      petal.castShadow = true;
-      flower.add(petal);
+      // 2. 莖上的小葉片點綴
+      const leafGeo = new THREE.BoxGeometry(0.09, 0.02, 0.04);
+      const leafMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.7 });
+      const leaf = new THREE.Mesh(leafGeo, leafMat);
+      leaf.position.set(0.04, 0.14, 0);
+      leaf.rotation.z = -0.35;
+      flower.add(leaf);
+
+      // 3. 花頭群組（朝天微斜）
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 0.35, 0);
+      headGroup.rotation.x = 0.15 + (Math.random() - 0.5) * 0.2; // 隨機朝向，更顯生動
+      headGroup.rotation.z = (Math.random() - 0.5) * 0.2;
+
+      // 4. 中央花蕊（暖黃色）
+      const centerGeo = new THREE.SphereGeometry(0.055, 8, 8);
+      const centerMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
+      const centerMesh = new THREE.Mesh(centerGeo, centerMat);
+      centerMesh.position.y = 0.015;
+      centerMesh.castShadow = true;
+      headGroup.add(centerMesh);
+
+      // 5. 隨機豐富花瓣配色庫（粉櫻、亮橙、純白、薰衣草紫、洋紅、金黃、天空藍、珊瑚紅）
+      const petalColors = [
+        0xf472b6, 0xfb7185, 0xf87171, 0xfb923c, 
+        0xffffff, 0xc084fc, 0xa855f7, 0x38bdf8, 
+        0xfde047, 0xff7f50
+      ];
+      const pickedColor = petalColors[Math.floor(Math.random() * petalColors.length)];
+      const petalMat = new THREE.MeshStandardMaterial({ color: pickedColor, roughness: 0.45 });
+
+      // 6. 生成 5 片環狀排列花瓣
+      const petalCount = 5;
+      const petalGeo = new THREE.SphereGeometry(0.05, 7, 7);
+      petalGeo.scale(1.0, 0.35, 1.6); // 拉平成水滴/橢圓狀花瓣
+
+      for (let i = 0; i < petalCount; i++) {
+        const petal = new THREE.Mesh(petalGeo, petalMat);
+        const angle = (i / petalCount) * Math.PI * 2;
+        
+        // 沿半徑向外排開並朝外伸展
+        petal.position.x = Math.cos(angle) * 0.085;
+        petal.position.z = Math.sin(angle) * 0.085;
+        petal.rotation.y = -angle + Math.PI / 2;
+        petal.rotation.x = 0.18; // 花瓣微向上收攏
+        petal.castShadow = true;
+        
+        headGroup.add(petal);
+      }
+
+      flower.add(headGroup);
+
+      // 隨機微調整體大小（85% ~ 125%），增添自然多樣感
+      const scale = 0.85 + Math.random() * 0.4;
+      flower.scale.setScalar(scale);
+
       return flower;
     }
 
@@ -2693,7 +2745,16 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
         labelSprite.position.set(0, 5.8, 0);
         group.add(labelSprite);
 
-        const treeCount = (cfg.id === 'civics') ? 1 : (Math.floor(Math.random() * 3) + 3);
+// 樹木生成數量：公民島 1 棵、閱讀島減少 1 顆 (2~4 棵)，其餘島維持 3~5 棵
+        let treeCount;
+        if (cfg.id === 'civics') {
+          treeCount = 1;
+        } else if (cfg.id === 'reading') {
+          treeCount = Math.floor(Math.random() * 3) + 2; // 🌟 2 ~ 4 棵（減少 1 棵）
+        } else {
+          treeCount = Math.floor(Math.random() * 3) + 3; // 3 ~ 5 棵
+        }
+
         for (let t = 0; t < treeCount; t++) {
           const tree = createTree();
           let tx, tz;
