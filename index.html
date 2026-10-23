@@ -59,28 +59,35 @@
       right: 16px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       z-index: 10;
       pointer-events: none;
     }
     .hud-header > * { pointer-events: auto; }
 
-    /* 全班能量條 */
+    /* 左側資訊群組（全班能量 + 個人能量 + 陀螺戰績） */
+    .energy-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* 全班能量條卡片 */
     .energy-card {
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(8px);
-      padding: 10px 18px;
-      border-radius: 20px;
+      padding: 8px 16px;
+      border-radius: 18px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
       display: flex;
       align-items: center;
       gap: 12px;
       border: 3px solid #f97316;
     }
-    .energy-label { font-weight: 800; color: #c2410c; font-size: 0.9rem; }
+    .energy-label { font-weight: 800; color: #c2410c; font-size: 0.85rem; }
     .energy-track {
-      width: 140px;
-      height: 14px;
+      width: 130px;
+      height: 12px;
       background: #ffedd5;
       border-radius: 10px;
       overflow: hidden;
@@ -91,7 +98,46 @@
       background: linear-gradient(90deg, #ea580c, #f59e0b);
       transition: width 0.5s ease;
     }
-    .energy-text { font-size: 0.85rem; font-weight: bold; color: #7c2d12; }
+    .energy-text { font-size: 0.8rem; font-weight: bold; color: #7c2d12; }
+
+    /* 個人累積能量卡片 */
+    .personal-energy-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 16px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid #3b82f6;
+      width: fit-content;
+    }
+    .personal-energy-label { font-weight: 800; color: #1d4ed8; font-size: 0.8rem; }
+    .personal-energy-val { font-weight: 900; color: #2563eb; font-size: 0.9rem; }
+
+    /* 戰鬥陀螺榮譽徽章 (前三名時才顯示) */
+    .bb-honor-badge {
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(185, 28, 28, 0.35);
+      font-size: 0.8rem;
+      font-weight: 800;
+      border: 2px solid #fde047;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      animation: badgeGlow 2s infinite alternate;
+    }
+    .bb-honor-badge.hidden { display: none !important; }
+
+    @keyframes badgeGlow {
+      0% { transform: scale(1); box-shadow: 0 4px 12px rgba(185, 28, 28, 0.35); }
+      100% { transform: scale(1.03); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.6); }
+    }
 
     .header-actions { display: flex; gap: 8px; }
 
@@ -218,7 +264,7 @@
       outline: none;
       font-family: inherit;
     }
-    .form-group input:focus, .form-group textarea:focus { border-color: #2563eb; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #2563eb; }
 
     .char-count { font-size: 0.75rem; text-align: right; color: #64748b; }
     .char-count.valid { color: #16a34a; font-weight: bold; }
@@ -338,12 +384,27 @@
 
   <!-- 頂部資訊列 -->
   <div class="hud-header">
-    <div class="energy-card">
-      <span class="energy-label">⚡ 全班共創能量</span>
-      <div class="energy-track">
-        <div id="class-energy-bar" class="energy-fill"></div>
+    <div class="energy-stack">
+      <!-- 1. 全班共創能量 -->
+      <div class="energy-card">
+        <span class="energy-label">⚡ 全班共創能量</span>
+        <div class="energy-track">
+          <div id="class-energy-bar" class="energy-fill"></div>
+        </div>
+        <span id="class-energy-text" class="energy-text">0 / 5000</span>
       </div>
-      <span id="class-energy-text" class="energy-text">0 / 5000</span>
+
+      <!-- 2. 個人累積能量 -->
+      <div class="personal-energy-card">
+        <span class="personal-energy-label">🌟 個人累積能量：</span>
+        <span class="personal-energy-val" id="my-energy-text">0 EXP</span>
+      </div>
+
+      <!-- 3. 戰鬥陀螺大賽前三名榮譽徽章 (有成績才顯示) -->
+      <div class="bb-honor-badge hidden" id="my-bb-badge">
+        <span>🏆</span>
+        <span id="my-bb-text">上次戰鬥陀螺大賽冠軍</span>
+      </div>
     </div>
 
     <div class="header-actions">
@@ -371,24 +432,29 @@
     </button>
   </div>
 
-  <!-- 學生開場設定彈窗 (預設加上 hidden，由 JS 判斷是否需要顯現) -->
+  <!-- 學生開場設定彈窗（實名制選單 + 訪客） -->
   <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
         <h2 class="modal-title">🎒 歡迎來到學習島！</h2>
       </div>
-      <div style="display:flex; gap:10px;">
-        <div class="form-group" style="flex:1;">
-          <label>座號</label>
-          <input type="number" id="input-seat" placeholder="座號" min="1" max="50">
-        </div>
-        <div class="form-group" style="flex:2;">
-          <label>姓名 / 暱稱</label>
-          <input type="text" id="input-name" placeholder="例如: 小宇" maxlength="10">
-        </div>
-      </div>
+
+      <!-- 下拉式選擇身分 -->
       <div class="form-group">
-        <label>挑選探險夥伴</label>
+        <label>選擇你的身分 / 座號姓名</label>
+        <select id="select-identity">
+          <option value="">載入學生名冊中...</option>
+        </select>
+      </div>
+
+      <!-- 若選訪客才顯示的輸入框 -->
+      <div class="form-group" id="guest-name-group" style="display:none;">
+        <label>訪客請輸入你的暱稱</label>
+        <input type="text" id="input-guest-name" placeholder="例如: 訪客小探險家" maxlength="10">
+      </div>
+
+      <div class="form-group">
+        <label>挑選探險夥伴頭像</label>
         <div class="avatar-grid">
           <button type="button" class="avatar-opt selected" data-avatar="🦊">🦊<span>小狐</span></button>
           <button type="button" class="avatar-opt" data-avatar="🐻">🐻<span>大熊</span></button>
@@ -574,7 +640,7 @@
 
   <script>
     // ==========================================
-    // 1. 金鑰與雲端設定區（已完整填入你的專屬設定）
+    // 1. 金鑰與雲端設定區
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyAiQtbWb4ewd3322xfMo5eKQ3S-rG4Xfmg",
@@ -593,6 +659,7 @@
     let db = null, totalEnergyRef = null, liveFeedRef = null, lockStatusRef = null, bbRef = null;
     let isIslandLocked = false;
     let bbState = { isOpen: false, deadline: '', status: 'closed', players: {}, matches: [] };
+    let rosterList = []; // 儲存試算表讀取的學生名冊
 
     try {
       firebase.initializeApp(firebaseConfig);
@@ -606,7 +673,144 @@
     }
 
     // ==========================================
-    // 2. 每日打卡次數限制邏輯
+    // 2. 學生名冊載入與實名制身分管理
+    // ==========================================
+    let currentStudent = { 
+      seatNumber: '', 
+      name: '小探險家', 
+      avatar: '🦊', 
+      myPoints: 0, 
+      beybladeRank: '' 
+    };
+
+    // 從 Google Apps Script 讀取學生名單
+    async function loadStudentRoster() {
+      const select = document.getElementById('select-identity');
+      try {
+        const res = await fetch(GAS_API_URL);
+        const data = await res.json();
+        if (data.status === 'success' && data.students) {
+          rosterList = data.students;
+          renderSelectOptions();
+        } else {
+          fallbackRoster();
+        }
+      } catch (err) {
+        console.warn("無法從試算表讀取名冊，啟用備用選項", err);
+        fallbackRoster();
+      }
+    }
+
+    function fallbackRoster() {
+      select.innerHTML = `
+        <option value="">請選擇座號身分</option>
+        <option value="guest">✨ 訪客探險家</option>
+      `;
+    }
+
+    function renderSelectOptions() {
+      const select = document.getElementById('select-identity');
+      let html = '<option value="">請選擇你的座號與姓名</option>';
+      rosterList.forEach(s => {
+        html += `<option value="${s.seatNumber}">${s.seatNumber}號 ${s.name}</option>`;
+      });
+      html += '<option value="guest">✨ 訪客探險家 (自訂暱稱)</option>';
+      select.innerHTML = html;
+
+      // 如果已儲存過身分，自動選中
+      if (currentStudent.seatNumber) {
+        select.value = currentStudent.seatNumber;
+      }
+    }
+
+    // 監聽下拉選單：選訪客才顯示暱稱輸入框
+    document.getElementById('select-identity').addEventListener('change', (e) => {
+      const guestGroup = document.getElementById('guest-name-group');
+      if (e.target.value === 'guest') {
+        guestGroup.style.display = 'block';
+      } else {
+        guestGroup.style.display = 'none';
+      }
+    });
+
+    function initStudent() {
+      const saved = localStorage.getItem('island_student_data_v2');
+      if (saved) {
+        try {
+          currentStudent = JSON.parse(saved);
+          updateHudProfile();
+          document.getElementById('login-modal').classList.add('hidden');
+        } catch(e){}
+      } else {
+        document.getElementById('login-modal').classList.remove('hidden');
+      }
+      loadStudentRoster();
+    }
+
+    function updateHudProfile() {
+      document.getElementById('hud-avatar').textContent = currentStudent.avatar;
+      document.getElementById('hud-name').textContent = currentStudent.seatNumber === '訪客' 
+        ? `[訪客] ${currentStudent.name}` 
+        : `${currentStudent.seatNumber}號 ${currentStudent.name}`;
+
+      // 1. 更新個人累積能量
+      document.getElementById('my-energy-text').textContent = `${currentStudent.myPoints || 0} EXP`;
+
+      // 2. 更新陀螺前三名戰績徽章
+      const badgeElem = document.getElementById('my-bb-badge');
+      const badgeText = document.getElementById('my-bb-text');
+      const rank = currentStudent.beybladeRank;
+
+      if (rank && (rank.includes('冠') || rank.includes('亞') || rank.includes('季') || rank.includes('前三') || rank.includes('第一') || rank.includes('第二') || rank.includes('第三'))) {
+        badgeText.textContent = rank;
+        badgeElem.classList.remove('hidden');
+      } else {
+        badgeElem.classList.add('hidden');
+      }
+    }
+
+    // 頭像切換
+    document.querySelectorAll('.avatar-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
+        opt.classList.add('selected');
+        currentStudent.avatar = opt.dataset.avatar;
+      });
+    });
+
+    // 儲存進入冒險
+    document.getElementById('btn-save-profile').addEventListener('click', () => {
+      const selVal = document.getElementById('select-identity').value;
+      if (!selVal) { alert('請先選擇你的座號身分喔！'); return; }
+
+      if (selVal === 'guest') {
+        const guestName = document.getElementById('input-guest-name').value.trim();
+        if (!guestName) { alert('訪客請填寫你的暱稱喔！'); return; }
+        currentStudent.seatNumber = '訪客';
+        currentStudent.name = guestName;
+        currentStudent.myPoints = currentStudent.myPoints || 0;
+        currentStudent.beybladeRank = '';
+      } else {
+        const matched = rosterList.find(s => String(s.seatNumber) === String(selVal));
+        if (matched) {
+          currentStudent.seatNumber = matched.seatNumber;
+          currentStudent.name = matched.name;
+          currentStudent.myPoints = matched.points || 0;
+          currentStudent.beybladeRank = matched.rank || '';
+        }
+      }
+
+      localStorage.setItem('island_student_data_v2', JSON.stringify(currentStudent));
+      updateHudProfile();
+      document.getElementById('login-modal').classList.add('hidden');
+    });
+
+    document.getElementById('profile-btn').addEventListener('click', () => {
+      document.getElementById('login-modal').classList.remove('hidden');
+    });
+
+    // ==========================================
+    // 3. 每日打卡次數限制邏輯
     // ==========================================
     function getTodayKey() {
       const d = new Date();
@@ -644,55 +848,6 @@
       return true;
     }
 
-    // ==========================================
-    // 3. 學生身分與狀態
-    // ==========================================
-    let currentStudent = { seatNumber: '', name: '小探險家', avatar: '🦊' };
-
-    function initStudent() {
-      const saved = localStorage.getItem('island_student_data');
-      if (saved) {
-        try {
-          currentStudent = JSON.parse(saved);
-          updateHudProfile();
-          document.getElementById('login-modal').classList.add('hidden');
-          return;
-        } catch(e){}
-      }
-      // 沒存過才顯示登入卡片
-      document.getElementById('login-modal').classList.remove('hidden');
-    }
-
-    function updateHudProfile() {
-      document.getElementById('hud-avatar').textContent = currentStudent.avatar;
-      document.getElementById('hud-name').textContent = `${currentStudent.seatNumber}號 ${currentStudent.name}`;
-    }
-
-    document.querySelectorAll('.avatar-opt').forEach(opt => {
-      opt.addEventListener('click', () => {
-        document.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
-        opt.classList.add('selected');
-        currentStudent.avatar = opt.dataset.avatar;
-      });
-    });
-
-    document.getElementById('btn-save-profile').addEventListener('click', () => {
-      const seat = document.getElementById('input-seat').value.trim();
-      const name = document.getElementById('input-name').value.trim();
-      if (!seat || !name) { alert('請填寫座號與名字喔！'); return; }
-      currentStudent.seatNumber = seat;
-      currentStudent.name = name;
-      localStorage.setItem('island_student_data', JSON.stringify(currentStudent));
-      updateHudProfile();
-      document.getElementById('login-modal').classList.add('hidden');
-    });
-
-    document.getElementById('profile-btn').addEventListener('click', () => {
-      document.getElementById('input-seat').value = currentStudent.seatNumber;
-      document.getElementById('input-name').value = currentStudent.name;
-      document.getElementById('login-modal').classList.remove('hidden');
-    });
-
     // 閱讀心得 20 字驗證
     const reflectionInput = document.getElementById('read-reflection');
     const reflectionCountText = document.getElementById('reflection-count');
@@ -704,7 +859,7 @@
     });
 
     // ==========================================
-    // 4. 雲端同步與打卡 (每打卡一次固定 5 點，滿 5000 鎖島不自動歸零)
+    // 4. 雲端同步與打卡 (個人點數即時累加 + 全班累加)
     // ==========================================
     async function sendToGAS(payload) {
       if (!GAS_API_URL || GAS_API_URL.includes("請替換")) return;
@@ -725,6 +880,12 @@
 
       const gainPoints = 5;
 
+      // 1. 本地端個人能量即時增加
+      currentStudent.myPoints = (currentStudent.myPoints || 0) + gainPoints;
+      localStorage.setItem('island_student_data_v2', JSON.stringify(currentStudent));
+      updateHudProfile();
+
+      // 2. Firebase 全班共創能量增加
       if (totalEnergyRef) {
         totalEnergyRef.transaction(current => {
           let next = (current || 0) + gainPoints;
@@ -742,6 +903,7 @@
         });
       }
 
+      // 3. 寫入 Google 試算表（同步累積至學生名冊）
       sendToGAS(gasData);
     }
 
@@ -894,7 +1056,7 @@
     }
 
     // ==========================================
-    // 6. 戰鬥陀螺島專屬邏輯（報名、雙淘汰晉級賽）
+    // 6. 戰鬥陀螺島專屬邏輯
     // ==========================================
     if (bbRef) {
       bbRef.on('value', snap => {
@@ -1227,7 +1389,7 @@
         islandGroups.push(group);
       });
 
-      // 點擊島嶼判定（防滑動、防穿透）
+      // 點擊島嶼判定
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
       let startX = 0, startY = 0;
@@ -1240,12 +1402,10 @@
       renderer.domElement.addEventListener('pointerup', (e) => {
         if (isIslandLocked) return;
 
-        // 若有任何彈窗開啟，不觸發點擊島嶼
         const isAnyModalVisible = Array.from(document.querySelectorAll('.modal-overlay'))
           .some(m => !m.classList.contains('hidden'));
         if (isAnyModalVisible) return;
 
-        // 手指或滑鼠位移大於 8px 視為拖曳地圖，不觸發進入島嶼
         const diff = Math.hypot(e.clientX - startX, e.clientY - startY);
         if (diff > 8) return;
 
