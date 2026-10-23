@@ -1251,23 +1251,195 @@
     }
 
     // ==========================================
-    // 9. Three.js 核心場景與柔和陰影建構
+    // 9. 地標模型建構工廠 (陀螺、啞鈴、書本、書桌)
     // ==========================================
-    const ISLAND_CONFIG = [
-      { id: 'nature', title: '生態科學島', color: 0x059669, pos: [-16, 0, -12] },
-      { id: 'sport', title: '運動健身島', color: 0x0284c7, pos: [16, 0, -12] },
-      { id: 'reading', title: '閱讀島', color: 0x7c3aed, pos: [-16, 0, 12] },
-      { id: 'civics', title: '優良公民島', color: 0xd97706, pos: [16, 0, 12] },
-      { id: 'beyblade', title: '戰鬥陀螺島', color: 0xdc2626, pos: [0, 0, 0] }
-    ];
 
-    let scene, camera, renderer, controls;
-    let islandGroups = [];
-    let villagers = [];
-    let skyCreatures = [];
-    let nextSkyEventTime = 0;
-    let lastNightBg = null;
+    // 1) 戰鬥陀螺 (墨綠色金屬風)
+    function createBeybladeModel() {
+      const bb = new THREE.Group();
 
+      // 尖錐底部 (陀螺尖端 - 鋼銀色)
+      const tipGeo = new THREE.ConeGeometry(0.7, 1.2, 10);
+      const tipMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 });
+      const tip = new THREE.Mesh(tipGeo, tipMat);
+      tip.rotation.x = Math.PI;
+      tip.position.y = 0.6;
+      tip.castShadow = true;
+      tip.receiveShadow = true;
+      bb.add(tip);
+
+      // 核心攻擊輪盤 (墨綠色主輪盤)
+      const ringGeo = new THREE.CylinderGeometry(2.4, 1.9, 0.6, 8);
+      const ringMat = new THREE.MeshStandardMaterial({ 
+        color: 0x144026, // 深邃墨綠
+        metalness: 0.45, 
+        roughness: 0.25 
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.y = 1.2;
+      ring.castShadow = true;
+      ring.receiveShadow = true;
+      bb.add(ring);
+
+      // 上層防禦環 (稍微淺一點的青翠墨綠)
+      const topGeo = new THREE.CylinderGeometry(1.6, 2.2, 0.4, 8);
+      const topMat = new THREE.MeshStandardMaterial({ color: 0x1b4d3e, metalness: 0.5, roughness: 0.3 });
+      const top = new THREE.Mesh(topGeo, topMat);
+      top.position.y = 1.6;
+      top.castShadow = true;
+      bb.add(top);
+
+      // 中央金色核心晶片圓珠
+      const coreGeo = new THREE.SphereGeometry(0.55, 12, 12);
+      const coreMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8, roughness: 0.15 });
+      const core = new THREE.Mesh(coreGeo, coreMat);
+      core.position.y = 1.9;
+      core.castShadow = true;
+      bb.add(core);
+
+      bb.scale.setScalar(1.2);
+      return bb;
+    }
+
+    // 2) 運動健身島地標：一支立體鑄鐵啞鈴
+    function createDumbbellModel() {
+      const dbGroup = new THREE.Group();
+
+      // 鍍鉻銀色握柄
+      const barGeo = new THREE.CylinderGeometry(0.18, 0.18, 3.2, 12);
+      const barMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
+      const bar = new THREE.Mesh(barGeo, barMat);
+      bar.rotation.z = Math.PI / 2;
+      bar.position.y = 0.9;
+      bar.castShadow = true;
+      bar.receiveShadow = true;
+      dbGroup.add(bar);
+
+      // 兩側深黑灰啞鈴片材質
+      const plateMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.4, roughness: 0.5 });
+
+      // 左側大槓片與小槓片
+      const plateL1 = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.45, 10), plateMat);
+      plateL1.rotation.z = Math.PI / 2;
+      plateL1.position.set(-1.1, 0.9, 0);
+      plateL1.castShadow = true;
+      plateL1.receiveShadow = true;
+      dbGroup.add(plateL1);
+
+      const plateL2 = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.35, 10), plateMat);
+      plateL2.rotation.z = Math.PI / 2;
+      plateL2.position.set(-1.45, 0.9, 0);
+      plateL2.castShadow = true;
+      dbGroup.add(plateL2);
+
+      // 右側大槓片與小槓片
+      const plateR1 = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.45, 10), plateMat);
+      plateR1.rotation.z = Math.PI / 2;
+      plateR1.position.set(1.1, 0.9, 0);
+      plateR1.castShadow = true;
+      plateR1.receiveShadow = true;
+      dbGroup.add(plateR1);
+
+      const plateR2 = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.35, 10), plateMat);
+      plateR2.rotation.z = Math.PI / 2;
+      plateR2.position.set(1.45, 0.9, 0);
+      plateR2.castShadow = true;
+      dbGroup.add(plateR2);
+
+      dbGroup.rotation.y = Math.PI / 4; // 傾斜擺放更有立體美感
+      dbGroup.scale.setScalar(1.2);
+      return dbGroup;
+    }
+
+    // 3) 閱讀島地標：一本翻開朝天的立體大魔法書
+    function createOpenBookModel() {
+      const book = new THREE.Group();
+
+      const pageMat = new THREE.MeshStandardMaterial({ color: 0xfffbeb, roughness: 0.6 }); // 象牙白書頁
+      const coverMat = new THREE.MeshStandardMaterial({ color: 0x581c87, roughness: 0.4 }); // 皇家深紫精裝封面
+
+      // 書脊
+      const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.6, 8), coverMat);
+      spine.position.set(0, 0.4, 0);
+      spine.rotation.x = Math.PI / 2;
+      spine.castShadow = true;
+      book.add(spine);
+
+      // 左封面與左書頁
+      const leftPage = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.25, 2.4), pageMat);
+      leftPage.position.set(-0.8, 0.55, 0);
+      leftPage.rotation.z = 0.25; // 稍微向上翻起角度
+      leftPage.castShadow = true;
+      leftPage.receiveShadow = true;
+      book.add(leftPage);
+
+      const leftCover = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.08, 2.5), coverMat);
+      leftCover.position.set(-0.82, 0.4, 0);
+      leftCover.rotation.z = 0.25;
+      leftCover.castShadow = true;
+      book.add(leftCover);
+
+      // 右封面與右書頁
+      const rightPage = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.25, 2.4), pageMat);
+      rightPage.position.set(0.8, 0.55, 0);
+      rightPage.rotation.z = -0.25;
+      rightPage.castShadow = true;
+      rightPage.receiveShadow = true;
+      book.add(rightPage);
+
+      const rightCover = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.08, 2.5), coverMat);
+      rightCover.position.set(0.82, 0.4, 0);
+      rightCover.rotation.z = -0.25;
+      rightCover.castShadow = true;
+      book.add(rightCover);
+
+      book.scale.setScalar(1.3);
+      book.position.y = 0.3;
+      return book;
+    }
+
+    // 4) 優良公民島地標：一張整潔小學實木書桌
+    function createDeskModel() {
+      const desk = new THREE.Group();
+
+      const woodMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 }); // 原木黃褐色桌面
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.6, roughness: 0.3 }); // 深灰金屬桌腳
+
+      // 桌面主板
+      const topPlate = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.22, 2.0), woodMat);
+      topPlate.position.y = 1.9;
+      topPlate.castShadow = true;
+      topPlate.receiveShadow = true;
+      desk.add(topPlate);
+
+      // 桌下整潔收納抽屜盒
+      const drawer = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.45, 1.8), woodMat);
+      drawer.position.y = 1.6;
+      drawer.castShadow = true;
+      drawer.receiveShadow = true;
+      desk.add(drawer);
+
+      // 四支立體桌腳
+      const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.6, 6);
+      const legPositions = [
+        [-1.2, 0.8, -0.75],
+        [ 1.2, 0.8, -0.75],
+        [-1.2, 0.8,  0.75],
+        [ 1.2, 0.8,  0.75]
+      ];
+
+      legPositions.forEach(pos => {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(...pos);
+        leg.castShadow = true;
+        desk.add(leg);
+      });
+
+      desk.scale.setScalar(1.2);
+      return desk;
+    }
+
+    // 輔助函式：建立小樹
     function createTree() {
       const tree = new THREE.Group();
       const trunkGeo = new THREE.CylinderGeometry(0.12, 0.16, 0.8, 5);
@@ -1294,6 +1466,7 @@
       return tree;
     }
 
+    // 輔助函式：建立彩色小花
     function createFlower() {
       const flower = new THREE.Group();
       const stemMat = new THREE.MeshBasicMaterial({ color: 0x15803d });
@@ -1313,6 +1486,7 @@
       return flower;
     }
 
+    // 輔助函式：夜晚路燈
     function createStreetLamp() {
       const lamp = new THREE.Group();
       const poleGeo = new THREE.CylinderGeometry(0.08, 0.12, 2.2, 6);
@@ -1342,6 +1516,7 @@
       return lamp;
     }
 
+    // 天空飛行鳥與蝙蝠
     function createBirdMesh() {
       const bird = new THREE.Group();
       const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true });
@@ -1403,6 +1578,11 @@
       }
     }
 
+    // ==========================================
+    // 10. Three.js 場景建構與渲染 (視角再調降5度)
+    // ==========================================
+    let lastNightBg = null;
+
     function init3D() {
       const container = document.getElementById('canvas-container');
       const timePhase = getTimePhase();
@@ -1413,33 +1593,33 @@
       scene.background = new THREE.Color(timePhase.bg);
       scene.fog = new THREE.FogExp2(timePhase.bg, 0.012);
 
-      // 視角降低 10 度 (Y: 44, Z: 38)
+      // 視角再降低 5 度：Y 高度由 44 降至 37，Z 軸後移至 42，保持優美的微俯視立體透視
       camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-      camera.position.set(0, 44, 38);
+      camera.position.set(0, 37, 42);
       camera.lookAt(0, 0, 0);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-      // 1. 渲染器開啟真實柔和陰影
+      // 柔和陰影渲染
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableRotate = false;
-      controls.enableZoom = true;
-      controls.enablePan = true;
-      controls.minDistance = 25;
+      controls.enableRotate = false; // 鎖定旋轉
+      controls.enableZoom = true;   // 縮放
+      controls.enablePan = true;    // 平移
+      controls.minDistance = 22;
       controls.maxDistance = 90;
       controls.target.set(0, 0, 0);
 
       const hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x1e293b, timePhase.light);
       scene.add(hemiLight);
 
-      // 2. 直射光開啟投射陰影並配置範圍
+      // 直射太陽光
       const dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 1.3);
       dirLight.position.set(15, 48, 25);
       dirLight.castShadow = true;
@@ -1477,7 +1657,7 @@
 
       nextSkyEventTime = Date.now() + 5000;
 
-      // 產生 5 座島嶼
+      // 產生 5 座島嶼及各專屬地標
       ISLAND_CONFIG.forEach(cfg => {
         const group = new THREE.Group();
         group.position.set(...cfg.pos);
@@ -1492,42 +1672,33 @@
         });
         const base = new THREE.Mesh(baseGeo, baseMat);
         base.position.y = -2;
-
-        // 3. 島面基底接收陰影
         base.receiveShadow = true;
         group.add(base);
 
-        let decoMesh;
-        if (cfg.id === 'reading') {
-          const g = new THREE.BoxGeometry(3, 2.2, 2.2);
-          const m = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 });
-          decoMesh = new THREE.Mesh(g, m);
-        } else if (cfg.id === 'civics') {
-          const g = new THREE.CylinderGeometry(2, 2, 2.8, 6);
-          const m = new THREE.MeshStandardMaterial({ color: 0xfef08a });
-          decoMesh = new THREE.Mesh(g, m);
+        // ------------------------------------------------
+        // 全新地標切換邏輯 (陀螺、啞鈴、書本、書桌、生態樹)
+        // ------------------------------------------------
+        let landmark;
+        if (cfg.id === 'beyblade') {
+          landmark = createBeybladeModel(); // 1) 墨綠色戰鬥陀螺
         } else if (cfg.id === 'sport') {
-          const g = new THREE.TorusGeometry(1.8, 0.5, 8, 16);
-          const m = new THREE.MeshStandardMaterial({ color: 0x38bdf8 });
-          decoMesh = new THREE.Mesh(g, m);
-          decoMesh.rotation.x = Math.PI / 2;
-        } else if (cfg.id === 'nature') {
-          const g = new THREE.ConeGeometry(2.2, 4.8, 6);
-          const m = new THREE.MeshStandardMaterial({ color: 0x10b981 });
-          decoMesh = new THREE.Mesh(g, m);
+          landmark = createDumbbellModel(); // 2) 鑄鐵啞鈴
+        } else if (cfg.id === 'reading') {
+          landmark = createOpenBookModel(); // 3) 翻開的書本
+        } else if (cfg.id === 'civics') {
+          landmark = createDeskModel();     // 4) 實木書桌
         } else {
-          const g = new THREE.CylinderGeometry(3.2, 2.5, 1.2, 16);
-          const m = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.6, roughness: 0.2 });
-          decoMesh = new THREE.Mesh(g, m);
+          // 生態科學島地標：巨木地標
+          const g = new THREE.ConeGeometry(2.4, 5.2, 6);
+          const m = new THREE.MeshStandardMaterial({ color: 0x10b981 });
+          landmark = new THREE.Mesh(g, m);
+          landmark.position.y = 1.8;
+          landmark.castShadow = true;
+          landmark.receiveShadow = true;
         }
-        decoMesh.position.y = 1.6;
+        group.add(landmark);
 
-        // 4. 地標投射並接收陰影
-        decoMesh.castShadow = true;
-        decoMesh.receiveShadow = true;
-        group.add(decoMesh);
-
-        // 小樹
+        // 植被：小樹
         const treeCount = Math.floor(Math.random() * 3) + 3;
         for (let t = 0; t < treeCount; t++) {
           const tree = createTree();
@@ -1538,7 +1709,7 @@
           group.add(tree);
         }
 
-        // 小花
+        // 植被：小花
         const flowerCount = Math.floor(Math.random() * 5) + 4;
         for (let f = 0; f < flowerCount; f++) {
           const flower = createFlower();
@@ -1560,7 +1731,7 @@
           }
         }
 
-        // 漫步島民（投射陰影）
+        // 漫步島民
         const villagerCount = Math.floor(Math.random() * 3) + 3;
         const clothesColors = [0xef4444, 0x2563eb, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xffffff];
 
@@ -1652,7 +1823,7 @@
         const time = clock.getElapsedTime();
         const now = Date.now();
 
-        // 夜晚時段每 3 分鐘自動平滑切換 5 款色票
+        // 夜晚時段色票輪替
         const currentPhase = getTimePhase();
         if (currentPhase.phase === 'night') {
           if (currentPhase.bg !== lastNightBg) {
@@ -1662,12 +1833,12 @@
           }
         }
 
-        // 島嶼輕微浮動
+        // 島嶼輕微浮動呼吸
         islandGroups.forEach((g, i) => {
           g.position.y = Math.sin(time * 1.5 + i) * 0.25;
         });
 
-        // 島民自由漫步
+        // 島民自由漫步 AI
         villagers.forEach(v => {
           if (v.waitTimer > 0) {
             v.waitTimer--;
@@ -1694,7 +1865,7 @@
           }
         });
 
-        // 7 分鐘一次的天空生物出動
+        // 7 分鐘一次的天空生物出發檢查
         if (now >= nextSkyEventTime) {
           if (currentPhase.phase === 'morning') {
             spawnSkyFlock('bird');
@@ -1704,7 +1875,7 @@
           nextSkyEventTime = now + (7 * 60 * 1000);
         }
 
-        // 天空飛行生物動畫
+        // 天空飛行生物動畫與振翅
         for (let i = skyCreatures.length - 1; i >= 0; i--) {
           const c = skyCreatures[i];
           c.mesh.position.x += c.speed;
