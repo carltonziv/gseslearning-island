@@ -1229,24 +1229,41 @@ function registerBeyblade() {
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
-      function onPointerDown(e) {
-        if (isIslandLocked) return;
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        if (!clientX || !clientY) return;
+// 點擊島嶼偵測（已加入防點擊穿透機制）
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
-        mouse.x = (clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+function onPointerDown(e) {
+  if (isIslandLocked) return;
 
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(islandGroups, true);
+  // -----------------------------------------------------------
+  // 防穿透第 1 道：如果有任何彈窗開啟中，絕對不判定點擊島嶼
+  // -----------------------------------------------------------
+  const anyModalOpen = Array.from(document.querySelectorAll('.modal-overlay'))
+    .some(modal => !modal.classList.contains('hidden'));
+  if (anyModalOpen) return;
 
-        if (intersects.length > 0) {
-          let root = intersects[0].object;
-          while (root.parent && root.parent !== scene) root = root.parent;
-          if (root.userData && root.userData.id) openIslandModal(root.userData.id);
-        }
-      }
+  // -----------------------------------------------------------
+  // 防穿透第 2 道：若點擊目標不是 3D 畫布本體（例如點到頂部 HUD、按鈕），直接略過
+  // -----------------------------------------------------------
+  if (e.target.tagName !== 'CANVAS') return;
+
+  const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+  if (clientX === undefined || clientY === undefined) return;
+
+  mouse.x = (clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(islandGroups, true);
+
+  if (intersects.length > 0) {
+    let root = intersects[0].object;
+    while (root.parent && root.parent !== scene) root = root.parent;
+    if (root.userData && root.userData.id) openIslandModal(root.userData.id);
+  }
+}
 
       window.addEventListener('pointerdown', onPointerDown);
       window.addEventListener('resize', () => {
