@@ -471,7 +471,7 @@
           <button type="button" class="avatar-opt" data-avatar="🐘">🐘<span>象</span></button>
           <button type="button" class="avatar-opt" data-avatar="🦅">🦅<span>鳥</span></button>
           <button type="button" class="avatar-opt" data-avatar="🦍">🦍<span>猩猩</span></button>
-          <button type="button" class="avatar-opt" data-avatar="👦">👦<span>毛克利</span></button>
+          <button type="button" class="avatar-opt" data-avatar="👦">👦<span>毛克力</span></button>
           <button type="button" class="avatar-opt" data-avatar="🦁">🦁<span>獅</span></button>
         </div>
       </div>
@@ -1010,6 +1010,7 @@
     // ==========================================
     let beybladeBaseMesh = null;
     let beybladeLandmarkGroup = null;
+    let mainBeybladeTop = null; // 保存中央主陀螺模型實體以供原地自轉
     let beybladeDecorations = [];
     const COLOR_GRAY_DORMANT = 0xD1D0CE;
 
@@ -1258,7 +1259,7 @@
     }
 
     // ==========================================
-    // 1) 鉸接式多關節立體人物架構
+    // 鉸接式多關節立體人物架構
     // ==========================================
     const HAIR_COLORS = [0x3A3B3C, 0x483C32, 0x72376A, 0xEBA937];
     const CLOTHES_COLORS = [0x64321A, 0x782800, 0x997305, 0x004230, 0x052E3B];
@@ -1278,14 +1279,12 @@
       const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
       const hairMat = new THREE.MeshStandardMaterial({ color: hColor, roughness: 0.6 });
 
-      // 1. 軀幹
       const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.52, 0.24), clothMat);
       torso.position.y = 0.62;
       torso.castShadow = true;
       torso.receiveShadow = true;
       person.add(torso);
 
-      // 2. 頭部與頭髮
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), skinMat);
       head.position.y = 1.02;
       head.castShadow = true;
@@ -1299,7 +1298,6 @@
       hair.castShadow = true;
       person.add(hair);
 
-      // 3. 雙手臂關節
       const armGeo = new THREE.BoxGeometry(0.11, 0.45, 0.11);
 
       const leftArmPivot = new THREE.Group();
@@ -1318,7 +1316,6 @@
       rightArmPivot.add(rightArmMesh);
       person.add(rightArmPivot);
 
-      // 4. 雙腿關節
       const legGeo = new THREE.BoxGeometry(0.13, 0.48, 0.13);
 
       const leftLegPivot = new THREE.Group();
@@ -1366,7 +1363,7 @@
     }
 
     // ==========================================
-    // 9. 地標模型工廠與障礙物收集
+    // 9. 地標模型工廠（質感精緻化全面升級）
     // ==========================================
     let islandObstacles = {}; 
 
@@ -1376,69 +1373,117 @@
     }
 
     let windTurbineBlades = [];
+    // 1. 生態科技島：高工藝金屬倒角放大鏡 + 雙渦輪風機
     function createNatureLandmark() {
       const group = new THREE.Group();
 
       const mag = new THREE.Group();
+      // 外層電鍍綠金屬環
       const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(1.3, 0.15, 12, 32),
-        new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.8, roughness: 0.2 })
+        new THREE.TorusGeometry(1.3, 0.16, 16, 40),
+        new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.85, roughness: 0.15 })
       );
       ring.castShadow = true;
       mag.add(ring);
 
+      // 內嵌金色倒角刻度環
+      const innerBevel = new THREE.Mesh(
+        new THREE.TorusGeometry(1.18, 0.05, 12, 36),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 })
+      );
+      mag.add(innerBevel);
+
+      // 雙凸透鏡物理高折射玻璃
       const lens = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.26, 1.26, 0.08, 32),
-        new THREE.MeshPhysicalMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.65, roughness: 0.1, transmission: 0.6 })
+        new THREE.CylinderGeometry(1.24, 1.24, 0.1, 36),
+        new THREE.MeshPhysicalMaterial({
+          color: 0xe0f2fe,
+          transparent: true,
+          opacity: 0.7,
+          roughness: 0.05,
+          transmission: 0.85,
+          ior: 1.45
+        })
       );
       lens.rotation.x = Math.PI / 2;
       mag.add(lens);
 
-      const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.22, 1.8, 16),
-        new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 })
+      // 金屬銜接頸箍
+      const neckJoint = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.2, 0.35, 16),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.25 })
       );
-      handle.position.set(0, -2.1, 0);
+      neckJoint.position.set(0, -1.45, 0);
+      mag.add(neckJoint);
+
+      // 雕花木質防滑把手
+      const handle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.22, 1.8, 20),
+        new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.65 })
+      );
+      handle.position.set(0, -2.45, 0);
       handle.castShadow = true;
       mag.add(handle);
 
-      mag.position.set(0, 2.0, 0);
+      // 黃銅配重球塞
+      const pommel = new THREE.Mesh(
+        new THREE.SphereGeometry(0.26, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.25 })
+      );
+      pommel.position.set(0, -3.4, 0);
+      mag.add(pommel);
+
+      mag.position.set(0, 2.2, 0);
       mag.rotation.x = 0.35;
       mag.rotation.z = -0.3;
       group.add(mag);
 
-      registerObstacle('nature', 0, 0, 1.5);
+      registerObstacle('nature', 0, 0, 1.6);
 
+      // 2 支風力發電機（流線機艙與精密渦輪罩）
       const turbineCoords = [[-2.8, -2.2], [2.8, 2.2]];
       turbineCoords.forEach(pos => {
         const wt = new THREE.Group();
         wt.position.set(pos[0], 0, pos[1]);
 
+        // 錐形漸縮塔柱
         const pole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.1, 0.22, 4.2, 12),
-          new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.3 })
+          new THREE.CylinderGeometry(0.1, 0.24, 4.4, 16),
+          new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.25, metalness: 0.2 })
         );
-        pole.position.y = 2.1;
+        pole.position.y = 2.2;
         pole.castShadow = true;
         wt.add(pole);
 
+        // 流線散熱機艙
         const nacelle = new THREE.Mesh(
-          new THREE.BoxGeometry(0.35, 0.35, 0.6),
-          new THREE.MeshStandardMaterial({ color: 0xf5f5f4 })
+          new THREE.CylinderGeometry(0.22, 0.25, 0.8, 12),
+          new THREE.MeshStandardMaterial({ color: 0xf5f5f4, roughness: 0.3 })
         );
-        nacelle.position.set(0, 4.2, 0);
+        nacelle.rotation.x = Math.PI / 2;
+        nacelle.position.set(0, 4.4, 0);
         nacelle.castShadow = true;
         wt.add(nacelle);
 
+        // 前導整流錐 (Nose Cone)
+        const noseCone = new THREE.Mesh(
+          new THREE.ConeGeometry(0.18, 0.35, 16),
+          new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.6, roughness: 0.3 })
+        );
+        noseCone.rotation.x = Math.PI / 2;
+        noseCone.position.set(0, 4.4, 0.52);
+        wt.add(noseCone);
+
+        // 三葉風扇組
         const rotor = new THREE.Group();
-        rotor.position.set(0, 4.2, 0.35);
+        rotor.position.set(0, 4.4, 0.45);
 
         for (let b = 0; b < 3; b++) {
           const blade = new THREE.Mesh(
-            new THREE.BoxGeometry(0.12, 1.8, 0.04),
+            new THREE.BoxGeometry(0.12, 1.9, 0.04),
             new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.2 })
           );
-          blade.position.y = 0.9;
+          blade.position.y = 0.95;
           blade.castShadow = true;
           const bladePivot = new THREE.Group();
           bladePivot.rotation.z = (b * Math.PI * 2) / 3;
@@ -1456,45 +1501,52 @@
     }
 
     let spinningMiniTops = [];
+    // 2. 戰鬥陀螺島：大陀螺（原地自轉） + 3 顆小陀螺
     function createBeybladeModel() {
       const bb = new THREE.Group();
 
+      // 中央主戰鬥陀螺
+      mainBeybladeTop = new THREE.Group();
+
       const tip = new THREE.Mesh(
-        new THREE.ConeGeometry(0.7, 1.2, 10),
-        new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 })
+        new THREE.ConeGeometry(0.7, 1.2, 12),
+        new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.15 })
       );
       tip.rotation.x = Math.PI;
       tip.position.y = 0.6;
       tip.castShadow = true;
-      bb.add(tip);
+      mainBeybladeTop.add(tip);
 
       const ring = new THREE.Mesh(
         new THREE.CylinderGeometry(2.4, 1.9, 0.6, 8),
-        new THREE.MeshStandardMaterial({ color: 0x144026, metalness: 0.45, roughness: 0.25 })
+        new THREE.MeshStandardMaterial({ color: 0x144026, metalness: 0.6, roughness: 0.2 })
       );
       ring.position.y = 1.2;
       ring.castShadow = true;
-      bb.add(ring);
+      mainBeybladeTop.add(ring);
 
       const top = new THREE.Mesh(
         new THREE.CylinderGeometry(1.6, 2.2, 0.4, 8),
-        new THREE.MeshStandardMaterial({ color: 0x1b4d3e, metalness: 0.5, roughness: 0.3 })
+        new THREE.MeshStandardMaterial({ color: 0x1b4d3e, metalness: 0.65, roughness: 0.25 })
       );
       top.position.y = 1.6;
       top.castShadow = true;
-      bb.add(top);
+      mainBeybladeTop.add(top);
 
       const core = new THREE.Mesh(
-        new THREE.SphereGeometry(0.55, 12, 12),
-        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8, roughness: 0.15 })
+        new THREE.SphereGeometry(0.55, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.1 })
       );
       core.position.y = 1.9;
       core.castShadow = true;
-      bb.add(core);
+      mainBeybladeTop.add(core);
 
-      bb.scale.setScalar(1.2);
+      mainBeybladeTop.scale.setScalar(1.2);
+      bb.add(mainBeybladeTop);
+
       registerObstacle('beyblade', 0, 0, 2.6);
 
+      // 3 顆精準避讓的小陀螺
       const miniColors = [0xef4444, 0x3b82f6, 0xeab308];
       const safeMiniPositions = [
         [0.0, 0, 2.3],
@@ -1508,7 +1560,7 @@
 
         const mTip = new THREE.Mesh(
           new THREE.ConeGeometry(0.13, 0.2, 8),
-          new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 })
+          new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85 })
         );
         mTip.rotation.x = Math.PI;
         mTip.position.y = 0.1;
@@ -1517,7 +1569,7 @@
 
         const mRing = new THREE.Mesh(
           new THREE.CylinderGeometry(0.35, 0.25, 0.1, 8),
-          new THREE.MeshStandardMaterial({ color: miniColors[i], metalness: 0.6, roughness: 0.3 })
+          new THREE.MeshStandardMaterial({ color: miniColors[i], metalness: 0.7, roughness: 0.25 })
         );
         mRing.position.y = 0.22;
         mRing.castShadow = true;
@@ -1534,33 +1586,54 @@
     let jumpRopeGroup = null;
     let jumperMan = null;
     let ropeMesh = null;
+    // 3. 健身運動島：專業防滑電鍍啞鈴 + 甩繩跳繩動態
     function createSportLandmark() {
       const group = new THREE.Group();
 
       const dbGroup = new THREE.Group();
+      // 電鍍滾花手柄
       const bar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.16, 0.16, 2.8, 12),
-        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 })
+        new THREE.CylinderGeometry(0.16, 0.16, 2.9, 16),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 })
       );
       bar.rotation.z = Math.PI / 2;
       bar.position.y = 0.8;
       bar.castShadow = true;
       dbGroup.add(bar);
 
-      const plateMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.4, roughness: 0.5 });
-      [-0.95, -1.25, 0.95, 1.25].forEach((x, i) => {
-        const rad = (i % 2 === 0) ? 1.05 : 0.8;
-        const p = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 0.35, 10), plateMat);
-        p.rotation.z = Math.PI / 2;
-        p.position.set(x, 0.8, 0);
-        p.castShadow = true;
-        dbGroup.add(p);
+      // 鑄鐵烤漆六角槓片材質
+      const plateMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
+      const collarMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
+
+      // 左右兩組多層槓片與安全夾扣
+      [-1.0, 1.0].forEach((side) => {
+        // 大槓片 (帶倒角外圈)
+        const pBig = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.35, 8), plateMat);
+        pBig.rotation.z = Math.PI / 2;
+        pBig.position.set(side * 0.95, 0.8, 0);
+        pBig.castShadow = true;
+        dbGroup.add(pBig);
+
+        // 中槓片
+        const pMed = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.3, 8), plateMat);
+        pMed.rotation.z = Math.PI / 2;
+        pMed.position.set(side * 1.3, 0.8, 0);
+        pMed.castShadow = true;
+        dbGroup.add(pMed);
+
+        // 外部安全卡扣
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.15, 12), collarMat);
+        collar.rotation.z = Math.PI / 2;
+        collar.position.set(side * 1.48, 0.8, 0);
+        dbGroup.add(collar);
       });
+
       dbGroup.position.set(0, 0, -1.5);
       dbGroup.rotation.y = 0.3;
       group.add(dbGroup);
-      registerObstacle('sport', 0, -1.5, 1.4);
+      registerObstacle('sport', 0, -1.5, 1.5);
 
+      // 三人跳繩組
       jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.6);
 
@@ -1588,27 +1661,32 @@
       return group;
     }
 
+    // 4. 閱讀島：燙金包角立體書 + 天下希望閱讀書車
     function createReadingLandmark() {
       const group = new THREE.Group();
 
       const book = new THREE.Group();
-      const pageMat = new THREE.MeshStandardMaterial({ color: 0xfffbeb, roughness: 0.6 });
-      const coverMat = new THREE.MeshStandardMaterial({ color: 0x581c87, roughness: 0.4 });
+      const pageMat = new THREE.MeshStandardMaterial({ color: 0xfffbeb, roughness: 0.65 });
+      const coverMat = new THREE.MeshStandardMaterial({ color: 0x4c1d95, roughness: 0.4 }); // 精裝深紫
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
       const textMat = new THREE.MeshBasicMaterial({ color: 0xD3D3D3 });
 
-      const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.4, 8), coverMat);
+      // 書脊與圓柱軸套
+      const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.4, 12), coverMat);
       spine.position.set(0, 0.4, 0);
       spine.rotation.x = Math.PI / 2;
       book.add(spine);
 
       [-0.75, 0.75].forEach((x, i) => {
         const rot = i === 0 ? 0.25 : -0.25;
+        // 書頁
         const page = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.22, 2.2), pageMat);
         page.position.set(x, 0.55, 0);
         page.rotation.z = rot;
         page.castShadow = true;
         book.add(page);
 
+        // 文字線條
         for (let l = 0; l < 4; l++) {
           const textLine = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.02, 0.12), textMat);
           textLine.position.set(x, 0.67, -0.65 + l * 0.45);
@@ -1616,18 +1694,27 @@
           book.add(textLine);
         }
 
+        // 精裝封面
         const cov = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.08, 2.3), coverMat);
         cov.position.set(x * 1.02, 0.42, 0);
         cov.rotation.z = rot;
         cov.castShadow = true;
         book.add(cov);
+
+        // 書角金屬燙金包角護片 (Corner Protectors)
+        const cornerProtector = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.18), goldMat);
+        cornerProtector.position.set(x * 1.7, 0.44, 1.1);
+        book.add(cornerProtector);
       });
       book.position.set(0, 0.2, -1.2);
       book.scale.setScalar(1.1);
       group.add(book);
       registerObstacle('reading', 0, -1.2, 1.6);
 
+      // 天下希望閱讀書車（彩虹展開式車廂）
       const van = new THREE.Group();
+
+      // 車頭
       const cabin = new THREE.Mesh(
         new THREE.BoxGeometry(1.4, 1.1, 1.2),
         new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.3 })
@@ -1636,13 +1723,23 @@
       cabin.castShadow = true;
       van.add(cabin);
 
+      // 擋風玻璃與雨刷
       const windshield = new THREE.Mesh(
         new THREE.BoxGeometry(1.2, 0.5, 0.2),
-        new THREE.MeshStandardMaterial({ color: 0xbae6fd, roughness: 0.1 })
+        new THREE.MeshStandardMaterial({ color: 0xbae6fd, roughness: 0.1, metalness: 0.3 })
       );
       windshield.position.set(0, 1.05, 2.0);
       van.add(windshield);
 
+      // 車頭鍍鉻水箱護罩
+      const grille = new THREE.Mesh(
+        new THREE.BoxGeometry(0.9, 0.25, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.2 })
+      );
+      grille.position.set(0, 0.55, 2.02);
+      van.add(grille);
+
+      // 彩虹車廂條紋
       const rainbowColors = [0xef4444, 0xf97316, 0xfacc15, 0x22c55e, 0x06b6d4, 0x3b82f6, 0x8b5cf6];
       const stripeWidth = 2.0 / rainbowColors.length;
       rainbowColors.forEach((col, idx) => {
@@ -1655,6 +1752,7 @@
         van.add(stripe);
       });
 
+      // 展開的鷗翼頂篷
       const wingL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 1.9), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
       wingL.position.set(-1.0, 1.8, -0.2);
       wingL.rotation.z = -0.6;
@@ -1667,13 +1765,20 @@
       wingR.castShadow = true;
       van.add(wingR);
 
-      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+      // 4 個立體輪胎與輪框
+      const tireMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
+      const rimMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.8 });
       [[-0.8, 0.3, 1.2], [0.8, 0.3, 1.2], [-0.8, 0.3, -0.6], [0.8, 0.3, -0.6]].forEach(pos => {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.25, 12), wheelMat);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(...pos);
-        wheel.castShadow = true;
-        van.add(wheel);
+        const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.25, 16), tireMat);
+        tire.rotation.z = Math.PI / 2;
+        tire.position.set(...pos);
+        tire.castShadow = true;
+        van.add(tire);
+
+        const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.26, 12), rimMat);
+        hubCap.rotation.z = Math.PI / 2;
+        hubCap.position.set(...pos);
+        van.add(hubCap);
       });
 
       van.position.set(0, 0, 1.4);
@@ -1684,6 +1789,7 @@
       return group;
     }
 
+    // 5. 優良公民島：莊嚴多立克羅馬神殿（多層柱頭、凹槽浮雕帶）
     let sweeperMan = null;
     let broomMesh = null;
     function createCivicsLandmark() {
@@ -1691,8 +1797,10 @@
 
       const temple = new THREE.Group();
       const marbleMat = new THREE.MeshStandardMaterial({ color: 0x928E85, roughness: 0.45 });
+      const trimMat = new THREE.MeshStandardMaterial({ color: 0xA8A49B, roughness: 0.35 });
 
-      [3.8, 3.4, 3.0].forEach((w, i) => {
+      // 三層台基 (Stereobate & Stylobate)
+      [4.0, 3.6, 3.2].forEach((w, i) => {
         const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, w * 0.8), marbleMat);
         baseStep.position.y = 0.1 + i * 0.2;
         baseStep.castShadow = true;
@@ -1700,40 +1808,54 @@
         temple.add(baseStep);
       });
 
-      const columnGeo = new THREE.CylinderGeometry(0.14, 0.17, 2.0, 10);
+      // 6 支多立克石柱（柱底托盤、柱身與雙層多立克柱頭）
       const colPositions = [
-        [-1.2, 1.6, -0.9], [0, 1.6, -0.9], [1.2, 1.6, -0.9],
-        [-1.2, 1.6,  0.9], [0, 1.6,  0.9], [1.2, 1.6,  0.9]
+        [-1.2, 0.7, -0.9], [0, 0.7, -0.9], [1.2, 0.7, -0.9],
+        [-1.2, 0.7,  0.9], [0, 0.7,  0.9], [1.2, 0.7,  0.9]
       ];
       colPositions.forEach(p => {
-        const col = new THREE.Mesh(columnGeo, marbleMat);
-        col.position.set(...p);
-        col.castShadow = true;
-        temple.add(col);
+        // 柱身
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.17, 1.8, 14), marbleMat);
+        shaft.position.set(p[0], p[1] + 0.9, p[2]);
+        shaft.castShadow = true;
+        temple.add(shaft);
+
+        // 柱頭飾板 (Capital Abacus)
+        const capital = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.12, 0.38), trimMat);
+        capital.position.set(p[0], p[1] + 1.85, p[2]);
+        temple.add(capital);
       });
 
-      const roofBase = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.25, 2.2), marbleMat);
-      roofBase.position.y = 2.7;
-      roofBase.castShadow = true;
-      temple.add(roofBase);
+      // 楣樑柱頂盤 (Architrave)
+      const architrave = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.22, 2.3), marbleMat);
+      architrave.position.y = 2.7;
+      architrave.castShadow = true;
+      temple.add(architrave);
 
+      // 三角山牆楣飾浮雕屋頂 (Pediment & Tympanum)
       const pediment = new THREE.Mesh(new THREE.ConeGeometry(2.0, 1.0, 4), marbleMat);
-      pediment.position.y = 3.3;
+      pediment.position.y = 3.32;
       pediment.rotation.y = Math.PI / 4;
-      pediment.scale.set(1.1, 0.8, 0.8);
+      pediment.scale.set(1.12, 0.8, 0.82);
       pediment.castShadow = true;
       temple.add(pediment);
+
+      // 山牆頂角端飾 (Acroterion)
+      const acroterion = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.24), trimMat);
+      acroterion.position.y = 3.82;
+      temple.add(acroterion);
 
       temple.scale.setScalar(1.1);
       group.add(temple);
       registerObstacle('civics', 0, 0, 2.2);
 
+      // 掃地島民與完整斜握竹掃把
       sweeperMan = createCharacterMesh(0x004230, 0x483C32);
       sweeperMan.position.set(2.4, 0, 1.5);
 
       broomMesh = new THREE.Group();
       const bHandle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.035, 0.035, 1.6, 6),
+        new THREE.CylinderGeometry(0.035, 0.035, 1.6, 8),
         new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.6 })
       );
       bHandle.position.set(0, 0.6, 0.45);
@@ -1742,7 +1864,7 @@
       broomMesh.add(bHandle);
 
       const bHead = new THREE.Mesh(
-        new THREE.ConeGeometry(0.24, 0.5, 6),
+        new THREE.ConeGeometry(0.24, 0.5, 8),
         new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.8 })
       );
       bHead.position.set(0, 0.12, 0.8);
@@ -1998,14 +2120,12 @@
       const darkCaveMat = new THREE.MeshBasicMaterial({ color: 0x05050b });
       const rimMat = new THREE.MeshStandardMaterial({ color: 0x2e353b, roughness: 0.8 });
 
-      // 內部深邃黑洞
       const darkHole = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.1, 16, 1, false, 0, Math.PI), darkCaveMat);
       darkHole.rotation.z = Math.PI / 2;
       darkHole.rotation.y = Math.PI / 2;
       darkHole.position.set(0, 0.45, 0);
       portal.add(darkHole);
 
-      // 洞口外緣平滑岩圈飾框
       const rim = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.14, 8, 16, Math.PI), rimMat);
       rim.position.set(0, 0.45, 0.05);
       rim.rotation.x = Math.PI;
@@ -2015,7 +2135,6 @@
       return portal;
     }
 
-    // 8字形穿梭軌道、枕木垂直校正與島底開洞
     let cartGroup = null;
     let cartProgress = 0;
     let trackCurve = null;
@@ -2069,7 +2188,6 @@
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      // 枕木垂直對齊
       const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
       for (let i = 0; i < 110; i++) {
         const t = i / 110;
@@ -2086,7 +2204,6 @@
         system.add(tie);
       }
 
-      // 移除原厚實山洞，直接於穿透點嵌設側面岩洞洞口
       const tunnelHoleLocations = [
         { pos: new THREE.Vector3(5.8, TRACK_Y, -4.0), dir: new THREE.Vector3(1, 0, -1).normalize() },
         { pos: new THREE.Vector3(5.8, TRACK_Y, 4.0),  dir: new THREE.Vector3(1, 0, 1).normalize() },
@@ -2101,7 +2218,6 @@
         system.add(portal);
       });
 
-      // 台車
       cartGroup = new THREE.Group();
       const cartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.5 });
 
@@ -2442,7 +2558,7 @@
         const currentPhase = getTimePhase();
         if (currentPhase.name !== lastPhaseName) {
           lastPhaseName = currentPhase.name;
-          document.getElementById('time-badge').textContent = `🕒 時段：${currentPhase.name}`;
+          document.getElementById('time-badge').textContent = `🕒 時段：${timePhase.name}`;
           scene.background.set(currentPhase.bg);
           scene.fog.color.set(currentPhase.bg);
 
@@ -2461,11 +2577,17 @@
           blade.rotation.z += 0.04;
         });
 
-        // 小陀螺旋轉
+        // 3 顆小陀螺旋轉
         spinningMiniTops.forEach((mini, idx) => {
           mini.rotation.y += 0.15 + idx * 0.03;
           mini.position.y = Math.sin(time * 3.0 + idx) * 0.04;
         });
+
+        // 大陀螺比賽時原地自轉
+        const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
+        if (mainBeybladeTop && isTournamentActive) {
+          mainBeybladeTop.rotation.y += 0.015; // 比賽進行中緩慢平滑原地自轉
+        }
 
         // 掃地動畫
         if (broomMesh && sweeperMan) {
@@ -2512,7 +2634,6 @@
         }
 
         // 陀螺島休眠島民顏色反灰
-        const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
         villagers.forEach(v => {
           if (v.currentIslandIdx === 0 && !isTournamentActive) {
             v.obj.traverse(c => {
@@ -2612,7 +2733,6 @@
               v.obj.position.z = v.currentZ;
               v.obj.rotation.y = Math.atan2(dx, dz);
 
-              // 雙手與雙腳交錯擺動
               v.walkCycle += 0.18;
               const swingAngle = Math.sin(v.walkCycle) * 0.45;
 
