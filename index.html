@@ -193,9 +193,7 @@
     .lock-overlay h1 { font-size: 2.2rem; margin-bottom: 12px; color: #facc15; }
     .lock-overlay p { font-size: 1.1rem; color: #cbd5e1; max-width: 500px; line-height: 1.6; }
 
-    /* =======================================
-       右側滑出毛玻璃抽屜面板 (Side Drawer)
-       ======================================= */
+    /* 右側滑出抽屜 */
     .side-drawer-container {
       position: fixed;
       top: 0;
@@ -214,9 +212,7 @@
       transition: right 0.45s cubic-bezier(0.16, 1, 0.3, 1);
       overflow-y: auto;
     }
-    .side-drawer-container.open {
-      right: 0;
-    }
+    .side-drawer-container.open { right: 0; }
 
     .drawer-header {
       display: flex;
@@ -241,7 +237,7 @@
     }
     .drawer-close:hover { background: #e2e8f0; }
 
-    /* 通用彈窗樣式 (用於登入與教師後台) */
+    /* 通用彈窗樣式 */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -451,7 +447,7 @@
   <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 class="modal-title">🎒 歡迎來到學習島！</h2>
+        <h2 class="modal-title">🎒 歡迎來到 301 學習島！</h2>
       </div>
 
       <div class="form-group">
@@ -483,9 +479,7 @@
     </div>
   </div>
 
-  <!-- =======================================
-       右側滑出毛玻璃抽屜面板 (Side Drawer)
-       ======================================= -->
+  <!-- 右側滑出抽屜面板 -->
   <div id="side-drawer" class="side-drawer-container">
     <div class="drawer-header">
       <div>
@@ -650,7 +644,7 @@
     }
 
     // ==========================================
-    // 2. 學生身分與名冊管理 (每次重整需重新登入)
+    // 2. 學生身分與名冊管理
     // ==========================================
     let currentStudent = { 
       seatNumber: '', 
@@ -808,7 +802,7 @@
     });
 
     // ==========================================
-    // 4. 雲端同步、能量光球發射與打卡
+    // 4. 能量光球發射與打卡
     // ==========================================
     async function sendToGAS(payload) {
       if (!GAS_API_URL || GAS_API_URL.includes("請替換")) return;
@@ -822,7 +816,6 @@
       } catch(e) {}
     }
 
-    // 發射能量光球沿橋梁飛向中央島
     let energyOrbs = [];
     function spawnEnergyOrb(fromPos, toPos) {
       const orbGeo = new THREE.SphereGeometry(0.35, 12, 12);
@@ -844,7 +837,6 @@
       addDailyCount(islandId);
       confetti({ particleCount: 75, spread: 70, origin: { y: 0.7 } });
 
-      // 從該島發射光球至中央戰鬥陀螺島
       const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
       if (islandCfg) {
         spawnEnergyOrb(islandCfg.pos, [0, 1.5, 0]);
@@ -1033,11 +1025,7 @@
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
       if (beybladeBaseMesh) {
-        if (isTournamentActive) {
-          beybladeBaseMesh.material.color.setHex(0xCD7F32);
-        } else {
-          beybladeBaseMesh.material.color.setHex(COLOR_GRAY_DORMANT);
-        }
+        beybladeBaseMesh.material.color.setHex(isTournamentActive ? 0xCD7F32 : COLOR_GRAY_DORMANT);
       }
 
       if (beybladeLandmarkGroup) {
@@ -1046,11 +1034,7 @@
             if (!child.userData.origColor) {
               child.userData.origColor = child.material.color.getHex();
             }
-            if (isTournamentActive) {
-              child.material.color.setHex(child.userData.origColor);
-            } else {
-              child.material.color.setHex(COLOR_GRAY_DORMANT);
-            }
+            child.material.color.setHex(isTournamentActive ? child.userData.origColor : COLOR_GRAY_DORMANT);
           }
         });
       }
@@ -1061,11 +1045,7 @@
             if (!child.userData.origColor) {
               child.userData.origColor = child.material.color.getHex();
             }
-            if (isTournamentActive) {
-              child.material.color.setHex(child.userData.origColor);
-            } else {
-              child.material.color.setHex(COLOR_GRAY_DORMANT);
-            }
+            child.material.color.setHex(isTournamentActive ? child.userData.origColor : COLOR_GRAY_DORMANT);
           }
         });
       });
@@ -1278,7 +1258,7 @@
     }
 
     // ==========================================
-    // 人物配色定義 (暗色調衣服與指定髮色)
+    // 1) 鉸接式多關節立體人物架構 (頭髮、頭部、軀幹、雙手、雙腳)
     // ==========================================
     const HAIR_COLORS = [0x3A3B3C, 0x483C32, 0x72376A, 0xEBA937];
     const CLOTHES_COLORS = [0x64321A, 0x782800, 0x997305, 0x004230, 0x052E3B];
@@ -1293,30 +1273,81 @@
       const cColor = clothesColor !== undefined ? clothesColor : getRandomItem(CLOTHES_COLORS);
       const hColor = hairColor !== undefined ? hairColor : getRandomItem(HAIR_COLORS);
 
-      const body = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.28, 0.38, 0.75, 6),
-        new THREE.MeshStandardMaterial({ color: cColor, roughness: 0.7 })
-      );
-      body.position.y = 0.38;
-      body.castShadow = true;
-      body.receiveShadow = true;
-      person.add(body);
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffedd5, roughness: 0.6 });
+      const clothMat = new THREE.MeshStandardMaterial({ color: cColor, roughness: 0.7 });
+      const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+      const hairMat = new THREE.MeshStandardMaterial({ color: hColor, roughness: 0.6 });
 
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.28, 8, 8),
-        new THREE.MeshStandardMaterial({ color: 0xffedd5, roughness: 0.6 })
-      );
-      head.position.y = 0.95;
+      // 1. 軀幹 (Torso)
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.52, 0.24), clothMat);
+      torso.position.y = 0.62;
+      torso.castShadow = true;
+      torso.receiveShadow = true;
+      person.add(torso);
+
+      // 2. 頭部與頭髮 (Head & Hair)
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), skinMat);
+      head.position.y = 1.02;
       head.castShadow = true;
       person.add(head);
 
       const hair = new THREE.Mesh(
-        new THREE.SphereGeometry(0.29, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.6),
-        new THREE.MeshStandardMaterial({ color: hColor, roughness: 0.6 })
+        new THREE.SphereGeometry(0.215, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        hairMat
       );
-      hair.position.y = 0.97;
+      hair.position.y = 1.04;
       hair.castShadow = true;
       person.add(hair);
+
+      // 3. 雙手臂關節 (Arms Pivot at shoulder)
+      const armGeo = new THREE.BoxGeometry(0.11, 0.45, 0.11);
+
+      // 左手臂 (肩部為樞紐原點)
+      const leftArmPivot = new THREE.Group();
+      leftArmPivot.position.set(-0.28, 0.82, 0);
+      const leftArmMesh = new THREE.Mesh(armGeo, clothMat);
+      leftArmMesh.position.y = -0.22;
+      leftArmMesh.castShadow = true;
+      leftArmPivot.add(leftArmMesh);
+      person.add(leftArmPivot);
+
+      // 右手臂
+      const rightArmPivot = new THREE.Group();
+      rightArmPivot.position.set(0.28, 0.82, 0);
+      const rightArmMesh = new THREE.Mesh(armGeo, clothMat);
+      rightArmMesh.position.y = -0.22;
+      rightArmMesh.castShadow = true;
+      rightArmPivot.add(rightArmMesh);
+      person.add(rightArmPivot);
+
+      // 4. 雙腿關節 (Legs Pivot at hip)
+      const legGeo = new THREE.BoxGeometry(0.13, 0.48, 0.13);
+
+      // 左腿
+      const leftLegPivot = new THREE.Group();
+      leftLegPivot.position.set(-0.12, 0.42, 0);
+      const leftLegMesh = new THREE.Mesh(legGeo, pantsMat);
+      leftLegMesh.position.y = -0.24;
+      leftLegMesh.castShadow = true;
+      leftLegPivot.add(leftLegMesh);
+      person.add(leftLegPivot);
+
+      // 右腿
+      const rightLegPivot = new THREE.Group();
+      rightLegPivot.position.set(0.12, 0.42, 0);
+      const rightLegMesh = new THREE.Mesh(legGeo, pantsMat);
+      rightLegMesh.position.y = -0.24;
+      rightLegMesh.castShadow = true;
+      rightLegPivot.add(rightLegMesh);
+      person.add(rightLegPivot);
+
+      // 儲存肢體關節參照以供動畫即時調度
+      person.userData.limbs = {
+        leftArm: leftArmPivot,
+        rightArm: rightArmPivot,
+        leftLeg: leftLegPivot,
+        rightLeg: rightLegPivot
+      };
 
       return person;
     }
@@ -1340,8 +1371,15 @@
     }
 
     // ==========================================
-    // 9. 地標模型工廠
+    // 9. 地標模型工廠與障礙物收集
     // ==========================================
+    // 2) 障礙物列表：儲存所有大型地標與樹木位置/碰撞半徑
+    let islandObstacles = {}; 
+
+    function registerObstacle(islandId, localX, localZ, radius) {
+      if (!islandObstacles[islandId]) islandObstacles[islandId] = [];
+      islandObstacles[islandId].push({ x: localX, z: localZ, r: radius });
+    }
 
     let windTurbineBlades = [];
     function createNatureLandmark() {
@@ -1374,6 +1412,8 @@
       mag.rotation.x = 0.35;
       mag.rotation.z = -0.3;
       group.add(mag);
+
+      registerObstacle('nature', 0, 0, 1.5);
 
       const turbineCoords = [[-2.8, -2.2], [2.8, 2.2]];
       turbineCoords.forEach(pos => {
@@ -1415,6 +1455,7 @@
         windTurbineBlades.push(rotor);
 
         group.add(wt);
+        registerObstacle('nature', pos[0], pos[1], 0.8);
       });
 
       return group;
@@ -1458,6 +1499,7 @@
       bb.add(core);
 
       bb.scale.setScalar(1.2);
+      registerObstacle('beyblade', 0, 0, 2.6);
 
       const miniColors = [0xef4444, 0x3b82f6, 0xeab308];
       const safeMiniPositions = [
@@ -1489,6 +1531,7 @@
 
         bb.add(mini);
         spinningMiniTops.push(mini);
+        registerObstacle('beyblade', pos[0], pos[2], 0.6);
       });
 
       return bb;
@@ -1522,6 +1565,7 @@
       dbGroup.position.set(0, 0, -1.5);
       dbGroup.rotation.y = 0.3;
       group.add(dbGroup);
+      registerObstacle('sport', 0, -1.5, 1.4);
 
       jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.6);
@@ -1545,6 +1589,8 @@
       jumpRopeGroup.add(ropeMesh);
 
       group.add(jumpRopeGroup);
+      registerObstacle('sport', 0, 1.6, 2.0);
+
       return group;
     }
 
@@ -1585,6 +1631,7 @@
       book.position.set(0, 0.2, -1.2);
       book.scale.setScalar(1.1);
       group.add(book);
+      registerObstacle('reading', 0, -1.2, 1.6);
 
       const van = new THREE.Group();
       const cabin = new THREE.Mesh(
@@ -1638,6 +1685,7 @@
       van.position.set(0, 0, 1.4);
       van.scale.setScalar(0.9);
       group.add(van);
+      registerObstacle('reading', 0, 1.4, 1.5);
 
       return group;
     }
@@ -1684,6 +1732,7 @@
 
       temple.scale.setScalar(1.1);
       group.add(temple);
+      registerObstacle('civics', 0, 0, 2.2);
 
       sweeperMan = createCharacterMesh(0x004230, 0x483C32);
       sweeperMan.position.set(2.4, 0, 1.5);
@@ -1709,11 +1758,11 @@
 
       sweeperMan.add(broomMesh);
       group.add(sweeperMan);
+      registerObstacle('civics', 2.4, 1.5, 0.8);
 
       return group;
     }
 
-    // 吉祥物肥皂箱木樁彩蛋
     let mascotLeader = null;
     function createMascotSoapbox() {
       const boxGroup = new THREE.Group();
@@ -1725,12 +1774,13 @@
       log.castShadow = true;
       boxGroup.add(log);
 
-      mascotLeader = createCharacterMesh(0xd97706, 0xEBA937); // 金黃髮色小探險領隊
+      mascotLeader = createCharacterMesh(0xd97706, 0xEBA937);
       mascotLeader.position.set(0, 0.3, 0);
       mascotLeader.userData = { isMascot: true };
       boxGroup.add(mascotLeader);
 
       boxGroup.position.set(-2.2, 0, -1.8);
+      registerObstacle('sport', -2.2, -1.8, 0.8);
       return boxGroup;
     }
 
@@ -1916,7 +1966,6 @@
     let lastPhaseName = '';
     let dirLight, hemiLight;
 
-    // 相機平滑插值運鏡變數 (Lerp)
     let isFocusing = false;
     let targetCameraPos = new THREE.Vector3(0, 36, 40);
     let targetLookAt = new THREE.Vector3(0, 0, 0);
@@ -1949,6 +1998,38 @@
       return bridge;
     }
 
+    // 3) 穿山拱形山洞 (Arch Tunnel)
+    function createMountainTunnel() {
+      const tunnel = new THREE.Group();
+      const tunnelMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.7 });
+
+      // 左側洞壁
+      const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.0, 2.8), tunnelMat);
+      wallL.position.set(-1.1, 0, 0);
+      wallL.castShadow = true;
+      wallL.receiveShadow = true;
+      tunnel.add(wallL);
+
+      // 右側洞壁
+      const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.0, 2.8), tunnelMat);
+      wallR.position.set(1.1, 0, 0);
+      wallR.castShadow = true;
+      wallR.receiveShadow = true;
+      tunnel.add(wallR);
+
+      // 拱頂
+      const archRoof = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 2.8, 12, 1, false, 0, Math.PI), tunnelMat);
+      archRoof.rotation.z = Math.PI / 2;
+      archRoof.rotation.y = Math.PI / 2;
+      archRoof.position.set(0, 1.0, 0);
+      archRoof.castShadow = true;
+      archRoof.receiveShadow = true;
+      tunnel.add(archRoof);
+
+      return tunnel;
+    }
+
+    // 3) 8字形穿梭軌道、枕木垂直校正與島底山洞
     let cartGroup = null;
     let cartProgress = 0;
     let trackCurve = null;
@@ -2002,19 +2083,40 @@
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
+      // 3) 枕木位置精確垂直於軌道
       const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
       for (let i = 0; i < 110; i++) {
         const t = i / 110;
         const pt = trackCurve.getPointAt(t);
-        const tan = trackCurve.getTangentAt(t);
-        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.2), tieMat);
+        const tan = trackCurve.getTangentAt(t).normalize();
+        const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
+
+        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.22), tieMat);
         tie.position.copy(pt);
         tie.position.y -= 0.04;
-        tie.lookAt(pt.clone().add(tan));
-        tie.rotateY(Math.PI / 2);
+        
+        // 將枕木方向與軌道法線 (Normal) 平行，即 90 度垂直於軌道走向
+        const lookTarget = pt.clone().add(normal);
+        tie.lookAt(lookTarget);
         system.add(tie);
       }
 
+      // 3) 在軌道穿過各島嶼下緣的交會點加裝山洞隧道
+      const tunnelLocations = [
+        { pos: new THREE.Vector3(6.5, TRACK_Y, -4.5), dir: new THREE.Vector3(1, 0, -1).normalize() },
+        { pos: new THREE.Vector3(6.5, TRACK_Y, 4.5),  dir: new THREE.Vector3(1, 0, 1).normalize() },
+        { pos: new THREE.Vector3(-6.5, TRACK_Y, -4.5), dir: new THREE.Vector3(-1, 0, -1).normalize() },
+        { pos: new THREE.Vector3(-6.5, TRACK_Y, 4.5),  dir: new THREE.Vector3(-1, 0, 1).normalize() }
+      ];
+
+      tunnelLocations.forEach(loc => {
+        const tunnel = createMountainTunnel();
+        tunnel.position.copy(loc.pos);
+        tunnel.lookAt(loc.pos.clone().add(loc.dir));
+        system.add(tunnel);
+      });
+
+      // 台車
       cartGroup = new THREE.Group();
       const cartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.5 });
 
@@ -2136,7 +2238,6 @@
       scene.add(createConcreteBridge(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
       scene.add(createConcreteBridge(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
 
-      // 8字形穿梭軌道
       scene.add(createFigureEightTrackAndCart());
 
       // 產生 5 座島嶼
@@ -2183,7 +2284,6 @@
         else if (cfg.id === 'civics') landmark = createCivicsLandmark();
         group.add(landmark);
 
-        // 吉祥物肥皂箱彩蛋 (設置於運動島與公民島)
         if (cfg.id === 'sport') {
           const mascotBox = createMascotSoapbox();
           group.add(mascotBox);
@@ -2193,16 +2293,20 @@
         labelSprite.position.set(0, 5.8, 0);
         group.add(labelSprite);
 
-        // 樹木
+        // 樹木與樹木障礙註冊
         const treeCount = Math.floor(Math.random() * 3) + 3;
         for (let t = 0; t < treeCount; t++) {
           const tree = createTree();
           const angle = Math.random() * Math.PI * 2;
           const dist = 2.4 + Math.random() * (baseRadius - 3.0);
-          tree.position.set(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
+          const tx = Math.cos(angle) * dist;
+          const tz = Math.sin(angle) * dist;
+          tree.position.set(tx, 0, tz);
           tree.scale.setScalar(0.7 + Math.random() * 0.4);
           group.add(tree);
           if (cfg.id === 'beyblade') beybladeDecorations.push(tree);
+
+          registerObstacle(cfg.id, tx, tz, 0.75); // 註冊小樹碰撞體
         }
 
         // 小花
@@ -2259,7 +2363,7 @@
           bridgeEndTarget: null,
           walkCycle: Math.random() * 10,
           waitTimer: Math.random() * 80,
-          speed: 0.014 + Math.random() * 0.006
+          speed: 0.016 + Math.random() * 0.006
         });
       }
 
@@ -2276,7 +2380,6 @@
       renderer.domElement.addEventListener('pointerup', (e) => {
         if (isIslandLocked) return;
 
-        // 若點擊時位移大於 8px 視為拖曳旋轉視角
         if (Math.hypot(e.clientX - startX, e.clientY - startY) > 8) return;
 
         const rect = renderer.domElement.getBoundingClientRect();
@@ -2285,7 +2388,6 @@
 
         raycaster.setFromCamera(mouse, camera);
 
-        // 檢查是否點擊到吉祥物彩蛋
         const allIntersects = raycaster.intersectObjects(scene.children, true);
         const mascotHit = allIntersects.find(item => {
           let curr = item.object;
@@ -2308,7 +2410,6 @@
           return;
         }
 
-        // 檢查島嶼點擊
         const intersects = raycaster.intersectObjects(islandGroups, true);
 
         if (intersects.length > 0) {
@@ -2329,12 +2430,23 @@
       let clock = new THREE.Clock();
       nextSkyEventTime = Date.now() + 5000;
 
+      // 2) 檢查目標點是否撞到島內障礙物 (地標與樹木)
+      function isPositionBlocked(islandId, localX, localZ) {
+        const obsList = islandObstacles[islandId];
+        if (!obsList) return false;
+        for (let i = 0; i < obsList.length; i++) {
+          const obs = obsList[i];
+          const dist = Math.hypot(localX - obs.x, localZ - obs.z);
+          if (dist < obs.r) return true; // 進入碰撞範圍
+        }
+        return false;
+      }
+
       function animate() {
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
         const now = Date.now();
 
-        // 相機平滑聚焦運鏡插值 (Lerp)
         if (isFocusing) {
           camera.position.lerp(targetCameraPos, 0.05);
           controls.target.lerp(targetLookAt, 0.05);
@@ -2343,7 +2455,6 @@
           }
         }
 
-        // 時段色彩檢測
         const currentPhase = getTimePhase();
         if (currentPhase.name !== lastPhaseName) {
           lastPhaseName = currentPhase.name;
@@ -2378,18 +2489,18 @@
           sweeperMan.rotation.y = Math.sin(time * 3.5) * 0.18;
         }
 
-        // 吉祥物肥皂箱跳躍招呼動畫
+        // 吉祥物招呼
         if (mascotLeader) {
           mascotLeader.position.y = 0.3 + Math.max(0, Math.sin(time * 3.0)) * 0.2;
           mascotLeader.rotation.y = Math.sin(time * 1.5) * 0.35;
         }
 
-        // 橋梁能量光球飛行飛向中央島
+        // 能量光球飛行
         for (let i = energyOrbs.length - 1; i >= 0; i--) {
           const orb = energyOrbs[i];
           orb.progress += orb.speed;
           orb.mesh.position.lerpVectors(orb.start, orb.end, orb.progress);
-          orb.mesh.position.y += Math.sin(orb.progress * Math.PI) * 1.5; // 拋物線飛越
+          orb.mesh.position.y += Math.sin(orb.progress * Math.PI) * 1.5;
 
           if (orb.progress >= 1.0) {
             scene.remove(orb.mesh);
@@ -2426,11 +2537,19 @@
           }
         });
 
-        // 島民走路步態微振動與過橋中心線
+        // 1) & 2) 人物四肢交錯擺動 (手臂與雙腳對角交叉) + 避開障礙物
         villagers.forEach(v => {
+          const limbs = v.obj.userData.limbs;
+
           if (v.waitTimer > 0) {
             v.waitTimer--;
-            v.obj.position.y = 0;
+            // 站立時關節回正
+            if (limbs) {
+              limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
+              limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
+              limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
+              limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
+            }
             if (v.waitTimer <= 0) {
               if (Math.random() < 0.4) {
                 let candidates = [];
@@ -2452,17 +2571,37 @@
                 v.bridgeEndTarget = {
                   x: pEnd[0] - dir.x * 4.6,
                   z: pEnd[2] - dir.z * 4.6,
-                  finalX: pEnd[0] + (Math.random() - 0.5) * 3.5,
-                  finalZ: pEnd[2] + (Math.random() - 0.5) * 3.5
+                  finalX: pEnd[0] + (Math.random() - 0.5) * 3.2,
+                  finalZ: pEnd[2] + (Math.random() - 0.5) * 3.2
                 };
                 v.state = 'bridge_start';
               } else {
-                const curCenter = ISLAND_CONFIG[v.currentIslandIdx].pos;
-                const a = Math.random() * Math.PI * 2;
-                const r = Math.random() * 3.6;
-                v.targetX = curCenter[0] + Math.cos(a) * r;
-                v.targetZ = curCenter[2] + Math.sin(a) * r;
-                v.state = 'wander';
+                // 2) 島內隨機找尋非障礙物目標點
+                const curIslandCfg = ISLAND_CONFIG[v.currentIslandIdx];
+                const curCenter = curIslandCfg.pos;
+                let foundValid = false;
+                let tx = 0, tz = 0;
+
+                for (let attempt = 0; attempt < 8; attempt++) {
+                  const a = Math.random() * Math.PI * 2;
+                  const r = Math.random() * 3.4;
+                  const lx = Math.cos(a) * r;
+                  const lz = Math.sin(a) * r;
+                  // 障礙檢測
+                  if (!isPositionBlocked(curIslandCfg.id, lx, lz)) {
+                    tx = curCenter[0] + lx;
+                    tz = curCenter[2] + lz;
+                    foundValid = true;
+                    break;
+                  }
+                }
+                if (foundValid) {
+                  v.targetX = tx;
+                  v.targetZ = tz;
+                  v.state = 'wander';
+                } else {
+                  v.waitTimer = 30; // 若找不到空位則稍待
+                }
               }
             }
           } else {
@@ -2492,8 +2631,16 @@
               v.obj.position.z = v.currentZ;
               v.obj.rotation.y = Math.atan2(dx, dz);
 
-              v.walkCycle += 0.22;
-              v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * 0.08;
+              // 1) 雙手與雙腳交錯擺動 (左手與右腳向前，右手與左腳向前，絕不同手同腳)
+              v.walkCycle += 0.18;
+              const swingAngle = Math.sin(v.walkCycle) * 0.45;
+
+              if (limbs) {
+                limbs.leftArm.rotation.x = -swingAngle;   // 左手
+                limbs.rightArm.rotation.x = swingAngle;   // 右手 (與左手相反)
+                limbs.leftLeg.rotation.x = swingAngle;    // 左腿 (與左手相反，與右手同步)
+                limbs.rightLeg.rotation.x = -swingAngle;  // 右腿 (與左腿相反，與左手同步)
+              }
             }
           }
         });
@@ -2540,7 +2687,6 @@
 
       document.getElementById('side-drawer').classList.add('open');
 
-      // 相機向左偏移 (X - 3)，留出右側抽屜視野空間，並俯衝特寫島嶼
       const ip = islandData.pos;
       targetLookAt.set(ip[0], 1.2, ip[2]);
       targetCameraPos.set(ip[0] - 2.5, 14, ip[2] + 16);
@@ -2549,7 +2695,6 @@
 
     function closeDrawer() {
       document.getElementById('side-drawer').classList.remove('open');
-      // 鏡頭拉升復原至俯視全景
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 36, 40);
       isFocusing = true;
