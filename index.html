@@ -24,7 +24,12 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    #canvas-container { position: absolute; inset: 0; z-index: 1; }
+    #canvas-container { 
+      position: absolute; 
+      inset: 0; 
+      z-index: 1; 
+      touch-action: none;
+    }
 
     /* 頂端即時廣播跑馬燈 */
     .live-banner {
@@ -144,7 +149,7 @@
       text-align: center;
       padding: 24px;
     }
-    .lock-overlay.hidden { display: none; }
+    .lock-overlay.hidden { display: none !important; }
     .lock-overlay h1 { font-size: 2.2rem; margin-bottom: 12px; color: #facc15; }
     .lock-overlay p { font-size: 1.1rem; color: #cbd5e1; max-width: 500px; line-height: 1.6; }
 
@@ -159,9 +164,13 @@
       align-items: center;
       z-index: 1000;
       padding: 16px;
-      transition: opacity 0.25s;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
     }
-    .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+    .modal-overlay.hidden { 
+      opacity: 0; 
+      visibility: hidden;
+      pointer-events: none !important; 
+    }
 
     .modal-card {
       background: #ffffff;
@@ -174,6 +183,7 @@
       box-shadow: 0 20px 40px rgba(0,0,0,0.3);
       border: 4px solid #fde047;
       animation: pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: auto;
     }
     @keyframes pop { 0% { transform: scale(0.9); } 100% { transform: scale(1); } }
 
@@ -361,8 +371,8 @@
     </button>
   </div>
 
-  <!-- 學生開場設定彈窗 -->
-  <div id="login-modal" class="modal-overlay">
+  <!-- 學生開場設定彈窗 (預設加上 hidden，由 JS 判斷是否需要顯現) -->
+  <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
         <h2 class="modal-title">🎒 歡迎來到學習島！</h2>
@@ -495,7 +505,7 @@
     </div>
   </div>
 
-  <!-- 5. 戰鬥陀螺島專用彈窗（學生登記與對戰樹） -->
+  <!-- 5. 戰鬥陀螺島專用彈窗 -->
   <div id="modal-beyblade" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -522,7 +532,7 @@
         <div id="bb-registered-list" style="margin-top:14px; font-size:0.85rem; color:#475569;"></div>
       </div>
 
-      <!-- 狀態 C：報名截止，雙淘汰對戰賽程樹展示 -->
+      <!-- 狀態 C：賽程進行中 -->
       <div id="bb-bracket-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h3 style="color:#dc2626;">🏆 雙淘汰大賽進行中</h3>
@@ -564,7 +574,7 @@
 
   <script>
     // ==========================================
-    // 1. 金鑰與雲端設定
+    // 1. 金鑰與雲端設定區（已完整填入你的專屬設定）
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyAiQtbWb4ewd3322xfMo5eKQ3S-rG4Xfmg",
@@ -575,11 +585,10 @@
       messagingSenderId: "47110742027",
       appId: "1:47110742027:web:e3781ccb0d5d71b442270e",
       measurementId: "G-JX7MR06NHW"
-
     };
 
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxpgYPXZQAyR2Qn1OLejnUMekxvOW1Bf9-U6DyBwFoaw-st0tkQT7K8yxsU3zyXhrGj/exec";
-    const TEACHER_PASSWORD = "4840"; // 🔒 密碼設定為 4840
+    const TEACHER_PASSWORD = "4840";
 
     let db = null, totalEnergyRef = null, liveFeedRef = null, lockStatusRef = null, bbRef = null;
     let isIslandLocked = false;
@@ -593,7 +602,7 @@
       lockStatusRef = db.ref('island_stats/is_locked');
       bbRef = db.ref('beyblade_championship');
     } catch(err) {
-      console.warn("Firebase 未配置或金鑰不完整", err);
+      console.warn("Firebase 初始化提示", err);
     }
 
     // ==========================================
@@ -647,8 +656,11 @@
           currentStudent = JSON.parse(saved);
           updateHudProfile();
           document.getElementById('login-modal').classList.add('hidden');
+          return;
         } catch(e){}
       }
+      // 沒存過才顯示登入卡片
+      document.getElementById('login-modal').classList.remove('hidden');
     }
 
     function updateHudProfile() {
@@ -717,7 +729,6 @@
         totalEnergyRef.transaction(current => {
           let next = (current || 0) + gainPoints;
           if (next >= 5000) {
-            // 滿 5000 點觸發鎖定，不自動歸零，等待老師手動處置
             if (lockStatusRef) lockStatusRef.set(true);
             return 5000;
           }
@@ -769,9 +780,16 @@
 
     function closeAllModals() {
       document.querySelectorAll('.modal-overlay').forEach(m => {
-        if (m.id !== 'login-modal') m.classList.add('hidden');
+        m.classList.add('hidden');
       });
     }
+
+    // 防止彈窗內所有點擊穿透到背景
+    document.querySelectorAll('.modal-card').forEach(card => {
+      card.addEventListener('pointerdown', e => e.stopPropagation());
+      card.addEventListener('pointerup', e => e.stopPropagation());
+      card.addEventListener('click', e => e.stopPropagation());
+    });
 
     // ==========================================
     // 5. 各島送出函式
@@ -906,7 +924,6 @@
       const isPastDeadline = deadlineTime > 0 && now > deadlineTime;
 
       if (!isPastDeadline && bbState.status !== 'bracket_ready') {
-        // 報名中
         regView.style.display = 'block';
         deadlineInfo.textContent = bbState.deadline 
           ? `⏳ 報名截止時間：${new Date(bbState.deadline).toLocaleString()}` 
@@ -916,40 +933,36 @@
         regList.innerHTML = `<strong>目前已報名選手 (${pArr.length} 位)：</strong><br>` + 
           pArr.map(p => `• ${p.seatNumber}號 ${p.studentName}（${p.bladeName}）`).join('<br>');
       } else {
-        // 截止 / 賽程進行中
         bracketView.style.display = 'block';
         renderBracketContent();
       }
     }
 
-function registerBeyblade() {
-  const bname = document.getElementById('bb-blade-name').value.trim();
-  if (!bname) { alert('請填寫你的陀螺名稱！'); return; }
-  if (!bbRef) return;
+    function registerBeyblade() {
+      const bname = document.getElementById('bb-blade-name').value.trim();
+      if (!bname) { alert('請填寫你的陀螺名稱！'); return; }
+      if (!bbRef) return;
 
-  const pKey = `seat_${currentStudent.seatNumber}`;
-  
-  // 1. 寫入 Firebase（供網頁即時排賽程、顯示已報名清單）
-  bbRef.child('players').child(pKey).set({
-    seatNumber: currentStudent.seatNumber,
-    studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-    bladeName: bname,
-    registeredAt: firebase.database.ServerValue.TIMESTAMP
-  });
+      const pKey = `seat_${currentStudent.seatNumber}`;
+      
+      bbRef.child('players').child(pKey).set({
+        seatNumber: currentStudent.seatNumber,
+        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+        bladeName: bname,
+        registeredAt: firebase.database.ServerValue.TIMESTAMP
+      });
 
-  // 2. 同步備份寫入 Google 試算表（戰鬥陀螺報名分頁）
-  sendToGAS({
-    type: 'beyblade_registration',
-    seatNumber: currentStudent.seatNumber,
-    studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-    bladeName: bname
-  });
+      sendToGAS({
+        type: 'beyblade_registration',
+        seatNumber: currentStudent.seatNumber,
+        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+        bladeName: bname
+      });
 
-  alert(`✅ 報名成功！期待你的【${bname}】在大賽大放異彩！`);
-  document.getElementById('bb-blade-name').value = '';
-}
+      alert(`✅ 報名成功！期待你的【${bname}】在大賽大放異彩！`);
+      document.getElementById('bb-blade-name').value = '';
+    }
 
-    // 渲染雙淘汰賽程樹
     function renderBracketContent() {
       const container = document.getElementById('bb-bracket-content');
       if (!bbState.matches || bbState.matches.length === 0) {
@@ -979,17 +992,14 @@ function registerBeyblade() {
       container.innerHTML = html;
     }
 
-    // 老師點選勝利者晉級
     function adminPickWinner(matchIdx, playerNum) {
       const pwd = prompt('請輸入教師密碼以認證賽果：');
       if (pwd !== TEACHER_PASSWORD) { alert('密碼錯誤！'); return; }
 
       const match = bbState.matches[matchIdx];
       const winner = playerNum === 1 ? match.p1 : match.p2;
-      const loser = playerNum === 1 ? match.p2 : match.p1;
       match.winner = winner.seatNumber;
 
-      // 如果有下一個指定前進場次，自動推進
       if (match.nextWinMatch !== undefined && bbState.matches[match.nextWinMatch]) {
         const nextM = bbState.matches[match.nextWinMatch];
         if (!nextM.p1) nextM.p1 = winner;
@@ -1047,7 +1057,6 @@ function registerBeyblade() {
       alert('已更新報名截止時間！');
     }
 
-    // 產生雙淘汰對戰架構
     function adminGenerateBracket() {
       if (!bbState.players || Object.keys(bbState.players).length < 2) {
         alert('至少需要 2 位報名選手才能生成賽程！');
@@ -1056,18 +1065,16 @@ function registerBeyblade() {
       const playerList = Object.values(bbState.players).sort(() => Math.random() - 0.5);
       const matches = [];
 
-      // 產生第一輪對決
       for (let i = 0; i < playerList.length; i += 2) {
         matches.push({
           stageName: `勝者組 首輪 第 ${Math.floor(i/2)+1} 場`,
           p1: playerList[i],
           p2: playerList[i+1] || null,
-          winner: playerList[i+1] ? null : playerList[i].seatNumber, // 輪空自動勝
+          winner: playerList[i+1] ? null : playerList[i].seatNumber,
           nextWinMatch: Math.floor(playerList.length / 2) + Math.floor(i / 4)
         });
       }
 
-      // 預備四強與決賽槽位
       matches.push({ stageName: '勝者組 準決賽', p1: null, p2: null, winner: null, nextWinMatch: matches.length + 1 });
       matches.push({ stageName: '敗者組 復活決賽', p1: null, p2: null, winner: null, nextWinMatch: matches.length + 1 });
       matches.push({ stageName: '🏆 總冠軍爭霸賽', p1: null, p2: null, winner: null });
@@ -1078,7 +1085,7 @@ function registerBeyblade() {
     }
 
     // ==========================================
-    // 8. 四階段時段亮度背景 (06-11, 11-13, 13-16, 16-06)
+    // 8. 四階段時段亮度背景
     // ==========================================
     function getTimePhase() {
       const hour = new Date().getHours();
@@ -1097,11 +1104,11 @@ function registerBeyblade() {
     // 9. Three.js 俯視視角、五大飽和島嶼與隨機漫步島民
     // ==========================================
     const ISLAND_CONFIG = [
-      { id: 'nature', title: '生態科學島', color: 0x059669, pos: [-16, 0, -12] }, // 祖母綠
-      { id: 'sport', title: '運動健身島', color: 0x0284c7, pos: [16, 0, -12] },   // 亮青藍
-      { id: 'reading', title: '閱讀島', color: 0x7c3aed, pos: [-16, 0, 12] },      // 皇家紫羅蘭
-      { id: 'civics', title: '優良公民島', color: 0xd97706, pos: [16, 0, 12] },    // 琥珀金黃
-      { id: 'beyblade', title: '戰鬥陀螺島', color: 0xdc2626, pos: [0, 0, 0] }     // 烈焰紅 (中央)
+      { id: 'nature', title: '生態科學島', color: 0x059669, pos: [-16, 0, -12] },
+      { id: 'sport', title: '運動健身島', color: 0x0284c7, pos: [16, 0, -12] },
+      { id: 'reading', title: '閱讀島', color: 0x7c3aed, pos: [-16, 0, 12] },
+      { id: 'civics', title: '優良公民島', color: 0xd97706, pos: [16, 0, 12] },
+      { id: 'beyblade', title: '戰鬥陀螺島', color: 0xdc2626, pos: [0, 0, 0] }
     ];
 
     let scene, camera, renderer, controls;
@@ -1117,7 +1124,6 @@ function registerBeyblade() {
       scene.background = new THREE.Color(timePhase.bg);
       scene.fog = new THREE.FogExp2(timePhase.bg, 0.012);
 
-      // 固定俯視 (Top-Down Isometric)
       camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
       camera.position.set(0, 56, 32);
       camera.lookAt(0, 0, 0);
@@ -1128,14 +1134,13 @@ function registerBeyblade() {
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableRotate = false; // 🔒 鎖定旋轉
-      controls.enableZoom = true;   // 雙指/滾輪縮放
-      controls.enablePan = true;    // 平移地圖
+      controls.enableRotate = false;
+      controls.enableZoom = true;
+      controls.enablePan = true;
       controls.minDistance = 25;
       controls.maxDistance = 90;
       controls.target.set(0, 0, 0);
 
-      // 光源
       const hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x1e293b, timePhase.light);
       scene.add(hemiLight);
 
@@ -1143,12 +1148,11 @@ function registerBeyblade() {
       dirLight.position.set(10, 45, 20);
       scene.add(dirLight);
 
-      // 產生 5 座高飽和色島嶼
+      // 產生 5 座島嶼
       ISLAND_CONFIG.forEach(cfg => {
         const group = new THREE.Group();
         group.position.set(...cfg.pos);
 
-        // 基底圓柱
         const baseRadius = cfg.id === 'beyblade' ? 6.8 : 6.0;
         const baseGeo = new THREE.CylinderGeometry(baseRadius, baseRadius * 0.75, 4, 8);
         const baseMat = new THREE.MeshStandardMaterial({ 
@@ -1161,7 +1165,6 @@ function registerBeyblade() {
         base.position.y = -2;
         group.add(base);
 
-        // 各島特色地標
         let decoMesh;
         if (cfg.id === 'reading') {
           const g = new THREE.BoxGeometry(3, 2.2, 2.2);
@@ -1181,7 +1184,6 @@ function registerBeyblade() {
           const m = new THREE.MeshStandardMaterial({ color: 0x10b981 });
           decoMesh = new THREE.Mesh(g, m);
         } else {
-          // 戰鬥陀螺島中央地標：金屬對戰盤 (Stadium Arena)
           const g = new THREE.CylinderGeometry(3.2, 2.5, 1.2, 16);
           const m = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.6, roughness: 0.2 });
           decoMesh = new THREE.Mesh(g, m);
@@ -1189,7 +1191,7 @@ function registerBeyblade() {
         decoMesh.position.y = 1.6;
         group.add(decoMesh);
 
-        // 生成 3~5 位漫步島民
+        // 生成島民
         const villagerCount = Math.floor(Math.random() * 3) + 3;
         const clothesColors = [0xef4444, 0x2563eb, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xffffff];
 
@@ -1225,31 +1227,31 @@ function registerBeyblade() {
         islandGroups.push(group);
       });
 
-      // 點擊島嶼偵測
+      // 點擊島嶼判定（防滑動、防穿透）
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
+      let startX = 0, startY = 0;
 
-// 點擊島嶼偵測（畫布專屬綁定 + 拖曳防誤觸機制）
-      const raycaster = new THREE.Raycaster();
-      const mouse = new THREE.Vector2();
-      let pointerDownPos = { x: 0, y: 0 };
-
-      // 1. 記錄按下的起點座標
       renderer.domElement.addEventListener('pointerdown', (e) => {
-        pointerDownPos.x = e.clientX;
-        pointerDownPos.y = e.clientY;
+        startX = e.clientX;
+        startY = e.clientY;
       });
 
-      // 2. 只有在「放開」且「沒有大幅滑動拖曳（位移小於 6px）」時才判定為點擊島嶼
       renderer.domElement.addEventListener('pointerup', (e) => {
         if (isIslandLocked) return;
 
-        // 計算手指或滑鼠移動距離（若是拖曳平移地圖，則不觸發點擊）
-        const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
-        if (dist > 6) return;
+        // 若有任何彈窗開啟，不觸發點擊島嶼
+        const isAnyModalVisible = Array.from(document.querySelectorAll('.modal-overlay'))
+          .some(m => !m.classList.contains('hidden'));
+        if (isAnyModalVisible) return;
 
-        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        // 手指或滑鼠位移大於 8px 視為拖曳地圖，不觸發進入島嶼
+        const diff = Math.hypot(e.clientX - startX, e.clientY - startY);
+        if (diff > 8) return;
+
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
         const intersects = raycaster.intersectObjects(islandGroups, true);
@@ -1257,30 +1259,25 @@ function registerBeyblade() {
         if (intersects.length > 0) {
           let root = intersects[0].object;
           while (root.parent && root.parent !== scene) root = root.parent;
-          if (root.userData && root.userData.id) {
-            openIslandModal(root.userData.id);
-          }
+          if (root.userData && root.userData.id) openIslandModal(root.userData.id);
         }
       });
 
-        window.addEventListener('resize', () => {
+      window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
-      // 動畫迴圈
       let clock = new THREE.Clock();
       function animate() {
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
 
-        // 浮動呼吸
         islandGroups.forEach((g, i) => {
           g.position.y = Math.sin(time * 1.5 + i) * 0.25;
         });
 
-        // 島民走動
         villagers.forEach(v => {
           v.angle += v.speed;
           v.obj.position.x = Math.cos(v.angle) * v.radius;
@@ -1296,18 +1293,10 @@ function registerBeyblade() {
 
     function openIslandModal(id) {
       closeAllModals();
-      if (id === 'nature') document.getElementById('modal-nature').classList.remove('hidden');
-      if (id === 'sport') document.getElementById('modal-sport').classList.remove('hidden');
-      if (id === 'civics') document.getElementById('modal-civics').classList.remove('hidden');
-      if (id === 'reading') document.getElementById('modal-reading').classList.remove('hidden');
-      if (id === 'beyblade') document.getElementById('modal-beyblade').classList.remove('hidden');
+      const modal = document.getElementById(`modal-${id}`);
+      if (modal) modal.classList.remove('hidden');
     }
-// 防止彈窗內部的任何點擊穿透到底層 3D 畫布
-document.querySelectorAll('.modal-card').forEach(card => {
-  card.addEventListener('pointerdown', e => e.stopPropagation());
-  card.addEventListener('pointerup', e => e.stopPropagation());
-  card.addEventListener('click', e => e.stopPropagation());
-});
+
     // 啟動程序
     initStudent();
     init3D();
