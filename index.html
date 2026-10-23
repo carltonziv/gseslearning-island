@@ -2045,13 +2045,36 @@
       van.add(windshield);
 
       [-0.55, 0.55].forEach(lx => {
-        const headlight = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12),
-          new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 0.5 })
-        );
-        headlight.rotation.x = Math.PI / 2;
-        headlight.position.set(lx, 0.65, 2.04);
-        van.add(headlight);
+// 金屬燈罩
+const headLight = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.16, 12), brassMat);
+headLight.rotation.x = Math.PI / 2;
+headLight.position.set(0, 0.75, 1.0);
+cartGroup.add(headLight);
+
+// 自發光燈泡
+const bulbLight = new THREE.Mesh(
+  new THREE.SphereGeometry(0.09, 8, 8),
+  new THREE.MeshBasicMaterial({ color: 0xfef08a })
+);
+bulbLight.position.set(0, 0.75, 1.08);
+cartGroup.add(bulbLight);
+
+// 🌟 1. 向前方照射的聚光燈 (SpotLight)
+const spotLight = new THREE.SpotLight(0xfef08a, 4.5, 9, Math.PI / 5, 0.45, 1.2);
+spotLight.position.set(0, 0.75, 1.08);
+
+// 🌟 2. 聚光燈的照射目標點（設定在車頭正前方 Z+4、地面高度 Y-0.5）
+const lightTarget = new THREE.Object3D();
+lightTarget.position.set(0, -0.5, 4.5);
+cartGroup.add(lightTarget);
+spotLight.target = lightTarget;
+
+cartGroup.add(spotLight);
+
+// 🌟 3. 車頭周圍的環境微光（讓車頭周圍也有柔和夜間氛圍）
+const bulbGlow = new THREE.PointLight(0xfef08a, 1.2, 2.5);
+bulbGlow.position.set(0, 0.75, 1.15);
+cartGroup.add(bulbGlow);
       });
 
       const grille = new THREE.Mesh(
