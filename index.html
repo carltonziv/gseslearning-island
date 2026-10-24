@@ -732,6 +732,7 @@
       </div>
     </div>
   </div>
+
   <script>
     // ==========================================
     // 1. 金鑰與雲端設定區
@@ -1742,9 +1743,9 @@
       return false;
     }
 
-    let islandFlowers = []; // 🌸 儲存所有花朵以供微風搖曳計算
-    
+    let islandFlowers = [];
     let windTurbineBlades = [];
+
     function createNatureLandmark() {
       const group = new THREE.Group();
 
@@ -1942,6 +1943,7 @@
     let jumpRopeGroup = null;
     let jumperMan = null;
     let ropeMesh = null;
+
     function createSportLandmark() {
       const group = new THREE.Group();
 
@@ -1982,32 +1984,29 @@
       group.add(dbGroup);
       registerObstacle('sport', 0, -1.5, 1.8);
 
-jumpRopeGroup = new THREE.Group();
+      jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.6);
 
-      // 左側甩繩者：面向中央（旋轉 +90 度），伸出右手（靠近跳繩端點）
+      // 左側甩繩者：面向中央 (+90度)，右手握住跳繩端點
       const swingerA = createCharacterMesh(false, 0xF5D0A9, 0x64321A, 0x3A3B3C);
       swingerA.position.set(-1.8, 0, 0);
-      swingerA.rotation.y = Math.PI / 2; // 🌟 面向中央 (+X)
-      // 右手抬起向前握住跳繩端點
+      swingerA.rotation.y = Math.PI / 2;
       if (swingerA.userData.limbs) {
-        swingerA.userData.limbs.rightArm.rotation.x = -1.2; // 抬臂向前
-        swingerA.userData.limbs.rightArm.rotation.z = -0.3; // 微朝內扣
+        swingerA.userData.limbs.rightArm.rotation.x = -1.2;
+        swingerA.userData.limbs.rightArm.rotation.z = -0.3;
       }
       jumpRopeGroup.add(swingerA);
 
-      // 右側甩繩者：面向中央（旋轉 -90 度），伸出左手（靠近跳繩端點）
+      // 右側甩繩者：面向中央 (-90度)，左手握住跳繩端點
       const swingerB = createCharacterMesh(false, 0x8D5524, 0x052E3B, 0x483C32);
       swingerB.position.set(1.8, 0, 0);
-      swingerB.rotation.y = -Math.PI / 2; // 🌟 面向中央 (-X)
-      // 左手抬起向前握住跳繩端點
+      swingerB.rotation.y = -Math.PI / 2;
       if (swingerB.userData.limbs) {
-        swingerB.userData.limbs.leftArm.rotation.x = -1.2; // 抬臂向前
-        swingerB.userData.limbs.leftArm.rotation.z = 0.3; // 微朝內扣
+        swingerB.userData.limbs.leftArm.rotation.x = -1.2;
+        swingerB.userData.limbs.leftArm.rotation.z = 0.3;
       }
       jumpRopeGroup.add(swingerB);
 
-      // 將兩位甩繩者儲存至全域或 jumpRopeGroup 供動畫調用
       jumpRopeGroup.userData.swingerA = swingerA;
       jumpRopeGroup.userData.swingerB = swingerB;
 
@@ -2239,6 +2238,37 @@ jumpRopeGroup = new THREE.Group();
       return boxGroup;
     }
 
+    // 💤 建立午夜睡眠 Zzz 微光 Sprite
+    function createSleepZzzSprite() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+
+      ctx.clearRect(0, 0, 128, 128);
+      ctx.shadowColor = '#93c5fd';
+      ctx.shadowBlur = 12;
+
+      ctx.font = 'bold 52px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#bfdbfe';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Zzz...', 64, 64);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMat = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(1.4, 1.4, 1);
+      sprite.position.set(0.18, 1.5, 0);
+      sprite.visible = false;
+      return sprite;
+    }
+    
     function createIslandTitleSprite(text) {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
@@ -2296,17 +2326,15 @@ jumpRopeGroup = new THREE.Group();
       return tree;
     }
 
-function createFlower() {
+    function createFlower() {
       const flower = new THREE.Group();
 
-      // 1. 綠色花莖
       const stemMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 });
       const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.35, 6), stemMat);
       stem.position.y = 0.175;
       stem.castShadow = true;
       flower.add(stem);
 
-      // 2. 莖上的小葉片點綴
       const leafGeo = new THREE.BoxGeometry(0.09, 0.02, 0.04);
       const leafMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.7 });
       const leaf = new THREE.Mesh(leafGeo, leafMat);
@@ -2314,13 +2342,11 @@ function createFlower() {
       leaf.rotation.z = -0.35;
       flower.add(leaf);
 
-      // 3. 花頭群組（朝天微斜）
       const headGroup = new THREE.Group();
       headGroup.position.set(0, 0.35, 0);
-      headGroup.rotation.x = 0.15 + (Math.random() - 0.5) * 0.2; // 隨機朝向，更顯生動
+      headGroup.rotation.x = 0.15 + (Math.random() - 0.5) * 0.2;
       headGroup.rotation.z = (Math.random() - 0.5) * 0.2;
 
-      // 4. 中央花蕊（暖黃色）
       const centerGeo = new THREE.SphereGeometry(0.055, 8, 8);
       const centerMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
       const centerMesh = new THREE.Mesh(centerGeo, centerMat);
@@ -2328,7 +2354,6 @@ function createFlower() {
       centerMesh.castShadow = true;
       headGroup.add(centerMesh);
 
-      // 5. 隨機豐富花瓣配色庫（粉櫻、亮橙、純白、薰衣草紫、洋紅、金黃、天空藍、珊瑚紅）
       const petalColors = [
         0xf472b6, 0xfb7185, 0xf87171, 0xfb923c, 
         0xffffff, 0xc084fc, 0xa855f7, 0x38bdf8, 
@@ -2337,28 +2362,24 @@ function createFlower() {
       const pickedColor = petalColors[Math.floor(Math.random() * petalColors.length)];
       const petalMat = new THREE.MeshStandardMaterial({ color: pickedColor, roughness: 0.45 });
 
-      // 6. 生成 5 片環狀排列花瓣
       const petalCount = 5;
       const petalGeo = new THREE.SphereGeometry(0.05, 7, 7);
-      petalGeo.scale(1.0, 0.35, 1.6); // 拉平成水滴/橢圓狀花瓣
+      petalGeo.scale(1.0, 0.35, 1.6);
 
       for (let i = 0; i < petalCount; i++) {
         const petal = new THREE.Mesh(petalGeo, petalMat);
         const angle = (i / petalCount) * Math.PI * 2;
         
-        // 沿半徑向外排開並朝外伸展
         petal.position.x = Math.cos(angle) * 0.085;
         petal.position.z = Math.sin(angle) * 0.085;
         petal.rotation.y = -angle + Math.PI / 2;
-        petal.rotation.x = 0.18; // 花瓣微向上收攏
+        petal.rotation.x = 0.18;
         petal.castShadow = true;
         
         headGroup.add(petal);
       }
 
       flower.add(headGroup);
-
-      // 隨機微調整體大小（85% ~ 125%），增添自然多樣感
       const scale = 0.85 + Math.random() * 0.4;
       flower.scale.setScalar(scale);
 
@@ -2528,15 +2549,15 @@ function createFlower() {
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
-      const tieCount = 220; // 🌟 枕木總數（可依喜好調整，如 200~260）
+      const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
+      const tieCount = 220; // 🌟 枕木數量
 
       for (let i = 0; i < tieCount; i++) {
         const t = i / tieCount;
         const pt = trackCurve.getPointAt(t);
         const tan = trackCurve.getTangentAt(t).normalize();
 
-        // 寬度 1.15（橫跨雙軌），厚度 Z 設為 0.16（更加細緻勻稱）
+        // 寬度 1.15（橫跨雙軌），厚度 Z 設為 0.16
         const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.16), tieMat);
         tie.position.copy(pt);
         tie.position.y -= 0.04;
@@ -2545,6 +2566,7 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
         tie.lookAt(lookTarget);
         system.add(tie);
       }
+
       const tunnelHoleLocations = [
         { pos: new THREE.Vector3(5.8, TRACK_Y, -4.0), dir: new THREE.Vector3(1, 0, -1).normalize() },
         { pos: new THREE.Vector3(5.8, TRACK_Y, 4.0),  dir: new THREE.Vector3(1, 0, 1).normalize() },
@@ -2765,14 +2787,14 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
         labelSprite.position.set(0, 5.8, 0);
         group.add(labelSprite);
 
-// 樹木生成數量：公民島 1 棵、閱讀島減少 1 顆 (2~4 棵)，其餘島維持 3~5 棵
+        // 樹木生成（公民島 1 棵、閱讀島 2~4 棵，其餘 3~5 棵）
         let treeCount;
         if (cfg.id === 'civics') {
           treeCount = 1;
         } else if (cfg.id === 'reading') {
-          treeCount = Math.floor(Math.random() * 3) + 2; // 🌟 2 ~ 4 棵（減少 1 棵）
+          treeCount = Math.floor(Math.random() * 3) + 2;
         } else {
-          treeCount = Math.floor(Math.random() * 3) + 3; // 3 ~ 5 棵
+          treeCount = Math.floor(Math.random() * 3) + 3;
         }
 
         for (let t = 0; t < treeCount; t++) {
@@ -2799,7 +2821,7 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
           registerObstacle(cfg.id, tx, tz, obsRadius);
         }
 
-// 小花生成
+        // 小花生成
         const flowerCount = Math.floor(Math.random() * 4) + 4;
         for (let f = 0; f < flowerCount; f++) {
           const flower = createFlower();
@@ -2809,12 +2831,11 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
           const fz = Math.sin(angle) * dist;
           flower.position.set(fx, 0, fz);
           
-          // 記錄每朵花的位置與專屬擺動時間差
           flower.userData.swayPhase = Math.random() * Math.PI * 2;
-          flower.userData.swaySpeed = 1.8 + Math.random() * 0.8; // 微風頻率
+          flower.userData.swaySpeed = 1.8 + Math.random() * 0.8;
           
           group.add(flower);
-          islandFlowers.push(flower); // 🌸 加入動態清單
+          islandFlowers.push(flower);
           
           if (cfg.id === 'beyblade') beybladeDecorations.push(flower);
         }
@@ -2833,6 +2854,7 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
 
       updateBeybladeIslandDormancy();
 
+      // 建立 20 位島民（安全順序建立）
       const totalVillagers = 20;
 
       for (let i = 0; i < totalVillagers; i++) {
@@ -2843,6 +2865,8 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
         else assignedSkin = 0xFFE0BD;
 
         const person = createCharacterMesh(isSkirt, assignedSkin);
+        const zzzSprite = createSleepZzzSprite();
+        person.add(zzzSprite);
 
         const currentIslandIdx = (i % 4) + 1;
         const curIsland = ISLAND_CONFIG[currentIslandIdx];
@@ -2863,8 +2887,14 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
         const stadiumX = Math.cos(cheerAngle) * cheerRadius;
         const stadiumZ = Math.sin(cheerAngle) * cheerRadius;
 
+        const sleepAngle = (i / totalVillagers) * Math.PI * 2;
+        const sleepRadius = 3.3 + (i % 2 === 0 ? 0.15 : -0.15);
+        const sleepX = Math.cos(sleepAngle) * sleepRadius;
+        const sleepZ = Math.sin(sleepAngle) * sleepRadius;
+
         villagers.push({
           obj: person,
+          zzzSprite: zzzSprite,
           currentIslandIdx: currentIslandIdx,
           targetIslandIdx: currentIslandIdx,
           state: 'wander',
@@ -2880,7 +2910,9 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
           isSkirt: isSkirt,
           cheerType: cheerType,
           stadiumPos: { x: stadiumX, z: stadiumZ },
-          cheerPhase: Math.random() * Math.PI * 2
+          sleepPos: { x: sleepX, z: sleepZ },
+          cheerPhase: Math.random() * Math.PI * 2,
+          sleepBreathPhase: Math.random() * Math.PI * 2
         });
       }
 
@@ -2978,9 +3010,7 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
         // 🌸 花朵隨微風自然搖曳
         islandFlowers.forEach(fl => {
           const phase = time * fl.userData.swaySpeed + fl.userData.swayPhase;
-          // Z 軸微幅前後傾斜（約 0.08 弧度，約 4.5 度）
           fl.rotation.z = Math.sin(phase) * 0.08;
-          // X 軸搭配微幅交錯傾斜，讓擺動更圓滑有機
           fl.rotation.x = Math.cos(phase * 0.8) * 0.05;
         });
         
@@ -3028,21 +3058,18 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
           ropeMesh.rotation.x = ropeAngle;
           jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
 
-          // 🌟 兩側甩繩者的手臂跟隨繩索旋轉節奏同步畫圓搖動
+          // 兩側甩繩者手臂畫圓甩動
           if (jumpRopeGroup && jumpRopeGroup.userData.swingerA && jumpRopeGroup.userData.swingerB) {
             const swingerA = jumpRopeGroup.userData.swingerA;
             const swingerB = jumpRopeGroup.userData.swingerB;
 
-            // 圓周甩動偏移量
             const circleY = Math.sin(ropeAngle) * 0.22;
             const circleZ = Math.cos(ropeAngle) * 0.22;
 
-            // 左側選手 (右手握繩)
             if (swingerA.userData.limbs) {
               swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
               swingerA.userData.limbs.rightArm.rotation.y = circleY;
             }
-            // 右側選手 (左手握繩)
             if (swingerB.userData.limbs) {
               swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
               swingerB.userData.limbs.leftArm.rotation.y = -circleY;
@@ -3050,9 +3077,83 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
           }
         }
 
+        // 睡眠時段判定 (午夜 23:00 至 清晨 06:00)
+        const currentHour = new Date().getHours();
+        const isSleepingTime = (currentHour >= 23 || currentHour < 6);
+        
         villagers.forEach((v, idx) => {
           const limbs = v.obj.userData.limbs;
 
+          // ==========================================
+          // 狀態 1：💤 午夜~清晨休息時段（中央陀螺島席地入睡 + Zzz 飄升）
+          // ==========================================
+          if (isSleepingTime) {
+            v.currentIslandIdx = 0;
+            const destX = v.sleepPos.x;
+            const destZ = v.sleepPos.z;
+
+            const tdx = destX - v.currentX;
+            const tdz = destZ - v.currentZ;
+            const tdist = Math.hypot(tdx, tdz);
+
+            if (tdist > 0.12) {
+              if (v.zzzSprite) v.zzzSprite.visible = false;
+
+              v.currentX += (tdx / tdist) * 0.028;
+              v.currentZ += (tdz / tdist) * 0.028;
+              v.obj.position.x = v.currentX;
+              v.obj.position.z = v.currentZ;
+              v.obj.position.y = 0;
+              v.obj.rotation.x = 0;
+              v.obj.rotation.y = Math.atan2(tdx, tdz);
+
+              v.walkCycle += 0.16;
+              if (limbs) {
+                limbs.leftLeg.rotation.x = Math.sin(v.walkCycle) * 0.4;
+                limbs.rightLeg.rotation.x = -Math.sin(v.walkCycle) * 0.4;
+                limbs.leftArm.rotation.x = -Math.sin(v.walkCycle) * 0.4;
+                limbs.rightArm.rotation.x = Math.sin(v.walkCycle) * 0.4;
+                if (limbs.skirt) limbs.skirt.rotation.x = 0;
+              }
+            } else {
+              v.obj.position.x = destX;
+              v.obj.position.z = destZ;
+              v.obj.rotation.y = Math.atan2(destX, destZ);
+
+              v.sleepBreathPhase += 0.035;
+              const breathWave = Math.sin(v.sleepBreathPhase);
+
+              v.obj.position.y = -0.16 + breathWave * 0.012;
+              v.obj.rotation.x = 0.18 + breathWave * 0.04;
+
+              if (limbs) {
+                limbs.leftLeg.rotation.x = -1.45;
+                limbs.rightLeg.rotation.x = -1.45;
+                limbs.leftArm.rotation.x = -0.45;
+                limbs.leftArm.rotation.z = 0.15;
+                limbs.rightArm.rotation.x = -0.45;
+                limbs.rightArm.rotation.z = -0.15;
+                if (limbs.skirt) limbs.skirt.rotation.x = -0.55;
+              }
+
+              if (v.zzzSprite) {
+                v.zzzSprite.visible = true;
+                const floatProgress = (time * 0.5 + idx * 0.35) % 1.0;
+                v.zzzSprite.position.y = 1.35 + floatProgress * 0.45;
+                v.zzzSprite.position.x = 0.18 + Math.sin(floatProgress * Math.PI * 2) * 0.08;
+                v.zzzSprite.material.opacity = Math.sin(floatProgress * Math.PI) * 0.85;
+              }
+            }
+            return;
+          }
+
+          if (v.zzzSprite && v.zzzSprite.visible) {
+            v.zzzSprite.visible = false;
+          }
+
+          // ==========================================
+          // 狀態 2：🏆 戰鬥陀螺大賽進行中（熱血應援）
+          // ==========================================
           if (isTournamentActive) {
             v.currentIslandIdx = 0;
             const destX = v.stadiumPos.x;
@@ -3100,6 +3201,9 @@ const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 
               }
             }
           } 
+          // ==========================================
+          // 狀態 3：🚶 平時四島散步與慢跑
+          // ==========================================
           else {
             v.obj.rotation.x = 0;
 
