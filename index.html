@@ -1736,7 +1736,33 @@
       toggleBracketSidebar(true);
     }
     // ==========================================
-    // 9. 人物模型生成（完整補齊）
+    // 9. 6 個時段背景色彩精準判定
+    // ==========================================
+    function getTimePhase() {
+      const hour = new Date().getHours();
+      
+      if (hour >= 3 && hour < 6) {
+        return { phase: 'dawn', name: '晨光微曦', bg: '#F7EDC4', light: 1.05, sun: 0xffedd5, hemi: 0xfffbeb };
+      } 
+      else if (hour >= 6 && hour < 11) {
+        return { phase: 'morning', name: '溫煦上午', bg: '#F8E8CA', light: 1.25, sun: 0xfff7ed, hemi: 0xffffff };
+      } 
+      else if (hour >= 11 && hour < 13) {
+        return { phase: 'noon', name: '耀眼正午', bg: '#FFEB80', light: 1.45, sun: 0xffffff, hemi: 0xfef08a };
+      } 
+      else if (hour >= 13 && hour < 17) {
+        return { phase: 'afternoon', name: '金黃午後', bg: '#CFB53B', light: 1.2, sun: 0xfde68a, hemi: 0xfef3c7 };
+      } 
+      else if (hour >= 17 && hour < 23) {
+        return { phase: 'night', name: '靜謐夜晚', bg: '#0F0F43', light: 0.95, sun: 0x93c5fd, hemi: 0x1e1b4b };
+      } 
+      else {
+        return { phase: 'midnight', name: '幽深午夜', bg: '#001343', light: 0.8, sun: 0x60a5fa, hemi: 0x0f172a };
+      }
+    }
+
+    // ==========================================
+    // 10. 人物模型生成
     // ==========================================
     const HAIR_COLORS = [0x3A3B3C, 0x483C32, 0x72376A, 0xEBA937, 0x1f2937];
     const SKIN_COLORS = [0xF5D0A9, 0x8D5524, 0xFFE0BD];
@@ -1875,7 +1901,7 @@
     }
 
     // ==========================================
-    // 10. 地標模型工廠與障礙物管理
+    // 11. 地標模型工廠與障礙物管理
     // ==========================================
     let islandObstacles = {}; 
 
@@ -2440,7 +2466,7 @@
     }
 
     // ==========================================
-    // 11. 島嶼之星 AI 對話系統
+    // 12. 島嶼之星 AI 對話系統
     // ==========================================
     function appendMascotMessage(sender, text) {
       const chatBox = document.getElementById('mascot-chat-box');
@@ -2743,7 +2769,7 @@
     }
 
     // ==========================================
-    // 12. 精準截短橋梁與軌道小車
+    // 13. 精準截短橋梁與軌道小車
     // ==========================================
     let scene, camera, renderer, controls;
     let islandGroups = [];
@@ -3207,7 +3233,7 @@
 
         raycaster.setFromCamera(mouse, camera);
 
-        // 🌟 1. 優先判斷小隊長／島嶼之星點擊
+        // 🌟 1. 優先檢查是否點中小隊長／島嶼之星
         const allIntersects = raycaster.intersectObjects(scene.children, true);
         const mascotHit = allIntersects.find(item => {
           let curr = item.object;
@@ -3237,16 +3263,21 @@
             title: '🎒 學習島冒險指南',
             subtitle: '島嶼之星為你介紹各島主要任務與挑戰'
           });
-          return;
+          return; // 💥 擊中小隊長後立即退出，防止被底下的公民島攔截
         }
 
-        // 🌟 2. 判斷各島嶼點擊
-        const intersects = raycaster.intersectObjects(islandGroups, true);
+        // 🌟 2. 點擊島嶼判斷（向上查找至各島嶼頂層 Group）
+        const intersects = raycaster.intersectObjects(scene.children, true);
         if (intersects.length > 0) {
-          let root = intersects[0].object;
-          while (root.parent && root.parent !== scene) root = root.parent;
-          if (root.userData && root.userData.id) {
-            focusOnIsland(root.userData);
+          for (let hit of intersects) {
+            let root = hit.object;
+            while (root && root.parent && root.parent !== scene) {
+              root = root.parent;
+            }
+            if (root && root.userData && root.userData.id) {
+              focusOnIsland(root.userData);
+              break;
+            }
           }
         }
       });
@@ -3389,7 +3420,6 @@
               v.currentZ += (tdz / tdist) * 0.028;
               v.obj.position.x = v.currentX;
               v.obj.position.z = v.currentZ;
-              v.obj.position.y = 0;
               v.obj.rotation.x = 0;
               v.obj.rotation.y = Math.atan2(tdx, tdz);
 
@@ -3625,7 +3655,7 @@
     }
 
     // ==========================================
-    // 13. 島嶼點擊焦點運鏡與抽屜控制
+    // 14. 島嶼點擊焦點運鏡與抽屜控制
     // ==========================================
     function focusOnIsland(islandData) {
       isFocusing = true;
@@ -3663,10 +3693,17 @@
       targetCameraPos.set(0, 36, 40);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    // 🌟 保險啟動機制（防止 DOMContentLoaded 逾時錯過導致黑屏）
+    function startIslandApp() {
       init3D();
       initStudent();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', startIslandApp);
+    } else {
+      startIslandApp();
+    }
   </script>
 </body>
 </html>
