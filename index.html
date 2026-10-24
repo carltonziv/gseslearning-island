@@ -678,7 +678,7 @@
       </div>
     </div>
 
-    <!-- 5. 戰鬥陀螺島內容 -->
+<!-- 5. 戰鬥陀螺島內容 -->
     <div id="panel-beyblade" style="display:none;">
       <div id="bb-closed-view" style="display:none; text-align:center; padding:20px;">
         <p style="font-size:1.1rem; color:#64748b; font-weight:bold;">⚔️ 本島目前休息中，當全班累積達 5000 能量時將盛大開啟下一屆錦標賽！</p>
@@ -702,9 +702,8 @@
         <p style="font-size:0.85rem; color:#64748b;">賽程對陣與勝負判定已整合至左側晉級圖面板。</p>
       </div>
     </div>
-  </div>
 
-<!-- 6. 探險小隊長冒險指南面板（放入抽屜內部） -->
+    <!-- 6. 探險小隊長冒險指南面板（正確置於抽屜內部） -->
     <div id="panel-mascot" style="display:none;">
       <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 16px; padding: 14px; margin-bottom: 16px;">
         <p style="font-weight: 800; color: #b45309; font-size: 0.95rem; margin-bottom: 4px;">🎒 探險小隊長的話：</p>
@@ -712,8 +711,7 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 10px;">
-        <!-- 生態科技島 -->
-        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[1])">
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[1])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #059669; font-size: 0.95rem;">🌿 生態科技島</strong>
             <span style="font-size: 0.75rem; background: #d1fae5; color: #047857; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+5 EXP</span>
@@ -721,8 +719,7 @@
           <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">觀察校園中的昆蟲與植物，記錄名稱與外觀特徵打卡。</p>
         </div>
 
-        <!-- 健身運動島 -->
-        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[2])">
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[2])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #d97706; font-size: 0.95rem;">🏃 健身運動島</strong>
             <span style="font-size: 0.75rem; background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+3~5 EXP</span>
@@ -730,8 +727,7 @@
           <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">跑操場、跳繩、打羽球，或在晚間 18-22 點打卡健康生活習慣。</p>
         </div>
 
-        <!-- 閱讀島 -->
-        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[3])">
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[3])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #7c3aed; font-size: 0.95rem;">📖 閱讀島</strong>
             <span style="font-size: 0.75rem; background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 10px; font-weight: 700;">每日 3 次</span>
@@ -739,8 +735,7 @@
           <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">節錄書中精采段落並寫下 20 字以上心得（每天可打卡 3 次）。</p>
         </div>
 
-        <!-- 優良公民島 -->
-        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[4])">
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[4])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #0284c7; font-size: 0.95rem;">🏛️ 優良公民島</strong>
             <span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+5 EXP</span>
@@ -748,8 +743,7 @@
           <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">桌面、抽屜、桌底碎屑與垃圾袋檢查，由同學互相見證認證。</p>
         </div>
 
-        <!-- 戰鬥陀螺島 -->
-        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[0])">
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[0])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #dc2626; font-size: 0.95rem;">⚔️ 戰鬥陀螺島</strong>
             <span style="font-size: 0.75rem; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-weight: 700;">全班 5000 滿額開啟</span>
@@ -758,8 +752,7 @@
         </div>
       </div>
     </div>
-
-  </div>
+  </div> <!-- 抽屜在所有面板結束後才關閉 -->
   
   <!-- 教師控制台彈窗 -->
   <div id="modal-teacher" class="modal-overlay hidden">
