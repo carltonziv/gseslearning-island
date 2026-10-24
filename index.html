@@ -525,7 +525,7 @@
 
   <div class="hud-hint">
     <span id="time-badge">🕒 檢測時段中...</span>
-    <span>| 點擊島嶼、單指旋轉、雙指縮放移動</span>
+    <span>| 點擊島嶼與台車、單指旋轉、雙指縮放移動</span>
   </div>
 
   <!-- 左側即時賽事晉級圖側欄 -->
@@ -789,7 +789,7 @@
           <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">桌面、抽屜、桌底碎屑與垃圾袋檢查，由同學互相見證認證。</p>
         </div>
 
-        <!-- 戰鬥陀螺島 (倒錐形陀螺圖示) -->
+        <!-- 戰鬥陀螺島 -->
         <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[0])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #dc2626; font-size: 0.95rem; display:inline-flex; align-items:center; gap:5px;">
@@ -809,7 +809,7 @@
       </div>
     </div>
 
-    <!-- 7. 龜山台車歷史導覽面板 -->
+    <!-- 7. 龜山台車文史導覽面板 -->
     <div id="panel-cart" style="display:none;">
       <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #d97706; border-radius: 16px; padding: 14px; margin-bottom: 16px;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
@@ -885,14 +885,17 @@
 
   <script>
     // ==========================================
-    // 1. 群島配置（置頂宣告，防止 ReferenceError）
+    // 1. 群島配置（正六角形精密密合配置）
     // ==========================================
+    // 正六邊形半徑 R 與邊心距 r = R * sqrt(3)/2 ≒ R * 0.866
+    // 中央島 R=5.2 (邊心距 4.50)，四周島 R=4.8 (邊心距 4.15)
+    // 兩島邊心距總和 = 4.50 + 4.15 = 8.65，加上 0.35m 極小間隙 = 9.0m
     const ISLAND_CONFIG = [
-      { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0x443423, pos: [0, 0, 0], radius: 5.8 },
-      { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0x3C421A, pos: [-10.5, 0, -8.5], radius: 5.0 },
-      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0x534818, pos: [10.5, 0, -8.5], radius: 5.0 },
-      { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', isGaussian: true, pos: [-10.5, 0, 8.5], radius: 5.0 },
-      { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0x4D3E2B, pos: [10.5, 0, 8.5], radius: 5.0 }
+      { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0x443423, pos: [0, 0, 0], radius: 5.2 },
+      { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0x3C421A, pos: [-7.8, 0, -4.5], radius: 4.8 },
+      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0x534818, pos: [7.8, 0, -4.5], radius: 4.8 },
+      { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', isGaussian: true, pos: [-7.8, 0, 4.5], radius: 4.8 },
+      { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0x4D3E2B, pos: [7.8, 0, 4.5], radius: 4.8 }
     ];
 
     // ==========================================
@@ -1030,8 +1033,8 @@
 
       const startIslandIdx = 4;
       const startIsland = ISLAND_CONFIG[startIslandIdx];
-      const spawnX = startIsland.pos[0] + 1.2;
-      const spawnZ = startIsland.pos[2] + 2.2;
+      const spawnX = startIsland.pos[0] + 0.8;
+      const spawnZ = startIsland.pos[2] + 1.2;
       person.position.set(spawnX, 0, spawnZ);
       scene.add(person);
 
@@ -1052,8 +1055,8 @@
         isJogging: false,
         isSkirt: false,
         cheerType: 'jump_both',
-        stadiumPos: { x: 3.5, z: 0.5 },
-        sleepPos: { x: 3.2, z: 0.5 },
+        stadiumPos: { x: 2.8, z: 0.5 },
+        sleepPos: { x: 2.6, z: 0.5 },
         cheerPhase: 0,
         sleepBreathPhase: 0
       };
@@ -1779,7 +1782,7 @@
       toggleBracketSidebar(true);
     }
     // ==========================================
-    // 9. 6 個時段背景色彩精準判定（含下午 #FEF0E8）
+    // 9. 6 個時段背景色彩精準判定（下午 #FEF0E8）
     // ==========================================
     function getTimePhase() {
       const hour = new Date().getHours();
@@ -2011,20 +2014,20 @@
 
       const mag = new THREE.Group();
       const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(1.3, 0.16, 16, 40),
+        new THREE.TorusGeometry(1.2, 0.15, 16, 36),
         new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.85, roughness: 0.15 })
       );
       ring.castShadow = true;
       mag.add(ring);
 
       const innerBevel = new THREE.Mesh(
-        new THREE.TorusGeometry(1.18, 0.05, 12, 36),
+        new THREE.TorusGeometry(1.08, 0.05, 12, 36),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 })
       );
       mag.add(innerBevel);
 
       const lens = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.24, 1.24, 0.1, 36),
+        new THREE.CylinderGeometry(1.14, 1.14, 0.1, 32),
         new THREE.MeshPhysicalMaterial({
           color: 0xe0f2fe,
           transparent: true,
@@ -2038,73 +2041,73 @@
       mag.add(lens);
 
       const neckJoint = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.24, 0.2, 0.35, 16),
+        new THREE.CylinderGeometry(0.22, 0.18, 0.32, 16),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.25 })
       );
-      neckJoint.position.set(0, -1.45, 0);
+      neckJoint.position.set(0, -1.35, 0);
       mag.add(neckJoint);
 
       const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.22, 1.8, 20),
+        new THREE.CylinderGeometry(0.16, 0.2, 1.6, 20),
         new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.65 })
       );
-      handle.position.set(0, -2.45, 0);
+      handle.position.set(0, -2.25, 0);
       handle.castShadow = true;
       mag.add(handle);
 
       const pommel = new THREE.Mesh(
-        new THREE.SphereGeometry(0.26, 16, 16),
+        new THREE.SphereGeometry(0.24, 16, 16),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.25 })
       );
-      pommel.position.set(0, -3.4, 0);
+      pommel.position.set(0, -3.1, 0);
       mag.add(pommel);
 
-      mag.position.set(0, 2.2, 0);
+      mag.position.set(0, 2.0, 0);
       mag.rotation.x = 0.35;
       mag.rotation.z = -0.3;
       group.add(mag);
 
-      registerObstacle('nature', 0, 0, 1.8);
+      registerObstacle('nature', 0, 0, 1.6);
 
-      const turbineCoords = [[-2.8, -2.2], [2.8, 2.2]];
+      const turbineCoords = [[-2.4, -1.8], [2.4, 1.8]];
       turbineCoords.forEach(pos => {
         const wt = new THREE.Group();
         wt.position.set(pos[0], 0, pos[1]);
 
         const pole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.1, 0.24, 4.4, 16),
+          new THREE.CylinderGeometry(0.09, 0.22, 4.0, 16),
           new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.25, metalness: 0.2 })
         );
-        pole.position.y = 2.2;
+        pole.position.y = 2.0;
         pole.castShadow = true;
         wt.add(pole);
 
         const nacelle = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.22, 0.25, 0.8, 12),
+          new THREE.CylinderGeometry(0.2, 0.22, 0.75, 12),
           new THREE.MeshStandardMaterial({ color: 0xf5f5f4, roughness: 0.3 })
         );
         nacelle.rotation.x = Math.PI / 2;
-        nacelle.position.set(0, 4.4, 0);
+        nacelle.position.set(0, 4.0, 0);
         nacelle.castShadow = true;
         wt.add(nacelle);
 
         const noseCone = new THREE.Mesh(
-          new THREE.ConeGeometry(0.18, 0.35, 16),
+          new THREE.ConeGeometry(0.16, 0.32, 16),
           new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.6, roughness: 0.3 })
         );
         noseCone.rotation.x = Math.PI / 2;
-        noseCone.position.set(0, 4.4, 0.52);
+        noseCone.position.set(0, 4.0, 0.48);
         wt.add(noseCone);
 
         const rotor = new THREE.Group();
-        rotor.position.set(0, 4.4, 0.45);
+        rotor.position.set(0, 4.0, 0.42);
 
         for (let b = 0; b < 3; b++) {
           const blade = new THREE.Mesh(
-            new THREE.BoxGeometry(0.12, 1.9, 0.04),
+            new THREE.BoxGeometry(0.11, 1.7, 0.04),
             new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.2 })
           );
-          blade.position.y = 0.95;
+          blade.position.y = 0.85;
           blade.castShadow = true;
           const bladePivot = new THREE.Group();
           bladePivot.rotation.z = (b * Math.PI * 2) / 3;
@@ -2115,7 +2118,7 @@
         windTurbineBlades.push(rotor);
 
         group.add(wt);
-        registerObstacle('nature', pos[0], pos[1], 1.1);
+        registerObstacle('nature', pos[0], pos[1], 1.0);
       });
 
       return group;
@@ -2127,48 +2130,48 @@
       mainBeybladeTop = new THREE.Group();
 
       const tip = new THREE.Mesh(
-        new THREE.ConeGeometry(0.7, 1.2, 12),
+        new THREE.ConeGeometry(0.65, 1.1, 12),
         new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.15 })
       );
       tip.rotation.x = Math.PI;
-      tip.position.y = 0.6;
+      tip.position.y = 0.55;
       tip.castShadow = true;
       mainBeybladeTop.add(tip);
 
       const ring = new THREE.Mesh(
-        new THREE.CylinderGeometry(2.4, 1.9, 0.6, 8),
+        new THREE.CylinderGeometry(2.2, 1.7, 0.55, 6),
         new THREE.MeshStandardMaterial({ color: 0x144026, metalness: 0.6, roughness: 0.2 })
       );
-      ring.position.y = 1.2;
+      ring.position.y = 1.1;
       ring.castShadow = true;
       mainBeybladeTop.add(ring);
 
       const top = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.6, 2.2, 0.4, 8),
+        new THREE.CylinderGeometry(1.5, 2.0, 0.38, 6),
         new THREE.MeshStandardMaterial({ color: 0x1b4d3e, metalness: 0.65, roughness: 0.25 })
       );
-      top.position.y = 1.6;
+      top.position.y = 1.48;
       top.castShadow = true;
       mainBeybladeTop.add(top);
 
       const core = new THREE.Mesh(
-        new THREE.SphereGeometry(0.55, 16, 16),
+        new THREE.SphereGeometry(0.5, 16, 16),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.1 })
       );
-      core.position.y = 1.9;
+      core.position.y = 1.75;
       core.castShadow = true;
       mainBeybladeTop.add(core);
 
-      mainBeybladeTop.scale.setScalar(1.2);
+      mainBeybladeTop.scale.setScalar(1.1);
       bb.add(mainBeybladeTop);
 
-      registerObstacle('beyblade', 0, 0, 2.8);
+      registerObstacle('beyblade', 0, 0, 2.5);
 
       const miniColors = [0xef4444, 0x3b82f6, 0xeab308];
       const safeMiniPositions = [
-        [0.0, 0, 2.3],
-        [-2.0, 0, -1.2],
-        [2.0, 0, -1.2]
+        [0.0, 0, 2.1],
+        [-1.8, 0, -1.0],
+        [1.8, 0, -1.0]
       ];
 
       safeMiniPositions.forEach((pos, i) => {
@@ -2176,25 +2179,25 @@
         mini.position.set(...pos);
 
         const mTip = new THREE.Mesh(
-          new THREE.ConeGeometry(0.13, 0.2, 8),
+          new THREE.ConeGeometry(0.12, 0.18, 8),
           new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85 })
         );
         mTip.rotation.x = Math.PI;
-        mTip.position.y = 0.1;
+        mTip.position.y = 0.09;
         mTip.castShadow = true;
         mini.add(mTip);
 
         const mRing = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.35, 0.25, 0.1, 8),
+          new THREE.CylinderGeometry(0.32, 0.22, 0.09, 6),
           new THREE.MeshStandardMaterial({ color: miniColors[i], metalness: 0.7, roughness: 0.25 })
         );
-        mRing.position.y = 0.22;
+        mRing.position.y = 0.2;
         mRing.castShadow = true;
         mini.add(mRing);
 
         bb.add(mini);
         spinningMiniTops.push(mini);
-        registerObstacle('beyblade', pos[0], pos[2], 0.7);
+        registerObstacle('beyblade', pos[0], pos[2], 0.65);
       });
 
       return bb;
@@ -2209,46 +2212,46 @@
 
       const dbGroup = new THREE.Group();
       const bar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.16, 0.16, 2.9, 16),
+        new THREE.CylinderGeometry(0.15, 0.15, 2.6, 16),
         new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 })
       );
       bar.rotation.z = Math.PI / 2;
-      bar.position.y = 0.8;
+      bar.position.y = 0.75;
       bar.castShadow = true;
       dbGroup.add(bar);
 
       const plateMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
       const collarMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
 
-      [-1.0, 1.0].forEach((side) => {
-        const pBig = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.35, 8), plateMat);
+      [-0.9, 0.9].forEach((side) => {
+        const pBig = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.32, 6), plateMat);
         pBig.rotation.z = Math.PI / 2;
-        pBig.position.set(side * 0.95, 0.8, 0);
+        pBig.position.set(side * 0.88, 0.75, 0);
         pBig.castShadow = true;
         dbGroup.add(pBig);
 
-        const pMed = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.3, 8), plateMat);
+        const pMed = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.28, 6), plateMat);
         pMed.rotation.z = Math.PI / 2;
-        pMed.position.set(side * 1.3, 0.8, 0);
+        pMed.position.set(side * 1.2, 0.75, 0);
         pMed.castShadow = true;
         dbGroup.add(pMed);
 
-        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.15, 12), collarMat);
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.14, 12), collarMat);
         collar.rotation.z = Math.PI / 2;
-        collar.position.set(side * 1.48, 0.8, 0);
+        collar.position.set(side * 1.36, 0.75, 0);
         dbGroup.add(collar);
       });
 
-      dbGroup.position.set(0, 0, -1.5);
+      dbGroup.position.set(0, 0, -1.35);
       dbGroup.rotation.y = 0.3;
       group.add(dbGroup);
-      registerObstacle('sport', 0, -1.5, 1.8);
+      registerObstacle('sport', 0, -1.35, 1.6);
 
       jumpRopeGroup = new THREE.Group();
-      jumpRopeGroup.position.set(0, 0, 1.6);
+      jumpRopeGroup.position.set(0, 0, 1.45);
 
       const swingerA = createCharacterMesh(false, 0xF5D0A9, 0x64321A, 0x3A3B3C);
-      swingerA.position.set(-1.8, 0, 0);
+      swingerA.position.set(-1.65, 0, 0);
       swingerA.rotation.y = Math.PI / 2;
       if (swingerA.userData.limbs) {
         swingerA.userData.limbs.rightArm.rotation.x = -1.2;
@@ -2257,7 +2260,7 @@
       jumpRopeGroup.add(swingerA);
 
       const swingerB = createCharacterMesh(false, 0x8D5524, 0x052E3B, 0x483C32);
-      swingerB.position.set(1.8, 0, 0);
+      swingerB.position.set(1.65, 0, 0);
       swingerB.rotation.y = -Math.PI / 2;
       if (swingerB.userData.limbs) {
         swingerB.userData.limbs.leftArm.rotation.x = -1.2;
@@ -2272,14 +2275,14 @@
       jumperMan.position.set(0, 0, 0);
       jumpRopeGroup.add(jumperMan);
 
-      const ropeGeo = new THREE.TorusGeometry(1.8, 0.04, 6, 24, Math.PI);
+      const ropeGeo = new THREE.TorusGeometry(1.65, 0.038, 6, 24, Math.PI);
       const ropeMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
       ropeMesh = new THREE.Mesh(ropeGeo, ropeMat);
-      ropeMesh.position.set(0, 0.4, 0);
+      ropeMesh.position.set(0, 0.38, 0);
       jumpRopeGroup.add(ropeMesh);
 
       group.add(jumpRopeGroup);
-      registerObstacle('sport', 0, 1.6, 2.3);
+      registerObstacle('sport', 0, 1.45, 2.1);
 
       return group;
     }
@@ -2293,132 +2296,131 @@
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
       const textMat = new THREE.MeshBasicMaterial({ color: 0xD3D3D3 });
 
-      const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.4, 12), coverMat);
-      spine.position.set(0, 0.4, 0);
+      const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 2.2, 12), coverMat);
+      spine.position.set(0, 0.36, 0);
       spine.rotation.x = Math.PI / 2;
       book.add(spine);
 
-      [-0.75, 0.75].forEach((x, i) => {
+      [-0.68, 0.68].forEach((x, i) => {
         const rot = i === 0 ? 0.25 : -0.25;
-        const page = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.22, 2.2), pageMat);
-        page.position.set(x, 0.55, 0);
+        const page = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.2, 2.0), pageMat);
+        page.position.set(x, 0.5, 0);
         page.rotation.z = rot;
         page.castShadow = true;
         book.add(page);
 
         for (let l = 0; l < 4; l++) {
-          const textLine = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.02, 0.12), textMat);
-          textLine.position.set(x, 0.67, -0.65 + l * 0.45);
+          const textLine = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.02, 0.11), textMat);
+          textLine.position.set(x, 0.61, -0.6 + l * 0.4);
           textLine.rotation.z = rot;
           book.add(textLine);
         }
 
-        const cov = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.08, 2.3), coverMat);
-        cov.position.set(x * 1.02, 0.42, 0);
+        const cov = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.07, 2.1), coverMat);
+        cov.position.set(x * 1.02, 0.38, 0);
         cov.rotation.z = rot;
         cov.castShadow = true;
         book.add(cov);
 
-        const cornerProtector = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.18), goldMat);
-        cornerProtector.position.set(x * 1.7, 0.44, 1.1);
+        const cornerProtector = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.09, 0.16), goldMat);
+        cornerProtector.position.set(x * 1.55, 0.4, 1.0);
         book.add(cornerProtector);
       });
-      book.position.set(0, 0.2, -1.2);
-      book.scale.setScalar(1.1);
+      book.position.set(0, 0.18, -1.1);
       group.add(book);
-      registerObstacle('reading', 0, -1.2, 1.8);
+      registerObstacle('reading', 0, -1.1, 1.6);
 
       const van = new THREE.Group();
 
       const cabin = new THREE.Mesh(
-        new THREE.BoxGeometry(1.45, 1.1, 1.25),
+        new THREE.BoxGeometry(1.3, 1.0, 1.15),
         new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.25, metalness: 0.1 })
       );
-      cabin.position.set(0, 0.8, 1.4);
+      cabin.position.set(0, 0.75, 1.25);
       cabin.castShadow = true;
       van.add(cabin);
 
       const bumper = new THREE.Mesh(
-        new THREE.BoxGeometry(1.5, 0.2, 0.2),
+        new THREE.BoxGeometry(1.36, 0.18, 0.18),
         new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 })
       );
-      bumper.position.set(0, 0.35, 2.05);
+      bumper.position.set(0, 0.32, 1.85);
       van.add(bumper);
 
       const windshield = new THREE.Mesh(
-        new THREE.BoxGeometry(1.22, 0.52, 0.1),
+        new THREE.BoxGeometry(1.1, 0.48, 0.09),
         new THREE.MeshPhysicalMaterial({ color: 0xbae6fd, roughness: 0.1, transmission: 0.7, opacity: 0.85, transparent: true })
       );
-      windshield.position.set(0, 1.05, 2.02);
+      windshield.position.set(0, 0.96, 1.83);
       van.add(windshield);
 
-      [-0.55, 0.55].forEach(lx => {
+      [-0.48, 0.48].forEach(lx => {
         const headlight = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12),
+          new THREE.CylinderGeometry(0.11, 0.11, 0.07, 12),
           new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 0.5 })
         );
         headlight.rotation.x = Math.PI / 2;
-        headlight.position.set(lx, 0.65, 2.04);
+        headlight.position.set(lx, 0.58, 1.84);
         van.add(headlight);
       });
 
       const grille = new THREE.Mesh(
-        new THREE.BoxGeometry(0.7, 0.26, 0.08),
+        new THREE.BoxGeometry(0.62, 0.24, 0.07),
         new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 })
       );
-      grille.position.set(0, 0.62, 2.03);
+      grille.position.set(0, 0.56, 1.84);
       van.add(grille);
 
       const rainbowColors = [0xef4444, 0xf97316, 0xfacc15, 0x22c55e, 0x06b6d4, 0x3b82f6, 0x8b5cf6];
-      const stripeWidth = 2.0 / rainbowColors.length;
+      const stripeWidth = 1.8 / rainbowColors.length;
       rainbowColors.forEach((col, idx) => {
         const stripe = new THREE.Mesh(
-          new THREE.BoxGeometry(1.65, 1.3, stripeWidth),
+          new THREE.BoxGeometry(1.48, 1.15, stripeWidth),
           new THREE.MeshStandardMaterial({ color: col, roughness: 0.35 })
         );
-        stripe.position.set(0, 1.0, -1.2 + (idx + 0.5) * stripeWidth);
+        stripe.position.set(0, 0.9, -1.05 + (idx + 0.5) * stripeWidth);
         stripe.castShadow = true;
         van.add(stripe);
       });
 
       [-1, 1].forEach(side => {
         const wing = new THREE.Mesh(
-          new THREE.BoxGeometry(0.08, 1.05, 1.95),
+          new THREE.BoxGeometry(0.07, 0.95, 1.75),
           new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.3 })
         );
-        wing.position.set(side * 1.05, 1.85, -0.2);
+        wing.position.set(side * 0.95, 1.65, -0.15);
         wing.rotation.z = side * -0.6;
         wing.castShadow = true;
         van.add(wing);
 
         const strut = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.02, 0.02, 0.75, 8),
+          new THREE.CylinderGeometry(0.02, 0.02, 0.68, 8),
           new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 })
         );
-        strut.position.set(side * 0.9, 1.45, -0.2);
+        strut.position.set(side * 0.82, 1.3, -0.15);
         strut.rotation.z = side * 0.45;
         van.add(strut);
       });
 
       const tireMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
       const rimMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.85, roughness: 0.2 });
-      [[-0.8, 0.3, 1.2], [0.8, 0.3, 1.2], [-0.8, 0.3, -0.6], [0.8, 0.3, -0.6]].forEach(pos => {
-        const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.25, 16), tireMat);
+      [[-0.72, 0.28, 1.05], [0.72, 0.28, 1.05], [-0.72, 0.28, -0.55], [0.72, 0.28, -0.55]].forEach(pos => {
+        const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.22, 16), tireMat);
         tire.rotation.z = Math.PI / 2;
         tire.position.set(...pos);
         tire.castShadow = true;
         van.add(tire);
 
-        const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.27, 12), rimMat);
+        const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.24, 12), rimMat);
         hubCap.rotation.z = Math.PI / 2;
         hubCap.position.set(...pos);
         van.add(hubCap);
       });
 
-      van.position.set(0, 0, 1.4);
-      van.scale.setScalar(0.9);
+      van.position.set(0, 0, 1.25);
+      van.scale.setScalar(0.85);
       group.add(van);
-      registerObstacle('reading', 0, 1.4, 1.8);
+      registerObstacle('reading', 0, 1.25, 1.6);
 
       return group;
     }
@@ -2429,49 +2431,49 @@
       const marbleMat = new THREE.MeshStandardMaterial({ color: 0x928E85, roughness: 0.45 });
       const trimMat = new THREE.MeshStandardMaterial({ color: 0xA8A49B, roughness: 0.35 });
 
-      [4.0, 3.6, 3.2].forEach((w, i) => {
-        const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, w * 0.8), marbleMat);
-        baseStep.position.y = 0.1 + i * 0.2;
+      [3.6, 3.2, 2.8].forEach((w, i) => {
+        const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.18, w * 0.8), marbleMat);
+        baseStep.position.y = 0.09 + i * 0.18;
         baseStep.castShadow = true;
         baseStep.receiveShadow = true;
         temple.add(baseStep);
       });
 
       const colPositions = [
-        [-1.2, 0.7, -0.9], [0, 0.7, -0.9], [1.2, 0.7, -0.9],
-        [-1.2, 0.7,   0.9], [0, 0.7,   0.9], [1.2, 0.7,   0.9]
+        [-1.05, 0.6, -0.8], [0, 0.6, -0.8], [1.05, 0.6, -0.8],
+        [-1.05, 0.6,  0.8], [0, 0.6,  0.8], [1.05, 0.6,  0.8]
       ];
       colPositions.forEach(p => {
-        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.17, 1.8, 14), marbleMat);
-        shaft.position.set(p[0], p[1] + 0.9, p[2]);
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.6, 14), marbleMat);
+        shaft.position.set(p[0], p[1] + 0.8, p[2]);
         shaft.castShadow = true;
         temple.add(shaft);
 
-        const capital = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.12, 0.38), trimMat);
-        capital.position.set(p[0], p[1] + 1.85, p[2]);
+        const capital = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.1, 0.34), trimMat);
+        capital.position.set(p[0], p[1] + 1.65, p[2]);
         temple.add(capital);
       });
 
-      const architrave = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.22, 2.3), marbleMat);
-      architrave.position.y = 2.7;
+      const architrave = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 2.05), marbleMat);
+      architrave.position.y = 2.45;
       architrave.castShadow = true;
       temple.add(architrave);
 
-      const flatCornice = new THREE.Mesh(new THREE.BoxGeometry(3.35, 0.16, 2.5), trimMat);
-      flatCornice.position.y = 2.89;
+      const flatCornice = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.14, 2.2), trimMat);
+      flatCornice.position.y = 2.62;
       flatCornice.castShadow = true;
       flatCornice.receiveShadow = true;
       temple.add(flatCornice);
 
-      const flatRoofPlate = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.14, 2.3), marbleMat);
-      flatRoofPlate.position.y = 3.04;
+      const flatRoofPlate = new THREE.Mesh(new THREE.BoxGeometry(2.85, 0.12, 2.05), marbleMat);
+      flatRoofPlate.position.y = 2.75;
       flatRoofPlate.castShadow = true;
       temple.add(flatRoofPlate);
 
-      temple.scale.setScalar(1.1);
+      temple.scale.setScalar(1.0);
       group.add(temple);
 
-      registerObstacle('civics', 0, 0, 2.9);
+      registerObstacle('civics', 0, 0, 2.5);
       return group;
     }
 
@@ -2481,16 +2483,16 @@
       boxGroup.userData = { isMascot: true };
 
       const log = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.45, 0.5, 0.3, 10),
+        new THREE.CylinderGeometry(0.4, 0.45, 0.28, 10),
         new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 })
       );
-      log.position.y = 0.15;
+      log.position.y = 0.14;
       log.castShadow = true;
       log.userData = { isMascot: true };
       boxGroup.add(log);
 
       mascotLeader = createCharacterMesh(false, 0xF5D0A9, 0xd97706, 0xEBA937);
-      mascotLeader.position.set(0, 0.3, 0);
+      mascotLeader.position.set(0, 0.28, 0);
       mascotLeader.userData = { isMascot: true };
       
       mascotLeader.traverse(child => {
@@ -2499,12 +2501,12 @@
 
       boxGroup.add(mascotLeader);
 
-      const posX = 2.6;
-      const posZ = 2.6;
+      const posX = 2.3;
+      const posZ = 2.3;
       boxGroup.position.set(posX, 0, posZ);
       boxGroup.rotation.y = -Math.PI * 0.75;
 
-      registerObstacle('civics', posX, posZ, 0.9);
+      registerObstacle('civics', posX, posZ, 0.8);
       return boxGroup;
     }
 
@@ -2542,56 +2544,45 @@
       }
     }
 
-    // 🎒 島嶼之星本地智慧大腦（免金鑰、100% 穩定秒回）
     function getMascotLocalResponse(userText) {
       const q = userText.toLowerCase().trim();
 
-      // 1. 戰鬥陀螺大賽相關
       if (q.includes('陀螺') || q.includes('比賽') || q.includes('大賽') || q.includes('錦標賽') || q.includes('冠軍')) {
         return "⚔️ 當全班累積能量達到 5000 點時，中央戰鬥陀螺島就會盛大開放報名！開放後可以填寫你的陀螺名稱參賽，老師截止報名後會抽籤產生雙淘汰晉級賽程，全班同學都會到中央島為你熱血應援喔！";
       }
 
-      // 2. 能量累積相關
       if (q.includes('能量') || q.includes('共創') || q.includes('5000') || q.includes('exp') || q.includes('點數')) {
         return "⚡ 累積全班能量很簡單！只要大家每天到各島完成任務打卡：\n• 🌿 生態科技島：+5 能量\n• 🏃 健身運動島：+3～5 能量\n• 📖 閱讀島：每次 +5 能量（每天可打卡 3 次！）\n• 🏛️ 優良公民島：+5 能量\n大家一起努力就能衝破 5000 能量開啟陀螺大賽！";
       }
 
-      // 3. 生態科技島
       if (q.includes('生態') || q.includes('科技') || q.includes('昆蟲') || q.includes('植物')) {
         return "🌿 生態科技島位於西北方！任務是探索校園中的植物或昆蟲，觀察它們的外觀特徵（如葉形、花色或斑紋）並拍照記錄打卡，每次打卡可獲得 5 點能量喔！";
       }
 
-      // 4. 健身運動島
       if (q.includes('運動') || q.includes('健身') || q.includes('跳繩') || q.includes('跑步') || q.includes('健康生活')) {
         return "🏃 健身運動島有兩項挑戰：\n1. 【增肌減脂】：跑操場5圈、跳繩500下或打球50下，找同學認證 (+5 能量)。\n2. 【健康生活】：每天 18:00～22:00 開放，睡前刷牙、少吃零食、3C少於1小時，勾選項目就能獲得 3～5 能量！";
       }
 
-      // 5. 閱讀島
       if (q.includes('閱讀') || q.includes('書') || q.includes('心得') || q.includes('文章')) {
         return "📖 閱讀島是每天可以打卡 3 次的超棒島嶼！只要寫下你看的書名、摘錄精采句子，並寫下至少 20 字的個人收穫心得，每次都能賺取 5 點能量喔！";
       }
 
-      // 6. 優良公民島
       if (q.includes('公民') || q.includes('整潔') || q.includes('垃圾') || q.includes('抽屜') || q.includes('桌面')) {
         return "🏛️ 你現在所在的正是優良公民島！每天維持良好生活習慣：桌面整齊、抽屜乾淨、桌底無碎屑、垃圾袋清空，請旁邊同學幫你檢查認證，就能獲得 5 點能量！";
       }
 
-      // 7. 人物睡覺 / 夜晚休息
       if (q.includes('睡覺') || q.includes('午夜') || q.includes('休息') || q.includes('zzz') || q.includes('晚上')) {
         return "🌙 到了深夜 23:00 至 清晨 06:00，島上的 20 位居民都會走過木橋，聚集在中央戰鬥陀螺島圍成一圈坐著睡覺，頭上還會飄出 Zzz... 微光喔！這時候要好好休息，白天再來冒險！";
       }
 
-      // 8. 任務總覽
       if (q.includes('任務') || q.includes('冒險') || q.includes('怎麼玩') || q.includes('島嶼') || q.includes('玩法')) {
         return "🎒 學習島共有 5 座島嶼：\n1. 🌿 生態科技島：校園動植物觀察打卡\n2. 🏃 健身運動島：運動健身與健康生活習慣\n3. 📖 閱讀島：閱讀心得分享（每日限 3 次）\n4. 🏛️ 優良公民島：個人座位整潔檢查認證\n5. 🪀 戰鬥陀螺島：全班達 5000 能量開啟淘汰錦標賽！";
       }
 
-      // 9. 鼓勵 / 打招呼
       if (q.includes('你好') || q.includes('嗨') || q.includes('hello') || q.includes('早') || q.includes('隊長') || q.includes('島嶼之星')) {
         return "👋 哈囉！我是 301 學習島的島嶼之星！今天準備好挑戰各島的任務、幫全班累積能量了嗎？點擊下方的按鈕或直接問我問題吧！";
       }
 
-      // 10. 無關話題 / 隨機 6 種不同風格引導
       const defaultReplies = [
         "🎒 哇！外面的世界聽起來好精采，不過島嶼之星的雷達現在只鎖定在 301 學習島的冒險呢！今天有沒有去生態島找小昆蟲，或是去閱讀島寫心得幫全班賺能量呢？",
         "⚡ 嗶嗶——探險雷達感應到外太空的訊號啦！現在全班共創能量正在朝著 5000 點衝刺，戰鬥陀螺大賽就等大家解鎖了！快來問我各島的打卡祕笈吧！",
@@ -2603,7 +2594,6 @@
       return defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
     }
 
-    // 發送訊息處理函式 (精準對齊 mascot-user-input 與 mascot-chat-box)
     function sendMascotMessage() {
       const input = document.getElementById('mascot-user-input');
       if (!input) return;
@@ -2625,7 +2615,6 @@
       }, 350);
     }
 
-    // 💤 建立午夜睡眠 Zzz 微光 Sprite
     function createSleepZzzSprite() {
       const canvas = document.createElement('canvas');
       canvas.width = 128;
@@ -2680,7 +2669,7 @@
       const texture = new THREE.CanvasTexture(canvas);
       const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
       const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(6.75, 1.98, 1);
+      sprite.scale.set(6.2, 1.8, 1);
       return sprite;
     }
 
@@ -2812,7 +2801,7 @@
     }
 
     // ==========================================
-    // 13. 精準截短橋梁與軌道小車
+    // 13. 精密六角步道、外環軌道與台車系統
     // ==========================================
     let scene, camera, renderer, controls;
     let islandGroups = [];
@@ -2821,74 +2810,70 @@
     let dirLight, hemiLight;
 
     let isFocusing = false;
-    let targetCameraPos = new THREE.Vector3(0, 36, 40);
+    let targetCameraPos = new THREE.Vector3(0, 36, 38);
     let targetLookAt = new THREE.Vector3(0, 0, 0);
 
-    let isCartPaused = false; // 🌟 控制台車暫停/運行狀態
+    let isCartPaused = false; // 台車暫停旗標
 
-    function createPreciseBridge(p1, p2, r1, r2) {
-      const bridge = new THREE.Group();
+    // 建立島嶼之間的平順接合石板道
+    function createConnectingWalkway(p1, p2) {
+      const road = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
       const v2 = new THREE.Vector3(...p2);
       const dist = v1.distanceTo(v2);
 
-      const bridgeLength = Math.max(0.5, dist - (r1 + r2) + 0.05);
-      const dir = new THREE.Vector3().subVectors(v2, v1).normalize();
-      const startEdge = v1.clone().add(dir.clone().multiplyScalar(r1 - 0.025));
-      const midPoint = startEdge.clone().add(dir.clone().multiplyScalar(bridgeLength / 2));
+      const midPoint = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
+      road.position.copy(midPoint);
+      road.lookAt(v2);
 
-      bridge.position.copy(midPoint);
-      bridge.lookAt(v2);
+      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.65 });
+      const borderMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.4 });
 
-      const concreteMat = new THREE.MeshStandardMaterial({ color: 0x4D4D4D, roughness: 0.6 });
-
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, bridgeLength), concreteMat);
-      deck.position.set(0, -0.05, 0);
-      deck.castShadow = true;
+      // 主道路面（平坦微高於海平面，厚度 0.18m）
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.18, dist), stoneMat);
+      deck.position.set(0, -0.02, 0);
       deck.receiveShadow = true;
-      bridge.add(deck);
+      deck.castShadow = true;
+      road.add(deck);
 
-      [-0.75, 0.75].forEach(x => {
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, bridgeLength), concreteMat);
-        rail.position.set(x, 0.2, 0);
-        rail.castShadow = true;
-        bridge.add(rail);
+      // 道路兩側金黃引導邊線
+      [-0.72, 0.72].forEach(x => {
+        const border = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, dist), borderMat);
+        border.position.set(x, 0.02, 0);
+        border.castShadow = true;
+        road.add(border);
       });
 
-      return bridge;
+      return road;
     }
 
     let cartGroup = null;
     let cartProgress = 0;
     let trackCurve = null;
 
-    function createFigureEightTrackAndCart() {
+    // 🌟 外圍環繞大軌道（貼合所有六角島嶼輪廓繞一圈）
+    function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
-      const TRACK_Y = -1.6;
+      const TRACK_Y = -0.55;
 
+      // 圍繞五座島嶼外圍計算的平滑閉合曲線路徑
       const points = [
-        new THREE.Vector3(0, TRACK_Y, 0),
-        new THREE.Vector3(6.5, TRACK_Y, -4.5),
-        new THREE.Vector3(12.5, TRACK_Y, -9.5),
-        new THREE.Vector3(14.5, TRACK_Y, -4.5),
-        new THREE.Vector3(6.5, TRACK_Y, 4.5),
-        new THREE.Vector3(12.5, TRACK_Y, 9.5),
-        new THREE.Vector3(10.5, TRACK_Y, 13.5),
-        new THREE.Vector3(0, TRACK_Y, 7.5),
-        new THREE.Vector3(0, TRACK_Y, 0),
-        new THREE.Vector3(-6.5, TRACK_Y, -4.5),
-        new THREE.Vector3(-12.5, TRACK_Y, -9.5),
-        new THREE.Vector3(-14.5, TRACK_Y, -4.5),
-        new THREE.Vector3(-6.5, TRACK_Y, 4.5),
-        new THREE.Vector3(-12.5, TRACK_Y, 9.5),
-        new THREE.Vector3(-10.5, TRACK_Y, 13.5),
-        new THREE.Vector3(0, TRACK_Y, 7.5)
+        new THREE.Vector3(0, TRACK_Y, -9.8),
+        new THREE.Vector3(7.5, TRACK_Y, -9.5),
+        new THREE.Vector3(13.2, TRACK_Y, -4.5),
+        new THREE.Vector3(13.2, TRACK_Y, 4.5),
+        new THREE.Vector3(7.5, TRACK_Y, 9.5),
+        new THREE.Vector3(0, TRACK_Y, 9.8),
+        new THREE.Vector3(-7.5, TRACK_Y, 9.5),
+        new THREE.Vector3(-13.2, TRACK_Y, 4.5),
+        new THREE.Vector3(-13.2, TRACK_Y, -4.5),
+        new THREE.Vector3(-7.5, TRACK_Y, -9.5)
       ];
 
-      trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.2);
+      trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.25);
 
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
-      const divisions = 200;
+      const divisions = 220;
       const innerPts = [];
       const outerPts = [];
       const railGauge = 0.35;
@@ -2906,19 +2891,20 @@
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 160, 0.05, 6, true);
-      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 160, 0.05, 6, true);
+      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 180, 0.05, 6, true);
+      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 180, 0.05, 6, true);
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
-      const tieCount = 220;
+      const tieMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+      const tieCount = 180;
 
       for (let i = 0; i < tieCount; i++) {
         const t = i / tieCount;
         const pt = trackCurve.getPointAt(t);
         const tan = trackCurve.getTangentAt(t).normalize();
 
+        // 枕木垂直於切線方向排列
         const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.16), tieMat);
         tie.position.copy(pt);
         tie.position.y -= 0.04;
@@ -2929,7 +2915,7 @@
       }
 
       cartGroup = new THREE.Group();
-      cartGroup.userData = { isCart: true }; // 🌟 標註台車物件
+      cartGroup.userData = { isCart: true };
 
       const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
       const ironFrameMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.85, roughness: 0.25 });
@@ -2989,7 +2975,6 @@
         cartGroup.add(hub);
       });
 
-      // 讓台車內所有子部件皆帶有 isCart 標籤
       cartGroup.traverse(child => {
         child.userData.isCart = true;
       });
@@ -3009,7 +2994,7 @@
       scene.fog = new THREE.Fog(timePhase.bg, 40, 160);
 
       camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 1000);
-      camera.position.set(0, 36, 40);
+      camera.position.set(0, 36, 38);
       camera.lookAt(0, 0, 0);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -3078,17 +3063,25 @@
         scene.add(moon);
       }
 
-      const cR = ISLAND_CONFIG[0].radius;
-      for (let i = 1; i < ISLAND_CONFIG.length; i++) {
-        scene.add(createPreciseBridge(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos, cR, ISLAND_CONFIG[i].radius));
+      // ==========================================
+      // 🌟 3. 鋪設十字與外環串接通道
+      // ==========================================
+      // 中央島分別延伸至四座外圍島嶼
+      for (let i = 1; i <= 4; i++) {
+        scene.add(createConnectingWalkway(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
       }
-      scene.add(createPreciseBridge(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos, 5.0, 5.0));
-      scene.add(createPreciseBridge(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos, 5.0, 5.0));
-      scene.add(createPreciseBridge(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos, 5.0, 5.0));
-      scene.add(createPreciseBridge(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos, 5.0, 5.0));
+      // 外圍四島彼此相鄰串接
+      scene.add(createConnectingWalkway(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos));
+      scene.add(createConnectingWalkway(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos));
+      scene.add(createConnectingWalkway(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
+      scene.add(createConnectingWalkway(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
 
-      scene.add(createFigureEightTrackAndCart());
+      // 🌟 4. 加入環繞所有島嶼外側的台車與軌道
+      scene.add(createOuterLoopTrackAndCart());
 
+      // ==========================================
+      // 🌟 1 & 2. 生成正六角形密合島嶼
+      // ==========================================
       ISLAND_CONFIG.forEach(cfg => {
         const group = new THREE.Group();
         group.position.set(...cfg.pos);
@@ -3112,11 +3105,13 @@
           });
         }
 
+        // 🌟 正六角形基底 (radialSegments: 6)，旋轉 30 度使平邊精準對齊
         const base = new THREE.Mesh(
-          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.75, 4, 8),
+          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.84, 4, 6),
           baseMat
         );
         base.position.y = -2;
+        base.rotation.y = Math.PI / 6;
         base.receiveShadow = true;
         group.add(base);
 
@@ -3138,16 +3133,16 @@
         }
 
         const labelSprite = createIslandTitleSprite(cfg.title);
-        labelSprite.position.set(0, 5.8, 0);
+        labelSprite.position.set(0, 5.6, 0);
         group.add(labelSprite);
 
         let treeCount;
         if (cfg.id === 'civics') {
           treeCount = 1;
         } else if (cfg.id === 'reading') {
-          treeCount = Math.floor(Math.random() * 3) + 2;
+          treeCount = Math.floor(Math.random() * 2) + 2;
         } else {
-          treeCount = Math.floor(Math.random() * 3) + 3;
+          treeCount = Math.floor(Math.random() * 2) + 3;
         }
 
         for (let t = 0; t < treeCount; t++) {
@@ -3155,30 +3150,30 @@
           let tx, tz;
           if (cfg.id === 'civics') {
             const angle = Math.PI * 0.75;
-            const dist = 4.3;
+            const dist = 3.6;
             tx = Math.cos(angle) * dist;
             tz = Math.sin(angle) * dist;
           } else {
             const angle = Math.random() * Math.PI * 2;
-            const dist = 2.4 + Math.random() * (baseRadius - 3.0);
+            const dist = 2.1 + Math.random() * (baseRadius - 2.8);
             tx = Math.cos(angle) * dist;
             tz = Math.sin(angle) * dist;
           }
 
           tree.position.set(tx, 0, tz);
-          tree.scale.setScalar(0.7 + Math.random() * 0.4);
+          tree.scale.setScalar(0.7 + Math.random() * 0.35);
           group.add(tree);
           if (cfg.id === 'beyblade') beybladeDecorations.push(tree);
 
-          const obsRadius = (cfg.id === 'civics') ? 0.5 : 0.75;
+          const obsRadius = (cfg.id === 'civics') ? 0.5 : 0.7;
           registerObstacle(cfg.id, tx, tz, obsRadius);
         }
 
-        const flowerCount = Math.floor(Math.random() * 4) + 4;
+        const flowerCount = Math.floor(Math.random() * 3) + 4;
         for (let f = 0; f < flowerCount; f++) {
           const flower = createFlower();
           const angle = Math.random() * Math.PI * 2;
-          const dist = 1.6 + Math.random() * (baseRadius - 2.2);
+          const dist = 1.5 + Math.random() * (baseRadius - 2.2);
           const fx = Math.cos(angle) * dist;
           const fz = Math.sin(angle) * dist;
           flower.position.set(fx, 0, fz);
@@ -3222,7 +3217,7 @@
         const currentIslandIdx = (i % 4) + 1;
         const curIsland = ISLAND_CONFIG[currentIslandIdx];
         const ang = Math.random() * Math.PI * 2;
-        const rad = 3.3 + Math.random() * (curIsland.radius - 4.1);
+        const rad = 2.5 + Math.random() * (curIsland.radius - 3.4);
         const initX = curIsland.pos[0] + Math.cos(ang) * rad;
         const initZ = curIsland.pos[2] + Math.sin(ang) * rad;
 
@@ -3234,12 +3229,12 @@
         else if (i >= 18) cheerType = 'raise_single';
 
         const cheerAngle = (i / totalVillagers) * Math.PI * 2 + (Math.random() - 0.5) * 0.15;
-        const cheerRadius = 3.3 + Math.random() * 0.8;
+        const cheerRadius = 2.9 + Math.random() * 0.6;
         const stadiumX = Math.cos(cheerAngle) * cheerRadius;
         const stadiumZ = Math.sin(cheerAngle) * cheerRadius;
 
         const sleepAngle = (i / totalVillagers) * Math.PI * 2;
-        const sleepRadius = 3.3 + (i % 2 === 0 ? 0.15 : -0.15);
+        const sleepRadius = 2.8 + (i % 2 === 0 ? 0.15 : -0.15);
         const sleepX = Math.cos(sleepAngle) * sleepRadius;
         const sleepZ = Math.sin(sleepAngle) * sleepRadius;
 
@@ -3284,10 +3279,9 @@
         mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
-
         const allIntersects = raycaster.intersectObjects(scene.children, true);
 
-        // 🌟 1. 優先檢查是否點中小隊長／島嶼之星
+        // 1. 小隊長點擊判定
         const mascotHit = allIntersects.find(item => {
           let curr = item.object;
           while (curr) {
@@ -3308,8 +3302,8 @@
           confetti({ particleCount: 40, spread: 60 });
 
           isFocusing = true;
-          targetLookAt.set(13.1, 0.8, 11.1);
-          targetCameraPos.set(13.1, 8.0, 19.0);
+          targetLookAt.set(10.1, 0.8, 6.8);
+          targetCameraPos.set(10.1, 7.5, 14.5);
 
           openDrawer({
             id: 'mascot',
@@ -3319,7 +3313,7 @@
           return;
         }
 
-        // 🌟 2. 檢查是否點中軌道台車（觸發文史導覽並暫停行駛）
+        // 2. 輕便台車點擊判定（文史導覽與暫停）
         const cartHit = allIntersects.find(item => {
           let curr = item.object;
           while (curr) {
@@ -3334,11 +3328,11 @@
           confetti({ particleCount: 35, spread: 50 });
 
           isFocusing = true;
-          targetLookAt.copy(cartGroup.position).add(new THREE.Vector3(0, 0.8, 0));
+          targetLookAt.copy(cartGroup.position).add(new THREE.Vector3(0, 0.7, 0));
           targetCameraPos.set(
-            cartGroup.position.x - 3.5,
-            cartGroup.position.y + 4.5,
-            cartGroup.position.z + 7.5
+            cartGroup.position.x - 3.0,
+            cartGroup.position.y + 4.2,
+            cartGroup.position.z + 6.8
           );
 
           openDrawer({
@@ -3349,7 +3343,7 @@
           return;
         }
 
-        // 🌟 3. 點擊島嶼判斷（向上查找至各島嶼頂層 Group）
+        // 3. 島嶼點擊判斷
         if (allIntersects.length > 0) {
           for (let hit of allIntersects) {
             let root = hit.object;
@@ -3376,7 +3370,6 @@
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
 
-        // 🌟 平滑運鏡推進與回歸全景
         if (isFocusing) {
           camera.position.lerp(targetCameraPos, 0.08);
           controls.target.lerp(targetLookAt, 0.08);
@@ -3429,7 +3422,7 @@
         }
 
         if (mascotLeader) {
-          mascotLeader.position.y = 0.3 + Math.max(0, Math.sin(time * 3.0)) * 0.2;
+          mascotLeader.position.y = 0.28 + Math.max(0, Math.sin(time * 3.0)) * 0.18;
           mascotLeader.rotation.y = Math.sin(time * 1.5) * 0.35;
         }
 
@@ -3446,9 +3439,9 @@
           }
         }
 
-        // 🌟 只有在未暫停時台車才前進
+        // 台車行駛動畫（未暫停時前進）
         if (cartGroup && trackCurve && !isCartPaused) {
-          cartProgress = (cartProgress + 0.0006) % 1.0;
+          cartProgress = (cartProgress + 0.0005) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
 
@@ -3503,6 +3496,7 @@
               v.currentZ += (tdz / tdist) * 0.028;
               v.obj.position.x = v.currentX;
               v.obj.position.z = v.currentZ;
+              v.obj.position.y = 0;
               v.obj.rotation.x = 0;
               v.obj.rotation.y = Math.atan2(tdx, tdz);
 
@@ -3603,8 +3597,8 @@
             if (v.currentIslandIdx === 0) {
               v.currentIslandIdx = (idx % 4) + 1;
               const resetIsland = ISLAND_CONFIG[v.currentIslandIdx];
-              v.currentX = resetIsland.pos[0] + (Math.random() - 0.5) * 3.0;
-              v.currentZ = resetIsland.pos[2] + (Math.random() - 0.5) * 3.0;
+              v.currentX = resetIsland.pos[0] + (Math.random() - 0.5) * 2.5;
+              v.currentZ = resetIsland.pos[2] + (Math.random() - 0.5) * 2.5;
               v.targetX = v.currentX;
               v.targetZ = v.currentZ;
               v.waitTimer = 40;
@@ -3624,7 +3618,7 @@
               v.obj.rotation.y += Math.sin(time * 2.0 + idx) * 0.005;
 
               if (v.waitTimer <= 0) {
-                if (Math.random() < 0.25) {
+                if (Math.random() < 0.28) {
                   const ringNeighbors = { 1: [2, 3], 2: [1, 4], 3: [1, 4], 4: [2, 3] };
                   const nextIsland = ringNeighbors[v.currentIslandIdx][Math.floor(Math.random() * 2)];
                   v.targetIslandIdx = nextIsland;
@@ -3633,13 +3627,13 @@
                   const pEnd = ISLAND_CONFIG[nextIsland].pos;
                   const dir = new THREE.Vector3(pEnd[0] - pStart[0], 0, pEnd[2] - pStart[2]).normalize();
 
-                  v.targetX = pStart[0] + dir.x * 4.8;
-                  v.targetZ = pStart[2] + dir.z * 4.8;
+                  v.targetX = pStart[0] + dir.x * 4.2;
+                  v.targetZ = pStart[2] + dir.z * 4.2;
                   v.bridgeEndTarget = {
-                    x: pEnd[0] - dir.x * 4.8,
-                    z: pEnd[2] - dir.z * 4.8,
-                    finalX: pEnd[0] + (Math.random() - 0.5) * 2.6,
-                    finalZ: pEnd[2] + (Math.random() - 0.5) * 2.6
+                    x: pEnd[0] - dir.x * 4.2,
+                    z: pEnd[2] - dir.z * 4.2,
+                    finalX: pEnd[0] + (Math.random() - 0.5) * 2.2,
+                    finalZ: pEnd[2] + (Math.random() - 0.5) * 2.2
                   };
                   v.state = 'bridge_start';
                 } else {
@@ -3651,7 +3645,7 @@
 
                   for (let attempt = 0; attempt < 12; attempt++) {
                     const a = Math.random() * Math.PI * 2;
-                    const r = 2.4 + Math.random() * (curIslandCfg.radius - 2.8);
+                    const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
                     const lx = Math.cos(a) * r;
                     const lz = Math.sin(a) * r;
 
@@ -3738,16 +3732,16 @@
     }
 
     // ==========================================
-    // 14. 島嶼與台車點擊焦點運鏡與抽屜控制
+    // 14. 島嶼與台車焦點運鏡與抽屜控制
     // ==========================================
     function focusOnIsland(islandData) {
       isFocusing = true;
       targetLookAt.set(islandData.pos[0], islandData.pos[1] + 1.2, islandData.pos[2]);
 
-      const zoomDist = islandData.radius * 1.8;
+      const zoomDist = islandData.radius * 1.7;
       targetCameraPos.set(
-        islandData.pos[0] - 2.5,
-        islandData.pos[1] + 6.8,
+        islandData.pos[0] - 2.0,
+        islandData.pos[1] + 6.2,
         islandData.pos[2] + zoomDist
       );
 
@@ -3758,16 +3752,14 @@
       document.getElementById('drawer-title').textContent = islandData.title;
       document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
 
-      // 🌟 當開啟台車側欄時暫停台車行駛，其餘島嶼則維持運作
+      // 當點選台車時暫停行駛，其餘島嶼則維持運轉
       isCartPaused = (islandData.id === 'cart');
 
-      // 隱藏全部抽屜面板
       ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart'].forEach(id => {
         const el = document.getElementById(`panel-${id}`);
         if (el) el.style.display = 'none';
       });
 
-      // 顯示目標面板
       const p = document.getElementById(`panel-${islandData.id}`);
       if (p) p.style.display = 'block';
 
@@ -3777,16 +3769,16 @@
     function closeDrawer() {
       document.getElementById('side-drawer').classList.remove('open');
       
-      // 🌟 關閉抽屜時，台車立即恢復沿著軌道運行
+      // 關閉側欄時恢復台車運行
       isCartPaused = false;
 
-      // 啟動全景運鏡過渡
+      // 啟動全景運鏡回位
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
-      targetCameraPos.set(0, 36, 40);
+      targetCameraPos.set(0, 36, 38);
     }
 
-    // 🌟 保險啟動機制（防止 DOMContentLoaded 逾時錯過導致黑屏）
+    // 🌟 啟動保護機制（防止因載入狀態錯過 DOMContentLoaded）
     function startIslandApp() {
       init3D();
       initStudent();
