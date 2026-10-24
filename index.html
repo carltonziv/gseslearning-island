@@ -464,7 +464,7 @@
       cursor: pointer;
     }
 
-    /* 島嶼之星 AI 快捷問題按鈕樣式 */
+    /* 島嶼之星 AI 快捷問題膠囊樣式 */
     .quick-chip {
       background: #ffedd5;
       color: #9a3412;
@@ -908,7 +908,7 @@
     }
 
     // ==========================================
-    // 2. 學生身分與名冊管理
+    // 2. 學生身分、名冊與登入專屬人物管理
     // ==========================================
     let currentStudent = { 
       seatNumber: '', 
@@ -917,6 +917,101 @@
       myPoints: 0, 
       beybladeRank: '' 
     };
+
+    // 🏷️ 建立使用者頭頂的名牌 Sprite（始終朝向螢幕視角）
+    function createPlayerNameplateSprite(nameText) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+      ctx.beginPath();
+      ctx.roundRect(10, 8, 236, 48, 24);
+      ctx.fill();
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#facc15";
+      ctx.stroke();
+
+      ctx.font = "bold 24px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(nameText, 128, 32);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(1.9, 0.5, 1);
+      sprite.position.set(0, 1.6, 0);
+      return sprite;
+    }
+
+    // 🌟 移除使用者的專屬化身（登出、更換身分或重整時調用）
+    let playerVillager = null;
+    function removePlayerCharacter() {
+      if (playerVillager) {
+        if (typeof scene !== 'undefined' && scene) {
+          scene.remove(playerVillager.obj);
+        }
+        if (typeof villagers !== 'undefined' && villagers) {
+          const idx = villagers.indexOf(playerVillager);
+          if (idx > -1) villagers.splice(idx, 1);
+        }
+        playerVillager = null;
+      }
+    }
+
+    // 🌟 生成使用者的專屬化身並加入四島巡邏漫步陣列
+    function spawnPlayerCharacter() {
+      removePlayerCharacter();
+
+      if (typeof createCharacterMesh !== 'function' || typeof scene === 'undefined' || !scene) return;
+
+      const person = createCharacterMesh(false, 0xF5D0A9, 0x2563eb, 0x3A3B3C);
+      person.userData.isPlayer = true;
+
+      const displayName = currentStudent.seatNumber === '訪客' 
+        ? `${currentStudent.avatar} ${currentStudent.name}` 
+        : `${currentStudent.seatNumber}號 ${currentStudent.name}`;
+      const nameplate = createPlayerNameplateSprite(displayName);
+      person.add(nameplate);
+
+      const startIslandIdx = 4;
+      const startIsland = ISLAND_CONFIG[startIslandIdx];
+      const spawnX = startIsland.pos[0] + 1.2;
+      const spawnZ = startIsland.pos[2] + 2.2;
+      person.position.set(spawnX, 0, spawnZ);
+      scene.add(person);
+
+      playerVillager = {
+        obj: person,
+        zzzSprite: null,
+        currentIslandIdx: startIslandIdx,
+        targetIslandIdx: startIslandIdx,
+        state: 'wander',
+        currentX: spawnX,
+        currentZ: spawnZ,
+        targetX: spawnX,
+        targetZ: spawnZ,
+        bridgeEndTarget: null,
+        walkCycle: 0,
+        waitTimer: 20,
+        speed: 0.024,
+        isJogging: false,
+        isSkirt: false,
+        cheerType: 'jump_both',
+        stadiumPos: { x: 3.5, z: 0.5 },
+        sleepPos: { x: 3.2, z: 0.5 },
+        cheerPhase: 0,
+        sleepBreathPhase: 0
+      };
+
+      if (typeof villagers !== 'undefined' && villagers) {
+        villagers.push(playerVillager);
+      }
+    }
 
     async function loadStudentRoster() {
       const select = document.getElementById('select-identity');
@@ -960,10 +1055,16 @@
 
     function initStudent() {
       sessionStorage.removeItem('island_student_data_session');
+      removePlayerCharacter();
+
       currentStudent = { seatNumber: '', name: '小探險家', avatar: '🐺', myPoints: 0, beybladeRank: '' };
       document.getElementById('login-modal').classList.remove('hidden');
       loadStudentRoster();
     }
+
+    window.addEventListener('beforeunload', () => {
+      removePlayerCharacter();
+    });
 
     function updateHudProfile() {
       document.getElementById('hud-avatar').textContent = currentStudent.avatar;
@@ -1018,6 +1119,9 @@
       updateHudProfile();
       document.getElementById('login-modal').classList.add('hidden');
 
+      // 🌟 登入成功後即刻在地圖生成專屬人物
+      spawnPlayerCharacter();
+
       if (bbState.isOpen || bbState.status === 'bracket_ready') {
         setTimeout(() => {
           toggleBracketSidebar(true);
@@ -1026,6 +1130,7 @@
     });
 
     document.getElementById('profile-btn').addEventListener('click', () => {
+      removePlayerCharacter();
       document.getElementById('login-modal').classList.remove('hidden');
     });
 
@@ -2093,7 +2198,6 @@
       jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.6);
 
-      // 左側甩繩者：面向中央 (+90度)，右手握住跳繩端點
       const swingerA = createCharacterMesh(false, 0xF5D0A9, 0x64321A, 0x3A3B3C);
       swingerA.position.set(-1.8, 0, 0);
       swingerA.rotation.y = Math.PI / 2;
@@ -2103,7 +2207,6 @@
       }
       jumpRopeGroup.add(swingerA);
 
-      // 右側甩繩者：面向中央 (-90度)，左手握住跳繩端點
       const swingerB = createCharacterMesh(false, 0x8D5524, 0x052E3B, 0x483C32);
       swingerB.position.set(1.8, 0, 0);
       swingerB.rotation.y = -Math.PI / 2;
@@ -2439,10 +2542,9 @@
         return "👋 哈囉！我是 301 學習島的島嶼之星！今天準備好挑戰各島的任務、幫全班累積能量了嗎？點擊下方的按鈕或直接問我問題吧！";
       }
 
-      // 10. 無關話題 / 預設引導
-      // 10. 無關話題 / 隨機三種不同風格引導
+      // 10. 無關話題 / 隨機 6 種不同風格引導
       const defaultReplies = [
-"🎒 哇！外面的世界聽起來好精采，不過島嶼之星的雷達現在只鎖定在 301 學習島的冒險呢！今天有沒有去生態島找小昆蟲，或是去閱讀島寫心得幫全班賺能量呢？",
+        "🎒 哇！外面的世界聽起來好精采，不過島嶼之星的雷達現在只鎖定在 301 學習島的冒險呢！今天有沒有去生態島找小昆蟲，或是去閱讀島寫心得幫全班賺能量呢？",
         "⚡ 嗶嗶——探險雷達感應到外太空的訊號啦！現在全班共創能量正在朝著 5000 點衝刺，戰鬥陀螺大賽就等大家解鎖了！快來問我各島的打卡祕笈吧！",
         "🗺️ 哈哈，這題超出了小隊長的島嶼航海圖範圍囉！我的專長是為大家指引五大島嶼的寶藏與任務。你今天想要挑戰運動健身，還是優良公民的座位整潔認證呢？",
         "🧭 哎呀！小隊長的探險指針轉得頭好暈，這個話題把我們吹離 301 航道啦！快收起風帆，先告訴我：你今天的個人座位整潔打卡完成了嗎？",
@@ -3305,7 +3407,6 @@
               v.currentZ += (tdz / tdist) * 0.028;
               v.obj.position.x = v.currentX;
               v.obj.position.z = v.currentZ;
-              v.obj.position.y = 0;
               v.obj.rotation.x = 0;
               v.obj.rotation.y = Math.atan2(tdx, tdz);
 
