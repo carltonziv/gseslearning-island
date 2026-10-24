@@ -816,7 +816,7 @@
           <span style="font-size:1.4rem;">🚋</span>
           <strong style="color: #92400e; font-size: 1.05rem;">龜山台車歷史演進</strong>
         </div>
-        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">穿梭在學習島群之間的軌道台車，承載著在地珍貴的林業歷史記憶！</p>
+        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">穿梭在學習島群外圍的輕便鐵道，承載著在地珍貴的林業歷史記憶！</p>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:12px; font-size:0.86rem; color:#334155; line-height:1.6;">
@@ -885,11 +885,8 @@
 
   <script>
     // ==========================================
-    // 1. 群島配置（正六角形精密密合配置）
+    // 1. 群島配置（正六角形密合配置）
     // ==========================================
-    // 正六邊形半徑 R 與邊心距 r = R * sqrt(3)/2 ≒ R * 0.866
-    // 中央島 R=5.2 (邊心距 4.50)，四周島 R=4.8 (邊心距 4.15)
-    // 兩島邊心距總和 = 4.50 + 4.15 = 8.65，加上 0.35m 極小間隙 = 9.0m
     const ISLAND_CONFIG = [
       { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0x443423, pos: [0, 0, 0], radius: 5.2 },
       { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0x3C421A, pos: [-7.8, 0, -4.5], radius: 4.8 },
@@ -965,7 +962,7 @@
     }
 
     // ==========================================
-    // 3. 學生身分、名冊與登入專屬人物管理
+    // 3. 學生身分與登入專屬人物管理
     // ==========================================
     let currentStudent = { 
       seatNumber: '', 
@@ -975,23 +972,24 @@
       beybladeRank: '' 
     };
 
+    // 🌟 修改4：底色改為亮橘色(#f97316)，文字改為深黑色(#0f172a)
     function createPlayerNameplateSprite(nameText) {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
       canvas.height = 64;
       const ctx = canvas.getContext('2d');
 
-      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+      ctx.fillStyle = "#f97316";
       ctx.beginPath();
       ctx.roundRect(10, 8, 236, 48, 24);
       ctx.fill();
 
       ctx.lineWidth = 3;
-      ctx.strokeStyle = "#facc15";
+      ctx.strokeStyle = "#ea580c";
       ctx.stroke();
 
       ctx.font = "bold 24px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = "#0f172a";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(nameText, 128, 32);
@@ -2801,7 +2799,7 @@
     }
 
     // ==========================================
-    // 13. 精密六角步道、外環軌道與台車系統
+    // 13. 精密道路（同色邊緣+縮半+平行虛線）、外擴軌道與路基系統
     // ==========================================
     let scene, camera, renderer, controls;
     let islandGroups = [];
@@ -2815,7 +2813,7 @@
 
     let isCartPaused = false; // 台車暫停旗標
 
-    // 建立島嶼之間的平順接合石板道
+    // 🌟 修改3 & 修改6：寬度縮減為 0.75m、邊緣與道路同色、中央鋪設平行白色虛線
     function createConnectingWalkway(p1, p2) {
       const road = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
@@ -2826,23 +2824,28 @@
       road.position.copy(midPoint);
       road.lookAt(v2);
 
-      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.65 });
-      const borderMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.4 });
+      const roadMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.65 });
 
-      // 主道路面（平坦微高於海平面，厚度 0.18m）
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.18, dist), stoneMat);
+      // 主道路面（寬度縮半為 0.75m，一體成型邊緣同色）
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.18, dist), roadMat);
       deck.position.set(0, -0.02, 0);
       deck.receiveShadow = true;
       deck.castShadow = true;
       road.add(deck);
 
-      // 道路兩側金黃引導邊線
-      [-0.72, 0.72].forEach(x => {
-        const border = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, dist), borderMat);
-        border.position.set(x, 0.02, 0);
-        border.castShadow = true;
-        road.add(border);
-      });
+      // 中央平行白色虛線標線
+      const dashLen = 0.45;
+      const gapLen = 0.35;
+      const step = dashLen + gapLen;
+      const count = Math.floor(dist / step);
+      const startZ = -(count * step) / 2 + dashLen / 2;
+      const dashMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+
+      for (let i = 0; i < count; i++) {
+        const dash = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, dashLen), dashMat);
+        dash.position.set(0, 0.08, startZ + i * step);
+        road.add(dash);
+      }
 
       return road;
     }
@@ -2851,29 +2854,29 @@
     let cartProgress = 0;
     let trackCurve = null;
 
-    // 🌟 外圍環繞大軌道（貼合所有六角島嶼輪廓繞一圈）
+    // 🌟 修改1 & 修改2：外擴軌道（絕不觸碰島嶼）＋ 下方實體帶狀路基（底面對齊島底 Y = -4）
     function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
-      const TRACK_Y = -0.55;
+      const TRACK_Y = 0.2; // 軌道高度貼近島面
 
-      // 圍繞五座島嶼外圍計算的平滑閉合曲線路徑
+      // 圍繞五座島嶼大外圍計算的寬闊平滑閉合迴圈（半徑 15~16 公尺，遠離島嶼）
       const points = [
-        new THREE.Vector3(0, TRACK_Y, -9.8),
-        new THREE.Vector3(7.5, TRACK_Y, -9.5),
-        new THREE.Vector3(13.2, TRACK_Y, -4.5),
-        new THREE.Vector3(13.2, TRACK_Y, 4.5),
-        new THREE.Vector3(7.5, TRACK_Y, 9.5),
-        new THREE.Vector3(0, TRACK_Y, 9.8),
-        new THREE.Vector3(-7.5, TRACK_Y, 9.5),
-        new THREE.Vector3(-13.2, TRACK_Y, 4.5),
-        new THREE.Vector3(-13.2, TRACK_Y, -4.5),
-        new THREE.Vector3(-7.5, TRACK_Y, -9.5)
+        new THREE.Vector3(0, TRACK_Y, -14.2),
+        new THREE.Vector3(10.5, TRACK_Y, -12.5),
+        new THREE.Vector3(16.5, TRACK_Y, -5.5),
+        new THREE.Vector3(16.5, TRACK_Y, 5.5),
+        new THREE.Vector3(10.5, TRACK_Y, 12.5),
+        new THREE.Vector3(0, TRACK_Y, 14.2),
+        new THREE.Vector3(-10.5, TRACK_Y, 12.5),
+        new THREE.Vector3(-16.5, TRACK_Y, 5.5),
+        new THREE.Vector3(-16.5, TRACK_Y, -5.5),
+        new THREE.Vector3(-10.5, TRACK_Y, -12.5)
       ];
 
       trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.25);
 
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
-      const divisions = 220;
+      const divisions = 260;
       const innerPts = [];
       const outerPts = [];
       const railGauge = 0.35;
@@ -2891,20 +2894,46 @@
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 180, 0.05, 6, true);
-      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 180, 0.05, 6, true);
+      // 雙鋼軌
+      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 200, 0.05, 6, true);
+      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 200, 0.05, 6, true);
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      const tieMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
-      const tieCount = 180;
+      // 🌟 修改2：軌道下方實體路基（厚度延伸至 Y = -4 對齊島嶼下緣）
+      const roadbedPts = [];
+      for (let i = 0; i <= divisions; i++) {
+        const t = i / divisions;
+        roadbedPts.push(trackCurve.getPointAt(t));
+      }
+      const roadbedCurve = new THREE.CatmullRomCurve3(roadbedPts, true);
+      const roadbedMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85, flatShading: true });
+      
+      // 沿曲線排列下延伸路基柱體塊，形成實體堅固基座
+      const roadbedSteps = 160;
+      for (let i = 0; i < roadbedSteps; i++) {
+        const t = i / roadbedSteps;
+        const pt = roadbedCurve.getPointAt(t);
+        const tan = roadbedCurve.getTangentAt(t).normalize();
+
+        // 路基頂高在 TRACK_Y - 0.06，底端對齊 Y = -4.0（高度差約 4.2m）
+        const bedHeight = 4.2;
+        const bedBlock = new THREE.Mesh(new THREE.BoxGeometry(1.6, bedHeight, 0.8), roadbedMat);
+        bedBlock.position.set(pt.x, TRACK_Y - bedHeight / 2 - 0.06, pt.z);
+        bedBlock.lookAt(pt.clone().add(tan));
+        bedBlock.receiveShadow = true;
+        system.add(bedBlock);
+      }
+
+      // 枕木
+      const tieMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
+      const tieCount = 200;
 
       for (let i = 0; i < tieCount; i++) {
         const t = i / tieCount;
         const pt = trackCurve.getPointAt(t);
         const tan = trackCurve.getTangentAt(t).normalize();
 
-        // 枕木垂直於切線方向排列
         const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.16), tieMat);
         tie.position.copy(pt);
         tie.position.y -= 0.04;
@@ -3063,25 +3092,19 @@
         scene.add(moon);
       }
 
-      // ==========================================
-      // 🌟 3. 鋪設十字與外環串接通道
-      // ==========================================
-      // 中央島分別延伸至四座外圍島嶼
+      // 鋪設十字與外環串接通道
       for (let i = 1; i <= 4; i++) {
         scene.add(createConnectingWalkway(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
       }
-      // 外圍四島彼此相鄰串接
       scene.add(createConnectingWalkway(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos));
       scene.add(createConnectingWalkway(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos));
       scene.add(createConnectingWalkway(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
       scene.add(createConnectingWalkway(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
 
-      // 🌟 4. 加入環繞所有島嶼外側的台車與軌道
+      // 加入外擴軌道與實體路基
       scene.add(createOuterLoopTrackAndCart());
 
-      // ==========================================
-      // 🌟 1 & 2. 生成正六角形密合島嶼
-      // ==========================================
+      // 生成正六角形島嶼
       ISLAND_CONFIG.forEach(cfg => {
         const group = new THREE.Group();
         group.position.set(...cfg.pos);
@@ -3105,7 +3128,6 @@
           });
         }
 
-        // 🌟 正六角形基底 (radialSegments: 6)，旋轉 30 度使平邊精準對齊
         const base = new THREE.Mesh(
           new THREE.CylinderGeometry(baseRadius, baseRadius * 0.84, 4, 6),
           baseMat
@@ -3169,22 +3191,36 @@
           registerObstacle(cfg.id, tx, tz, obsRadius);
         }
 
+        // 🌟 修改5：生成小花時避開道路
         const flowerCount = Math.floor(Math.random() * 3) + 4;
-        for (let f = 0; f < flowerCount; f++) {
-          const flower = createFlower();
+        let spawnedFlowers = 0;
+        let flowerAttempts = 0;
+
+        while (spawnedFlowers < flowerCount && flowerAttempts < 25) {
+          flowerAttempts++;
           const angle = Math.random() * Math.PI * 2;
-          const dist = 1.5 + Math.random() * (baseRadius - 2.2);
+          const dist = 1.4 + Math.random() * (baseRadius - 2.1);
           const fx = Math.cos(angle) * dist;
           const fz = Math.sin(angle) * dist;
-          flower.position.set(fx, 0, fz);
+
+          // 計算世界座標，確保不落在連通道上（道路寬度 0.75m，安全淨空保留 0.7m）
+          const worldX = cfg.pos[0] + fx;
+          const worldZ = cfg.pos[2] + fz;
+          const toCenterAngle = Math.atan2(worldZ, worldX);
+          const distToCenter = Math.hypot(worldX, worldZ);
           
+          // 若過於接近通往中央或外環步道區域，則重新嘗試
+          const isNearCrossRoad = Math.abs(fx) < 0.65 || Math.abs(fz) < 0.65;
+          if (isNearCrossRoad) continue;
+
+          const flower = createFlower();
+          flower.position.set(fx, 0, fz);
           flower.userData.swayPhase = Math.random() * Math.PI * 2;
           flower.userData.swaySpeed = 1.8 + Math.random() * 0.8;
-          
           group.add(flower);
           islandFlowers.push(flower);
-          
           if (cfg.id === 'beyblade') beybladeDecorations.push(flower);
+          spawnedFlowers++;
         }
 
         if (timePhase.phase === 'night' || timePhase.phase === 'midnight') {
@@ -3496,7 +3532,6 @@
               v.currentZ += (tdz / tdist) * 0.028;
               v.obj.position.x = v.currentX;
               v.obj.position.z = v.currentZ;
-              v.obj.position.y = 0;
               v.obj.rotation.x = 0;
               v.obj.rotation.y = Math.atan2(tdx, tdz);
 
@@ -3778,7 +3813,7 @@
       targetCameraPos.set(0, 36, 38);
     }
 
-    // 🌟 啟動保護機制（防止因載入狀態錯過 DOMContentLoaded）
+    // 啟動保護機制
     function startIslandApp() {
       init3D();
       initStudent();
