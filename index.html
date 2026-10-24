@@ -1301,6 +1301,14 @@
         return false;
       }
 
+      // 🌟 新增：每日 22:00 至次日 07:00 關閉周圍四島任務
+      const currentHour = new Date().getHours();
+      const isNightClosed = (currentHour >= 22 || currentHour < 7);
+      if (isNightClosed && islandId !== 'beyblade') {
+        alert('🌙 夜間休息時間（22:00 - 07:00），周圍四島任務已關閉，請明天 07:00 後再來挑戰！');
+        return false;
+      }
+
       const count = getDailyCount(islandId);
       if (islandId === 'reading') {
         if (count >= 3) { alert('📖 閱讀島今天已經挑戰 3 次囉！明天再繼續加油！'); return false; }
