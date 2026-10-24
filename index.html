@@ -809,6 +809,49 @@
       </div>
     </div>
 
+    <!-- 7. 龜山台車歷史導覽面板 -->
+    <div id="panel-cart" style="display:none;">
+      <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #d97706; border-radius: 16px; padding: 14px; margin-bottom: 16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <span style="font-size:1.4rem;">🚋</span>
+          <strong style="color: #92400e; font-size: 1.05rem;">龜山台車歷史演進</strong>
+        </div>
+        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">穿梭在學習島群之間的軌道台車，承載著在地珍貴的林業歷史記憶！</p>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px; font-size:0.86rem; color:#334155; line-height:1.6;">
+        <div style="background:#f8fafc; border-left:4px solid #f59e0b; padding:10px 12px; border-radius:0 12px 12px 0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <strong style="color:#b45309; font-size:0.92rem;">🌲 1928 年（日治時期｜木材運輸起點）</strong>
+          <p style="margin-top:3px; color:#475569;">由三井合名會社鋪設（軌距 545 mm），專用於運送桶後、福山及孝義一帶的檜木、扁柏與伐木機具，採單軌配置。</p>
+        </div>
+
+        <div style="background:#f8fafc; border-left:4px solid #f59e0b; padding:10px 12px; border-radius:0 12px 12px 0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <strong style="color:#b45309; font-size:0.92rem;">💪 1940–1950 年代（人力推車時期）</strong>
+          <p style="margin-top:3px; color:#475569;">無動力運作。上坡由台車工全程人力推行，下坡憑重力滑行並手動煞車；回程常架設小藤椅兼載深山居民與林班工人。</p>
+        </div>
+
+        <div style="background:#f8fafc; border-left:4px solid #f59e0b; padding:10px 12px; border-radius:0 12px 12px 0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <strong style="color:#b45309; font-size:0.92rem;">🎫 1963–1964 年（轉型觀光與雙軌化）</strong>
+          <p style="margin-top:3px; color:#475569;">因應烏來瀑布觀光潮，林務局於 1963 年正式開辦客運收費業務；隔年拓寬為雙軌，開創全台輕便鐵道發展觀光的先河。</p>
+        </div>
+
+        <div style="background:#f8fafc; border-left:4px solid #f59e0b; padding:10px 12px; border-radius:0 12px 12px 0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <strong style="color:#b45309; font-size:0.92rem;">⚙️ 1974 年（動力機械化）</strong>
+          <p style="margin-top:3px; color:#475569;">柴油機動母車引進上線，正式淘汰人力推車，大幅提升運輸效率與行車安全。</p>
+        </div>
+
+        <div style="background:#f8fafc; border-left:4px solid #f59e0b; padding:10px 12px; border-radius:0 12px 12px 0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <strong style="color:#b45309; font-size:0.92rem;">🚇 1987 年（迴轉隧道開通）</strong>
+          <p style="margin-top:3px; color:#475569;">於瀑布站開鑿迴轉隧道，取代過往人工手動旋轉車台的調頭工法，確立現代化的運行模式。</p>
+        </div>
+
+        <div style="background:#f8fafc; border-left:4px solid #059669; padding:10px 12px; border-radius:0 12px 12px 0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <strong style="color:#047857; font-size:0.92rem;">🏛️ 現代定位（唯一現役輕便鐵道）</strong>
+          <p style="margin-top:3px; color:#475569;">昔日長達數十公里的林道網絡僅保留烏來至瀑布段（1.5 公里），現由林保署管轄，轉型為兼具文史與生態的動態鐵道文化資產。</p>
+        </div>
+      </div>
+    </div>
+
   </div> <!-- 抽屜 #side-drawer 結束 -->
 
   <!-- 教師控制台彈窗 -->
@@ -1735,8 +1778,8 @@
       alert('🎲 雙淘汰賽程圖已隨機抽籤產生完成！即時晉級圖側邊欄已同步更新！');
       toggleBracketSidebar(true);
     }
-// ==========================================
-    // 9. 6 個時段背景色彩精準判定
+    // ==========================================
+    // 9. 6 個時段背景色彩精準判定（含下午 #FEF0E8）
     // ==========================================
     function getTimePhase() {
       const hour = new Date().getHours();
@@ -2781,6 +2824,8 @@
     let targetCameraPos = new THREE.Vector3(0, 36, 40);
     let targetLookAt = new THREE.Vector3(0, 0, 0);
 
+    let isCartPaused = false; // 🌟 控制台車暫停/運行狀態
+
     function createPreciseBridge(p1, p2, r1, r2) {
       const bridge = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
@@ -2884,6 +2929,8 @@
       }
 
       cartGroup = new THREE.Group();
+      cartGroup.userData = { isCart: true }; // 🌟 標註台車物件
+
       const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
       const ironFrameMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.85, roughness: 0.25 });
       const brassMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 });
@@ -2940,6 +2987,11 @@
         hub.rotation.z = Math.PI / 2;
         hub.position.set(...pos);
         cartGroup.add(hub);
+      });
+
+      // 讓台車內所有子部件皆帶有 isCart 標籤
+      cartGroup.traverse(child => {
+        child.userData.isCart = true;
       });
 
       system.add(cartGroup);
@@ -3233,8 +3285,9 @@
 
         raycaster.setFromCamera(mouse, camera);
 
-        // 🌟 1. 優先檢查是否點中小隊長／島嶼之星
         const allIntersects = raycaster.intersectObjects(scene.children, true);
+
+        // 🌟 1. 優先檢查是否點中小隊長／島嶼之星
         const mascotHit = allIntersects.find(item => {
           let curr = item.object;
           while (curr) {
@@ -3263,13 +3316,42 @@
             title: '🎒 學習島冒險指南',
             subtitle: '島嶼之星為你介紹各島主要任務與挑戰'
           });
-          return; // 💥 擊中小隊長後立即退出，防止被底下的公民島攔截
+          return;
         }
 
-        // 🌟 2. 點擊島嶼判斷（向上查找至各島嶼頂層 Group）
-        const intersects = raycaster.intersectObjects(scene.children, true);
-        if (intersects.length > 0) {
-          for (let hit of intersects) {
+        // 🌟 2. 檢查是否點中軌道台車（觸發文史導覽並暫停行駛）
+        const cartHit = allIntersects.find(item => {
+          let curr = item.object;
+          while (curr) {
+            if (curr.userData && curr.userData.isCart) return true;
+            curr = curr.parent;
+          }
+          return false;
+        });
+
+        if (cartHit && cartGroup) {
+          showLiveBanner("🚋 正在瀏覽：龜山台車百年林業文史！");
+          confetti({ particleCount: 35, spread: 50 });
+
+          isFocusing = true;
+          targetLookAt.copy(cartGroup.position).add(new THREE.Vector3(0, 0.8, 0));
+          targetCameraPos.set(
+            cartGroup.position.x - 3.5,
+            cartGroup.position.y + 4.5,
+            cartGroup.position.z + 7.5
+          );
+
+          openDrawer({
+            id: 'cart',
+            title: '🚋 龜山台車文史誌',
+            subtitle: '見證新店溪上游至烏來的林業軌道發展歷程'
+          });
+          return;
+        }
+
+        // 🌟 3. 點擊島嶼判斷（向上查找至各島嶼頂層 Group）
+        if (allIntersects.length > 0) {
+          for (let hit of allIntersects) {
             let root = hit.object;
             while (root && root.parent && root.parent !== scene) {
               root = root.parent;
@@ -3364,7 +3446,8 @@
           }
         }
 
-        if (cartGroup && trackCurve) {
+        // 🌟 只有在未暫停時台車才前進
+        if (cartGroup && trackCurve && !isCartPaused) {
           cartProgress = (cartProgress + 0.0006) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
@@ -3655,7 +3738,7 @@
     }
 
     // ==========================================
-    // 14. 島嶼點擊焦點運鏡與抽屜控制
+    // 14. 島嶼與台車點擊焦點運鏡與抽屜控制
     // ==========================================
     function focusOnIsland(islandData) {
       isFocusing = true;
@@ -3675,11 +3758,16 @@
       document.getElementById('drawer-title').textContent = islandData.title;
       document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
 
-      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot'].forEach(id => {
+      // 🌟 當開啟台車側欄時暫停台車行駛，其餘島嶼則維持運作
+      isCartPaused = (islandData.id === 'cart');
+
+      // 隱藏全部抽屜面板
+      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart'].forEach(id => {
         const el = document.getElementById(`panel-${id}`);
         if (el) el.style.display = 'none';
       });
 
+      // 顯示目標面板
       const p = document.getElementById(`panel-${islandData.id}`);
       if (p) p.style.display = 'block';
 
@@ -3688,6 +3776,11 @@
 
     function closeDrawer() {
       document.getElementById('side-drawer').classList.remove('open');
+      
+      // 🌟 關閉抽屜時，台車立即恢復沿著軌道運行
+      isCartPaused = false;
+
+      // 啟動全景運鏡過渡
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 36, 40);
