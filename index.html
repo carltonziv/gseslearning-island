@@ -392,79 +392,6 @@
     .btn-red { background: #dc2626; box-shadow: 0 4px 0 #991b1b; }
     .btn-purple { background: #7c3aed; box-shadow: 0 4px 0 #5b21b6; }
 
-    /* 樹狀對抗賽階梯卡片樣式 */
-    .bracket-tree-container {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding-bottom: 24px;
-    }
-    .bracket-round-block {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    }
-    .bracket-round-title {
-      font-size: 0.95rem;
-      font-weight: 900;
-      color: #38bdf8;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border-left: 4px solid #38bdf8;
-      padding-left: 8px;
-    }
-    .bracket-card {
-      background: #0f172a;
-      border: 1.5px solid #475569;
-      border-radius: 12px;
-      padding: 10px;
-      margin-bottom: 10px;
-      position: relative;
-    }
-    .bracket-card.active { border-color: #f59e0b; }
-    .bracket-card.finished { border-color: #22c55e; }
-    .bracket-card-stage {
-      font-size: 0.75rem;
-      font-weight: bold;
-      color: #94a3b8;
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .bracket-slot {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #1e293b;
-      padding: 8px 10px;
-      border-radius: 8px;
-      margin-top: 4px;
-      font-size: 0.85rem;
-    }
-    .bracket-slot.winner {
-      background: #14532d;
-      border: 1px solid #4ade80;
-      font-weight: 900;
-      color: #dcfce7;
-    }
-    .bracket-slot .slot-name { font-weight: 700; }
-    .bracket-slot .slot-blade { font-size: 0.75rem; color: #94a3b8; margin-left: 4px; }
-    .btn-win-sm {
-      background: #f59e0b;
-      border: none;
-      color: #000;
-      font-weight: bold;
-      font-size: 0.7rem;
-      padding: 3px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    /* 島嶼之星 AI 快捷問題按鈕樣式 */
     .quick-chip {
       background: #ffedd5;
       color: #9a3412;
@@ -2358,29 +2285,8 @@
     }
 
     // ==========================================
-    // 島嶼之星 AI 對話系統 (話題嚴格限定在 301 學習島)
+    // 島嶼之星 AI 對話系統
     // ==========================================
-    let mascotChatHistory = [];
-    let isMascotThinking = false;
-
-    const MASCOT_SYSTEM_PROMPT = `你現在是國小三年一班「301學習島」的「島嶼之星」！你的角色設定是熱情活潑、親切友善、充滿冒險精神與鼓勵語氣的班級隊長，說話常用可愛的冒險用語（例如「探險家」、「出發囉！」、「太棒了！」）。
-
-【學習島的核心世界觀與規則】：
-1. 301學習島共有 5 座島嶼：
-   - 🌿 生態科技島：在校園觀察植物或昆蟲並記錄外觀特徵，每次打卡 +5 能量。
-   - 🏃 健身運動島：跑操場5圈、跳繩500下或羽毛球50球（+5 能量）；每天 18:00~22:00 開放健康生活打卡（睡前刷牙、少吃零食、3C少於1小時，完成3項+5、2項+4、1項+3）。
-   - 📖 閱讀島：閱讀書籍並節錄段落，寫下 20 字以上心得（每天可打卡 3 次，每次 +5 能量）。
-   - 🏛️ 優良公民島：個人整潔生活達成（桌面、抽屜、桌底碎屑、垃圾袋），由同學檢查認證 +5 能量。
-   - 🪀 戰鬥陀螺島：平時休眠；當全班共同累積達 5000 點能量時盛大開放報名與雙淘汰錦標賽！大賽期間四周任務暫停，全員移至中央島應援！
-2. 睡眠時段：每天午夜 23:00 至清晨 06:00 為休息時段，島民會聚集在戰鬥陀螺島周邊席地打瞌睡（頭頂飄出 Zzz...）。
-3. 你的駐紮地：優良公民島。
-
-【話題限定與邊界規則（絕對遵循）】：
-- 你的所有對話嚴格限定在「301學習島」的島嶼任務、打卡規則、能量累積、陀螺錦標賽及日常生活好習慣。
-- 如果學生詢問島嶼以外的任何無關話題（例如：外部電玩遊戲、作業解答、程式碼、時事、明星、非本島的一般知識），請立刻禮貌拒絕並熱情拉回島嶼冒險！
-  範例：「哇！外面的世界很精采，但小隊長的任務是帶領大家在 301 學習島探險！要不要跟我聊聊你今天在生態島或閱讀島的新發現呢？」
-- 回答請簡明扼要、親切活潑，每次回答控制在 80~140 字以內，適合三年級小學生閱讀。`;
-
     function appendMascotMessage(sender, text) {
       const chatBox = document.getElementById('mascot-chat-box');
       if (!chatBox) return;
@@ -2412,8 +2318,7 @@
       }
     }
 
-    async function sendMascotMessage() {
-// 🎒 島嶼之星本地智慧大腦（免金鑰、100% 穩定秒回）
+    // 🎒 島嶼之星本地智慧大腦（免金鑰、100% 穩定秒回）
     function getMascotLocalResponse(userText) {
       const q = userText.toLowerCase().trim();
 
@@ -2473,14 +2378,11 @@
       const text = input.value.trim();
       if (!text) return;
 
-      // 1. 顯示使用者發送的問題
       appendMascotMessage('user', text);
       input.value = '';
 
-      // 2. 顯示島嶼之星思考中
       appendMascotMessage('mascot', '島嶼之星正在思考中...');
 
-      // 3. 0.35 秒後自然切換為回答
       setTimeout(() => {
         const chatBox = document.getElementById('mascot-chat-box');
         if (chatBox && chatBox.lastElementChild) {
@@ -2783,7 +2685,7 @@
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
       const tieMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
-      const tieCount = 220; // 🌟 220 根垂直枕木
+      const tieCount = 220;
 
       for (let i = 0; i < tieCount; i++) {
         const t = i / tieCount;
@@ -2996,7 +2898,6 @@
         else if (cfg.id === 'civics') landmark = createCivicsLandmark();
         group.add(landmark);
 
-        // 🌟 將島嶼之星講台加入優良公民島
         if (cfg.id === 'civics') {
           const mascotBox = createMascotSoapbox();
           group.add(mascotBox);
@@ -3006,7 +2907,6 @@
         labelSprite.position.set(0, 5.8, 0);
         group.add(labelSprite);
 
-        // 樹木生成（公民島 1 棵、閱讀島 2~4 棵，其餘 3~5 棵）
         let treeCount;
         if (cfg.id === 'civics') {
           treeCount = 1;
@@ -3040,7 +2940,6 @@
           registerObstacle(cfg.id, tx, tz, obsRadius);
         }
 
-        // 小花生成
         const flowerCount = Math.floor(Math.random() * 4) + 4;
         for (let f = 0; f < flowerCount; f++) {
           const flower = createFlower();
@@ -3073,7 +2972,6 @@
 
       updateBeybladeIslandDormancy();
 
-      // 建立 20 位島民（安全順序建立）
       const totalVillagers = 20;
 
       for (let i = 0; i < totalVillagers; i++) {
@@ -3163,7 +3061,6 @@
           return false;
         });
 
-        // 🌟 點擊小隊長：聚焦相機、噴發彩帶、展開小隊長抽屜指南
         if (mascotHit) {
           const quotes = [
             "🎒 今天也要元氣滿滿地探索新知識喔！",
@@ -3175,7 +3072,6 @@
           confetti({ particleCount: 40, spread: 60 });
 
           isFocusing = true;
-          // 公民島中心 (10.5, 0, 8.5)，小隊長 (13.1, 0, 11.1)
           targetLookAt.set(13.1, 0.8, 11.1);
           targetCameraPos.set(13.1, 8.0, 19.0);
 
@@ -3238,7 +3134,6 @@
           blade.rotation.z += 0.04;
         });
 
-        // 🌸 花朵隨微風自然搖曳
         islandFlowers.forEach(fl => {
           const phase = time * fl.userData.swaySpeed + fl.userData.swayPhase;
           fl.rotation.z = Math.sin(phase) * 0.08;
@@ -3255,7 +3150,6 @@
           mainBeybladeTop.rotation.y += 0.015;
         }
 
-        // 🌟 小隊長持續輕微微跳與轉動打氣
         if (mascotLeader) {
           mascotLeader.position.y = 0.3 + Math.max(0, Math.sin(time * 3.0)) * 0.2;
           mascotLeader.rotation.y = Math.sin(time * 1.5) * 0.35;
@@ -3290,7 +3184,6 @@
           ropeMesh.rotation.x = ropeAngle;
           jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
 
-          // 兩側甩繩者手臂畫圓甩動
           if (jumpRopeGroup && jumpRopeGroup.userData.swingerA && jumpRopeGroup.userData.swingerB) {
             const swingerA = jumpRopeGroup.userData.swingerA;
             const swingerB = jumpRopeGroup.userData.swingerB;
@@ -3309,16 +3202,12 @@
           }
         }
 
-        // 睡眠時段判定 (午夜 23:00 至 清晨 06:00)
         const currentHour = new Date().getHours();
         const isSleepingTime = (currentHour >= 23 || currentHour < 6);
         
         villagers.forEach((v, idx) => {
           const limbs = v.obj.userData.limbs;
 
-          // ==========================================
-          // 狀態 1：💤 午夜~清晨休息時段（中央陀螺島席地入睡 + Zzz 飄升）
-          // ==========================================
           if (isSleepingTime) {
             v.currentIslandIdx = 0;
             const destX = v.sleepPos.x;
@@ -3350,275 +3239,4 @@
             } else {
               v.obj.position.x = destX;
               v.obj.position.z = destZ;
-              v.obj.rotation.y = Math.atan2(destX, destZ);
-
-              v.sleepBreathPhase += 0.035;
-              const breathWave = Math.sin(v.sleepBreathPhase);
-
-              v.obj.position.y = -0.16 + breathWave * 0.012;
-              v.obj.rotation.x = 0.18 + breathWave * 0.04;
-
-              if (limbs) {
-                limbs.leftLeg.rotation.x = -1.45;
-                limbs.rightLeg.rotation.x = -1.45;
-                limbs.leftArm.rotation.x = -0.45;
-                limbs.leftArm.rotation.z = 0.15;
-                limbs.rightArm.rotation.x = -0.45;
-                limbs.rightArm.rotation.z = -0.15;
-                if (limbs.skirt) limbs.skirt.rotation.x = -0.55;
-              }
-
-              if (v.zzzSprite) {
-                v.zzzSprite.visible = true;
-                const floatProgress = (time * 0.5 + idx * 0.35) % 1.0;
-                v.zzzSprite.position.y = 1.35 + floatProgress * 0.45;
-                v.zzzSprite.position.x = 0.18 + Math.sin(floatProgress * Math.PI * 2) * 0.08;
-                v.zzzSprite.material.opacity = Math.sin(floatProgress * Math.PI) * 0.85;
-              }
-            }
-            return;
-          }
-
-          if (v.zzzSprite && v.zzzSprite.visible) {
-            v.zzzSprite.visible = false;
-          }
-
-          // ==========================================
-          // 狀態 2：🏆 戰鬥陀螺大賽進行中（熱血應援）
-          // ==========================================
-          if (isTournamentActive) {
-            v.currentIslandIdx = 0;
-            const destX = v.stadiumPos.x;
-            const destZ = v.stadiumPos.z;
-
-            const tdx = destX - v.currentX;
-            const tdz = destZ - v.currentZ;
-            const tdist = Math.hypot(tdx, tdz);
-
-            if (tdist > 0.15) {
-              v.currentX += (tdx / tdist) * 0.035;
-              v.currentZ += (tdz / tdist) * 0.035;
-              v.obj.position.x = v.currentX;
-              v.obj.position.z = v.currentZ;
-              v.obj.rotation.y = Math.atan2(tdx, tdz);
-            } else {
-              v.obj.position.x = destX;
-              v.obj.position.z = destZ;
-              v.obj.rotation.y = Math.atan2(-destX, -destZ);
-
-              v.cheerPhase += 0.09;
-              const wave = Math.sin(v.cheerPhase * 2.2);
-
-              if (limbs) {
-                if (v.cheerType === 'jump_both') {
-                  v.obj.position.y = Math.max(0, Math.sin(v.cheerPhase * 2.2) * 0.32);
-                  limbs.leftArm.rotation.x = -2.7 + wave * 0.3;
-                  limbs.rightArm.rotation.x = -2.7 + wave * 0.3;
-                  limbs.leftLeg.rotation.x = 0;
-                  limbs.rightLeg.rotation.x = 0;
-                  if (limbs.skirt) limbs.skirt.rotation.x = wave * 0.12;
-                } 
-                else if (v.cheerType === 'shout_mouth') {
-                  v.obj.position.y = 0;
-                  limbs.leftArm.rotation.x = -1.8 + Math.sin(v.cheerPhase * 1.5) * 0.15;
-                  limbs.rightArm.rotation.x = -1.8 + Math.sin(v.cheerPhase * 1.5) * 0.15;
-                  v.obj.rotation.x = 0.14;
-                } 
-                else if (v.cheerType === 'raise_single') {
-                  v.obj.position.y = 0;
-                  const singleArmWave = Math.sin(v.cheerPhase * 1.8);
-                  limbs.rightArm.rotation.x = -1.4 + singleArmWave * 1.2;
-                  limbs.leftArm.rotation.x = 0.2;
-                }
-              }
-            }
-          } 
-          // ==========================================
-          // 狀態 3：🚶 平時四島散步與慢跑
-          // ==========================================
-          else {
-            v.obj.rotation.x = 0;
-
-            if (v.currentIslandIdx === 0) {
-              v.currentIslandIdx = (idx % 4) + 1;
-              const resetIsland = ISLAND_CONFIG[v.currentIslandIdx];
-              v.currentX = resetIsland.pos[0] + (Math.random() - 0.5) * 3.0;
-              v.currentZ = resetIsland.pos[2] + (Math.random() - 0.5) * 3.0;
-              v.targetX = v.currentX;
-              v.targetZ = v.currentZ;
-              v.waitTimer = 40;
-            }
-
-            const curIslandCfg = ISLAND_CONFIG[v.currentIslandIdx];
-
-            if (v.waitTimer > 0) {
-              v.waitTimer--;
-              if (limbs) {
-                limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
-                limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
-                limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
-                limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
-                if (limbs.skirt) limbs.skirt.rotation.x = 0;
-              }
-              v.obj.rotation.y += Math.sin(time * 2.0 + idx) * 0.005;
-
-              if (v.waitTimer <= 0) {
-                if (Math.random() < 0.25) {
-                  const ringNeighbors = { 1: [2, 3], 2: [1, 4], 3: [1, 4], 4: [2, 3] };
-                  const nextIsland = ringNeighbors[v.currentIslandIdx][Math.floor(Math.random() * 2)];
-                  v.targetIslandIdx = nextIsland;
-
-                  const pStart = ISLAND_CONFIG[v.currentIslandIdx].pos;
-                  const pEnd = ISLAND_CONFIG[nextIsland].pos;
-                  const dir = new THREE.Vector3(pEnd[0] - pStart[0], 0, pEnd[2] - pStart[2]).normalize();
-
-                  v.targetX = pStart[0] + dir.x * 4.8;
-                  v.targetZ = pStart[2] + dir.z * 4.8;
-                  v.bridgeEndTarget = {
-                    x: pEnd[0] - dir.x * 4.8,
-                    z: pEnd[2] - dir.z * 4.8,
-                    finalX: pEnd[0] + (Math.random() - 0.5) * 2.6,
-                    finalZ: pEnd[2] + (Math.random() - 0.5) * 2.6
-                  };
-                  v.state = 'bridge_start';
-                } else {
-                  const curCenter = curIslandCfg.pos;
-                  const startLocalX = v.currentX - curCenter[0];
-                  const startLocalZ = v.currentZ - curCenter[2];
-                  let foundValid = false;
-                  let tx = 0, tz = 0;
-
-                  for (let attempt = 0; attempt < 12; attempt++) {
-                    const a = Math.random() * Math.PI * 2;
-                    const r = 2.4 + Math.random() * (curIslandCfg.radius - 2.8);
-                    const lx = Math.cos(a) * r;
-                    const lz = Math.sin(a) * r;
-
-                    if (!isPositionBlocked(curIslandCfg.id, lx, lz) &&
-                        !isPathBlocked(curIslandCfg.id, startLocalX, startLocalZ, lx, lz)) {
-                      tx = curCenter[0] + lx;
-                      tz = curCenter[2] + lz;
-                      foundValid = true;
-                      break;
-                    }
-                  }
-                  if (foundValid) {
-                    v.targetX = tx;
-                    v.targetZ = tz;
-                    v.state = 'wander';
-                  } else {
-                    v.waitTimer = 30;
-                  }
-                }
-              }
-            } else {
-              const dx = v.targetX - v.currentX;
-              const dz = v.targetZ - v.currentZ;
-              const dist = Math.hypot(dx, dz);
-
-              if (dist > 0.08) {
-                const moveStep = v.speed;
-                v.currentX += (dx / dist) * moveStep;
-                v.currentZ += (dz / dist) * moveStep;
-
-                const localPos = {
-                  x: v.currentX - curIslandCfg.pos[0],
-                  z: v.currentZ - curIslandCfg.pos[2]
-                };
-                const wasBlocked = applyRepulsionForce(curIslandCfg.id, localPos);
-                v.currentX = curIslandCfg.pos[0] + localPos.x;
-                v.currentZ = curIslandCfg.pos[2] + localPos.z;
-
-                v.obj.position.x = v.currentX;
-                v.obj.position.z = v.currentZ;
-
-                if (wasBlocked) {
-                  v.targetX = v.currentX;
-                  v.targetZ = v.currentZ;
-                  v.waitTimer = Math.floor(Math.random() * 30) + 20;
-                } else {
-                  v.obj.rotation.y = Math.atan2(dx, dz);
-                }
-
-                v.walkCycle += v.isJogging ? 0.28 : 0.16;
-                const legSwing = Math.sin(v.walkCycle) * (v.isJogging ? 0.65 : 0.45);
-                const armSwing = Math.sin(v.walkCycle) * (v.isJogging ? 0.65 : 0.45);
-
-                if (limbs) {
-                  limbs.leftLeg.rotation.x = legSwing;
-                  limbs.rightLeg.rotation.x = -legSwing;
-                  limbs.leftArm.rotation.x = -armSwing;
-                  limbs.rightArm.rotation.x = armSwing;
-                  if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(v.walkCycle * 2) * 0.12;
-                }
-                v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * (v.isJogging ? 0.08 : 0.04);
-              } else {
-                if (v.state === 'bridge_start' && v.bridgeEndTarget) {
-                  v.targetX = v.bridgeEndTarget.x;
-                  v.targetZ = v.bridgeEndTarget.z;
-                  v.state = 'bridge_crossing';
-                } else if (v.state === 'bridge_crossing' && v.bridgeEndTarget) {
-                  v.currentIslandIdx = v.targetIslandIdx;
-                  v.targetX = v.bridgeEndTarget.finalX;
-                  v.targetZ = v.bridgeEndTarget.finalZ;
-                  v.bridgeEndTarget = null;
-                  v.state = 'wander';
-                } else {
-                  v.waitTimer = Math.floor(Math.random() * 80) + 40;
-                }
-              }
-            }
-          }
-        });
-
-        renderer.render(scene, camera);
-      }
-      animate();
-    }
-
-    // ==========================================
-    // 12. 島嶼點擊焦點運鏡
-    // ==========================================
-    function focusOnIsland(islandData) {
-      isFocusing = true;
-      targetLookAt.set(islandData.pos[0], islandData.pos[1], islandData.pos[2]);
-
-      const offsetDist = islandData.radius * 2.8;
-      targetCameraPos.set(
-        islandData.pos[0],
-        islandData.pos[1] + 13.0,
-        islandData.pos[2] + offsetDist
-      );
-
-      openDrawer(islandData);
-    }
-
-    function openDrawer(islandData) {
-      document.getElementById('drawer-title').textContent = islandData.title;
-      document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
-
-      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot'].forEach(id => {
-        const el = document.getElementById(`panel-${id}`);
-        if (el) el.style.display = 'none';
-      });
-
-      const p = document.getElementById(`panel-${islandData.id}`);
-      if (p) p.style.display = 'block';
-
-      document.getElementById('side-drawer').classList.add('open');
-    }
-
-    function closeDrawer() {
-      document.getElementById('side-drawer').classList.remove('open');
-      isFocusing = true;
-      targetLookAt.set(0, 0, 0);
-      targetCameraPos.set(0, 36, 40);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      init3D();
-      initStudent();
-    });
-  </script>
-</body>
-</html>
+              v.obj.rotation.y = Math.atan2(destX, dest
