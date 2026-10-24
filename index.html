@@ -2567,19 +2567,7 @@
         system.add(tie);
       }
 
-      const tunnelHoleLocations = [
-        { pos: new THREE.Vector3(5.8, TRACK_Y, -4.0), dir: new THREE.Vector3(1, 0, -1).normalize() },
-        { pos: new THREE.Vector3(5.8, TRACK_Y, 4.0),  dir: new THREE.Vector3(1, 0, 1).normalize() },
-        { pos: new THREE.Vector3(-5.8, TRACK_Y, -4.0), dir: new THREE.Vector3(-1, 0, -1).normalize() },
-        { pos: new THREE.Vector3(-5.8, TRACK_Y, 4.0),  dir: new THREE.Vector3(-1, 0, 1).normalize() }
-      ];
 
-      tunnelHoleLocations.forEach(loc => {
-        const portal = createIslandTunnelHole();
-        portal.position.copy(loc.pos);
-        portal.lookAt(loc.pos.clone().add(loc.dir));
-        system.add(portal);
-      });
 
       cartGroup = new THREE.Group();
       const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
