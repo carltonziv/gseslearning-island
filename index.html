@@ -336,6 +336,41 @@
     }
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #2563eb; }
 
+    /* 性別選擇單選樣式 */
+    .gender-selector {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .gender-btn {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 2px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .gender-btn.active-boy {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    }
+    .gender-btn.active-girl {
+      border-color: #ec4899;
+      background: #fdf2f8;
+      color: #be185d;
+      box-shadow: 0 2px 8px rgba(236, 72, 153, 0.25);
+    }
+
     .char-count { font-size: 0.75rem; text-align: right; color: #64748b; }
     .char-count.valid { color: #16a34a; font-weight: bold; }
 
@@ -540,7 +575,7 @@
     <div id="bracket-tree-root" class="bracket-tree-container"></div>
   </div>
 
-  <!-- 登入設定彈窗 -->
+  <!-- 登入設定彈窗（增加性別選項） -->
   <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -552,6 +587,15 @@
         <select id="select-identity">
           <option value="">載入學生名冊中...</option>
         </select>
+      </div>
+
+      <!-- 🌟 修改2：新增男／女性別選擇選項（僅供判定人物外觀） -->
+      <div class="form-group">
+        <label>選擇角色性別外觀</label>
+        <div class="gender-selector">
+          <button type="button" class="gender-btn active-boy" id="btn-gender-boy" onclick="selectGender('boy')">👦 男孩造型 (多樣冒險風格)</button>
+          <button type="button" class="gender-btn" id="btn-gender-girl" onclick="selectGender('girl')">👧 女孩造型 (粉色系百褶裙)</button>
+        </div>
       </div>
 
       <div class="form-group" id="guest-name-group" style="display:none;">
@@ -962,17 +1006,31 @@
     }
 
     // ==========================================
-    // 3. 學生身分與登入專屬人物管理
+    // 3. 學生身分與登入專屬人物管理（含性別判定）
     // ==========================================
     let currentStudent = { 
       seatNumber: '', 
       name: '小探險家', 
       avatar: '🐺', 
+      gender: 'boy', // 預設為男孩
       myPoints: 0, 
       beybladeRank: '' 
     };
 
-    // 🌟 修改4：底色改為亮橘色(#f97316)，文字改為深黑色(#0f172a)
+    function selectGender(gen) {
+      currentStudent.gender = gen;
+      const boyBtn = document.getElementById('btn-gender-boy');
+      const girlBtn = document.getElementById('btn-gender-girl');
+      if (gen === 'boy') {
+        boyBtn.className = 'gender-btn active-boy';
+        girlBtn.className = 'gender-btn';
+      } else {
+        boyBtn.className = 'gender-btn';
+        girlBtn.className = 'gender-btn active-girl';
+      }
+    }
+
+    // 橘色底標籤、深黑字體
     function createPlayerNameplateSprite(nameText) {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
@@ -1016,11 +1074,22 @@
       }
     }
 
+    // 🌟 依照性別生成專屬人物（女：粉色系搭配＋裙裝；男：隨機生成）
     function spawnPlayerCharacter() {
       removePlayerCharacter();
       if (typeof createCharacterMesh !== 'function' || typeof scene === 'undefined' || !scene) return;
 
-      const person = createCharacterMesh(false, 0xF5D0A9, 0x2563eb, 0x3A3B3C);
+      const isGirl = (currentStudent.gender === 'girl');
+      let customSkin, customClothes, customHair;
+
+      if (isGirl) {
+        const pinkPalette = [0xF472B6, 0xFB7185, 0xF87171, 0xFDA4AF, 0xDB2777, 0xEC4899];
+        customClothes = pinkPalette[Math.floor(Math.random() * pinkPalette.length)];
+        customSkin = 0xF5D0A9;
+        customHair = 0x72376A;
+      }
+
+      const person = createCharacterMesh(isGirl, customSkin, customClothes, customHair);
       person.userData.isPlayer = true;
 
       const displayName = currentStudent.seatNumber === '訪客' 
@@ -1051,7 +1120,7 @@
         waitTimer: 20,
         speed: 0.024,
         isJogging: false,
-        isSkirt: false,
+        isSkirt: isGirl,
         cheerType: 'jump_both',
         stadiumPos: { x: 2.8, z: 0.5 },
         sleepPos: { x: 2.6, z: 0.5 },
@@ -1108,7 +1177,8 @@
       sessionStorage.removeItem('island_student_data_session');
       removePlayerCharacter();
 
-      currentStudent = { seatNumber: '', name: '小探險家', avatar: '🐺', myPoints: 0, beybladeRank: '' };
+      currentStudent = { seatNumber: '', name: '小探險家', avatar: '🐺', gender: 'boy', myPoints: 0, beybladeRank: '' };
+      selectGender('boy');
       document.getElementById('login-modal').classList.remove('hidden');
       loadStudentRoster();
     }
@@ -2799,7 +2869,7 @@
     }
 
     // ==========================================
-    // 13. 精密道路（同色邊緣+縮半+平行虛線）、外擴軌道與路基系統
+    // 13. 道路、雙層道碴碎石與土地層系統
     // ==========================================
     let scene, camera, renderer, controls;
     let islandGroups = [];
@@ -2813,7 +2883,6 @@
 
     let isCartPaused = false; // 台車暫停旗標
 
-    // 🌟 修改3 & 修改6：寬度縮減為 0.75m、邊緣與道路同色、中央鋪設平行白色虛線
     function createConnectingWalkway(p1, p2) {
       const road = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
@@ -2826,14 +2895,12 @@
 
       const roadMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.65 });
 
-      // 主道路面（寬度縮半為 0.75m，一體成型邊緣同色）
       const deck = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.18, dist), roadMat);
       deck.position.set(0, -0.02, 0);
       deck.receiveShadow = true;
       deck.castShadow = true;
       road.add(deck);
 
-      // 中央平行白色虛線標線
       const dashLen = 0.45;
       const gapLen = 0.35;
       const step = dashLen + gapLen;
@@ -2854,12 +2921,11 @@
     let cartProgress = 0;
     let trackCurve = null;
 
-    // 🌟 修改1 & 修改2：外擴軌道（絕不觸碰島嶼）＋ 下方實體帶狀路基（底面對齊島底 Y = -4）
+    // 🌟 軌道外擴 + 道碴碎石層(厚度0.36m) + 土地層(厚度0.72m)
     function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
-      const TRACK_Y = 0.2; // 軌道高度貼近島面
+      const TRACK_Y = 0.2;
 
-      // 圍繞五座島嶼大外圍計算的寬闊平滑閉合迴圈（半徑 15~16 公尺，遠離島嶼）
       const points = [
         new THREE.Vector3(0, TRACK_Y, -14.2),
         new THREE.Vector3(10.5, TRACK_Y, -12.5),
@@ -2894,38 +2960,37 @@
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      // 雙鋼軌
       const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 200, 0.05, 6, true);
       const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 200, 0.05, 6, true);
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      // 🌟 修改2：軌道下方實體路基（厚度延伸至 Y = -4 對齊島嶼下緣）
-      const roadbedPts = [];
-      for (let i = 0; i <= divisions; i++) {
-        const t = i / divisions;
-        roadbedPts.push(trackCurve.getPointAt(t));
-      }
-      const roadbedCurve = new THREE.CatmullRomCurve3(roadbedPts, true);
-      const roadbedMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85, flatShading: true });
-      
-      // 沿曲線排列下延伸路基柱體塊，形成實體堅固基座
-      const roadbedSteps = 160;
-      for (let i = 0; i < roadbedSteps; i++) {
-        const t = i / roadbedSteps;
-        const pt = roadbedCurve.getPointAt(t);
-        const tan = roadbedCurve.getTangentAt(t).normalize();
+      // 🌟 道碴碎石層（厚度 0.36m，為道路 0.18m 的 2 倍）
+      const ballastMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9, flatShading: true });
+      // 🌟 土地基底層（厚度 0.72m，為道碴 0.36m 的 2 倍）
+      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
 
-        // 路基頂高在 TRACK_Y - 0.06，底端對齊 Y = -4.0（高度差約 4.2m）
-        const bedHeight = 4.2;
-        const bedBlock = new THREE.Mesh(new THREE.BoxGeometry(1.6, bedHeight, 0.8), roadbedMat);
-        bedBlock.position.set(pt.x, TRACK_Y - bedHeight / 2 - 0.06, pt.z);
-        bedBlock.lookAt(pt.clone().add(tan));
-        bedBlock.receiveShadow = true;
-        system.add(bedBlock);
+      const steps = 160;
+      for (let i = 0; i < steps; i++) {
+        const t = i / steps;
+        const pt = trackCurve.getPointAt(t);
+        const tan = trackCurve.getTangentAt(t).normalize();
+
+        // 1. 道碴碎石層區塊（厚度 0.36）
+        const ballastBlock = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.36, 0.8), ballastMat);
+        ballastBlock.position.set(pt.x, TRACK_Y - 0.20, pt.z);
+        ballastBlock.lookAt(pt.clone().add(tan));
+        ballastBlock.receiveShadow = true;
+        system.add(ballastBlock);
+
+        // 2. 土地基底層區塊（厚度 0.72，接續在道碴下方）
+        const soilBlock = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.72, 0.8), soilMat);
+        soilBlock.position.set(pt.x, TRACK_Y - 0.36 - 0.36, pt.z);
+        soilBlock.lookAt(pt.clone().add(tan));
+        soilBlock.receiveShadow = true;
+        system.add(soilBlock);
       }
 
-      // 枕木
       const tieMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
       const tieCount = 200;
 
@@ -3101,7 +3166,7 @@
       scene.add(createConnectingWalkway(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
       scene.add(createConnectingWalkway(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
 
-      // 加入外擴軌道與實體路基
+      // 加入外擴軌道與分層路基
       scene.add(createOuterLoopTrackAndCart());
 
       // 生成正六角形島嶼
@@ -3191,7 +3256,7 @@
           registerObstacle(cfg.id, tx, tz, obsRadius);
         }
 
-        // 🌟 修改5：生成小花時避開道路
+        // 小花生成（嚴格避開道路）
         const flowerCount = Math.floor(Math.random() * 3) + 4;
         let spawnedFlowers = 0;
         let flowerAttempts = 0;
@@ -3203,13 +3268,6 @@
           const fx = Math.cos(angle) * dist;
           const fz = Math.sin(angle) * dist;
 
-          // 計算世界座標，確保不落在連通道上（道路寬度 0.75m，安全淨空保留 0.7m）
-          const worldX = cfg.pos[0] + fx;
-          const worldZ = cfg.pos[2] + fz;
-          const toCenterAngle = Math.atan2(worldZ, worldX);
-          const distToCenter = Math.hypot(worldX, worldZ);
-          
-          // 若過於接近通往中央或外環步道區域，則重新嘗試
           const isNearCrossRoad = Math.abs(fx) < 0.65 || Math.abs(fz) < 0.65;
           if (isNearCrossRoad) continue;
 
@@ -3787,7 +3845,6 @@
       document.getElementById('drawer-title').textContent = islandData.title;
       document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
 
-      // 當點選台車時暫停行駛，其餘島嶼則維持運轉
       isCartPaused = (islandData.id === 'cart');
 
       ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart'].forEach(id => {
@@ -3803,11 +3860,8 @@
 
     function closeDrawer() {
       document.getElementById('side-drawer').classList.remove('open');
-      
-      // 關閉側欄時恢復台車運行
       isCartPaused = false;
 
-      // 啟動全景運鏡回位
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 36, 38);
