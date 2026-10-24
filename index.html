@@ -704,6 +704,61 @@
     </div>
   </div>
 
+<!-- 6. 探險小隊長冒險指南面板 -->
+    <div id="panel-mascot" style="display:none;">
+      <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 16px; padding: 14px; margin-bottom: 16px;">
+        <p style="font-weight: 800; color: #b45309; font-size: 0.95rem; margin-bottom: 4px;">🎒 探險小隊長的話：</p>
+        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">「歡迎來到 301 學習島！點擊下方島嶼卡片可以直接查看各島任務，累積全班能量開啟陀螺錦標賽喔！」</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- 生態科技島 -->
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[1])">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color: #059669; font-size: 0.95rem;">🌿 生態科技島</strong>
+            <span style="font-size: 0.75rem; background: #d1fae5; color: #047857; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+5 EXP</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">觀察校園中的昆蟲與植物，記錄名稱與外觀特徵打卡。</p>
+        </div>
+
+        <!-- 健身運動島 -->
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[2])">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color: #d97706; font-size: 0.95rem;">🏃 健身運動島</strong>
+            <span style="font-size: 0.75rem; background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+3~5 EXP</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">跑操場、跳繩、打羽球，或在晚間 18-22 點打卡健康生活習慣。</p>
+        </div>
+
+        <!-- 閱讀島 -->
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[3])">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color: #7c3aed; font-size: 0.95rem;">📖 閱讀島</strong>
+            <span style="font-size: 0.75rem; background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 10px; font-weight: 700;">每日 3 次</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">節錄書中精采段落並寫下 20 字以上心得（每天可打卡 3 次）。</p>
+        </div>
+
+        <!-- 優良公民島 -->
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[4])">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color: #0284c7; font-size: 0.95rem;">🏛️ 優良公民島</strong>
+            <span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+5 EXP</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">桌面、抽屜、桌底碎屑與垃圾袋檢查，由同學互相見證認證。</p>
+        </div>
+
+        <!-- 戰鬥陀螺島 -->
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.15s;" onclick="focusOnIsland(ISLAND_CONFIG[0])">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color: #dc2626; font-size: 0.95rem;">⚔️ 戰鬥陀螺島</strong>
+            <span style="font-size: 0.75rem; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-weight: 700;">全班 5000 滿額開啟</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">全班共創能量累積達標時盛大開啟雙淘汰錦標賽！</p>
+        </div>
+      </div>
+    </div>
+  
   <!-- 教師控制台彈窗 -->
   <div id="modal-teacher" class="modal-overlay hidden">
     <div class="modal-card">
@@ -2923,16 +2978,31 @@ let mascotLeader = null;
           return false;
         });
 
-        if (mascotHit) {
+       if (mascotHit) {
           const quotes = [
             "🎒 今天也要元氣滿滿地探索新知識喔！",
             "🏃 運動能讓大腦更靈活，記得多動一動！",
             "📖 閱讀是最好的冒險，今天看了哪本書呢？",
             "🌟 每個人的努力，都是全班進步的能量！"
           ];
-          showLiveBanner(`💬 島與志工：「${quotes[Math.floor(Math.random() * quotes.length)]}」`);
-          confetti({ particleCount: 30, spread: 50 });
+          showLiveBanner(`💬 探險小隊長：「${quotes[Math.floor(Math.random() * quotes.length)]}」`);
+          confetti({ particleCount: 40, spread: 60 });
+
+          // 🌟 1. 鏡頭聚焦至優良公民島上的小隊長
+          isFocusing = true;
+          // 公民島中心為 (10.5, 0, 8.5)，小隊長位於 (10.5+2.6, 0, 8.5+2.6)
+          targetLookAt.set(13.1, 0.8, 11.1);
+          targetCameraPos.set(13.1, 8.0, 19.0);
+
+          // 🌟 2. 打開右側抽屜並展示「各島主要冒險指南」
+          openDrawer({
+            id: 'mascot',
+            title: '🎒 學習島冒險指南',
+            subtitle: '探險小隊長為你介紹各島主要任務與挑戰'
+          });
+
           return;
+        
         }
 
         const intersects = raycaster.intersectObjects(islandGroups, true);
@@ -3340,12 +3410,20 @@ let mascotLeader = null;
       openDrawer(islandData);
     }
 
-    function openDrawer(islandData) {
+function openDrawer(islandData) {
       document.getElementById('drawer-title').textContent = islandData.title;
       document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
 
-      ['nature', 'sport', 'civics', 'reading', 'beyblade'].forEach(id => {
-        document.getElementById(`panel-${id}`).style.display = 'none';
+      // 🌟 加入 mascot 面板至重置隱藏名單
+      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot'].forEach(id => {
+        const el = document.getElementById(`panel-${id}`);
+        if (el) el.style.display = 'none';
+      });
+
+      const p = document.getElementById(`panel-${islandData.id}`);
+      if (p) p.style.display = 'block';
+
+      document.getElementById('side-drawer').classList.add('open');
       });
 
       const p = document.getElementById(`panel-${islandData.id}`);
