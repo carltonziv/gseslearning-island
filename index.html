@@ -589,12 +589,12 @@
         </select>
       </div>
 
-      <!-- 🌟 修改2：新增男／女性別選擇選項（僅供判定人物外觀） -->
+      <!-- 🌟 修改2：新增男／女性別選擇選項（人偶外觀） -->
       <div class="form-group">
         <label>選擇角色性別外觀</label>
         <div class="gender-selector">
-          <button type="button" class="gender-btn active-boy" id="btn-gender-boy" onclick="selectGender('boy')">👦 男孩造型 (多樣冒險風格)</button>
-          <button type="button" class="gender-btn" id="btn-gender-girl" onclick="selectGender('girl')">👧 女孩造型 (粉色系百褶裙)</button>
+          <button type="button" class="gender-btn active-boy" id="btn-gender-boy" onclick="selectGender('boy')">👦 男孩造型</button>
+          <button type="button" class="gender-btn" id="btn-gender-girl" onclick="selectGender('girl')">👧 女孩造型</button>
         </div>
       </div>
 
@@ -644,7 +644,7 @@
           <label>外觀特徵或特別之處描述</label>
           <textarea id="nature-feature" rows="4" placeholder="葉片對生、紅橘色小花，上方有黑色斑紋幼蟲..."></textarea>
         </div>
-        <button class="btn-action btn-green" onclick="submitNature()">🌟 完成打卡 (+5 能量)</button>
+        <button class="btn-action btn-green" onclick="submitNature()">🌟 完成任務 (+5 能量)</button>
       </div>
     </div>
 
@@ -669,15 +669,15 @@
             <input type="text" id="sport-item" placeholder="例如: 跳繩 500 下">
           </div>
           <div class="form-group">
-            <label>見證認證者（老師或同學姓名）</label>
+            <label>認證者（老師或同學姓名）</label>
             <input type="text" id="sport-verifier" placeholder="請填寫幫你確認的同學座號或老師">
           </div>
-          <button class="btn-action btn-green" onclick="submitSportExercise()">🌟 完成打卡 (+5 能量)</button>
+          <button class="btn-action btn-green" onclick="submitSportExercise()">🌟 完成任務 (+5 能量)</button>
         </div>
 
         <div id="subtab-sport-health" style="display:none;">
           <p style="color:#d97706; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">
-            ⏰ 開放時段：每天 18:00 - 22:00（勾選3項+5，2項+4，1項+3）
+            ⏰ 開放時段：每天 18:00 - 22:00
           </p>
           <div class="checkbox-group">
             <label class="checkbox-item"><input type="checkbox" id="chk-brush"> 🪥 睡前刷牙</label>
@@ -685,10 +685,10 @@
             <label class="checkbox-item"><input type="checkbox" id="chk-screen"> 📱 3C少於1小時</label>
           </div>
           <div class="form-group" style="margin-top:14px;">
-            <label>見證認證者（家長、老師或同學）</label>
-            <input type="text" id="health-verifier" placeholder="請填寫協助確認的認證者">
+            <label>認證者（家長、老師或同學）</label>
+            <input type="text" id="health-verifier" placeholder="請填寫認證者">
           </div>
-          <button class="btn-action btn-green" onclick="submitSportHealth()">🌟 認證生活打卡</button>
+          <button class="btn-action btn-green" onclick="submitSportHealth()">🌟 完成任務</button>
         </div>
       </div>
     </div>
@@ -709,10 +709,10 @@
           <label class="checkbox-item"><input type="checkbox" id="chk-trash"> 垃圾袋清空</label>
         </div>
         <div class="form-group" style="margin-top:14px;">
-          <label>檢查認證者（座號/姓名）</label>
-          <input type="text" id="civics-verifier" placeholder="例如: 8號 小宣">
+          <label>認證者</label>
+          <input type="text" id="civics-verifier" placeholder="例如: 曉宣">
         </div>
-        <button class="btn-action btn-green" onclick="submitCivics()">🌟 認證完成打卡 (+5 能量)</button>
+        <button class="btn-action btn-green" onclick="submitCivics()">🌟 完成任務 (+5 能量)</button>
       </div>
     </div>
 
@@ -724,7 +724,7 @@
       <div id="task-content-reading">
         <div class="form-group">
           <label>閱讀書名或文章標題</label>
-          <input type="text" id="read-title" placeholder="例如: 達克比辦案系列">
+          <input type="text" id="read-title" placeholder="例如: 達克比辦案、國語日報">
         </div>
         <div class="form-group">
           <label>節錄文章重要段落</label>
@@ -732,10 +732,10 @@
         </div>
         <div class="form-group">
           <label>個人心得與收穫（至少需滿 20 個中文字）</label>
-          <textarea id="read-reflection" rows="4" placeholder="寫下讀完這段後的想法與啟發..."></textarea>
+          <textarea id="read-reflection" rows="4" placeholder="寫下讀完後的想法與你的看法"></textarea>
           <div id="reflection-count" class="char-count">目前字數：0 / 20 字</div>
         </div>
-        <button class="btn-action btn-purple" id="btn-submit-reading" onclick="submitReading()">📝 送出心得 (+5 能量)</button>
+        <button class="btn-action btn-purple" id="btn-submit-reading" onclick="submitReading()">📝 完成任務 (+5 能量)</button>
       </div>
     </div>
 
@@ -749,7 +749,7 @@
         <p style="color:#d97706; font-weight:bold; margin-bottom:10px;" id="bb-deadline-info"></p>
         <div class="form-group">
           <label>參賽戰鬥陀螺名稱 / 型號</label>
-          <input type="text" id="bb-blade-name" placeholder="例如: 地獄三頭犬、飛天神翼...">
+          <input type="text" id="bb-blade-name" placeholder="例如: 凱旋巨神、迪卡狂怒...等">
         </div>
         <button class="btn-action btn-red" onclick="registerBeyblade()">🔥 立即報名參賽！</button>
         <div id="bb-registered-list" style="margin-top:14px; font-size:0.85rem; color:#475569;"></div>
@@ -778,7 +778,7 @@
       <div style="background:#ffffff; border:2px solid #fed7aa; border-radius:18px; padding:12px; margin-bottom:14px; box-shadow:0 4px 12px rgba(251,146,60,0.12);">
         <div id="mascot-chat-box" style="height:190px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px; margin-bottom:10px;">
           <div style="align-self:flex-start; background:#fef3c7; color:#78350f; font-size:0.82rem; padding:8px 12px; border-radius:14px 14px 14px 4px; max-width:85%; line-height:1.45; border:1px solid #fde68a;">
-            👋 小探險家你好！今天想要挑戰哪一座島嶼的任務呢？
+            👋 歡迎探險家！今天想要挑戰哪一座島嶼的任務呢？
           </div>
         </div>
 
@@ -846,9 +846,9 @@
               </svg>
               戰鬥陀螺島
             </strong>
-            <span style="font-size: 0.75rem; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-weight: 700;">全班 5000 滿額開啟</span>
+            <span style="font-size: 0.75rem; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-weight: 700;">全班 5000 能量全滿開啟</span>
           </div>
-          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">全班共創能量累積達標時盛大開啟雙淘汰錦標賽！</p>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">全班共創能量累積達標時盛大開啟陀螺錦標賽！</p>
         </div>
       </div>
     </div>
@@ -1030,24 +1030,24 @@
       }
     }
 
-    // 橘色底標籤、深黑字體
+    // 黃色底標籤、深黑字體
     function createPlayerNameplateSprite(nameText) {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
       canvas.height = 64;
       const ctx = canvas.getContext('2d');
 
-      ctx.fillStyle = "#f97316";
+      ctx.fillStyle = "#ffbe3b";
       ctx.beginPath();
       ctx.roundRect(10, 8, 236, 48, 24);
       ctx.fill();
 
       ctx.lineWidth = 3;
-      ctx.strokeStyle = "#ea580c";
+      ctx.strokeStyle = "#c26417";
       ctx.stroke();
 
       ctx.font = "bold 24px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-      ctx.fillStyle = "#0f172a";
+      ctx.fillStyle = "#111317";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(nameText, 128, 32);
@@ -1152,14 +1152,14 @@
     function fallbackRoster() {
       const select = document.getElementById('select-identity');
       select.innerHTML = `
-        <option value="">請選擇座號身分</option>
+        <option value="">請選擇身分</option>
         <option value="guest">✨ 訪客探險家</option>
       `;
     }
 
     function renderSelectOptions() {
       const select = document.getElementById('select-identity');
-      let html = '<option value="">請選擇你的座號與姓名</option>';
+      let html = '<option value="">請選擇你的姓名</option>';
       rosterList.forEach(s => {
         html += `<option value="${s.seatNumber}">${s.seatNumber}號 ${s.name}</option>`;
       });
@@ -1286,9 +1286,9 @@
 
       const count = getDailyCount(islandId);
       if (islandId === 'reading') {
-        if (count >= 3) { alert('📖 閱讀島今天已經打卡 3 次囉！明天再繼續加油！'); return false; }
+        if (count >= 3) { alert('📖 閱讀島今天已經挑戰 3 次囉！明天再繼續加油！'); return false; }
       } else {
-        if (count >= 1) { alert('⭐ 這項任務今天已經打卡過囉！把機會留給其他任務吧！'); return false; }
+        if (count >= 1) { alert('⭐ 這項任務今天已經挑戰過囉！把機會留給其他任務吧！'); return false; }
       }
       return true;
     }
@@ -1330,7 +1330,7 @@
         start: new THREE.Vector3(...fromPos),
         end: new THREE.Vector3(...toPos),
         progress: 0,
-        speed: 0.025
+        speed: 0.02
       });
     }
 
@@ -1453,7 +1453,7 @@
     function submitSportHealth() {
       const nowHour = new Date().getHours();
       if (nowHour < 18 || nowHour >= 22) {
-        alert('🌙 健康生活任務的開放認證時段為每天 18:00 至 22:00 喔！請於該時段再來打卡！');
+        alert('🌙 健康生活任務的開放認證時段為每天 18:00 至 22:00 喔！請於該時段再來挑戰！');
         return;
       }
 
@@ -1471,7 +1471,7 @@
         return;
       }
       if (!verifier) {
-        alert('請填寫見證認證者姓名！');
+        alert('請填寫認證者姓名！');
         return;
       }
 
