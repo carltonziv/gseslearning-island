@@ -63,7 +63,7 @@
     }
     .hud-header > * { pointer-events: auto; }
 
-    /* 🌟 左側視角快捷按鈕群組（下移至 210px 完美避開左上角能量堆疊） */
+    /* 🌟 左側視角快捷按鈕群組（完美接續在個人能量卡片下方） */
     .view-controls-sidebar {
       position: absolute;
       top: 210px;
@@ -91,7 +91,7 @@
     }
     .view-btn:active { transform: scale(0.95); background: #0284c7; color: #fff; }
 
-    /* 🌟 左上角能量面板：參考附圖優化為科技感藍光進度條 */
+    /* 🌟 左上角能量面板：科技感藍光進度條 */
     .energy-stack {
       display: flex;
       flex-direction: column;
@@ -622,7 +622,19 @@
         <div class="tech-badge-circle" id="class-energy-pct">0%</div>
         <div class="tech-content-area">
           <div class="tech-header-row">
-            <span class="tech-title-power">POWER >>></span>
+            <span class="tech-title-power">
+              <svg class="energy-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 10px; height: 10px;">
+                <defs>
+                  <linearGradient id="energyGrad" x1="13" y1="2" x2="7" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#FFF500" />
+                    <stop offset="100%" stop-color="#FF8C00" />
+                  </linearGradient>
+                </defs>
+                <circle cx="12" cy="12" r="10" fill="#FFD700" fill-opacity="0.15" />
+                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="url(#energyGrad)" stroke="#FFE600" stroke-width="0.8" stroke-linejoin="round" />
+              </svg>
+              全班共創能量>>>
+            </span>
             <span class="tech-val-text" id="class-energy-text">0 / 5000</span>
           </div>
           <div class="tech-track">
@@ -2689,291 +2701,1002 @@
     }
 
     // ==========================================
-    // 12. 島嶼之星 AI 對話系統
+    // 12. 道路、雙層道碴與土地層系統
     // ==========================================
-    function appendMascotMessage(sender, text) {
-      const chatBox = document.getElementById('mascot-chat-box');
-      if (!chatBox) return;
+    function createConnectingWalkway(p1, p2) {
+      const road = new THREE.Group();
+      const v1 = new THREE.Vector3(...p1);
+      const v2 = new THREE.Vector3(...p2);
+      const dist = v1.distanceTo(v2);
 
-      const msgDiv = document.createElement('div');
-      const isUser = sender === 'user';
+      const midPoint = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
+      road.position.copy(midPoint);
+      road.lookAt(v2);
 
-      msgDiv.style.alignSelf = isUser ? 'flex-end' : 'flex-start';
-      msgDiv.style.background = isUser ? '#2563eb' : '#fef3c7';
-      msgDiv.style.color = isUser ? '#ffffff' : '#78350f';
-      msgDiv.style.fontSize = '0.82rem';
-      msgDiv.style.padding = '8px 12px';
-      msgDiv.style.borderRadius = isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px';
-      msgDiv.style.maxWidth = '85%';
-      msgDiv.style.lineHeight = '1.45';
-      msgDiv.style.border = isUser ? 'none' : '1px solid #fde68a';
-      msgDiv.style.wordBreak = 'break-word';
-      msgDiv.textContent = text;
+      const roadMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.65 });
 
-      chatBox.appendChild(msgDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.18, dist), roadMat);
+      deck.position.set(0, -0.02, 0);
+      deck.receiveShadow = true;
+      deck.castShadow = true;
+      road.add(deck);
+
+      const dashLen = 0.45;
+      const gapLen = 0.35;
+      const step = dashLen + gapLen;
+      const count = Math.floor(dist / step);
+      const startZ = -(count * step) / 2 + dashLen / 2;
+      const dashMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+
+      for (let i = 0; i < count; i++) {
+        const dash = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, dashLen), dashMat);
+        dash.position.set(0, 0.08, startZ + i * step);
+        road.add(dash);
+      }
+
+      return road;
     }
 
-    function askQuickPrompt(text) {
-      const input = document.getElementById('mascot-user-input');
-      if (input) {
-        input.value = text;
-        sendMascotMessage();
-      }
-    }
+    let cartGroup = null;
+    let cartProgress = 0;
+    let trackCurve = null;
 
-    function getMascotLocalResponse(userText) {
-      const q = userText.toLowerCase().trim();
+    function createOuterLoopTrackAndCart() {
+      const system = new THREE.Group();
+      const TRACK_Y = 0.2;
 
-      if (q.includes('陀螺') || q.includes('比賽') || q.includes('大賽') || q.includes('錦標賽') || q.includes('冠軍')) {
-        return "⚔️ 當全班累積能量達到 5000 點時，中央戰鬥陀螺島就會盛大開放報名！開放後可以填寫你的陀螺名稱參賽，老師截止報名後會抽籤產生雙淘汰晉級賽程，全班同學都會到中央島為你熱血應援喔！";
-      }
-
-      if (q.includes('能量') || q.includes('共創') || q.includes('5000') || q.includes('exp') || q.includes('點數')) {
-        return "⚡ 累積全班能量很簡單！只要大家每天到各島完成任務打卡：\n• 🌿 生態科技島：+5 能量\n• 🏃 健身運動島：+3～5 能量\n• 📖 閱讀島：每次 +5 能量（每天可打卡 3 次！）\n• 🏛️ 優良公民島：+5 能量\n大家一起努力就能衝破 5000 能量開啟陀螺大賽！";
-      }
-
-      if (q.includes('生態') || q.includes('科技') || q.includes('昆蟲') || q.includes('植物')) {
-        return "🌿 生態科技島位於西北方！任務是探索校園中的植物或昆蟲，觀察它們的外觀特徵（如葉形、花色或斑紋）並拍照記錄打卡，每次打卡可獲得 5 點能量喔！";
-      }
-
-      if (q.includes('運動') || q.includes('健身') || q.includes('跳繩') || q.includes('跑步') || q.includes('健康生活')) {
-        return "🏃 健身運動島有兩項挑戰：\n1. 【增肌減脂】：跑操場5圈、跳繩500下或打球50下，找同學認證 (+5 能量)。\n2. 【健康生活】：每天 18:00～22:00 開放，睡前刷牙、少吃零食、3C少於1小時，勾選項目就能獲得 3～5 能量！";
-      }
-
-      if (q.includes('閱讀') || q.includes('書') || q.includes('心得') || q.includes('文章')) {
-        return "📖 閱讀島是每天可以打卡 3 次的超棒島嶼！只要寫下你看的書名、摘錄精采句子，並寫下至少 20 字的個人收穫心得，每次都能賺取 5 點能量喔！";
-      }
-
-      if (q.includes('公民') || q.includes('整潔') || q.includes('垃圾') || q.includes('抽屜') || q.includes('桌面')) {
-        return "🏛️ 你現在所在的正是優良公民島！每天維持良好生活習慣：桌面整齊、抽屜乾淨、桌底無碎屑、垃圾袋清空，請旁邊同學幫你檢查認證，就能獲得 5 點能量！";
-      }
-
-      if (q.includes('睡覺') || q.includes('午夜') || q.includes('休息') || q.includes('zzz') || q.includes('晚上')) {
-        return "🌙 到了深夜 23:00 至 清晨 06:00，島上的 20 位居民都會走過木橋，聚集在中央戰鬥陀螺島圍成一圈坐著睡覺，頭上還會飄出 Zzz... 微光喔！這時候要好好休息，白天再來冒險！";
-      }
-
-      if (q.includes('任務') || q.includes('冒險') || q.includes('怎麼玩') || q.includes('島嶼') || q.includes('玩法')) {
-        return "🎒 學習島共有 5 座島嶼：\n1. 🌿 生態科技島：校園動植物觀察打卡\n2. 🏃 健身運動島：運動健身與健康生活習慣\n3. 📖 閱讀島：閱讀心得分享（每日限 3 次）\n4. 🏛️ 優良公民島：個人座位整潔檢查認證\n5. 🪀 戰鬥陀螺島：全班達 5000 能量開啟淘汰錦標賽！";
-      }
-
-      if (q.includes('你好') || q.includes('嗨') || q.includes('hello') || q.includes('早') || q.includes('隊長') || q.includes('島嶼之星')) {
-        return "👋 哈囉！我是 301 學習島的島嶼之星！今天準備好挑戰各島的任務、幫全班累積能量了嗎？點擊下方的按鈕或直接問我問題吧！";
-      }
-
-      const defaultReplies = [
-        "🎒 哇！外面的世界聽起來好精采，不過島嶼之星的雷達現在只鎖定在 301 學習島的冒險呢！今天有沒有去生態島找小昆蟲，或是去閱讀島寫心得幫全班賺能量呢？",
-        "⚡ 嗶嗶——探險雷達感應到外太空的訊號啦！現在全班共創能量正在朝著 5000 點衝刺，戰鬥陀螺大賽就等大家解鎖了！快來問我各島的打卡祕笈吧！",
-        "🗺️ 哈哈，這題超出了小隊長的島嶼航海圖範圍囉！我的專長是為大家指引五大島嶼的寶藏與任務。你今天想要挑戰運動健身，還是優良公民的座位整潔認證呢？",
-        "🧭 哎呀！小隊長的探險指針轉得頭好暈，這個話題把我們吹離 301 航道啦！快收起風帆，先告訴我：你今天的個人座位整潔打卡完成了嗎？",
-        "🔋 嗶嗶！小隊長的晶片提示：聊這個可沒辦法替 301 班級累積共創能量喔！今天閱讀島心得寫了嗎？只要 20 個字就能替全班賺進 5 點能量呢！",
-        "📜 翻開《301 探險家手冊》第一條：專注眼前的大陸！我們距離戰鬥陀螺大賽的 5000 能量大關越來越近了，你想先打聽哪座島嶼的通關祕訣？"
+      const points = [
+        new THREE.Vector3(0, TRACK_Y, -14.2),
+        new THREE.Vector3(10.5, TRACK_Y, -12.5),
+        new THREE.Vector3(16.5, TRACK_Y, -5.5),
+        new THREE.Vector3(16.5, TRACK_Y, 5.5),
+        new THREE.Vector3(10.5, TRACK_Y, 12.5),
+        new THREE.Vector3(0, TRACK_Y, 14.2),
+        new THREE.Vector3(-10.5, TRACK_Y, 12.5),
+        new THREE.Vector3(-16.5, TRACK_Y, 5.5),
+        new THREE.Vector3(-16.5, TRACK_Y, -5.5),
+        new THREE.Vector3(-10.5, TRACK_Y, -12.5)
       ];
-      return defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
-    }
 
-    function sendMascotMessage() {
-      const input = document.getElementById('mascot-user-input');
-      if (!input) return;
-      const text = input.value.trim();
-      if (!text) return;
+      trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.25);
 
-      appendMascotMessage('user', text);
-      input.value = '';
+      const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
+      const divisions = 260;
+      const innerPts = [];
+      const outerPts = [];
+      const railGauge = 0.35;
 
-      appendMascotMessage('mascot', '島嶼之星正在思考中...');
+      for (let i = 0; i <= divisions; i++) {
+        const t = i / divisions;
+        const pt = trackCurve.getPointAt(t);
+        const tan = trackCurve.getTangentAt(t);
+        const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
 
-      setTimeout(() => {
-        const chatBox = document.getElementById('mascot-chat-box');
-        if (chatBox && chatBox.lastElementChild) {
-          const reply = getMascotLocalResponse(text);
-          chatBox.lastElementChild.innerHTML = reply.replace(/\n/g, '<br>');
-          chatBox.scrollTop = chatBox.scrollHeight;
-        }
-      }, 350);
-    }
+        innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
+        outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
+      }
 
-    function createSleepZzzSprite() {
-      const canvas = document.createElement('canvas');
-      canvas.width = 128;
-      canvas.height = 128;
-      const ctx = canvas.getContext('2d');
+      const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
+      const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      ctx.clearRect(0, 0, 128, 128);
-      ctx.shadowColor = '#93c5fd';
-      ctx.shadowBlur = 12;
+      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 200, 0.05, 6, true);
+      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 200, 0.05, 6, true);
+      system.add(new THREE.Mesh(railTubeGeo1, railMat));
+      system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      ctx.font = 'bold 52px "Segoe UI", sans-serif';
-      ctx.fillStyle = '#bfdbfe';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('Zzz...', 64, 64);
+      const ballastMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9, flatShading: true });
+      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
 
-      const texture = new THREE.CanvasTexture(canvas);
-      const spriteMat = new THREE.SpriteMaterial({
-        map: texture,
-        transparent: true,
-        opacity: 0,
-        depthWrite: false
+      const steps = 160;
+      for (let i = 0; i < steps; i++) {
+        const t = i / steps;
+        const pt = trackCurve.getPointAt(t);
+        const tan = trackCurve.getTangentAt(t).normalize();
+
+        const ballastBlock = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.36, 0.8), ballastMat);
+        ballastBlock.position.set(pt.x, TRACK_Y - 0.20, pt.z);
+        ballastBlock.lookAt(pt.clone().add(tan));
+        ballastBlock.receiveShadow = true;
+        system.add(ballastBlock);
+
+        const soilBlock = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.72, 0.8), soilMat);
+        soilBlock.position.set(pt.x, TRACK_Y - 0.36 - 0.36, pt.z);
+        soilBlock.lookAt(pt.clone().add(tan));
+        soilBlock.receiveShadow = true;
+        system.add(soilBlock);
+      }
+
+      const tieMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
+      const tieCount = 200;
+
+      for (let i = 0; i < tieCount; i++) {
+        const t = i / tieCount;
+        const pt = trackCurve.getPointAt(t);
+        const tan = trackCurve.getTangentAt(t).normalize();
+
+        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.16), tieMat);
+        tie.position.copy(pt);
+        tie.position.y -= 0.04;
+        
+        const lookTarget = pt.clone().add(tan);
+        tie.lookAt(lookTarget);
+        system.add(tie);
+      }
+
+      cartGroup = new THREE.Group();
+      cartGroup.userData = { isCart: true };
+
+      const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
+      const ironFrameMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.85, roughness: 0.25 });
+      const brassMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 });
+
+      const cartBody = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.55, 1.9), woodCartMat);
+      cartBody.position.y = 0.45;
+      cartBody.castShadow = true;
+      cartGroup.add(cartBody);
+
+      const frameBottom = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.08, 1.94), ironFrameMat);
+      frameBottom.position.y = 0.2;
+      cartGroup.add(frameBottom);
+
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.08, 2.05), woodCartMat);
+      roof.position.y = 1.3;
+      roof.castShadow = true;
+      cartGroup.add(roof);
+
+      [[-0.55, 0.88, -0.75], [0.55, 0.88, -0.75], [-0.55, 0.88, 0.75], [0.55, 0.88, 0.75]].forEach(pos => {
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.85, 8), ironFrameMat);
+        pillar.position.set(...pos);
+        cartGroup.add(pillar);
       });
-      const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(1.4, 1.4, 1);
-      sprite.position.set(0.18, 1.5, 0);
-      sprite.visible = false;
-      return sprite;
-    }
-    
-    function createIslandTitleSprite(text) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 256;
-      canvas.height = 70;
-      const ctx = canvas.getContext('2d');
 
-      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-      ctx.beginPath();
-      ctx.roundRect(10, 10, 236, 50, 25);
-      ctx.fill();
+      const headLight = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.16, 12), brassMat);
+      headLight.rotation.x = Math.PI / 2;
+      headLight.position.set(0, 0.75, 1.0);
+      cartGroup.add(headLight);
 
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = "#fde047";
-      ctx.stroke();
+      const bulbLight = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+      bulbLight.position.set(0, 0.75, 1.08);
+      cartGroup.add(bulbLight);
 
-      ctx.font = "bold 26px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-      ctx.fillStyle = "#ffffff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(text, 128, 36);
+      const spotLight = new THREE.SpotLight(0xfef08a, 4.5, 9, Math.PI / 5, 0.45, 1.2);
+      spotLight.position.set(0, 0.75, 1.08);
+      const lightTarget = new THREE.Object3D();
+      lightTarget.position.set(0, -0.5, 4.5);
+      cartGroup.add(lightTarget);
+      spotLight.target = lightTarget;
+      cartGroup.add(spotLight);
 
-      const texture = new THREE.CanvasTexture(canvas);
-      const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
-      const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(6.2, 1.8, 1);
-      return sprite;
-    }
+      const bulbGlow = new THREE.PointLight(0xfef08a, 1.2, 2.5);
+      bulbGlow.position.set(0, 0.75, 1.15);
+      cartGroup.add(bulbGlow);
 
-    const TREE_LEAF_COLORS = [0x003C00, 0x145314, 0x014943];
+      [[-0.6, 0.15, -0.55], [0.6, 0.15, -0.55], [-0.6, 0.15, 0.55], [0.6, 0.15, 0.55]].forEach(pos => {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.12, 12), ironFrameMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(...pos);
+        wheel.castShadow = true;
+        cartGroup.add(wheel);
 
-    function createTree() {
-      const tree = new THREE.Group();
-      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c2b0c, roughness: 0.85 });
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.14, 8), brassMat);
+        hub.rotation.z = Math.PI / 2;
+        hub.position.set(...pos);
+        cartGroup.add(hub);
+      });
 
-      const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.12, 0.22, 1.1, 8),
-        trunkMat
-      );
-      trunk.position.y = 0.55;
-      trunk.castShadow = true;
-      tree.add(trunk);
+      cartGroup.traverse(child => {
+        child.userData.isCart = true;
+      });
 
-      const leafColor = getRandomItem(TREE_LEAF_COLORS);
-      const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, flatShading: true, roughness: 0.75 });
-
-      const crownLower = new THREE.Mesh(new THREE.DodecahedronGeometry(0.72, 1), leafMat);
-      crownLower.position.y = 1.25;
-      crownLower.castShadow = true;
-      tree.add(crownLower);
-
-      const crownUpper = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 1), leafMat);
-      crownUpper.position.y = 1.7;
-      crownUpper.castShadow = true;
-      tree.add(crownUpper);
-
-      return tree;
+      system.add(cartGroup);
+      return system;
     }
 
-    function createFlower() {
-      const flower = new THREE.Group();
+    // ==========================================
+    // 13. 3D 初始化與動畫迴圈
+    // ==========================================
+    function init3D() {
+      const container = document.getElementById('canvas-container');
+      const timePhase = getTimePhase();
+      lastPhaseName = timePhase.name;
+      document.getElementById('time-badge').textContent = `🕒 時段：${timePhase.name}`;
 
-      const stemMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 });
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.35, 6), stemMat);
-      stem.position.y = 0.175;
-      stem.castShadow = true;
-      flower.add(stem);
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(timePhase.bg);
+      scene.fog = new THREE.Fog(timePhase.bg, 40, 160);
 
-      const leafGeo = new THREE.BoxGeometry(0.09, 0.02, 0.04);
-      const leafMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.7 });
-      const leaf = new THREE.Mesh(leafGeo, leafMat);
-      leaf.position.set(0.04, 0.14, 0);
-      leaf.rotation.z = -0.35;
-      flower.add(leaf);
+      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 1000);
+      camera.position.set(0, 36, 38);
+      camera.lookAt(0, 0, 0);
 
-      const headGroup = new THREE.Group();
-      headGroup.position.set(0, 0.35, 0);
-      headGroup.rotation.x = 0.15 + (Math.random() - 0.5) * 0.2;
-      headGroup.rotation.z = (Math.random() - 0.5) * 0.2;
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
 
-      const centerGeo = new THREE.SphereGeometry(0.055, 8, 8);
-      const centerMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
-      const centerMesh = new THREE.Mesh(centerGeo, centerMat);
-      centerMesh.position.y = 0.015;
-      centerMesh.castShadow = true;
-      headGroup.add(centerMesh);
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableRotate = true;
+      controls.enableZoom = true;
+      controls.enablePan = true;
+      controls.dampingFactor = 0.04;
+      controls.rotateSpeed = 0.45;
+      controls.minDistance = 12;
+      controls.maxDistance = 110;
+      controls.maxPolarAngle = Math.PI / 2.05;
+      controls.target.set(0, 0, 0);
+      controls.update();
 
-      const petalColors = [
-        0xf472b6, 0xfb7185, 0xf87171, 0xfb923c, 
-        0xffffff, 0xc084fc, 0xa855f7, 0x38bdf8, 
-        0xfde047, 0xff7f50
+      hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x1e293b, timePhase.light);
+      scene.add(hemiLight);
+
+      dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 1.3);
+      dirLight.position.set(15, 48, 25);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 1024;
+      dirLight.shadow.mapSize.height = 1024;
+      dirLight.shadow.bias = -0.0005;
+      scene.add(dirLight);
+
+      const planetConfigs = [
+        { radius: 6.5, pos: [-42, 28, -60], opacity: 0.28, color: 0x60a5fa },
+        { radius: 4.2, pos: [38, 34, -55],  opacity: 0.40, color: 0xa78bfa },
+        { radius: 7.8, pos: [-18, 42, -75], opacity: 0.22, color: 0x38bdf8 },
+        { radius: 3.5, pos: [22, 22, -65],  opacity: 0.48, color: 0xf472b6 },
+        { radius: 5.0, pos: [48, 18, -48],  opacity: 0.32, color: 0x34d399 }
       ];
-      const pickedColor = petalColors[Math.floor(Math.random() * petalColors.length)];
-      const petalMat = new THREE.MeshStandardMaterial({ color: pickedColor, roughness: 0.45 });
 
-      const petalCount = 5;
-      const petalGeo = new THREE.SphereGeometry(0.05, 7, 7);
-      petalGeo.scale(1.0, 0.35, 1.6);
+      planetConfigs.forEach(p => {
+        const planetGeo = new THREE.SphereGeometry(p.radius, 24, 24);
+        const planetMat = new THREE.MeshBasicMaterial({
+          color: p.color,
+          transparent: true,
+          opacity: p.opacity
+        });
+        const planetMesh = new THREE.Mesh(planetGeo, planetMat);
+        planetMesh.position.set(...p.pos);
+        scene.add(planetMesh);
+      });
 
-      for (let i = 0; i < petalCount; i++) {
-        const petal = new THREE.Mesh(petalGeo, petalMat);
-        const angle = (i / petalCount) * Math.PI * 2;
-        
-        petal.position.x = Math.cos(angle) * 0.085;
-        petal.position.z = Math.sin(angle) * 0.085;
-        petal.rotation.y = -angle + Math.PI / 2;
-        petal.rotation.x = 0.18;
-        petal.castShadow = true;
-        
-        headGroup.add(petal);
+      if (timePhase.phase === 'noon') {
+        const sun = new THREE.Mesh(
+          new THREE.SphereGeometry(3.5, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0xfff066 })
+        );
+        sun.position.set(0, 38, -25);
+        scene.add(sun);
+      } else if (timePhase.phase === 'night' || timePhase.phase === 'midnight') {
+        const moon = new THREE.Mesh(
+          new THREE.SphereGeometry(3.2, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0xfef9c3 })
+        );
+        moon.position.set(-20, 36, -30);
+        scene.add(moon);
       }
 
-      flower.add(headGroup);
-      const scale = 0.85 + Math.random() * 0.4;
-      flower.scale.setScalar(scale);
+      // 鋪設十字與外環串接通道
+      for (let i = 1; i <= 4; i++) {
+        scene.add(createConnectingWalkway(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
+      }
+      scene.add(createConnectingWalkway(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos));
+      scene.add(createConnectingWalkway(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos));
+      scene.add(createConnectingWalkway(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
+      scene.add(createConnectingWalkway(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
 
-      return flower;
+      // 加入外擴軌道與分層路基
+      scene.add(createOuterLoopTrackAndCart());
+
+      // 生成正六角形島嶼
+      ISLAND_CONFIG.forEach(cfg => {
+        const group = new THREE.Group();
+        group.position.set(...cfg.pos);
+
+        const baseRadius = cfg.radius;
+        let baseMat;
+
+        if (cfg.isGaussian) {
+          baseMat = new THREE.MeshStandardMaterial({ 
+            map: createGaussianReadingTexture(), 
+            flatShading: true, 
+            roughness: 0.55, 
+            metalness: 0.1 
+          });
+        } else {
+          baseMat = new THREE.MeshStandardMaterial({ 
+            color: cfg.color, 
+            flatShading: true, 
+            roughness: 0.45, 
+            metalness: 0.1 
+          });
+        }
+
+        const base = new THREE.Mesh(
+          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.84, 4, 6),
+          baseMat
+        );
+        base.position.y = -2;
+        base.rotation.y = Math.PI / 6;
+        base.receiveShadow = true;
+        group.add(base);
+
+        let landmark;
+        if (cfg.id === 'nature') landmark = createNatureLandmark();
+        else if (cfg.id === 'beyblade') {
+          landmark = createBeybladeModel();
+          beybladeBaseMesh = base;
+          beybladeLandmarkGroup = landmark;
+        }
+        else if (cfg.id === 'sport') landmark = createSportLandmark();
+        else if (cfg.id === 'reading') landmark = createReadingLandmark();
+        else if (cfg.id === 'civics') landmark = createCivicsLandmark();
+        group.add(landmark);
+
+        if (cfg.id === 'civics') {
+          const mascotBox = createMascotSoapbox();
+          group.add(mascotBox);
+        }
+
+        const labelSprite = createIslandTitleSprite(cfg.title);
+        labelSprite.position.set(0, 5.6, 0);
+        group.add(labelSprite);
+
+        let treeCount;
+        if (cfg.id === 'civics') {
+          treeCount = 1;
+        } else if (cfg.id === 'reading') {
+          treeCount = Math.floor(Math.random() * 2) + 2;
+        } else {
+          treeCount = Math.floor(Math.random() * 2) + 3;
+        }
+
+        for (let t = 0; t < treeCount; t++) {
+          const tree = createTree();
+          let tx, tz;
+          if (cfg.id === 'civics') {
+            const angle = Math.PI * 0.75;
+            const dist = 3.6;
+            tx = Math.cos(angle) * dist;
+            tz = Math.sin(angle) * dist;
+          } else {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 2.1 + Math.random() * (baseRadius - 2.8);
+            tx = Math.cos(angle) * dist;
+            tz = Math.sin(angle) * dist;
+          }
+
+          tree.position.set(tx, 0, tz);
+          tree.scale.setScalar(0.7 + Math.random() * 0.35);
+          group.add(tree);
+          if (cfg.id === 'beyblade') beybladeDecorations.push(tree);
+
+          const obsRadius = (cfg.id === 'civics') ? 0.5 : 0.7;
+          registerObstacle(cfg.id, tx, tz, obsRadius);
+        }
+
+        // 小花生成（嚴格避開道路）
+        const flowerCount = Math.floor(Math.random() * 3) + 4;
+        let spawnedFlowers = 0;
+        let flowerAttempts = 0;
+
+        while (spawnedFlowers < flowerCount && flowerAttempts < 25) {
+          flowerAttempts++;
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 1.4 + Math.random() * (baseRadius - 2.1);
+          const fx = Math.cos(angle) * dist;
+          const fz = Math.sin(angle) * dist;
+
+          const isNearCrossRoad = Math.abs(fx) < 0.65 || Math.abs(fz) < 0.65;
+          if (isNearCrossRoad) continue;
+
+          const flower = createFlower();
+          flower.position.set(fx, 0, fz);
+          flower.userData.swayPhase = Math.random() * Math.PI * 2;
+          flower.userData.swaySpeed = 1.8 + Math.random() * 0.8;
+          group.add(flower);
+          islandFlowers.push(flower);
+          if (cfg.id === 'beyblade') beybladeDecorations.push(flower);
+          spawnedFlowers++;
+        }
+
+        if (timePhase.phase === 'night' || timePhase.phase === 'midnight') {
+          const lamp = createStreetLamp();
+          lamp.position.set(Math.cos(0.8) * (baseRadius - 1.0), 0, Math.sin(0.8) * (baseRadius - 1.0));
+          group.add(lamp);
+          if (cfg.id === 'beyblade') beybladeDecorations.push(lamp);
+        }
+
+        group.userData = cfg;
+        scene.add(group);
+        islandGroups.push(group);
+      });
+
+      updateBeybladeIslandDormancy();
+
+      const totalVillagers = 20;
+
+      for (let i = 0; i < totalVillagers; i++) {
+        const isSkirt = (i < 5);
+        let assignedSkin;
+        if (i % 3 === 0) assignedSkin = 0xF5D0A9;
+        else if (i % 3 === 1) assignedSkin = 0x8D5524;
+        else assignedSkin = 0xFFE0BD;
+
+        const person = createCharacterMesh(isSkirt, assignedSkin);
+        const zzzSprite = createSleepZzzSprite();
+        person.add(zzzSprite);
+
+        const currentIslandIdx = (i % 4) + 1;
+        const curIsland = ISLAND_CONFIG[currentIslandIdx];
+        const ang = Math.random() * Math.PI * 2;
+        const rad = 2.5 + Math.random() * (curIsland.radius - 3.4);
+        const initX = curIsland.pos[0] + Math.cos(ang) * rad;
+        const initZ = curIsland.pos[2] + Math.sin(ang) * rad;
+
+        person.position.set(initX, 0, initZ);
+        scene.add(person);
+
+        let cheerType = 'jump_both';
+        if (i >= 10 && i < 18) cheerType = 'shout_mouth';
+        else if (i >= 18) cheerType = 'raise_single';
+
+        const cheerAngle = (i / totalVillagers) * Math.PI * 2 + (Math.random() - 0.5) * 0.15;
+        const cheerRadius = 2.9 + Math.random() * 0.6;
+        const stadiumX = Math.cos(cheerAngle) * cheerRadius;
+        const stadiumZ = Math.sin(cheerAngle) * cheerRadius;
+
+        const sleepAngle = (i / totalVillagers) * Math.PI * 2;
+        const sleepRadius = 2.8 + (i % 2 === 0 ? 0.15 : -0.15);
+        const sleepX = Math.cos(sleepAngle) * sleepRadius;
+        const sleepZ = Math.sin(sleepAngle) * sleepRadius;
+
+        villagers.push({
+          obj: person,
+          zzzSprite: zzzSprite,
+          currentIslandIdx: currentIslandIdx,
+          targetIslandIdx: currentIslandIdx,
+          state: 'wander',
+          currentX: initX,
+          currentZ: initZ,
+          targetX: initX,
+          targetZ: initZ,
+          bridgeEndTarget: null,
+          walkCycle: Math.random() * 10,
+          waitTimer: Math.random() * 80,
+          speed: (Math.random() > 0.4 ? 0.016 : 0.026),
+          isJogging: Math.random() > 0.4,
+          isSkirt: isSkirt,
+          cheerType: cheerType,
+          stadiumPos: { x: stadiumX, z: stadiumZ },
+          sleepPos: { x: sleepX, z: sleepZ },
+          cheerPhase: Math.random() * Math.PI * 2,
+          sleepBreathPhase: Math.random() * Math.PI * 2
+        });
+      }
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      let startX = 0, startY = 0;
+
+      renderer.domElement.addEventListener('pointerdown', (e) => {
+        startX = e.clientX;
+        startY = e.clientY;
+      });
+
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        if (Math.hypot(e.clientX - startX, e.clientY - startY) > 8) return;
+
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const allIntersects = raycaster.intersectObjects(scene.children, true);
+
+        // 1. 小隊長點擊判定
+        const mascotHit = allIntersects.find(item => {
+          let curr = item.object;
+          while (curr) {
+            if (curr.userData && curr.userData.isMascot) return true;
+            curr = curr.parent;
+          }
+          return false;
+        });
+
+        if (mascotHit) {
+          const quotes = [
+            "🎒 今天也要元氣滿滿地探索新知識喔！",
+            "🏃 運動能讓大腦更靈活，記得多動一動！",
+            "📖 閱讀是最好的冒險，今天看了哪本書呢？",
+            "🌟 每個人的努力，都是全班進步的能量！"
+          ];
+          showLiveBanner(`💬 島嶼之星：「${quotes[Math.floor(Math.random() * quotes.length)]}」`);
+          confetti({ particleCount: 40, spread: 60 });
+
+          isFocusing = true;
+          targetLookAt.set(10.1, 0.8, 6.8);
+          targetCameraPos.set(10.1, 7.5, 14.5);
+
+          openDrawer({
+            id: 'mascot',
+            title: '🎒 學習島冒險指南',
+            subtitle: '島嶼之星為你介紹各島主要任務與挑戰'
+          });
+          return;
+        }
+
+        // 2. 輕便台車點擊判定（文史導覽與暫停）
+        const cartHit = allIntersects.find(item => {
+          let curr = item.object;
+          while (curr) {
+            if (curr.userData && curr.userData.isCart) return true;
+            curr = curr.parent;
+          }
+          return false;
+        });
+
+        if (cartHit && cartGroup) {
+          showLiveBanner("🚋 正在瀏覽：龜山台車百年林業文史！");
+          confetti({ particleCount: 35, spread: 50 });
+
+          isFocusing = true;
+          targetLookAt.copy(cartGroup.position).add(new THREE.Vector3(0, 0.7, 0));
+          targetCameraPos.set(
+            cartGroup.position.x - 3.0,
+            cartGroup.position.y + 4.2,
+            cartGroup.position.z + 6.8
+          );
+
+          openDrawer({
+            id: 'cart',
+            title: '🚋 龜山台車文史誌',
+            subtitle: '見證新店溪上游至烏來的林業軌道發展歷程'
+          });
+          return;
+        }
+
+        // 3. 島嶼點擊判斷
+        if (allIntersects.length > 0) {
+          for (let hit of allIntersects) {
+            let root = hit.object;
+            while (root && root.parent && root.parent !== scene) {
+              root = root.parent;
+            }
+            if (root && root.userData && root.userData.id) {
+              focusOnIsland(root.userData);
+              break;
+            }
+          }
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      let clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const time = clock.getElapsedTime();
+
+        if (isFocusing) {
+          camera.position.lerp(targetCameraPos, 0.08);
+          controls.target.lerp(targetLookAt, 0.08);
+          controls.update();
+
+          if (camera.position.distanceTo(targetCameraPos) < 0.15 && 
+              controls.target.distanceTo(targetLookAt) < 0.1) {
+            camera.position.copy(targetCameraPos);
+            controls.target.copy(targetLookAt);
+            controls.update();
+            isFocusing = false;
+          }
+        }
+
+        const currentPhase = getTimePhase();
+        if (currentPhase.name !== lastPhaseName) {
+          lastPhaseName = currentPhase.name;
+          document.getElementById('time-badge').textContent = `🕒 時段：${currentPhase.name}`;
+          scene.background.set(currentPhase.bg);
+          scene.fog.color.set(currentPhase.bg);
+
+          if (hemiLight) {
+            hemiLight.color.set(currentPhase.hemi);
+            hemiLight.intensity = currentPhase.light;
+          }
+          if (dirLight) {
+            dirLight.color.set(currentPhase.sun);
+            dirLight.intensity = currentPhase.light * 1.3;
+          }
+        }
+
+        windTurbineBlades.forEach(blade => {
+          blade.rotation.z += 0.04;
+        });
+
+        islandFlowers.forEach(fl => {
+          const phase = time * fl.userData.swaySpeed + fl.userData.swayPhase;
+          fl.rotation.z = Math.sin(phase) * 0.08;
+          fl.rotation.x = Math.cos(phase * 0.8) * 0.05;
+        });
+        
+        spinningMiniTops.forEach((mini, idx) => {
+          mini.rotation.y += 0.15 + idx * 0.03;
+          mini.position.y = Math.sin(time * 3.0 + idx) * 0.04;
+        });
+
+        const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
+        if (mainBeybladeTop && isTournamentActive) {
+          mainBeybladeTop.rotation.y += 0.015;
+        }
+
+        if (mascotLeader) {
+          mascotLeader.position.y = 0.28 + Math.max(0, Math.sin(time * 3.0)) * 0.18;
+          mascotLeader.rotation.y = Math.sin(time * 1.5) * 0.35;
+        }
+
+        for (let i = energyOrbs.length - 1; i >= 0; i--) {
+          const orb = energyOrbs[i];
+          orb.progress += orb.speed;
+          orb.mesh.position.lerpVectors(orb.start, orb.end, orb.progress);
+          orb.mesh.position.y += Math.sin(orb.progress * Math.PI) * 1.5;
+
+          if (orb.progress >= 1.0) {
+            scene.remove(orb.mesh);
+            energyOrbs.splice(i, 1);
+            confetti({ particleCount: 20, spread: 45, origin: { x: 0.5, y: 0.5 } });
+          }
+        }
+
+        // 台車行駛動畫（未暫停時前進）
+        if (cartGroup && trackCurve && !isCartPaused) {
+          cartProgress = (cartProgress + 0.0005) % 1.0;
+          const pos = trackCurve.getPointAt(cartProgress);
+          const tangent = trackCurve.getTangentAt(cartProgress);
+
+          cartGroup.position.copy(pos);
+          cartGroup.position.y += 0.02;
+          const lookTarget = pos.clone().add(tangent);
+          cartGroup.lookAt(lookTarget);
+        }
+
+        if (ropeMesh && jumperMan) {
+          const ropeAngle = time * 5.0;
+          ropeMesh.rotation.x = ropeAngle;
+          jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
+
+          if (jumpRopeGroup && jumpRopeGroup.userData.swingerA && jumpRopeGroup.userData.swingerB) {
+            const swingerA = jumpRopeGroup.userData.swingerA;
+            const swingerB = jumpRopeGroup.userData.swingerB;
+
+            const circleY = Math.sin(ropeAngle) * 0.22;
+            const circleZ = Math.cos(ropeAngle) * 0.22;
+
+            if (swingerA.userData.limbs) {
+              swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
+              swingerA.userData.limbs.rightArm.rotation.y = circleY;
+            }
+            if (swingerB.userData.limbs) {
+              swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
+              swingerB.userData.limbs.leftArm.rotation.y = -circleZ;
+            }
+          }
+        }
+
+        const currentHour = new Date().getHours();
+        const isSleepingTime = (currentHour >= 23 || currentHour < 6);
+        
+        villagers.forEach((v, idx) => {
+          const limbs = v.obj.userData.limbs;
+
+          if (isSleepingTime) {
+            v.currentIslandIdx = 0;
+            const destX = v.sleepPos.x;
+            const destZ = v.sleepPos.z;
+
+            const tdx = destX - v.currentX;
+            const tdz = destZ - v.currentZ;
+            const tdist = Math.hypot(tdx, tdz);
+
+            if (tdist > 0.12) {
+              if (v.zzzSprite) v.zzzSprite.visible = false;
+
+              v.currentX += (tdx / tdist) * 0.028;
+              v.currentZ += (tdz / tdist) * 0.028;
+              v.obj.position.x = v.currentX;
+              v.obj.position.z = v.currentZ;
+              v.obj.position.y = 0;
+              v.obj.rotation.x = 0;
+              v.obj.rotation.y = Math.atan2(tdx, tdz);
+
+              v.walkCycle += 0.16;
+              if (limbs) {
+                limbs.leftLeg.rotation.x = Math.sin(v.walkCycle) * 0.4;
+                limbs.rightLeg.rotation.x = -Math.sin(v.walkCycle) * 0.4;
+                limbs.leftArm.rotation.x = -Math.sin(v.walkCycle) * 0.4;
+                limbs.rightArm.rotation.x = Math.sin(v.walkCycle) * 0.4;
+                if (limbs.skirt) limbs.skirt.rotation.x = 0;
+              }
+            } else {
+              v.obj.position.x = destX;
+              v.obj.position.z = destZ;
+              v.obj.rotation.y = Math.atan2(destX, destZ);
+
+              v.sleepBreathPhase += 0.035;
+              const breathWave = Math.sin(v.sleepBreathPhase);
+
+              v.obj.position.y = -0.16 + breathWave * 0.012;
+              v.obj.rotation.x = 0.18 + breathWave * 0.04;
+
+              if (limbs) {
+                limbs.leftLeg.rotation.x = -1.45;
+                limbs.rightLeg.rotation.x = -1.45;
+                limbs.leftArm.rotation.x = -0.45;
+                limbs.leftArm.rotation.z = 0.15;
+                limbs.rightArm.rotation.x = -0.45;
+                limbs.rightArm.rotation.z = -0.15;
+                if (limbs.skirt) limbs.skirt.rotation.x = -0.55;
+              }
+
+              if (v.zzzSprite) {
+                v.zzzSprite.visible = true;
+                const floatProgress = (time * 0.5 + idx * 0.35) % 1.0;
+                v.zzzSprite.position.y = 1.35 + floatProgress * 0.45;
+                v.zzzSprite.position.x = 0.18 + Math.sin(floatProgress * Math.PI * 2) * 0.08;
+                v.zzzSprite.material.opacity = Math.sin(floatProgress * Math.PI) * 0.85;
+              }
+            }
+            return;
+          }
+
+          if (v.zzzSprite && v.zzzSprite.visible) {
+            v.zzzSprite.visible = false;
+          }
+
+          if (isTournamentActive) {
+            v.currentIslandIdx = 0;
+            const destX = v.stadiumPos.x;
+            const destZ = v.stadiumPos.z;
+
+            const tdx = destX - v.currentX;
+            const tdz = destZ - v.currentZ;
+            const tdist = Math.hypot(tdx, tdz);
+
+            if (tdist > 0.15) {
+              v.currentX += (tdx / tdist) * 0.035;
+              v.currentZ += (tdz / tdist) * 0.035;
+              v.obj.position.x = v.currentX;
+              v.obj.position.z = v.currentZ;
+              v.obj.rotation.y = Math.atan2(tdx, tdz);
+            } else {
+              v.obj.position.x = destX;
+              v.obj.position.z = destZ;
+              v.obj.rotation.y = Math.atan2(-destX, -destZ);
+
+              v.cheerPhase += 0.09;
+              const wave = Math.sin(v.cheerPhase * 2.2);
+
+              if (limbs) {
+                if (v.cheerType === 'jump_both') {
+                  v.obj.position.y = Math.max(0, Math.sin(v.cheerPhase * 2.2) * 0.32);
+                  limbs.leftArm.rotation.x = -2.7 + wave * 0.3;
+                  limbs.rightArm.rotation.x = -2.7 + wave * 0.3;
+                  limbs.leftLeg.rotation.x = 0;
+                  limbs.rightLeg.rotation.x = 0;
+                  if (limbs.skirt) limbs.skirt.rotation.x = wave * 0.12;
+                } 
+                else if (v.cheerType === 'shout_mouth') {
+                  v.obj.position.y = 0;
+                  limbs.leftArm.rotation.x = -1.8 + Math.sin(v.cheerPhase * 1.5) * 0.15;
+                  limbs.rightArm.rotation.x = -1.8 + Math.sin(v.cheerPhase * 1.5) * 0.15;
+                  v.obj.rotation.x = 0.14;
+                } 
+                else if (v.cheerType === 'raise_single') {
+                  v.obj.position.y = 0;
+                  const singleArmWave = Math.sin(v.cheerPhase * 1.8);
+                  limbs.rightArm.rotation.x = -1.4 + singleArmWave * 1.2;
+                  limbs.leftArm.rotation.x = 0.2;
+                }
+              }
+            }
+          } 
+          else {
+            v.obj.rotation.x = 0;
+
+            if (v.currentIslandIdx === 0) {
+              v.currentIslandIdx = (idx % 4) + 1;
+              const resetIsland = ISLAND_CONFIG[v.currentIslandIdx];
+              v.currentX = resetIsland.pos[0] + (Math.random() - 0.5) * 2.5;
+              v.currentZ = resetIsland.pos[2] + (Math.random() - 0.5) * 2.5;
+              v.targetX = v.currentX;
+              v.targetZ = v.currentZ;
+              v.waitTimer = 40;
+            }
+
+            const curIslandCfg = ISLAND_CONFIG[v.currentIslandIdx];
+
+            if (v.waitTimer > 0) {
+              v.waitTimer--;
+              if (limbs) {
+                limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
+                limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
+                limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
+                limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
+                if (limbs.skirt) limbs.skirt.rotation.x = 0;
+              }
+              v.obj.rotation.y += Math.sin(time * 2.0 + idx) * 0.005;
+
+              if (v.waitTimer <= 0) {
+                if (Math.random() < 0.28) {
+                  const ringNeighbors = { 1: [2, 3], 2: [1, 4], 3: [1, 4], 4: [2, 3] };
+                  const nextIsland = ringNeighbors[v.currentIslandIdx][Math.floor(Math.random() * 2)];
+                  v.targetIslandIdx = nextIsland;
+
+                  const pStart = ISLAND_CONFIG[v.currentIslandIdx].pos;
+                  const pEnd = ISLAND_CONFIG[nextIsland].pos;
+                  const dir = new THREE.Vector3(pEnd[0] - pStart[0], 0, pEnd[2] - pStart[2]).normalize();
+
+                  v.targetX = pStart[0] + dir.x * 4.2;
+                  v.targetZ = pStart[2] + dir.z * 4.2;
+                  v.bridgeEndTarget = {
+                    x: pEnd[0] - dir.x * 4.2,
+                    z: pEnd[2] - dir.z * 4.2,
+                    finalX: pEnd[0] + (Math.random() - 0.5) * 2.2,
+                    finalZ: pEnd[2] + (Math.random() - 0.5) * 2.2
+                  };
+                  v.state = 'bridge_start';
+                } else {
+                  const curCenter = curIslandCfg.pos;
+                  const startLocalX = v.currentX - curCenter[0];
+                  const startLocalZ = v.currentZ - curCenter[2];
+                  let foundValid = false;
+                  let tx = 0, tz = 0;
+
+                  for (let attempt = 0; attempt < 12; attempt++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
+                    const lx = Math.cos(a) * r;
+                    const lz = Math.sin(a) * r;
+
+                    if (!isPositionBlocked(curIslandCfg.id, lx, lz) &&
+                        !isPathBlocked(curIslandCfg.id, startLocalX, startLocalZ, lx, lz)) {
+                      tx = curCenter[0] + lx;
+                      tz = curCenter[2] + lz;
+                      foundValid = true;
+                      break;
+                    }
+                  }
+                  if (foundValid) {
+                    v.targetX = tx;
+                    v.targetZ = tz;
+                    v.state = 'wander';
+                  } else {
+                    v.waitTimer = 30;
+                  }
+                }
+              }
+            } else {
+              const dx = v.targetX - v.currentX;
+              const dz = v.targetZ - v.currentZ;
+              const dist = Math.hypot(dx, dz);
+
+              if (dist > 0.08) {
+                const moveStep = v.speed;
+                v.currentX += (dx / dist) * moveStep;
+                v.currentZ += (dz / dist) * moveStep;
+
+                const localPos = {
+                  x: v.currentX - curIslandCfg.pos[0],
+                  z: v.currentZ - curIslandCfg.pos[2]
+                };
+                const wasBlocked = applyRepulsionForce(curIslandCfg.id, localPos);
+                v.currentX = curIslandCfg.pos[0] + localPos.x;
+                v.currentZ = curIslandCfg.pos[2] + localPos.z;
+
+                v.obj.position.x = v.currentX;
+                v.obj.position.z = v.currentZ;
+
+                if (wasBlocked) {
+                  v.targetX = v.currentX;
+                  v.targetZ = v.currentZ;
+                  v.waitTimer = Math.floor(Math.random() * 30) + 20;
+                } else {
+                  v.obj.rotation.y = Math.atan2(dx, dz);
+                }
+
+                v.walkCycle += v.isJogging ? 0.28 : 0.16;
+                const legSwing = Math.sin(v.walkCycle) * (v.isJogging ? 0.65 : 0.45);
+                const armSwing = Math.sin(v.walkCycle) * (v.isJogging ? 0.65 : 0.45);
+
+                if (limbs) {
+                  limbs.leftLeg.rotation.x = legSwing;
+                  limbs.rightLeg.rotation.x = -legSwing;
+                  limbs.leftArm.rotation.x = -armSwing;
+                  limbs.rightArm.rotation.x = armSwing;
+                  if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(v.walkCycle * 2) * 0.12;
+                }
+                v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * (v.isJogging ? 0.08 : 0.04);
+              } else {
+                if (v.state === 'bridge_start' && v.bridgeEndTarget) {
+                  v.targetX = v.bridgeEndTarget.x;
+                  v.targetZ = v.bridgeEndTarget.z;
+                  v.state = 'bridge_crossing';
+                } else if (v.state === 'bridge_crossing' && v.bridgeEndTarget) {
+                  v.currentIslandIdx = v.targetIslandIdx;
+                  v.targetX = v.bridgeEndTarget.finalX;
+                  v.targetZ = v.bridgeEndTarget.finalZ;
+                  v.bridgeEndTarget = null;
+                  v.state = 'wander';
+                } else {
+                  v.waitTimer = Math.floor(Math.random() * 80) + 40;
+                }
+              }
+            }
+          }
+        });
+
+        renderer.render(scene, camera);
+      }
+      animate();
     }
 
-    function createStreetLamp() {
-      const lamp = new THREE.Group();
-      const metalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.3 });
+    // ==========================================
+    // 14. 島嶼與台車焦點運鏡與抽屜控制
+    // ==========================================
+    function focusOnIsland(islandData) {
+      isFocusing = true;
+      targetLookAt.set(islandData.pos[0], islandData.pos[1] + 1.2, islandData.pos[2]);
 
-      const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.3, 8), metalMat);
-      lampBase.position.y = 0.15;
-      lampBase.castShadow = true;
-      lamp.add(lampBase);
-
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 2.2, 8), metalMat);
-      pole.position.y = 1.25;
-      pole.castShadow = true;
-      lamp.add(pole);
-
-      const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.08, 0.2, 6), metalMat);
-      bracket.position.y = 2.35;
-      lamp.add(bracket);
-
-      const bulb = new THREE.Mesh(
-        new THREE.SphereGeometry(0.14, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xfef08a })
+      const zoomDist = islandData.radius * 1.7;
+      targetCameraPos.set(
+        islandData.pos[0] - 2.0,
+        islandData.pos[1] + 6.2,
+        islandData.pos[2] + zoomDist
       );
-      bulb.position.y = 2.5;
-      lamp.add(bulb);
 
-      const lampCap = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.22, 4), metalMat);
-      lampCap.position.y = 2.72;
-      lampCap.rotation.y = Math.PI / 4;
-      lampCap.castShadow = true;
-      lamp.add(lampCap);
-
-      const pointLight = new THREE.PointLight(0xfef08a, 0.9, 11);
-      pointLight.position.set(0, 2.5, 0);
-      lamp.add(pointLight);
-      return lamp;
+      openDrawer(islandData);
     }
+
+    function openDrawer(islandData) {
+      document.getElementById('drawer-title').textContent = islandData.title;
+      document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
+
+      isCartPaused = (islandData.id === 'cart');
+
+      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart'].forEach(id => {
+        const el = document.getElementById(`panel-${id}`);
+        if (el) el.style.display = 'none';
+      });
+
+      const p = document.getElementById(`panel-${islandData.id}`);
+      if (p) p.style.display = 'block';
+
+      document.getElementById('side-drawer').classList.add('open');
+    }
+
+    function closeDrawer() {
+      document.getElementById('side-drawer').classList.remove('open');
+      isCartPaused = false;
+
+      isFocusing = true;
+      targetLookAt.set(0, 0, 0);
+      targetCameraPos.set(0, 36, 38);
+    }
+
+    // 啟動保護機制
+    function startIslandApp() {
+      init3D();
+      initStudent();
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', startIslandApp);
+    } else {
+      startIslandApp();
+    }
+  </script>
+</body>
+</html>
