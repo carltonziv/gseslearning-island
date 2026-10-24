@@ -464,7 +464,7 @@
       cursor: pointer;
     }
 
-    /* 小隊長 AI 快捷問題按鈕樣式 */
+    /* 島嶼之星 AI 快捷問題按鈕樣式 */
     .quick-chip {
       background: #ffedd5;
       color: #9a3412;
@@ -525,7 +525,7 @@
 
   <div class="hud-hint">
     <span id="time-badge">🕒 檢測時段中...</span>
-    <span>| 點擊島嶼或小隊長聚焦解說、單指旋轉、雙指縮放</span>
+    <span>| 點擊島嶼、單指旋轉、雙指縮放移動</span>
   </div>
 
   <!-- 左側即時賽事晉級圖側欄 -->
@@ -2413,80 +2413,82 @@
     }
 
     async function sendMascotMessage() {
-      if (isMascotThinking) return;
+// 🎒 島嶼之星本地智慧大腦（免金鑰、100% 穩定秒回）
+    function getMascotLocalResponse(userText) {
+      const q = userText.toLowerCase().trim();
+
+      // 1. 戰鬥陀螺大賽相關
+      if (q.includes('陀螺') || q.includes('比賽') || q.includes('大賽') || q.includes('錦標賽') || q.includes('冠軍')) {
+        return "⚔️ 當全班累積能量達到 5000 點時，中央戰鬥陀螺島就會盛大開放報名！開放後可以填寫你的陀螺名稱參賽，老師截止報名後會抽籤產生雙淘汰晉級賽程，全班同學都會到中央島為你熱血應援喔！";
+      }
+
+      // 2. 能量累積相關
+      if (q.includes('能量') || q.includes('共創') || q.includes('5000') || q.includes('exp') || q.includes('點數')) {
+        return "⚡ 累積全班能量很簡單！只要大家每天到各島完成任務打卡：\n• 🌿 生態科技島：+5 能量\n• 🏃 健身運動島：+3～5 能量\n• 📖 閱讀島：每次 +5 能量（每天可打卡 3 次！）\n• 🏛️ 優良公民島：+5 能量\n大家一起努力就能衝破 5000 能量開啟陀螺大賽！";
+      }
+
+      // 3. 生態科技島
+      if (q.includes('生態') || q.includes('科技') || q.includes('昆蟲') || q.includes('植物')) {
+        return "🌿 生態科技島位於西北方！任務是探索校園中的植物或昆蟲，觀察它們的外觀特徵（如葉形、花色或斑紋）並拍照記錄打卡，每次打卡可獲得 5 點能量喔！";
+      }
+
+      // 4. 健身運動島
+      if (q.includes('運動') || q.includes('健身') || q.includes('跳繩') || q.includes('跑步') || q.includes('健康生活')) {
+        return "🏃 健身運動島有兩項挑戰：\n1. 【增肌減脂】：跑操場5圈、跳繩500下或打球50下，找同學認證 (+5 能量)。\n2. 【健康生活】：每天 18:00～22:00 開放，睡前刷牙、少吃零食、3C少於1小時，勾選項目就能獲得 3～5 能量！";
+      }
+
+      // 5. 閱讀島
+      if (q.includes('閱讀') || q.includes('書') || q.includes('心得') || q.includes('文章')) {
+        return "📖 閱讀島是每天可以打卡 3 次的超棒島嶼！只要寫下你看的書名、摘錄精采句子，並寫下至少 20 字的個人收穫心得，每次都能賺取 5 點能量喔！";
+      }
+
+      // 6. 優良公民島
+      if (q.includes('公民') || q.includes('整潔') || q.includes('垃圾') || q.includes('抽屜') || q.includes('桌面')) {
+        return "🏛️ 你現在所在的正是優良公民島！每天維持良好生活習慣：桌面整齊、抽屜乾淨、桌底無碎屑、垃圾袋清空，請旁邊同學幫你檢查認證，就能獲得 5 點能量！";
+      }
+
+      // 7. 人物睡覺 / 夜晚休息
+      if (q.includes('睡覺') || q.includes('午夜') || q.includes('休息') || q.includes('zzz') || q.includes('晚上')) {
+        return "🌙 到了深夜 23:00 至 清晨 06:00，島上的 20 位居民都會走過木橋，聚集在中央戰鬥陀螺島圍成一圈坐著睡覺，頭上還會飄出 Zzz... 微光喔！這時候要好好休息，白天再來冒險！";
+      }
+
+      // 8. 任務總覽
+      if (q.includes('任務') || q.includes('冒險') || q.includes('怎麼玩') || q.includes('島嶼') || q.includes('玩法')) {
+        return "🎒 學習島共有 5 座島嶼：\n1. 🌿 生態科技島：校園動植物觀察打卡\n2. 🏃 健身運動島：運動健身與健康生活習慣\n3. 📖 閱讀島：閱讀心得分享（每日限 3 次）\n4. 🏛️ 優良公民島：個人座位整潔檢查認證\n5. 🪀 戰鬥陀螺島：全班達 5000 能量開啟淘汰錦標賽！";
+      }
+
+      // 9. 鼓勵 / 打招呼
+      if (q.includes('你好') || q.includes('嗨') || q.includes('hello') || q.includes('早') || q.includes('隊長') || q.includes('島嶼之星')) {
+        return "👋 哈囉！我是 301 學習島的島嶼之星！今天準備好挑戰各島的任務、幫全班累積能量了嗎？點擊下方的按鈕或直接問我問題吧！";
+      }
+
+      // 10. 無關話題 / 預設引導
+      return "🎒 哈哈，我的心思全都放在 301 學習島的探險上呢！你想了解生態觀察、健身打卡、閱讀分享、整潔生活，還是戰鬥陀螺大賽的規則呢？問我這些我最清楚喔！";
+    }
+
+    // 發送訊息處理函式 (精準對齊 mascot-user-input 與 mascot-chat-box)
+    function sendMascotMessage() {
       const input = document.getElementById('mascot-user-input');
+      if (!input) return;
       const text = input.value.trim();
       if (!text) return;
 
+      // 1. 顯示使用者發送的問題
       appendMascotMessage('user', text);
       input.value = '';
-      isMascotThinking = true;
 
-      const chatBox = document.getElementById('mascot-chat-box');
-      const thinkingDiv = document.createElement('div');
-      thinkingDiv.id = 'mascot-thinking-indicator';
-      thinkingDiv.style.alignSelf = 'flex-start';
-      thinkingDiv.style.background = '#fef9c3';
-      thinkingDiv.style.color = '#854d0e';
-      thinkingDiv.style.fontSize = '0.78rem';
-      thinkingDiv.style.padding = '6px 12px';
-      thinkingDiv.style.borderRadius = '14px';
-      thinkingDiv.style.border = '1px dashed #facc15';
-      thinkingDiv.textContent = '🎒 小隊長翻閱探險地圖中...';
-      chatBox.appendChild(thinkingDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      // 2. 顯示島嶼之星思考中
+      appendMascotMessage('mascot', '島嶼之星正在思考中...');
 
-      mascotChatHistory.push({
-        role: "user",
-        parts: [{ text: text }]
-      });
-
-      const apiKey = "";
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-
-      const payload = {
-        contents: mascotChatHistory,
-        systemInstruction: {
-          parts: [{ text: MASCOT_SYSTEM_PROMPT }]
+      // 3. 0.35 秒後自然切換為回答
+      setTimeout(() => {
+        const chatBox = document.getElementById('mascot-chat-box');
+        if (chatBox && chatBox.lastElementChild) {
+          const reply = getMascotLocalResponse(text);
+          chatBox.lastElementChild.innerHTML = reply.replace(/\n/g, '<br>');
+          chatBox.scrollTop = chatBox.scrollHeight;
         }
-      };
-
-      try {
-        let response = null;
-        for (let delay of [0, 1000, 2000]) {
-          if (delay > 0) await new Promise(r => setTimeout(r, delay));
-          const res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            response = res;
-            break;
-          }
-        }
-
-        const indicator = document.getElementById('mascot-thinking-indicator');
-        if (indicator) indicator.remove();
-
-        if (response && response.ok) {
-          const result = await response.json();
-          const replyText = result.candidates?.[0]?.content?.parts?.[0]?.text || "哎呀！島上的電波有點微弱，請小探險家再說一次喔！";
-          appendMascotMessage('mascot', replyText);
-          mascotChatHistory.push({
-            role: "model",
-            parts: [{ text: replyText }]
-          });
-        } else {
-          appendMascotMessage('mascot', "小隊長剛才被一陣大風吹了一下，請你再問一次好嗎？🎒");
-        }
-      } catch (err) {
-        const indicator = document.getElementById('mascot-thinking-indicator');
-        if (indicator) indicator.remove();
-        appendMascotMessage('mascot', "小隊長正在記錄筆記，請稍等一下再跟我說話喔！");
-      } finally {
-        isMascotThinking = false;
-      }
+      }, 350);
     }
 
     // 💤 建立午夜睡眠 Zzz 微光 Sprite
