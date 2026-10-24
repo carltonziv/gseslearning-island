@@ -3288,10 +3288,18 @@
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
 
+// 🌟 平滑運鏡推進與回歸全景
         if (isFocusing) {
-          camera.position.lerp(targetCameraPos, 0.05);
-          controls.target.lerp(targetLookAt, 0.05);
-          if (camera.position.distanceTo(targetCameraPos) < 0.2) {
+          camera.position.lerp(targetCameraPos, 0.08);
+          controls.target.lerp(targetLookAt, 0.08);
+          controls.update(); // 讓控制器與插值目標同步更新
+
+          // 距離足夠接近時完成聚焦，將控制權無縫交還給使用者手動旋轉
+          if (camera.position.distanceTo(targetCameraPos) < 0.15 && 
+              controls.target.distanceTo(targetLookAt) < 0.1) {
+            camera.position.copy(targetCameraPos);
+            controls.target.copy(targetLookAt);
+            controls.update();
             isFocusing = false;
           }
         }
@@ -3644,37 +3652,30 @@
     // ==========================================
     // 12. 島嶼點擊焦點運鏡
     // ==========================================
+// 🌟 點擊島嶼：視角平滑聚焦並放大置中
     function focusOnIsland(islandData) {
       isFocusing = true;
-      targetLookAt.set(islandData.pos[0], islandData.pos[1], islandData.pos[2]);
+      
+      // 1. 將注視目標鎖定在島嶼中心偏上高度（讓整個島完整收在畫面中央偏下，避開抽屜）
+      targetLookAt.set(islandData.pos[0], islandData.pos[1] + 1.2, islandData.pos[2]);
 
-      const offsetDist = islandData.radius * 2.8;
+      // 2. 特寫距離：依照島嶼半徑精準放大推進（戰鬥陀螺島為半徑 5.8，四周為 5.0）
+      // 擺放在左前方略帶俯角的視角，此時右側滑出抽屜不會擋到島嶼主體
+      const zoomDist = islandData.radius * 1.8;
       targetCameraPos.set(
-        islandData.pos[0],
-        islandData.pos[1] + 13.0,
-        islandData.pos[2] + offsetDist
+        islandData.pos[0] - 2.5,
+        islandData.pos[1] + 6.8,
+        islandData.pos[2] + zoomDist
       );
 
       openDrawer(islandData);
     }
 
-    function openDrawer(islandData) {
-      document.getElementById('drawer-title').textContent = islandData.title;
-      document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
-
-      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot'].forEach(id => {
-        const el = document.getElementById(`panel-${id}`);
-        if (el) el.style.display = 'none';
-      });
-
-      const p = document.getElementById(`panel-${islandData.id}`);
-      if (p) p.style.display = 'block';
-
-      document.getElementById('side-drawer').classList.add('open');
-    }
-
+    // 🌟 關閉側欄：相機流暢拉遠，恢復五島全景俯視
     function closeDrawer() {
       document.getElementById('side-drawer').classList.remove('open');
+      
+      // 啟動全景運鏡過渡
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 36, 40);
