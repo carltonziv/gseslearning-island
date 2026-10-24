@@ -2476,25 +2476,7 @@
       return bridge;
     }
 
-    function createIslandTunnelHole() {
-      const portal = new THREE.Group();
-      const darkCaveMat = new THREE.MeshBasicMaterial({ color: 0x05050b });
-      const rimMat = new THREE.MeshStandardMaterial({ color: 0x2e353b, roughness: 0.8 });
 
-      const darkHole = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.1, 16, 1, false, 0, Math.PI), darkCaveMat);
-      darkHole.rotation.z = Math.PI / 2;
-      darkHole.rotation.y = Math.PI / 2;
-      darkHole.position.set(0, 0.45, 0);
-      portal.add(darkHole);
-
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.14, 8, 16, Math.PI), rimMat);
-      rim.position.set(0, 0.45, 0.05);
-      rim.rotation.x = Math.PI;
-      rim.castShadow = true;
-      portal.add(rim);
-
-      return portal;
-    }
 
     let cartGroup = null;
     let cartProgress = 0;
