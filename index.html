@@ -81,18 +81,35 @@
       border: 3px solid #f97316;
     }
     .energy-label { font-weight: 800; color: #c2410c; font-size: 0.85rem; }
-    .energy-track {
-      width: 130px;
-      height: 12px;
-      background: #ffedd5;
-      border-radius: 10px;
+.energy-track {
+      width: 140px;
+      height: 16px;
+      background: linear-gradient(to bottom, #111827, #1f2937);
+      border-radius: 20px;
       overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8), 0 1px 2px rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
     .energy-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #ea580c, #f59e0b);
+      background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #1d4ed8 100%);
+      border-radius: 20px;
+      position: relative;
       transition: width 0.5s ease;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+    }
+    /* 玻璃高光與內部能量光點質感 */
+    .energy-fill::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      right: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.45);
+      border-radius: 10px;
     }
     .energy-text { font-size: 0.8rem; font-weight: bold; color: #7c2d12; }
 
