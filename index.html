@@ -562,14 +562,14 @@
       <div class="form-group">
         <label>挑選探險夥伴頭像</label>
         <div class="avatar-grid">
-          <button type="button" class="avatar-opt selected" data-avatar="🐺">🐺<span>狼</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🐻">🐻<span>熊</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🐍">🐍<span>蛇</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🐘">🐘<span>象</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🦅">🦅<span>鳥</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🦍">🦍<span>猩猩</span></button>
-          <button type="button" class="avatar-opt" data-avatar="👦">👦<span>毛克力</span></button>
-          <button type="button" class="avatar-opt" data-avatar="🦁">🦁<span>獅</span></button>
+          <button type="button" class="avatar-opt selected" data-avatar="🐺">🐺<span>輝夜狼</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🐻">🐻<span>熊霸天</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🐍">🐍<span>大蛇丸</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🐘">🐘<span>猛瑪象</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🦅">🦅<span>雷之鳥</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🦍">🦍<span>金鋼侍</span></button>
+          <button type="button" class="avatar-opt" data-avatar="👦">👦<span>毛克利</span></button>
+          <button type="button" class="avatar-opt" data-avatar="🦁">🦁<span>金獅王</span></button>
         </div>
       </div>
       <button class="btn-action btn-blue" id="btn-save-profile">✨ 進入冒險！</button>
@@ -720,14 +720,14 @@
       </div>
     </div>
 
-    <!-- 6. 探險小隊長冒險指南面板（含 AI 冒險對話助理） -->
+    <!-- 6. 島嶼之星冒險指南面板（含 AI 冒險對話助理） -->
     <div id="panel-mascot" style="display:none;">
       <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
           <span style="font-size:1.3rem;">🎒</span>
-          <strong style="color: #b45309; font-size: 0.98rem;">探險小隊長 AI 冒險嚮導</strong>
+          <strong style="color: #b45309; font-size: 0.98rem;">島嶼之星 AI 冒險嚮導</strong>
         </div>
-        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">「哈囉！我是探險小隊長！隨時問我關於 301 學習島各島任務、陀螺錦標賽或全班共創能量的任何疑問喔！」</p>
+        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">「哈囉！我是島嶼之星！隨時問我關於 301 學習島各島任務、陀螺錦標賽或全班共創能量的任何疑問喔！」</p>
       </div>
 
       <!-- AI 對話互動視窗 -->
@@ -2358,12 +2358,12 @@
     }
 
     // ==========================================
-    // 探險小隊長 AI 對話系統 (話題嚴格限定在 301 學習島)
+    // 島嶼之星 AI 對話系統 (話題嚴格限定在 301 學習島)
     // ==========================================
     let mascotChatHistory = [];
     let isMascotThinking = false;
 
-    const MASCOT_SYSTEM_PROMPT = `你現在是國小三年一班「301學習島」的「探險小隊長」！你的角色設定是熱情活潑、親切友善、充滿冒險精神與鼓勵語氣的班級隊長，說話常用可愛的冒險用語（例如「探險家」、「出發囉！」、「太棒了！」）。
+    const MASCOT_SYSTEM_PROMPT = `你現在是國小三年一班「301學習島」的「島嶼之星」！你的角色設定是熱情活潑、親切友善、充滿冒險精神與鼓勵語氣的班級隊長，說話常用可愛的冒險用語（例如「探險家」、「出發囉！」、「太棒了！」）。
 
 【學習島的核心世界觀與規則】：
 1. 301學習島共有 5 座島嶼：
@@ -2994,7 +2994,7 @@
         else if (cfg.id === 'civics') landmark = createCivicsLandmark();
         group.add(landmark);
 
-        // 🌟 將探險小隊長講台加入優良公民島
+        // 🌟 將島嶼之星講台加入優良公民島
         if (cfg.id === 'civics') {
           const mascotBox = createMascotSoapbox();
           group.add(mascotBox);
@@ -3169,7 +3169,7 @@
             "📖 閱讀是最好的冒險，今天看了哪本書呢？",
             "🌟 每個人的努力，都是全班進步的能量！"
           ];
-          showLiveBanner(`💬 探險小隊長：「${quotes[Math.floor(Math.random() * quotes.length)]}」`);
+          showLiveBanner(`💬 島嶼之星：「${quotes[Math.floor(Math.random() * quotes.length)]}」`);
           confetti({ particleCount: 40, spread: 60 });
 
           isFocusing = true;
@@ -3180,7 +3180,7 @@
           openDrawer({
             id: 'mascot',
             title: '🎒 學習島冒險指南',
-            subtitle: '探險小隊長為你介紹各島主要任務與挑戰'
+            subtitle: '島嶼之星為你介紹各島主要任務與挑戰'
           });
           return;
         }
