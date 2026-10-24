@@ -703,14 +703,14 @@
       </div>
     </div>
 
-    <!-- 6. 探險小隊長冒險指南面板（含 AI 冒險對話助理） -->
+    <!-- 6. 島嶼之星冒險指南面板（含 AI 冒險對話助理） -->
     <div id="panel-mascot" style="display:none;">
       <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
           <span style="font-size:1.3rem;">🎒</span>
-          <strong style="color: #b45309; font-size: 0.98rem;">探險小隊長 AI 冒險嚮導</strong>
+          <strong style="color: #b45309; font-size: 0.98rem;">島嶼之星 AI 冒險嚮導</strong>
         </div>
-        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">「哈囉！我是探險小隊長！隨時問我關於 301 學習島各島任務、陀螺錦標賽或全班共創能量的任何疑問喔！」</p>
+        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">「哈囉！我是島嶼之星！隨時問我關於 301 學習島各島任務、陀螺錦標賽或全班共創能量的任何疑問喔！」</p>
       </div>
 
       <!-- AI 對話互動視窗 -->
@@ -2359,12 +2359,12 @@
     }
 
     // ==========================================
-    // 探險小隊長 AI 對話系統 (話題嚴格限定在 301 學習島)
+    // 島嶼之星 AI 對話系統 (話題嚴格限定在 301 學習島)
     // ==========================================
     let mascotChatHistory = [];
     let isMascotThinking = false;
 
-    const MASCOT_SYSTEM_PROMPT = `你現在是國小三年一班「301學習島」的「探險小隊長」！你的角色設定是熱情活潑、親切友善、充滿冒險精神與鼓勵語氣的班級隊長，說話常用可愛的冒險用語（例如「探險家」、「出發囉！」、「太棒了！」）。
+    const MASCOT_SYSTEM_PROMPT = `你現在是國小三年一班「301學習島」的「島嶼之星」！你的角色設定是熱情活潑、親切友善、充滿冒險精神與鼓勵語氣的班級隊長，說話常用可愛的冒險用語（例如「探險家」、「出發囉！」、「太棒了！」）。
 
 【學習島的核心世界觀與規則】：
 1. 301學習島共有 5 座島嶼：
@@ -3205,7 +3205,7 @@
             "📖 閱讀是最好的冒險，今天看了哪本書呢？",
             "🌟 每個人的努力，都是全班進步的能量！"
           ];
-          showLiveBanner(`💬 探險小隊長：「${quotes[Math.floor(Math.random() * quotes.length)]}」`);
+          showLiveBanner(`💬 島嶼之星：「${quotes[Math.floor(Math.random() * quotes.length)]}」`);
           confetti({ particleCount: 30, spread: 50 });
           return;
         }
