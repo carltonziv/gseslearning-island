@@ -3571,8 +3571,8 @@ const totalVillagers = 16;
         const time = clock.getElapsedTime();
 
         if (isFocusing) {
-          camera.position.lerp(targetCameraPos, 0.08);
-          controls.target.lerp(targetLookAt, 0.08);
+          camera.position.lerp(targetCameraPos, 0.15);
+          controls.target.lerp(targetLookAt, 0.15);
           controls.update();
 
           if (camera.position.distanceTo(targetCameraPos) < 0.15 && 
