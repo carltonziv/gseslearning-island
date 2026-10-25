@@ -1086,23 +1086,23 @@
 
       // 1. 繪製底部投射柔和陰影（模擬向下光影立體感）
       ctx.save();
-      ctx.shadowColor = "rgba(0, 0, 0, 0.35)"; // 陰影顏色（深黑透明）
+      ctx.shadowColor = "rgba(0, 0, 0, 0.45)"; // 陰影顏色（深黑透明）
       ctx.shadowBlur = 10;                     // 陰影模糊擴散程度
-      ctx.shadowOffsetX = 0;                   // 水平偏移
+      ctx.shadowOffsetX = 2;                   // 水平偏移
       ctx.shadowOffsetY = 6;                   // 垂直向下偏移
 
       // 繪製圓形底框（帶陰影效果）
-      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.fillStyle = "rgba(212, 212, 212, 0.9)";
       ctx.beginPath();
-      ctx.arc(64, 60, 48, 0, Math.PI * 2);
+      ctx.arc(64, 60, 52, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       // 2. 金色立體外框
       ctx.lineWidth = 5;
-      ctx.strokeStyle = "#f59e0b";
+      ctx.strokeStyle = "#585550";
       ctx.beginPath();
-      ctx.arc(64, 60, 48, 0, Math.PI * 2);
+      ctx.arc(64, 60, 52, 0, Math.PI * 2);
       ctx.stroke();
 
       // 3. Emoji 圖示（微加字體陰影提升層次）
@@ -1120,7 +1120,7 @@
       const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
       const sprite = new THREE.Sprite(spriteMat);
       sprite.scale.set(0.65, 0.65, 1);
-      sprite.position.set(1.15, 1.6, 0);
+      sprite.position.set(-1.15, 1.6, 0);
       return sprite;
     }
 let playerVillager = null;
