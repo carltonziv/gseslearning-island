@@ -2183,66 +2183,50 @@ function updateNightClosedState() {
     let islandFlowers = [];
     let windTurbineBlades = [];
 
-    function createNatureLandmark() {
+function createNatureLandmark() {
       const group = new THREE.Group();
 
-      const mag = new THREE.Group();
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(1.2, 0.15, 16, 36),
-        new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.85, roughness: 0.15 })
-      );
-      ring.castShadow = true;
-      mag.add(ring);
+      // 瓢蟲身體材質與斑點材質
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3, metalness: 0.2 }); // 紅色亮面外殼
+      const headMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色頭部
+      const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色斑點
 
-      const innerBevel = new THREE.Mesh(
-        new THREE.TorusGeometry(1.08, 0.05, 12, 36),
-        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 })
-      );
-      mag.add(innerBevel);
+      // 1. 瓢蟲身體（半球體外殼）
+      const body = new THREE.Mesh(new THREE.SphereGeometry(1.6, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.6), bodyMat);
+      body.position.y = 0.8;
+      body.rotation.x = Math.PI;
+      body.castShadow = true;
+      group.add(body);
 
-      const lens = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.14, 1.14, 0.1, 32),
-        new THREE.MeshPhysicalMaterial({
-          color: 0xe0f2fe,
-          transparent: true,
-          opacity: 0.7,
-          roughness: 0.05,
-          transmission: 0.85,
-          ior: 1.45
-        })
-      );
-      lens.rotation.x = Math.PI / 2;
-      mag.add(lens);
+      // 2. 黑色頭部
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 12), headMat);
+      head.position.set(0, 0.6, 1.3);
+      head.castShadow = true;
+      group.add(head);
 
-      const neckJoint = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.22, 0.18, 0.32, 16),
-        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.25 })
-      );
-      neckJoint.position.set(0, -1.35, 0);
-      mag.add(neckJoint);
+      // 3. 背部黑色斑點（左右對稱共 4 顆）
+      const spotGeo = new THREE.SphereGeometry(0.25, 8, 8);
+      spotGeo.scale(1, 0.4, 1);
 
-      const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.16, 0.2, 1.6, 20),
-        new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.65 })
-      );
-      handle.position.set(0, -2.25, 0);
-      handle.castShadow = true;
-      mag.add(handle);
+      const spotPositions = [
+        [-0.6, 1.4, 0.3], [0.6, 1.4, 0.3],
+        [-0.8, 1.1, -0.5], [0.8, 1.1, -0.5]
+      ];
+      spotPositions.forEach(pos => {
+        const spot = new THREE.Mesh(spotGeo, spotMat);
+        spot.position.set(...pos);
+        group.add(spot);
+      });
 
-      const pommel = new THREE.Mesh(
-        new THREE.SphereGeometry(0.24, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.25 })
-      );
-      pommel.position.set(0, -3.1, 0);
-      mag.add(pommel);
+      // 4. 背部中央分隔線
+      const lineGeo = new THREE.BoxGeometry(0.08, 0.05, 2.5);
+      const lineMesh = new THREE.Mesh(lineGeo, spotMat);
+      lineMesh.position.set(0, 1.62, 0.1);
+      group.add(lineMesh);
 
-      mag.position.set(0, 2.0, 0);
-      mag.rotation.x = 0.35;
-      mag.rotation.z = -0.3;
-      group.add(mag);
+      registerObstacle('nature', 0, 0, 2.0);
 
-      registerObstacle('nature', 0, 0, 1.6);
-
+      // 5. 保留原本的風力發電機（風車），放在瓢蟲身旁兩側
       const turbineCoords = [[-2.4, -1.8], [2.4, 1.8]];
       turbineCoords.forEach(pos => {
         const wt = new THREE.Group();
@@ -2289,7 +2273,7 @@ function updateNightClosedState() {
           rotor.add(bladePivot);
         }
         wt.add(rotor);
-        windTurbineBlades.push(rotor);
+        windTurbineBlades.push(rotor); // 讓風車葉片繼續參與旋轉動畫
 
         group.add(wt);
         registerObstacle('nature', pos[0], pos[1], 1.0);
