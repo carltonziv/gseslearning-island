@@ -3802,10 +3802,21 @@ if (mascotLeader) {
 
             const isMoving = (moveX !== 0 || moveZ !== 0);
 
-if (isMoving) {
+            if (isMoving) {
               const len = Math.hypot(moveX, moveZ);
               const dirX = moveX / len;
               const dirZ = moveZ / len;
+              
+              // 🌟 1. 取得鏡頭在水平平面上的朝向角度
+              const camDir = new THREE.Vector3();
+              camera.getWorldDirection(camDir);
+              const camAngle = Math.atan2(camDir.x, camDir.z); // 鏡頭當前的偏航角 (Yaw)
+
+              // 🌟 2. 將十字鍵的輸入向量，依照鏡頭角度進行旋轉變換
+              // (inputZ < 0 是按「▲」向前，因此對應 +camAngle)
+              const dirX = inputX * Math.cos(camAngle) - inputZ * Math.sin(camAngle);
+              const dirZ = inputX * Math.sin(camAngle) + inputZ * Math.cos(camAngle);
+              
               const moveSpeed = 0.07; // 移動速度
 
               // 1. 預計移動的新座標
