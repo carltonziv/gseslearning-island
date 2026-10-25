@@ -2063,7 +2063,10 @@ function updateNightClosedState() {
         skirt: skirtPivot
       };
 
-      // 根據頭像 Emoji 生成對應的 3D 小動物模型
+      return person;
+    }
+
+          // 根據頭像 Emoji 生成對應的 3D 小動物模型
     function createCompanionAnimal(avatarEmoji) {
       const animalGroup = new THREE.Group();
 
@@ -2113,8 +2116,6 @@ function updateNightClosedState() {
       return animalGroup;
     }
 
-      return person;
-    }
 
     function createGaussianReadingTexture() {
       const canvas = document.createElement('canvas');
