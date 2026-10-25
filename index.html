@@ -3704,9 +3704,9 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
           const zzzJumper = jumpRopeGroup.userData.zzzJumper;
 
           if (isJumperSleeping) {
-            // 🌙 夜間：繩子靜止垂放於地面，3 人坐下/低頭入睡並浮現 Zzz
-            ropeMesh.rotation.x = 0;
-            ropeMesh.position.y = 0.05;
+            // 🌙 夜間：跳繩水平平躺在地面上
+            ropeMesh.rotation.set(Math.PI / 2, 0, 0); // 旋轉 90 度平貼地面
+            ropeMesh.position.set(0, 0.04, 0);       // 貼近地面高度（0.04 避免與草地產生 Z-fighting 閃爍）
 
             // 呼吸微幅起伏
             const sleepBreath = Math.sin(time * 2.0) * 0.015;
@@ -3757,10 +3757,10 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
               }
             });
           } else {
-            // ☀️ 白天：恢復原本充滿活力的甩繩與彈跳
-            ropeMesh.position.y = 0.38;
+            // ☀️ 白天：恢復立體直立旋轉
+            ropeMesh.position.set(0, 0.38, 0);
             const ropeAngle = time * 5.0;
-            ropeMesh.rotation.x = ropeAngle;
+            ropeMesh.rotation.set(ropeAngle, 0, 0);
 
             jumperMan.rotation.x = 0;
             jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
