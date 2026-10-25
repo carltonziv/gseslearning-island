@@ -3074,26 +3074,21 @@ function createSportLandmark() {
       // 🌟 土地基底層（厚度 0.72m，為道碴 0.36m 的 2 倍）
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
 
-      const steps = 160;
-      for (let i = 0; i < steps; i++) {
-        const t = i / steps;
-        const pt = trackCurve.getPointAt(t);
-        const tan = trackCurve.getTangentAt(t).normalize();
+// 🌟 1. 道碴碎石層（連續平滑環狀管帶，厚度約 0.36m）
+      const ballastGeo = new THREE.TubeGeometry(trackCurve, 200, 0.55, 8, true);
+      const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
+      ballastMesh.position.y = TRACK_Y - 0.22;
+      ballastMesh.scale.set(1.4, 0.45, 1.4); // 壓扁展寬，形成梯形路基質感
+      ballastMesh.receiveShadow = true;
+      system.add(ballastMesh);
 
-        // 1. 道碴碎石層區塊（厚度 0.36）
-        const ballastBlock = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.36, 0.8), ballastMat);
-        ballastBlock.position.set(pt.x, TRACK_Y - 0.20, pt.z);
-        ballastBlock.lookAt(pt.clone().add(tan));
-        ballastBlock.receiveShadow = true;
-        system.add(ballastBlock);
-
-        // 2. 土地基底層區塊（厚度 0.72，接續在道碴下方）
-        const soilBlock = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.72, 0.8), soilMat);
-        soilBlock.position.set(pt.x, TRACK_Y - 0.36 - 0.36, pt.z);
-        soilBlock.lookAt(pt.clone().add(tan));
-        soilBlock.receiveShadow = true;
-        system.add(soilBlock);
-      }
+      // 🌟 2. 下層泥土地基（接在道碴下方，厚度更大、顏色更深）
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 200, 0.75, 8, true);
+      const soilMesh = new THREE.Mesh(soilGeo, soilMat);
+      soilMesh.position.y = TRACK_Y - 0.55;
+      soilMesh.scale.set(1.7, 0.6, 1.7); // 比道碴更寬、更厚實
+      soilMesh.receiveShadow = true;
+      system.add(soilMesh);
 
       const tieMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
       const tieCount = 200;
