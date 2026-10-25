@@ -3210,14 +3210,14 @@ function createSportLandmark() {
       bulbGlow.position.set(0, 0.75, 1.15);
       cartGroup.add(bulbGlow);
 
-      [[-0.6, 0.15, -0.55], [0.6, 0.15, -0.55], [-0.6, 0.15, 0.55], [0.6, 0.15, 0.55]].forEach(pos => {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.12, 12), ironFrameMat);
+        [[-0.35, 0.15, -0.55], [0.35, 0.15, -0.55], [-0.35, 0.15, 0.55], [0.35, 0.15, 0.55]].forEach(pos => {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.10, 16), ironFrameMat);
         wheel.rotation.z = Math.PI / 2;
         wheel.position.set(...pos);
         wheel.castShadow = true;
         cartGroup.add(wheel);
 
-        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.14, 8), brassMat);
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 8), brassMat);
         hub.rotation.z = Math.PI / 2;
         hub.position.set(...pos);
         cartGroup.add(hub);
