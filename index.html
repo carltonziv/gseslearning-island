@@ -1121,6 +1121,12 @@
       const spawnZ = startIsland.pos[2] + 1.2;
       person.position.set(spawnX, 0, spawnZ);
       scene.add(person);
+      // 🌟 新進：生成 3D 探險夥伴小動物跟班
+      const companionAnimal = createCompanionAnimal(currentStudent.avatar);
+      person.add(companionAnimal);
+      
+      // 將動物物件儲存起來以便後續做跑步或跳躍動畫
+      playerVillager.companionAnimal = companionAnimal;
 
       playerVillager = {
         obj: person,
@@ -2042,6 +2048,56 @@ function updateNightClosedState() {
         rightLeg: rightLegPivot,
         skirt: skirtPivot
       };
+
+      // 根據頭像 Emoji 生成對應的 3D 小動物模型
+    function createCompanionAnimal(avatarEmoji) {
+      const animalGroup = new THREE.Group();
+
+      let bodyMat, headMat, detailMat;
+
+      // 依據不同的頭像設定顏色與材質
+      if (avatarEmoji === '🐺' || avatarEmoji === '🦊') {
+        bodyMat = new THREE.MeshStandardMaterial({ color: 0x8c7853, roughness: 0.8 }); // 狼/狐狸灰棕色
+      } else if (avatarEmoji === '🐻') {
+        bodyMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.8 }); // 熊棕色
+      } else if (avatarEmoji === '🐍') {
+        bodyMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.6 }); // 蛇綠色
+      } else if (avatarEmoji === '🐘') {
+        bodyMat = new THREE.MeshStandardMaterial({ color: 0x95a5a6, roughness: 0.7 }); // 象灰色
+      } else {
+        bodyMat = new THREE.MeshStandardMaterial({ color: 0xf39c12, roughness: 0.7 }); // 預設橘黃色
+      }
+
+      // 1. 動物身體（小圓球體）
+      const bodyMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), bodyMat);
+      bodyMesh.position.y = 0.22;
+      bodyMesh.castShadow = true;
+      animalGroup.add(bodyMesh);
+
+      // 2. 動物頭部
+      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), bodyMat);
+      headMesh.position.set(0, 0.42, 0.12);
+      headMesh.castShadow = true;
+      animalGroup.add(headMesh);
+
+      // 3. 簡單的小耳朵
+      const earGeo = new THREE.ConeGeometry(0.06, 0.12, 8);
+      const leftEar = new THREE.Mesh(earGeo, bodyMat);
+      leftEar.position.set(-0.1, 0.55, 0.1);
+      leftEar.rotation.z = -0.2;
+      animalGroup.add(leftEar);
+
+      const rightEar = new THREE.Mesh(earGeo, bodyMat);
+      rightEar.position.set(0.1, 0.55, 0.1);
+      rightEar.rotation.z = 0.2;
+      animalGroup.add(rightEar);
+
+      // 將整個 3D 動物模型縮小並放在玩家身側下方
+      animalGroup.scale.setScalar(0.9);
+      animalGroup.position.set(0.55, 0, -0.4); // 位於玩家右後方或側邊
+
+      return animalGroup;
+    }
 
       return person;
     }
@@ -3610,6 +3666,11 @@ if (mascotLeader) {
             confetti({ particleCount: 20, spread: 45, origin: { x: 0.5, y: 0.5 } });
           }
         }
+        // 如果玩家身旁有 3D 動物夥伴，讓它隨著時間上下彈跳跑步
+      if (playerVillager && playerVillager.companionAnimal) {
+        const bounce = Math.abs(Math.sin(time * 12.0)) * 0.08;
+        playerVillager.companionAnimal.position.y = bounce;
+      }
 
         // 台車行駛動畫（未暫停時前進）
         if (cartGroup && trackCurve && !isCartPaused) {
