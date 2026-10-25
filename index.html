@@ -3806,7 +3806,7 @@ if (mascotLeader) {
               const len = Math.hypot(moveX, moveZ);
               const dirX = moveX / len;
               const dirZ = moveZ / len;
-              const moveSpeed = 0.055; // 移動速度
+              const moveSpeed = 0.07; // 移動速度
 
               v.currentX += dirX * moveSpeed;
               v.currentZ += dirZ * moveSpeed;
@@ -3815,7 +3815,7 @@ if (mascotLeader) {
               v.obj.rotation.y = Math.atan2(dirX, dirZ);
 
               // 邁步與擺手跑步動畫
-              v.walkCycle += 0.22;
+              v.walkCycle += 0.32;
               const legSwing = Math.sin(v.walkCycle) * 0.55;
               const armSwing = Math.sin(v.walkCycle) * 0.55;
               if (limbs) {
