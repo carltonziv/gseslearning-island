@@ -2191,10 +2191,10 @@ function createNatureLandmark() {
       const headMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色頭部
       const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色斑點
 
-// 1. 瓢蟲身體（半球體外殼）
-      const body = new THREE.Mesh(new THREE.SphereGeometry(1.6, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.6), bodyMat);
-      body.position.y = 0.8;
-      body.rotation.x = Math.PI;
+// 1. 瓢蟲身體（使用標準圓球體或正確的半球體，避免變形）
+      const body = new THREE.Mesh(new THREE.SphereGeometry(1.3, 16, 16), bodyMat);
+      body.position.y = 0.9;
+      body.scale.set(1, 0.85, 1.2); // 稍微調整長寬高比例使其飽滿
       body.castShadow = true;
       group.add(body);
 
