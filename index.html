@@ -1293,90 +1293,7 @@ const texture = new THREE.CanvasTexture(canvas);
       const dpad = document.getElementById('dpad-controls');
       if (dpad) dpad.style.display = 'block';
     }
-      if (playerVillager) {
-        if (typeof scene !== 'undefined' && scene) {
-          scene.remove(playerVillager.obj);
-        }
-        if (typeof villagers !== 'undefined' && villagers) {
-          const idx = villagers.indexOf(playerVillager);
-          if (idx > -1) villagers.splice(idx, 1);
-        }
-        playerVillager = null;
-      }
-    }
-
-    // 🌟 依照性別生成專屬人物（含夥伴頭像精靈與強制移動）
-    function spawnPlayerCharacter() {
-      removePlayerCharacter();
-      if (typeof createCharacterMesh !== 'function' || typeof scene === 'undefined' || !scene) return;
-
-      const isGirl = (currentStudent.gender === 'girl');
-      let customSkin, customClothes, customHair;
-
-      if (isGirl) {
-        const pinkPalette = [0xF472B6, 0xFB7185, 0xF87171, 0xFDA4AF, 0xDB2777, 0xEC4899];
-        customClothes = pinkPalette[Math.floor(Math.random() * pinkPalette.length)];
-        customSkin = 0xF5D0A9;
-        customHair = 0x72376A;
-      }
-
-      const person = createCharacterMesh(isGirl, customSkin, customClothes, customHair);
-      person.userData.isPlayer = true;
-
-      const displayName = currentStudent.seatNumber === '訪客' 
-        ? `${currentStudent.avatar} ${currentStudent.name}` 
-        : `${currentStudent.seatNumber}號 ${currentStudent.name}`;
-      const nameplate = createPlayerNameplateSprite(displayName);
-      person.add(nameplate);
-
-      // 🌟 將所選的探險夥伴頭像精靈加到人物頭頂（名字旁邊）
-      const companionSprite = createCompanionSprite(currentStudent.avatar);
-      person.add(companionSprite);
-
-      const startIslandIdx = 4;
-      const startIsland = ISLAND_CONFIG[startIslandIdx];
-      const spawnX = startIsland.pos[0] + 0.8;
-      const spawnZ = startIsland.pos[2] + 1.2;
-      person.position.set(spawnX, 0, spawnZ);
-      scene.add(person);
-      
-      playerVillager = {
-        obj: person,
-        zzzSprite: null,
-        companionSprite: companionSprite, // 🌟 將夥伴頭像精靈存入結構中
-        currentIslandIdx: 4,
-        targetIslandIdx: 4,
-        state: 'wander',
-        currentX: spawnX,
-        currentZ: spawnZ,
-        targetX: spawnX,
-        targetZ: spawnZ,
-        bridgeEndTarget: null,
-        walkCycle: 0,
-        waitTimer: 1, // 設為 1 讓它立刻開始走動
-        speed: 0.024,
-        isJogging: false,
-        isSkirt: isGirl,
-        cheerType: 'jump_both',
-        stadiumPos: { x: 2.8, z: 0.5 },
-        sleepPos: { x: 2.6, z: 0.5 },
-        cheerPhase: 0,
-        sleepBreathPhase: 0
-      };
-
-      // 🌟 強制賦予隨機移動目標，讓登入後立刻開始漫步
-      const curIslandCfg = ISLAND_CONFIG[4];
-      const a = Math.random() * Math.PI * 2;
-      const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
-      playerVillager.targetX = curIslandCfg.pos[0] + Math.cos(a) * r;
-      playerVillager.targetZ = curIslandCfg.pos[2] + Math.sin(a) * r;
-
-      if (typeof villagers !== 'undefined' && villagers) {
-        villagers.push(playerVillager);
-      }
-    }
-
-
+    
     async function loadStudentRoster() {
       const select = document.getElementById('select-identity');
       try {
@@ -1819,7 +1736,7 @@ const texture = new THREE.CanvasTexture(canvas);
         bbState = snap.val() || { isOpen: false, deadline: '', status: 'closed', players: {}, matches: [] };
         renderBeybladeUI();
         updateBeybladeIslandDormancy();
-        updateSurroundingIslandsPauseState();
+        updateNightClosedState();
         renderBracketSidebarContent();
       });
     }
