@@ -532,6 +532,49 @@
       background: #fed7aa;
       transform: translateY(-1px);
     }
+
+    /* 左下角虛擬十字鍵容器 */
+    .dpad-container {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      width: 130px;
+      height: 130px;
+      z-index: 100;
+      user-select: none;
+      touch-action: none;
+      display: none; /* 登入後才會顯示 */
+    }
+    .dpad-btn {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 2px solid #fde047;
+      color: #ffffff;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.1rem;
+      font-weight: 900;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: background 0.1s, transform 0.1s;
+    }
+    .dpad-btn:active, .dpad-btn.pressed {
+      background: #f59e0b;
+      color: #000000;
+      transform: scale(0.92);
+    }
+    .dpad-up    { top: 0; left: 44px; }
+    .dpad-down  { bottom: 0; left: 44px; }
+    .dpad-left  { top: 44px; left: 0; }
+    .dpad-right { top: 44px; right: 0; }
+
+
+    
   </style>
 </head>
 <body>
@@ -578,6 +621,14 @@
   <div class="hud-hint">
     <span id="time-badge">🕒 檢測時段中...</span>
     <span>| 點擊畫面物件、單指旋轉、雙指縮放移動</span>
+  </div>
+
+  <!-- 左下角玩家操作十字鍵 -->
+  <div id="dpad-controls" class="dpad-container">
+    <button type="button" class="dpad-btn dpad-up" id="dpad-up">▲</button>
+    <button type="button" class="dpad-btn dpad-left" id="dpad-left">◀</button>
+    <button type="button" class="dpad-btn dpad-down" id="dpad-down">▼</button>
+    <button type="button" class="dpad-btn dpad-right" id="dpad-right">▶</button>
   </div>
 
   <!-- 左側即時賽事晉級圖側欄 -->
@@ -1116,15 +1167,132 @@
       ctx.fillText(avatarEmoji, 64, 64);
       ctx.restore();
 
-      const texture = new THREE.CanvasTexture(canvas);
+const texture = new THREE.CanvasTexture(canvas);
       const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
       const sprite = new THREE.Sprite(spriteMat);
       sprite.scale.set(0.65, 0.65, 1);
       sprite.position.set(-1.15, 1.6, 0);
       return sprite;
     }
-let playerVillager = null;
+
+    // 🌟 玩家操控狀態與鍵盤/十字鍵監聽
+    let playerVillager = null;
+    const playerMoveInput = { up: false, down: false, left: false, right: false };
+
+    function bindDpadEvents() {
+      const bindBtn = (id, key) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        const start = (e) => { e.preventDefault(); playerMoveInput[key] = true; btn.classList.add('pressed'); };
+        const end = (e) => { e.preventDefault(); playerMoveInput[key] = false; btn.classList.remove('pressed'); };
+        btn.addEventListener('pointerdown', start);
+        btn.addEventListener('pointerup', end);
+        btn.addEventListener('pointercancel', end);
+        btn.addEventListener('pointerleave', end);
+      };
+
+      bindBtn('dpad-up', 'up');
+      bindBtn('dpad-down', 'down');
+      bindBtn('dpad-left', 'left');
+      bindBtn('dpad-right', 'right');
+
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') playerMoveInput.up = true;
+        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') playerMoveInput.down = true;
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') playerMoveInput.left = true;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') playerMoveInput.right = true;
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') playerMoveInput.up = false;
+        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') playerMoveInput.down = false;
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') playerMoveInput.left = false;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') playerMoveInput.right = false;
+      });
+    }
+
     function removePlayerCharacter() {
+      if (playerVillager) {
+        if (typeof scene !== 'undefined' && scene) {
+          scene.remove(playerVillager.obj);
+        }
+        if (typeof villagers !== 'undefined' && villagers) {
+          const idx = villagers.indexOf(playerVillager);
+          if (idx > -1) villagers.splice(idx, 1);
+        }
+        playerVillager = null;
+      }
+      const dpad = document.getElementById('dpad-controls');
+      if (dpad) dpad.style.display = 'none';
+    }
+
+    function spawnPlayerCharacter() {
+      removePlayerCharacter();
+      if (typeof createCharacterMesh !== 'function' || typeof scene === 'undefined' || !scene) return;
+
+      const isGirl = (currentStudent.gender === 'girl');
+      let customSkin, customClothes, customHair;
+
+      if (isGirl) {
+        const pinkPalette = [0xF472B6, 0xFB7185, 0xF87171, 0xFDA4AF, 0xDB2777, 0xEC4899];
+        customClothes = pinkPalette[Math.floor(Math.random() * pinkPalette.length)];
+        customSkin = 0xF5D0A9;
+        customHair = 0x72376A;
+      }
+
+      const person = createCharacterMesh(isGirl, customSkin, customClothes, customHair);
+      person.userData.isPlayer = true;
+
+      const displayName = currentStudent.seatNumber === '訪客' 
+        ? `${currentStudent.avatar} ${currentStudent.name}` 
+        : `${currentStudent.seatNumber}號 ${currentStudent.name}`;
+      const nameplate = createPlayerNameplateSprite(displayName);
+      person.add(nameplate);
+
+      // 🌟 將所選的探險夥伴頭像精靈加到人物頭頂（名字旁邊）
+      const companionSprite = createCompanionSprite(currentStudent.avatar);
+      person.add(companionSprite);
+
+      const startIslandIdx = 4;
+      const startIsland = ISLAND_CONFIG[startIslandIdx];
+      const spawnX = startIsland.pos[0] + 0.8;
+      const spawnZ = startIsland.pos[2] + 1.2;
+      person.position.set(spawnX, 0, spawnZ);
+      scene.add(person);
+      
+      playerVillager = {
+        obj: person,
+        zzzSprite: null,
+        companionSprite: companionSprite,
+        currentIslandIdx: 4,
+        targetIslandIdx: 4,
+        state: 'wander',
+        currentX: spawnX,
+        currentZ: spawnZ,
+        targetX: spawnX,
+        targetZ: spawnZ,
+        bridgeEndTarget: null,
+        walkCycle: 0,
+        waitTimer: 1,
+        speed: 0.024,
+        isJogging: false,
+        isSkirt: isGirl,
+        cheerType: 'jump_both',
+        stadiumPos: { x: 2.8, z: 0.5 },
+        sleepPos: { x: 2.6, z: 0.5 },
+        cheerPhase: 0,
+        sleepBreathPhase: 0
+      };
+
+      if (typeof villagers !== 'undefined' && villagers) {
+        villagers.push(playerVillager);
+      }
+
+      // 🌟 顯示十字鍵
+      const dpad = document.getElementById('dpad-controls');
+      if (dpad) dpad.style.display = 'block';
+    }
       if (playerVillager) {
         if (typeof scene !== 'undefined' && scene) {
           scene.remove(playerVillager.obj);
@@ -3706,6 +3874,55 @@ if (mascotLeader) {
         villagers.forEach((v, idx) => {
           const limbs = v.obj.userData.limbs;
 
+          if (v === playerVillager) {
+            let moveX = 0;
+            let moveZ = 0;
+
+            if (playerMoveInput.up)    moveZ -= 1;
+            if (playerMoveInput.down)  moveZ += 1;
+            if (playerMoveInput.left)  moveX -= 1;
+            if (playerMoveInput.right) moveX += 1;
+
+            const isMoving = (moveX !== 0 || moveZ !== 0);
+
+            if (isMoving) {
+              const len = Math.hypot(moveX, moveZ);
+              const dirX = moveX / len;
+              const dirZ = moveZ / len;
+              const moveSpeed = 0.055; // 移動速度
+
+              v.currentX += dirX * moveSpeed;
+              v.currentZ += dirZ * moveSpeed;
+              v.obj.position.x = v.currentX;
+              v.obj.position.z = v.currentZ;
+              v.obj.rotation.y = Math.atan2(dirX, dirZ);
+
+              // 邁步與擺手跑步動畫
+              v.walkCycle += 0.22;
+              const legSwing = Math.sin(v.walkCycle) * 0.55;
+              const armSwing = Math.sin(v.walkCycle) * 0.55;
+              if (limbs) {
+                limbs.leftLeg.rotation.x = legSwing;
+                limbs.rightLeg.rotation.x = -legSwing;
+                limbs.leftArm.rotation.x = -armSwing;
+                limbs.rightArm.rotation.x = armSwing;
+                if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(v.walkCycle * 2) * 0.1;
+              }
+              v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * 0.05;
+            } else {
+              // 放開按鍵時停留在原地並回到站立放鬆姿勢
+              if (limbs) {
+                limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.2);
+                limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.2);
+                limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.2);
+                limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.2);
+                if (limbs.skirt) limbs.skirt.rotation.x = 0;
+              }
+              v.obj.position.y = 0;
+            }
+            return; // 🌟 關鍵：玩家處理完畢直接結束本輪，跳過下方的自動巡邏或睡眠邏輯
+          }
+
           if (isSleepingTime) {
             v.currentIslandIdx = 0;
             const destX = v.sleepPos.x;
@@ -4006,6 +4223,7 @@ if (mascotLeader) {
     function startIslandApp() {
       init3D();
       initStudent();
+      bindDpadEvents();
     }
 
     if (document.readyState === 'loading') {
