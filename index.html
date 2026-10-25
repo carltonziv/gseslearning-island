@@ -1125,10 +1125,7 @@
       const companionAnimal = createCompanionAnimal(currentStudent.avatar);
       person.add(companionAnimal);
       
-      // 將動物物件儲存起來以便後續做跑步或跳躍動畫
-      playerVillager.companionAnimal = companionAnimal;
-
-      playerVillager = {
+playerVillager = {
         obj: person,
         zzzSprite: null,
         currentIslandIdx: startIslandIdx,
@@ -1148,13 +1145,13 @@
         stadiumPos: { x: 2.8, z: 0.5 },
         sleepPos: { x: 2.6, z: 0.5 },
         cheerPhase: 0,
-        sleepBreathPhase: 0
+        sleepBreathPhase: 0,
+        companionAnimal: companionAnimal // 🌟 將 3D 動物夥伴正確放入玩家結構中
       };
 
       if (typeof villagers !== 'undefined' && villagers) {
         villagers.push(playerVillager);
       }
-    }
 
     async function loadStudentRoster() {
       const select = document.getElementById('select-identity');
