@@ -3552,9 +3552,37 @@ function updateNightClosedState() {
           mainBeybladeTop.rotation.y += 0.015;
         }
 
-        if (mascotLeader) {
-          mascotLeader.position.y = 0.28 + Math.max(0, Math.sin(time * 3.0)) * 0.18;
-          mascotLeader.rotation.y = Math.sin(time * 1.5) * 0.35;
+if (mascotLeader) {
+          const currentHour = new Date().getHours();
+          const isMascotSleeping = (currentHour >= 22 || currentHour < 7);
+          const mascotLimbs = mascotLeader.userData.limbs;
+
+          if (isMascotSleeping) {
+            // 🌙 夜間 22:00 ~ 07:00：坐下睡覺、身體微微呼吸起伏、頭部低下
+            mascotLeader.position.y = 0.12; // 坐下的高度
+            mascotLeader.rotation.y = -Math.PI * 0.75; // 維持原本面向台階的方向
+            mascotLeader.rotation.x = 0.25; // 頭稍微往下垂
+
+            // 調整四肢呈現坐姿與放鬆狀態
+            if (mascotLimbs) {
+              mascotLimbs.leftLeg.rotation.x = -1.45;
+              mascotLimbs.rightLeg.rotation.x = -1.45;
+              mascotLimbs.leftArm.rotation.x = -0.3;
+              mascotLimbs.rightArm.rotation.x = -0.3;
+            }
+
+            // 如果有 Zzz 標籤可以讓它顯示（如果 mascoter 也掛載了 sprite 的話）
+          } else {
+            // ☀️ 白天正常活動：原本的元氣跳動與打招呼
+            mascotLeader.position.y = 0.28 + Math.max(0, Math.sin(time * 3.0)) * 0.18;
+            mascotLeader.rotation.x = 0;
+            mascotLeader.rotation.y = Math.sin(time * 1.5) * 0.35;
+
+            if (mascotLimbs) {
+              mascotLimbs.leftLeg.rotation.x = 0;
+              mascotLimbs.rightLeg.rotation.x = 0;
+            }
+          }
         }
 
         for (let i = energyOrbs.length - 1; i >= 0; i--) {
