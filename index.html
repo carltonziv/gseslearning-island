@@ -1168,8 +1168,7 @@ const texture = new THREE.CanvasTexture(canvas);
       sprite.position.set(-1.15, 1.6, 0);
       return sprite;
     }
-
-
+    let playerVillager = null;
     function removePlayerCharacter() {
       if (playerVillager) {
         if (typeof scene !== 'undefined' && scene) {
@@ -4110,7 +4109,6 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
     function startIslandApp() {
       init3D();
       initStudent();
-      bindDpadEvents();
     }
 
     if (document.readyState === 'loading') {
