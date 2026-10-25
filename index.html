@@ -1077,36 +1077,52 @@
       return sprite;
     }
 
-    // 建立夥伴頭像的 2D 貼圖精靈（顯示在名字旁邊）
+// 建立夥伴頭像的 2D 貼圖精靈（增加立體外框與柔和陰影）
     function createCompanionSprite(avatarEmoji) {
       const canvas = document.createElement('canvas');
       canvas.width = 128;
       canvas.height = 128;
       const ctx = canvas.getContext('2d');
 
-      // 繪製圓形半透明背景底框
-      ctx.fillStyle = "rgba(212, 212, 212, 0.9)";
+      // 1. 繪製底部投射柔和陰影（模擬向下光影立體感）
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.35)"; // 陰影顏色（深黑透明）
+      ctx.shadowBlur = 10;                     // 陰影模糊擴散程度
+      ctx.shadowOffsetX = 0;                   // 水平偏移
+      ctx.shadowOffsetY = 6;                   // 垂直向下偏移
+
+      // 繪製圓形底框（帶陰影效果）
+      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
       ctx.beginPath();
-      ctx.arc(64, 64, 55, 0, Math.PI * 2);
+      ctx.arc(64, 60, 48, 0, Math.PI * 2);
       ctx.fill();
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "#2E3B48"; // 藍灰色外框
+      ctx.restore();
+
+      // 2. 金色立體外框
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "#f59e0b";
+      ctx.beginPath();
+      ctx.arc(64, 60, 48, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 繪製頭像 Emoji
-      ctx.font = "64px sans-serif";
+      // 3. Emoji 圖示（微加字體陰影提升層次）
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 2;
+      ctx.font = "56px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(avatarEmoji, 64, 68);
+      ctx.fillText(avatarEmoji, 64, 64);
+      ctx.restore();
 
       const texture = new THREE.CanvasTexture(canvas);
       const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
       const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(0.8, 0.8, 1); // 調整精靈大小
-      sprite.position.set(-1.15, 1.6, 0); // 位於名字標誌的右側
+      sprite.scale.set(0.65, 0.65, 1);
+      sprite.position.set(1.15, 1.6, 0);
       return sprite;
     }
-
 let playerVillager = null;
     function removePlayerCharacter() {
       if (playerVillager) {
