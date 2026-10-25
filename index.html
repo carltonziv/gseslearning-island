@@ -3470,10 +3470,11 @@ function createNatureLandmark() {
 
       updateBeybladeIslandDormancy();
 
-      const totalVillagers = 20;
+const totalVillagers = 16;
 
       for (let i = 0; i < totalVillagers; i++) {
-        const isSkirt = (i < 5);
+        // 設定裙子造型比例（例如前 4 位穿裙子）
+        const isSkirt = (i < 4);
         let assignedSkin;
         if (i % 3 === 0) assignedSkin = 0xF5D0A9;
         else if (i % 3 === 1) assignedSkin = 0x8D5524;
@@ -3493,9 +3494,10 @@ function createNatureLandmark() {
         person.position.set(initX, 0, initZ);
         scene.add(person);
 
+        // 🌟 重新平均分配 16 人的應援動作（雙手跳躍、雙手歡呼、單手揮舞）
         let cheerType = 'jump_both';
-        if (i >= 10 && i < 18) cheerType = 'shout_mouth';
-        else if (i >= 18) cheerType = 'raise_single';
+        if (i >= 8 && i < 13) cheerType = 'shout_mouth';
+        else if (i >= 13) cheerType = 'raise_single';
 
         const cheerAngle = (i / totalVillagers) * Math.PI * 2 + (Math.random() - 0.5) * 0.15;
         const cheerRadius = 2.9 + Math.random() * 0.6;
