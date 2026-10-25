@@ -1083,6 +1083,22 @@
         if (typeof scene !== 'undefined' && scene) {
           scene.remove(playerVillager.obj);
         }
+        // 🌟 強制讓玩家一生成就開始隨機漫步
+      playerVillager.waitTimer = 1; // 讓它幾乎不用等待就開始移動
+      const curIslandCfg = ISLAND_CONFIG[startIslandIdx];
+      const startLocalX = spawnX - curIslandCfg.pos[0];
+      const startLocalZ = spawnZ - curIslandCfg.pos[2];
+      
+      // 隨機挑選島上的下一個移動點
+      const a = Math.random() * Math.PI * 2;
+      const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
+      playerVillager.targetX = curIslandCfg.pos[0] + Math.cos(a) * r;
+      playerVillager.targetZ = curIslandCfg.pos[2] + Math.sin(a) * r;
+      playerVillager.state = 'wander';
+
+      if (typeof villagers !== 'undefined' && villagers) {
+        villagers.push(playerVillager);
+      }
         if (typeof villagers !== 'undefined' && villagers) {
           const idx = villagers.indexOf(playerVillager);
           if (idx > -1) villagers.splice(idx, 1);
