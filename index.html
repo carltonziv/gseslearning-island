@@ -3851,13 +3851,21 @@ if (isMoving) {
               v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * 0.05;
 
               // 鏡頭平滑跟隨
-              if (!isFocusing) {
-                const camOffset = new THREE.Vector3(0, 10, 14); // 鏡頭相對人物的距離（高 10、後方 14）
-                const targetCamPos = new THREE.Vector3(v.currentX, 0, v.currentZ).add(camOffset);
-                const targetLook = new THREE.Vector3(v.currentX, 0.8, v.currentZ);
+if (!isFocusing) {
+                const followDistance = 14; // 鏡頭距離人物後方的水平距離
+                const followHeight = 8;    // 鏡頭高度（俯瞰角度）
 
-                camera.position.lerp(targetCamPos, 0.06); // 平滑跟隨
-                controls.target.lerp(targetLook, 0.06);
+                // 根據人物當前的旋轉角度，動態計算人物正後方的座標
+                const camX = v.currentX - Math.sin(v.obj.rotation.y) * followDistance;
+                const camZ = v.currentZ - Math.cos(v.obj.rotation.y) * followDistance;
+                const targetCamPos = new THREE.Vector3(camX, followHeight, camZ);
+
+                // 鏡頭注視點（人物腰部到頭部高度）
+                const targetLook = new THREE.Vector3(v.currentX, 1.0, v.currentZ);
+
+                // 平滑插值跟隨與轉向
+                camera.position.lerp(targetCamPos, 0.08);
+                controls.target.lerp(targetLook, 0.08);
                 controls.update();
               }
             } else {
