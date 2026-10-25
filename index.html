@@ -1169,42 +1169,6 @@ const texture = new THREE.CanvasTexture(canvas);
       return sprite;
     }
 
-    // 🌟 玩家操控狀態與鍵盤/十字鍵監聽
-    let playerVillager = null;
-    const playerMoveInput = { up: false, down: false, left: false, right: false };
-
-    function bindDpadEvents() {
-      const bindBtn = (id, key) => {
-        const btn = document.getElementById(id);
-        if (!btn) return;
-        const start = (e) => { e.preventDefault(); playerMoveInput[key] = true; btn.classList.add('pressed'); };
-        const end = (e) => { e.preventDefault(); playerMoveInput[key] = false; btn.classList.remove('pressed'); };
-        btn.addEventListener('pointerdown', start);
-        btn.addEventListener('pointerup', end);
-        btn.addEventListener('pointercancel', end);
-        btn.addEventListener('pointerleave', end);
-      };
-
-      bindBtn('dpad-up', 'up');
-      bindBtn('dpad-down', 'down');
-      bindBtn('dpad-left', 'left');
-      bindBtn('dpad-right', 'right');
-
-      window.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') playerMoveInput.up = true;
-        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') playerMoveInput.down = true;
-        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') playerMoveInput.left = true;
-        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') playerMoveInput.right = true;
-      });
-
-      window.addEventListener('keyup', (e) => {
-        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') playerMoveInput.up = false;
-        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') playerMoveInput.down = false;
-        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') playerMoveInput.left = false;
-        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') playerMoveInput.right = false;
-      });
-    }
 
     function removePlayerCharacter() {
       if (playerVillager) {
@@ -3715,11 +3679,7 @@ if (mascotLeader) {
           const floatOffset = Math.sin(time * 4.0) * 0.06;
           playerVillager.companionSprite.position.y = 1.6 + floatOffset;
         }
-        // 如果玩家身旁有 3D 動物夥伴，讓它隨著時間上下彈跳跑步
-      if (playerVillager && playerVillager.companionAnimal) {
-        const bounce = Math.abs(Math.sin(time * 12.0)) * 0.08;
-        playerVillager.companionAnimal.position.y = bounce;
-      }
+
 
         // 台車行駛動畫（未暫停時前進）
         if (cartGroup && trackCurve && !isCartPaused) {
@@ -3768,7 +3728,9 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
               if (swingerA.userData.limbs) {
                 swingerA.userData.limbs.leftLeg.rotation.x = -1.45;
                 swingerA.userData.limbs.rightLeg.rotation.x = -1.45;
-                swingerA.userData.limbs.rightArm.rotation.set(-0.3, 0, 0);
+                swingerA.userData.limbs.rightArm.rotation.x = -0.3;
+                swingerA.userData.limbs.rightArm.rotation.y = 0;
+                swingerA.userData.limbs.rightArm.rotation.z = 0;
               }
             }
 
@@ -3779,7 +3741,9 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
               if (swingerB.userData.limbs) {
                 swingerB.userData.limbs.leftLeg.rotation.x = -1.45;
                 swingerB.userData.limbs.rightLeg.rotation.x = -1.45;
-                swingerB.userData.limbs.leftArm.rotation.set(-0.3, 0, 0);
+                swingerB.userData.limbs.leftArm.rotation.x = -0.3;
+                swingerB.userData.limbs.leftArm.rotation.y = 0;
+                swingerB.userData.limbs.leftArm.rotation.z = 0;
               }
             }
 
