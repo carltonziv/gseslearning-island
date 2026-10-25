@@ -623,13 +623,7 @@
     <span>| 點擊畫面物件、單指旋轉、雙指縮放移動</span>
   </div>
 
-  <!-- 左下角玩家操作十字鍵 -->
-  <div id="dpad-controls" class="dpad-container">
-    <button type="button" class="dpad-btn dpad-up" id="dpad-up">▲</button>
-    <button type="button" class="dpad-btn dpad-left" id="dpad-left">◀</button>
-    <button type="button" class="dpad-btn dpad-down" id="dpad-down">▼</button>
-    <button type="button" class="dpad-btn dpad-right" id="dpad-right">▶</button>
-  </div>
+
 
   <!-- 左側即時賽事晉級圖側欄 -->
   <div id="bracket-sidebar" class="bracket-sidebar-container">
@@ -1289,9 +1283,12 @@ const texture = new THREE.CanvasTexture(canvas);
         villagers.push(playerVillager);
       }
 
-      // 🌟 顯示十字鍵
-      const dpad = document.getElementById('dpad-controls');
-      if (dpad) dpad.style.display = 'block';
+// 🌟 給予初始漫步目標，讓角色登入後立即自然巡邏
+      const curIslandCfg = ISLAND_CONFIG[4];
+      const a = Math.random() * Math.PI * 2;
+      const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
+      playerVillager.targetX = curIslandCfg.pos[0] + Math.cos(a) * r;
+      playerVillager.targetZ = curIslandCfg.pos[2] + Math.sin(a) * r;
     }
     
     async function loadStudentRoster() {
@@ -3791,106 +3788,7 @@ if (mascotLeader) {
         villagers.forEach((v, idx) => {
           const limbs = v.obj.userData.limbs;
 
-          if (v === playerVillager) {
-            let moveX = 0;
-            let moveZ = 0;
 
-            if (playerMoveInput.up)    moveZ -= 1;
-            if (playerMoveInput.down)  moveZ += 1;
-            if (playerMoveInput.left)  moveX -= 1;
-            if (playerMoveInput.right) moveX += 1;
-
-            const isMoving = (moveX !== 0 || moveZ !== 0);
-
-if (isMoving) {
-              const len = Math.hypot(moveX, moveZ);
-              const inputX = moveX / len; // ✅ 命名為 inputX
-              const inputZ = moveZ / len; // ✅ 命名為 inputZ
-              
-              // 🌟 1. 取得鏡頭在水平平面上的朝向角度
-              const camDir = new THREE.Vector3();
-              camera.getWorldDirection(camDir);
-              const camAngle = Math.atan2(camDir.x, camDir.z); // 鏡頭當前的偏航角 (Yaw)
-
-              // 🌟 2. 將十字鍵的輸入向量，依照鏡頭角度進行旋轉變換
-              const dirX = inputX * Math.cos(camAngle) - inputZ * Math.sin(camAngle); // ✅ 正常計算轉向後的 dirX
-              const dirZ = inputX * Math.sin(camAngle) + inputZ * Math.cos(camAngle); // ✅ 正常計算轉向後的 dirZ
-              
-              const moveSpeed = 0.07; // 移動速度
-
-              // 1. 預計移動的新座標
-              let nextX = v.currentX + dirX * moveSpeed;
-              let nextZ = v.currentZ + dirZ * moveSpeed;
-
-              // 2. 判定玩家目前最靠近哪一座島嶼
-              let closestIsland = ISLAND_CONFIG[0];
-              let minDist = Infinity;
-              ISLAND_CONFIG.forEach(cfg => {
-                const dist = Math.hypot(nextX - cfg.pos[0], nextZ - cfg.pos[2]);
-                if (dist < minDist) {
-                  minDist = dist;
-                  closestIsland = cfg;
-                }
-              });
-
-              // 3. 計算相對該島中心的局部座標，並執行碰撞推擠判定
-              const localPos = {
-                x: nextX - closestIsland.pos[0],
-                z: nextZ - closestIsland.pos[2]
-              };
-              applyRepulsionForce(closestIsland.id, localPos);
-
-              // 4. 更新實際位置（若碰撞會被推回障礙物外圍）
-              v.currentX = closestIsland.pos[0] + localPos.x;
-              v.currentZ = closestIsland.pos[2] + localPos.z;
-              v.obj.position.x = v.currentX;
-              v.obj.position.z = v.currentZ;
-              v.obj.rotation.y = Math.atan2(dirX, dirZ);
-
-              // 邁步與擺手跑步動畫
-              v.walkCycle += 0.32;
-              const legSwing = Math.sin(v.walkCycle) * 0.55;
-              const armSwing = Math.sin(v.walkCycle) * 0.55;
-              if (limbs) {
-                limbs.leftLeg.rotation.x = legSwing;
-                limbs.rightLeg.rotation.x = -legSwing;
-                limbs.leftArm.rotation.x = -armSwing;
-                limbs.rightArm.rotation.x = armSwing;
-                if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(v.walkCycle * 2) * 0.1;
-              }
-              v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * 0.05;
-
-              // 鏡頭平滑跟隨
-if (!isFocusing) {
-                const followDistance = 14; // 鏡頭距離人物後方的水平距離
-                const followHeight = 8;    // 鏡頭高度（俯瞰角度）
-
-                // 根據人物當前的旋轉角度，動態計算人物正後方的座標
-                const camX = v.currentX - Math.sin(v.obj.rotation.y) * followDistance;
-                const camZ = v.currentZ - Math.cos(v.obj.rotation.y) * followDistance;
-                const targetCamPos = new THREE.Vector3(camX, followHeight, camZ);
-
-                // 鏡頭注視點（人物腰部到頭部高度）
-                const targetLook = new THREE.Vector3(v.currentX, 1.0, v.currentZ);
-
-                // 平滑插值跟隨與轉向
-                camera.position.lerp(targetCamPos, 0.08);
-                controls.target.lerp(targetLook, 0.08);
-                controls.update();
-              }
-            } else {
-              // 放開按鍵時停留在原地並回到站立放鬆姿勢
-              if (limbs) {
-                limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.2);
-                limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.2);
-                limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.2);
-                limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.2);
-                if (limbs.skirt) limbs.skirt.rotation.x = 0;
-              }
-              v.obj.position.y = 0;
-            }
-            return; // 🌟 關鍵：玩家處理完畢直接結束本輪，跳過下方的自動巡邏或睡眠邏輯
-          }
 
           if (isSleepingTime) {
             v.currentIslandIdx = 0;
