@@ -2065,13 +2065,7 @@ function updateNightClosedState() {
       rightEye.position.set(0.06, 1.04, 0.18);
       person.add(rightEye);
 
-      const hair = new THREE.Mesh(
-        new THREE.SphereGeometry(0.215, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.6),
-        hairMat
-      );
-      hair.position.y = 1.04;
-      hair.castShadow = true;
-      person.add(hair);
+
 
       const armGeo = new THREE.BoxGeometry(0.11, 0.45, 0.11);
 
