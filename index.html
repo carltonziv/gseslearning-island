@@ -1108,7 +1108,6 @@
     }
 
 let playerVillager = null;
-
     function removePlayerCharacter() {
       if (playerVillager) {
         if (typeof scene !== 'undefined' && scene) {
@@ -1122,6 +1121,7 @@ let playerVillager = null;
       }
     }
 
+    // 🌟 依照性別生成專屬人物（含夥伴頭像精靈與強制移動）
     function spawnPlayerCharacter() {
       removePlayerCharacter();
       if (typeof createCharacterMesh !== 'function' || typeof scene === 'undefined' || !scene) return;
@@ -1145,7 +1145,7 @@ let playerVillager = null;
       const nameplate = createPlayerNameplateSprite(displayName);
       person.add(nameplate);
 
-      // 產生夥伴頭像精靈並加到頭頂名字旁
+      // 🌟 將所選的探險夥伴頭像精靈加到人物頭頂（名字旁邊）
       const companionSprite = createCompanionSprite(currentStudent.avatar);
       person.add(companionSprite);
 
@@ -1159,7 +1159,7 @@ let playerVillager = null;
       playerVillager = {
         obj: person,
         zzzSprite: null,
-        companionSprite: companionSprite,
+        companionSprite: companionSprite, // 🌟 將夥伴頭像精靈存入結構中
         currentIslandIdx: 4,
         targetIslandIdx: 4,
         state: 'wander',
@@ -1169,7 +1169,7 @@ let playerVillager = null;
         targetZ: spawnZ,
         bridgeEndTarget: null,
         walkCycle: 0,
-        waitTimer: 1,
+        waitTimer: 1, // 設為 1 讓它立刻開始走動
         speed: 0.024,
         isJogging: false,
         isSkirt: isGirl,
@@ -1179,17 +1179,6 @@ let playerVillager = null;
         cheerPhase: 0,
         sleepBreathPhase: 0
       };
-
-      const curIslandCfg = ISLAND_CONFIG[4];
-      const a = Math.random() * Math.PI * 2;
-      const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
-      playerVillager.targetX = curIslandCfg.pos[0] + Math.cos(a) * r;
-      playerVillager.targetZ = curIslandCfg.pos[2] + Math.sin(a) * r;
-
-      if (typeof villagers !== 'undefined' && villagers) {
-        villagers.push(playerVillager);
-      }
-    }
 
       // 🌟 強制賦予隨機移動目標，讓登入後立刻開始漫步
       const curIslandCfg = ISLAND_CONFIG[4];
@@ -1202,7 +1191,6 @@ let playerVillager = null;
         villagers.push(playerVillager);
       }
     }
-
       const person = createCharacterMesh(isGirl, customSkin, customClothes, customHair);
       person.userData.isPlayer = true;
 
