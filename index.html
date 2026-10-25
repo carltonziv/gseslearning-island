@@ -3069,24 +3069,80 @@ function createSportLandmark() {
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      // 🌟 道碴碎石層（厚度 0.36m，為道路 0.18m 的 2 倍）
+// 🌟 道碴碎石層與泥土地基材質
       const ballastMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9, flatShading: true });
-      // 🌟 土地基底層（厚度 0.72m，為道碴 0.36m 的 2 倍）
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
 
-// 🌟 1. 道碴碎石層（連續平滑環狀管帶，厚度約 0.36m）
-      const ballastGeo = new THREE.TubeGeometry(trackCurve, 200, 0.55, 8, true);
+      // 🌟 1. 道碴碎石層與土地層（絕對居中，與鐵軌完美重合）
+      const divisions = 260;
+      const ballastWidth = 0.65; // 道碴半寬度（左右各 0.65m，剛好包覆兩根鐵軌外側）
+      const soilWidth = 0.95;    // 泥土半寬度（左右各 0.95m，形成自然梯形坡）
+
+      const bTopY = TRACK_Y - 0.02;    // 緊貼枕木底部
+      const bBottomY = TRACK_Y - 0.38; // 道碴層厚度 0.36m
+      const sBottomY = TRACK_Y - 1.10; // 土地層厚度 0.72m
+
+      const ballastGeo = new THREE.BufferGeometry();
+      const soilGeo = new THREE.BufferGeometry();
+
+      const bVerts = [];
+      const sVerts = [];
+
+      for (let i = 0; i < divisions; i++) {
+        const t1 = i / divisions;
+        const t2 = (i + 1) / divisions;
+
+        const p1 = trackCurve.getPointAt(t1);
+        const tan1 = trackCurve.getTangentAt(t1);
+        // 水平正交法線（嚴格鎖定水平面 Y=0，防止任何傾角導致水平位移）
+        const n1 = new THREE.Vector3(-tan1.z, 0, tan1.x).normalize();
+
+        const p2 = trackCurve.getPointAt(t2);
+        const tan2 = trackCurve.getTangentAt(t2);
+        const n2 = new THREE.Vector3(-tan2.z, 0, tan2.x).normalize();
+
+        // --- 節點座標計算（以曲線中心為原點對稱展開） ---
+        const bL1 = new THREE.Vector3(p1.x - n1.x * ballastWidth, bTopY, p1.z - n1.z * ballastWidth);
+        const bR1 = new THREE.Vector3(p1.x + n1.x * ballastWidth, bTopY, p1.z + n1.z * ballastWidth);
+        const bL2 = new THREE.Vector3(p2.x - n2.x * ballastWidth, bTopY, p2.z - n2.z * ballastWidth);
+        const bR2 = new THREE.Vector3(p2.x + n2.x * ballastWidth, bTopY, p2.z + n2.z * ballastWidth);
+
+        // 1. 道碴頂面
+        bVerts.push(bL1.x, bTopY, bL1.z,  bR1.x, bTopY, bR1.z,  bR2.x, bTopY, bR2.z);
+        bVerts.push(bL1.x, bTopY, bL1.z,  bR2.x, bTopY, bR2.z,  bL2.x, bTopY, bL2.z);
+
+        // 2. 道碴外側垂直坡面
+        bVerts.push(bR1.x, bTopY, bR1.z,  bR1.x, bBottomY, bR1.z,  bR2.x, bBottomY, bR2.z);
+        bVerts.push(bR1.x, bTopY, bR1.z,  bR2.x, bBottomY, bR2.z,  bR2.x, bTopY, bR2.z);
+
+        // 3. 道碴內側垂直坡面
+        bVerts.push(bL1.x, bBottomY, bL1.z,  bL1.x, bTopY, bL1.z,  bL2.x, bTopY, bL2.z);
+        bVerts.push(bL1.x, bBottomY, bL1.z,  bL2.x, bTopY, bL2.z,  bL2.x, bBottomY, bL2.z);
+
+        // --- 土地層節點（向外更寬、形成下收梯形） ---
+        const sL1 = new THREE.Vector3(p1.x - n1.x * soilWidth, sBottomY, p1.z - n1.z * soilWidth);
+        const sR1 = new THREE.Vector3(p1.x + n1.x * soilWidth, sBottomY, p1.z + n1.z * soilWidth);
+        const sL2 = new THREE.Vector3(p2.x - n2.x * soilWidth, sBottomY, p2.z - n2.z * soilWidth);
+        const sR2 = new THREE.Vector3(p2.x + n2.x * soilWidth, sBottomY, p2.z + n2.z * soilWidth);
+
+        // 4. 泥土外側斜坡
+        sVerts.push(bR1.x, bBottomY, bR1.z,  sR1.x, sBottomY, sR1.z,  sR2.x, sBottomY, sR2.z);
+        sVerts.push(bR1.x, bBottomY, bR1.z,  sR2.x, sBottomY, sR2.z,  bR2.x, bBottomY, bR2.z);
+
+        // 5. 泥土內側斜坡
+        sVerts.push(sL1.x, sBottomY, sL1.z,  bL1.x, bBottomY, bL1.z,  bL2.x, bBottomY, bL2.z);
+        sVerts.push(sL1.x, sBottomY, sL1.z,  bL2.x, bBottomY, bL2.z,  sL2.x, sBottomY, sL2.z);
+      }
+
+      ballastGeo.setAttribute('position', new THREE.Float32BufferAttribute(bVerts, 3));
+      ballastGeo.computeVertexNormals();
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
-      ballastMesh.position.y = TRACK_Y - 0.22;
-      ballastMesh.scale.set(1.4, 0.45, 1.4); // 壓扁展寬，形成梯形路基質感
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 2. 下層泥土地基（接在道碴下方，厚度更大、顏色更深）
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 200, 0.75, 8, true);
+      soilGeo.setAttribute('position', new THREE.Float32BufferAttribute(sVerts, 3));
+      soilGeo.computeVertexNormals();
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
-      soilMesh.position.y = TRACK_Y - 0.55;
-      soilMesh.scale.set(1.7, 0.6, 1.7); // 比道碴更寬、更厚實
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
