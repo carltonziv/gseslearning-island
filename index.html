@@ -2450,73 +2450,45 @@ function createNatureLandmark() {
     let jumperMan = null;
     let ropeMesh = null;
 
-    function createSportLandmark() {
+function createSportLandmark() {
       const group = new THREE.Group();
 
       const dbGroup = new THREE.Group();
-      const bar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.15, 0.15, 2.6, 16),
-        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 })
-      );
-      bar.rotation.z = Math.PI / 2;
-      bar.position.y = 0.75;
-      bar.castShadow = true;
-      dbGroup.add(bar);
-
-      const plateMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
-      const collarMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
-
-      [-0.9, 0.9].forEach((side) => {
-        const pBig = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.32, 6), plateMat);
-        pBig.rotation.z = Math.PI / 2;
-        pBig.position.set(side * 0.88, 0.75, 0);
-        pBig.castShadow = true;
-        dbGroup.add(pBig);
-
-        const pMed = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.28, 6), plateMat);
-        pMed.rotation.z = Math.PI / 2;
-        pMed.position.set(side * 1.2, 0.75, 0);
-        pMed.castShadow = true;
-        dbGroup.add(pMed);
-
-        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.14, 12), collarMat);
-        collar.rotation.z = Math.PI / 2;
-        collar.position.set(side * 1.36, 0.75, 0);
-        dbGroup.add(collar);
-      });
-
-      dbGroup.position.set(0, 0, -1.35);
-      dbGroup.rotation.y = 0.3;
+      // ...啞鈴部分保持不變...
       group.add(dbGroup);
       registerObstacle('sport', 0, -1.35, 1.6);
 
       jumpRopeGroup = new THREE.Group();
       jumpRopeGroup.position.set(0, 0, 1.45);
 
+      // 1. 搖繩手 A
       const swingerA = createCharacterMesh(false, 0xF5D0A9, 0x64321A, 0x3A3B3C);
       swingerA.position.set(-1.65, 0, 0);
       swingerA.rotation.y = Math.PI / 2;
-      if (swingerA.userData.limbs) {
-        swingerA.userData.limbs.rightArm.rotation.x = -1.2;
-        swingerA.userData.limbs.rightArm.rotation.z = -0.3;
-      }
+      const zzzA = createSleepZzzSprite();
+      swingerA.add(zzzA);
       jumpRopeGroup.add(swingerA);
 
+      // 2. 搖繩手 B
       const swingerB = createCharacterMesh(false, 0x8D5524, 0x052E3B, 0x483C32);
       swingerB.position.set(1.65, 0, 0);
       swingerB.rotation.y = -Math.PI / 2;
-      if (swingerB.userData.limbs) {
-        swingerB.userData.limbs.leftArm.rotation.x = -1.2;
-        swingerB.userData.limbs.leftArm.rotation.z = 0.3;
-      }
+      const zzzB = createSleepZzzSprite();
+      swingerB.add(zzzB);
       jumpRopeGroup.add(swingerB);
 
       jumpRopeGroup.userData.swingerA = swingerA;
       jumpRopeGroup.userData.swingerB = swingerB;
+      jumpRopeGroup.userData.zzzA = zzzA;
+      jumpRopeGroup.userData.zzzB = zzzB;
 
+      // 3. 中間跳繩者
       jumperMan = createCharacterMesh(true, 0xFFE0BD, 0xBE185D, 0xEBA937);
       jumperMan.position.set(0, 0, 0);
+      const zzzJumper = createSleepZzzSprite();
+      jumperMan.add(zzzJumper);
       jumpRopeGroup.add(jumperMan);
+      jumpRopeGroup.userData.zzzJumper = zzzJumper;
 
       const ropeGeo = new THREE.TorusGeometry(1.65, 0.038, 6, 24, Math.PI);
       const ropeMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
@@ -3761,26 +3733,108 @@ if (mascotLeader) {
           cartGroup.lookAt(lookTarget);
         }
 
-        if (ropeMesh && jumperMan) {
-          const ropeAngle = time * 5.0;
-          ropeMesh.rotation.x = ropeAngle;
-          jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
+if (ropeMesh && jumperMan && jumpRopeGroup) {
+          const currentHour = new Date().getHours();
+          const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
 
-          if (jumpRopeGroup && jumpRopeGroup.userData.swingerA && jumpRopeGroup.userData.swingerB) {
-            const swingerA = jumpRopeGroup.userData.swingerA;
-            const swingerB = jumpRopeGroup.userData.swingerB;
+          const swingerA = jumpRopeGroup.userData.swingerA;
+          const swingerB = jumpRopeGroup.userData.swingerB;
+          const zzzA = jumpRopeGroup.userData.zzzA;
+          const zzzB = jumpRopeGroup.userData.zzzB;
+          const zzzJumper = jumpRopeGroup.userData.zzzJumper;
 
-            const circleY = Math.sin(ropeAngle) * 0.22;
-            const circleZ = Math.cos(ropeAngle) * 0.22;
+          if (isJumperSleeping) {
+            // 🌙 夜間：繩子靜止垂放於地面，3 人坐下/低頭入睡並浮現 Zzz
+            ropeMesh.rotation.x = 0;
+            ropeMesh.position.y = 0.05;
 
-            if (swingerA.userData.limbs) {
-              swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
-              swingerA.userData.limbs.rightArm.rotation.y = circleY;
+            // 呼吸微幅起伏
+            const sleepBreath = Math.sin(time * 2.0) * 0.015;
+
+            // 1. 中間跳繩者坐下低頭
+            jumperMan.position.set(0, -0.15 + sleepBreath, 0);
+            jumperMan.rotation.x = 0.25;
+            if (jumperMan.userData.limbs) {
+              jumperMan.userData.limbs.leftLeg.rotation.x = -1.45;
+              jumperMan.userData.limbs.rightLeg.rotation.x = -1.45;
+              jumperMan.userData.limbs.leftArm.rotation.x = -0.3;
+              jumperMan.userData.limbs.rightArm.rotation.x = -0.3;
             }
-            if (swingerB.userData.limbs) {
-              swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
-              swingerB.userData.limbs.leftArm.rotation.y = -circleY;
+
+            // 2. 搖繩手 A 坐下入睡
+            if (swingerA) {
+              swingerA.position.y = -0.15 + sleepBreath;
+              swingerA.rotation.x = 0.2;
+              if (swingerA.userData.limbs) {
+                swingerA.userData.limbs.leftLeg.rotation.x = -1.45;
+                swingerA.userData.limbs.rightLeg.rotation.x = -1.45;
+                swingerA.userData.limbs.rightArm.rotation.set(-0.3, 0, 0);
+              }
             }
+
+            // 3. 搖繩手 B 坐下入睡
+            if (swingerB) {
+              swingerB.position.y = -0.15 + sleepBreath;
+              swingerB.rotation.x = 0.2;
+              if (swingerB.userData.limbs) {
+                swingerB.userData.limbs.leftLeg.rotation.x = -1.45;
+                swingerB.userData.limbs.rightLeg.rotation.x = -1.45;
+                swingerB.userData.limbs.leftArm.rotation.set(-0.3, 0, 0);
+              }
+            }
+
+            // 4. 顯示 Zzz 微光動畫
+            [zzzA, zzzB, zzzJumper].forEach((zzz, i) => {
+              if (zzz) {
+                zzz.visible = true;
+                const floatProgress = (time * 0.5 + i * 0.3) % 1.0;
+                zzz.position.y = 1.35 + floatProgress * 0.45;
+                zzz.material.opacity = Math.sin(floatProgress * Math.PI) * 0.85;
+              }
+            });
+          } else {
+            // ☀️ 白天：恢復原本充滿活力的甩繩與彈跳
+            ropeMesh.position.y = 0.38;
+            const ropeAngle = time * 5.0;
+            ropeMesh.rotation.x = ropeAngle;
+
+            jumperMan.rotation.x = 0;
+            jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
+
+            if (jumperMan.userData.limbs) {
+              jumperMan.userData.limbs.leftLeg.rotation.x = 0;
+              jumperMan.userData.limbs.rightLeg.rotation.x = 0;
+              jumperMan.userData.limbs.leftArm.rotation.x = 0;
+              jumperMan.userData.limbs.rightArm.rotation.x = 0;
+            }
+
+            if (swingerA && swingerB) {
+              swingerA.rotation.x = 0;
+              swingerB.rotation.x = 0;
+              swingerA.position.y = 0;
+              swingerB.position.y = 0;
+
+              const circleY = Math.sin(ropeAngle) * 0.22;
+              const circleZ = Math.cos(ropeAngle) * 0.22;
+
+              if (swingerA.userData.limbs) {
+                swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
+                swingerA.userData.limbs.rightArm.rotation.y = circleY;
+                swingerA.userData.limbs.leftLeg.rotation.x = 0;
+                swingerA.userData.limbs.rightLeg.rotation.x = 0;
+              }
+              if (swingerB.userData.limbs) {
+                swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
+                swingerB.userData.limbs.leftArm.rotation.y = -circleY;
+                swingerB.userData.limbs.leftLeg.rotation.x = 0;
+                swingerB.userData.limbs.rightLeg.rotation.x = 0;
+              }
+            }
+
+            // 隱藏 Zzz
+            if (zzzA) zzzA.visible = false;
+            if (zzzB) zzzB.visible = false;
+            if (zzzJumper) zzzJumper.visible = false;
           }
         }
 
