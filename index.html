@@ -1191,53 +1191,7 @@ let playerVillager = null;
         villagers.push(playerVillager);
       }
     }
-      const person = createCharacterMesh(isGirl, customSkin, customClothes, customHair);
-      person.userData.isPlayer = true;
 
-      const displayName = currentStudent.seatNumber === '訪客' 
-        ? `${currentStudent.avatar} ${currentStudent.name}` 
-        : `${currentStudent.seatNumber}號 ${currentStudent.name}`;
-      const nameplate = createPlayerNameplateSprite(displayName);
-      person.add(nameplate);
-
-      const startIslandIdx = 4;
-      const startIsland = ISLAND_CONFIG[startIslandIdx];
-      const spawnX = startIsland.pos[0] + 0.8;
-      const spawnZ = startIsland.pos[2] + 1.2;
-      person.position.set(spawnX, 0, spawnZ);
-      scene.add(person);
-      // 🌟 新進：生成 3D 探險夥伴小動物跟班
-      const companionAnimal = createCompanionAnimal(currentStudent.avatar);
-      person.add(companionAnimal);
-      
-playerVillager = {
-        obj: person,
-        zzzSprite: null,
-        currentIslandIdx: 4,
-        targetIslandIdx: 4,
-        state: 'wander',
-        currentX: spawnX,
-        currentZ: spawnZ,
-        targetX: spawnX,
-        targetZ: spawnZ,
-        bridgeEndTarget: null,
-        walkCycle: 0,
-        waitTimer: 20,
-        speed: 0.024,
-        isJogging: false,
-        isSkirt: isGirl,
-        cheerType: 'jump_both',
-        stadiumPos: { x: 2.8, z: 0.5 },
-        sleepPos: { x: 2.6, z: 0.5 },
-        cheerPhase: 0,
-        sleepBreathPhase: 0,
-        companionAnimal: companionAnimal // 🌟 將 3D 動物夥伴正確放入玩家結構中
-      };
-
-      if (typeof villagers !== 'undefined' && villagers) {
-        villagers.push(playerVillager);
-      }
-    }
 
     async function loadStudentRoster() {
       const select = document.getElementById('select-identity');
