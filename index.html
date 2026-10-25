@@ -3826,6 +3826,15 @@ if (mascotLeader) {
                 if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(v.walkCycle * 2) * 0.1;
               }
               v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * 0.05;
+              if (!isFocusing) { // 避免與點擊島嶼時的特寫運鏡衝突
+                const camOffset = new THREE.Vector3(0, 10, 14); // 鏡頭相對人物的距離（高 10、後方 14）
+                const targetCamPos = new THREE.Vector3(v.currentX, 0, v.currentZ).add(camOffset);
+                const targetLook = new THREE.Vector3(v.currentX, 0.8, v.currentZ);
+
+                camera.position.lerp(targetCamPos, 0.06); // 平滑跟隨
+                controls.target.lerp(targetLook, 0.06);
+                controls.update();
+              }
             } else {
               // 放開按鍵時停留在原地並回到站立放鬆姿勢
               if (limbs) {
