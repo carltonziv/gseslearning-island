@@ -3802,14 +3802,37 @@ if (mascotLeader) {
 
             const isMoving = (moveX !== 0 || moveZ !== 0);
 
-            if (isMoving) {
+if (isMoving) {
               const len = Math.hypot(moveX, moveZ);
               const dirX = moveX / len;
               const dirZ = moveZ / len;
               const moveSpeed = 0.07; // 移動速度
 
-              v.currentX += dirX * moveSpeed;
-              v.currentZ += dirZ * moveSpeed;
+              // 1. 預計移動的新座標
+              let nextX = v.currentX + dirX * moveSpeed;
+              let nextZ = v.currentZ + dirZ * moveSpeed;
+
+              // 2. 判定玩家目前最靠近哪一座島嶼
+              let closestIsland = ISLAND_CONFIG[0];
+              let minDist = Infinity;
+              ISLAND_CONFIG.forEach(cfg => {
+                const dist = Math.hypot(nextX - cfg.pos[0], nextZ - cfg.pos[2]);
+                if (dist < minDist) {
+                  minDist = dist;
+                  closestIsland = cfg;
+                }
+              });
+
+              // 3. 計算相對該島中心的局部座標，並執行碰撞推擠判定
+              const localPos = {
+                x: nextX - closestIsland.pos[0],
+                z: nextZ - closestIsland.pos[2]
+              };
+              applyRepulsionForce(closestIsland.id, localPos);
+
+              // 4. 更新實際位置（若碰撞會被推回障礙物外圍）
+              v.currentX = closestIsland.pos[0] + localPos.x;
+              v.currentZ = closestIsland.pos[2] + localPos.z;
               v.obj.position.x = v.currentX;
               v.obj.position.z = v.currentZ;
               v.obj.rotation.y = Math.atan2(dirX, dirZ);
@@ -3826,7 +3849,9 @@ if (mascotLeader) {
                 if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(v.walkCycle * 2) * 0.1;
               }
               v.obj.position.y = Math.abs(Math.sin(v.walkCycle)) * 0.05;
-              if (!isFocusing) { // 避免與點擊島嶼時的特寫運鏡衝突
+
+              // 鏡頭平滑跟隨
+              if (!isFocusing) {
                 const camOffset = new THREE.Vector3(0, 10, 14); // 鏡頭相對人物的距離（高 10、後方 14）
                 const targetCamPos = new THREE.Vector3(v.currentX, 0, v.currentZ).add(camOffset);
                 const targetLook = new THREE.Vector3(v.currentX, 0.8, v.currentZ);
