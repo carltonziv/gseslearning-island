@@ -2381,47 +2381,61 @@ function updateNightClosedState() {
     let windTurbineBlades = [];
 
 function createNatureLandmark() {
-      const group = new THREE.Group();
+  const group = new THREE.Group();
 
-      // 瓢蟲身體材質與斑點材質
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3, metalness: 0.2 }); // 紅色亮面外殼
-      const headMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色頭部
-      const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色斑點
+  // 瓢蟲身體材質與斑點材質
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3, metalness: 0.2 }); // 紅色亮面外殼
+  const headMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色頭部
+  const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色斑點
 
-// 1. 瓢蟲身體（使用標準圓球體或正確的半球體，避免變形）
-      const body = new THREE.Mesh(new THREE.SphereGeometry(1.3, 16, 16), bodyMat);
-      body.position.y = 0.9;
-      body.scale.set(1, 0.85, 1.2); // 稍微調整長寬高比例使其飽滿
-      body.castShadow = true;
-      group.add(body);
+  // 🌟 1. 瓢蟲身體改為「上半半球體」並貼齊地面 (Y = 0)
+  // SphereGeometry 參數說明：半徑 1.5, 寬度分段 24, 高度分段 16, phiStart 0, phiLength 2π, thetaStart 0, thetaLength π/2 (上半球)
+  const bodyGeo = new THREE.SphereGeometry(1.5, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.y = 0;              // 底部貼齊地面
+  body.scale.set(1.0, 0.75, 1.25);  // 水平稍長、高度微扁的甲蟲流線體型
+  body.castShadow = true;
+  body.receiveShadow = true;
+  group.add(body);
 
-      // 2. 黑色頭部
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 12), headMat);
-      head.position.set(0, 0.6, 1.3);
-      head.castShadow = true;
-      group.add(head);
+  // 底部封底平盤（防止俯瞰或鏡頭旋轉時內部穿幫鏤空）
+  const bottomCapGeo = new THREE.CircleGeometry(1.5, 24);
+  const bottomCap = new THREE.Mesh(bottomCapGeo, spotMat);
+  bottomCap.rotation.x = Math.PI / 2; // 水平躺平
+  bottomCap.scale.set(1.0, 1.25, 1.0);
+  bottomCap.position.y = 0.01;        // 微高於地表避免破面
+  group.add(bottomCap);
 
-      // 3. 背部黑色斑點（左右對稱共 4 顆）
-      const spotGeo = new THREE.SphereGeometry(0.25, 8, 8);
-      spotGeo.scale(1, 0.4, 1);
+  // 🌟 2. 黑色頭部（調整為半埋入地表的半球體外觀，接在前側）
+  const headGeo = new THREE.SphereGeometry(0.7, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.set(0, 0, 1.4);
+  head.scale.set(1.0, 0.65, 0.85);
+  head.castShadow = true;
+  group.add(head);
 
-      const spotPositions = [
-        [-0.6, 1.4, 0.3], [0.6, 1.4, 0.3],
-        [-0.8, 1.1, -0.5], [0.8, 1.1, -0.5]
-      ];
-      spotPositions.forEach(pos => {
-        const spot = new THREE.Mesh(spotGeo, spotMat);
-        spot.position.set(...pos);
-        group.add(spot);
-      });
+  // 🌟 3. 背部黑色斑點（貼合上半球表面弧度）
+  const spotGeo = new THREE.SphereGeometry(0.24, 12, 12);
+  spotGeo.scale(1.0, 0.25, 1.0);
 
-      // 4. 背部中央分隔線
-      const lineGeo = new THREE.BoxGeometry(0.08, 0.05, 2.5);
-      const lineMesh = new THREE.Mesh(lineGeo, spotMat);
-      lineMesh.position.set(0, 1.62, 0.1);
-      group.add(lineMesh);
+  const spotPositions = [
+    [-0.65, 0.75, 0.35], [0.65, 0.75, 0.35],
+    [-0.75, 0.55, -0.55], [0.75, 0.55, -0.55]
+  ];
+  spotPositions.forEach(pos => {
+    const spot = new THREE.Mesh(spotGeo, spotMat);
+    spot.position.set(...pos);
+    group.add(spot);
+  });
 
-      registerObstacle('nature', 0, 0, 2.0);
+  // 🌟 4. 背部中央分隔線（貼合半球體最高脊線）
+  const lineGeo = new THREE.BoxGeometry(0.06, 0.04, 2.7);
+  const lineMesh = new THREE.Mesh(lineGeo, spotMat);
+  lineMesh.position.set(0, 1.13, 0.05); // 貼在身體縮放後的最高頂點附近
+  group.add(lineMesh);
+
+  registerObstacle('nature', 0, 0, 2.0); // 避障範圍維持 2.0m
+
 
       // 5. 保留原本的風力發電機（風車），放在瓢蟲身旁兩側
       const turbineCoords = [[-2.4, -1.8], [2.4, 1.8]];
