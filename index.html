@@ -3465,14 +3465,7 @@ function createSportLandmark() {
         scene.add(moon);
       }
 
-      // 鋪設十字與外環串接通道
-      for (let i = 1; i <= 4; i++) {
-        scene.add(createConnectingWalkway(ISLAND_CONFIG[0].pos, ISLAND_CONFIG[i].pos));
-      }
-      scene.add(createConnectingWalkway(ISLAND_CONFIG[1].pos, ISLAND_CONFIG[2].pos));
-      scene.add(createConnectingWalkway(ISLAND_CONFIG[2].pos, ISLAND_CONFIG[4].pos));
-      scene.add(createConnectingWalkway(ISLAND_CONFIG[4].pos, ISLAND_CONFIG[3].pos));
-      scene.add(createConnectingWalkway(ISLAND_CONFIG[3].pos, ISLAND_CONFIG[1].pos));
+
 
       // 加入外擴軌道與分層路基
       scene.add(createOuterLoopTrackAndCart());
@@ -4290,54 +4283,37 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
               v.obj.rotation.y += Math.sin(time * 2.0 + idx) * 0.005;
 
               if (v.waitTimer <= 0) {
-                if (Math.random() < 0.28) {
-                  const ringNeighbors = { 1: [2, 3], 2: [1, 4], 3: [1, 4], 4: [2, 3] };
-                  const nextIsland = ringNeighbors[v.currentIslandIdx][Math.floor(Math.random() * 2)];
-                  v.targetIslandIdx = nextIsland;
+                // 🌟 取消跨島過橋，村民僅在各自所屬島嶼內部漫步
+                const curCenter = curIslandCfg.pos;
+                const startLocalX = v.currentX - curCenter[0];
+                const startLocalZ = v.currentZ - curCenter[2];
+                let foundValid = false;
+                let tx = 0, tz = 0;
 
-                  const pStart = ISLAND_CONFIG[v.currentIslandIdx].pos;
-                  const pEnd = ISLAND_CONFIG[nextIsland].pos;
-                  const dir = new THREE.Vector3(pEnd[0] - pStart[0], 0, pEnd[2] - pStart[2]).normalize();
+                for (let attempt = 0; attempt < 12; attempt++) {
+                  const a = Math.random() * Math.PI * 2;
+                  const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
+                  const lx = Math.cos(a) * r;
+                  const lz = Math.sin(a) * r;
 
-                  v.targetX = pStart[0] + dir.x * 4.2;
-                  v.targetZ = pStart[2] + dir.z * 4.2;
-                  v.bridgeEndTarget = {
-                    x: pEnd[0] - dir.x * 4.2,
-                    z: pEnd[2] - dir.z * 4.2,
-                    finalX: pEnd[0] + (Math.random() - 0.5) * 2.2,
-                    finalZ: pEnd[2] + (Math.random() - 0.5) * 2.2
-                  };
-                  v.state = 'bridge_start';
-                } else {
-                  const curCenter = curIslandCfg.pos;
-                  const startLocalX = v.currentX - curCenter[0];
-                  const startLocalZ = v.currentZ - curCenter[2];
-                  let foundValid = false;
-                  let tx = 0, tz = 0;
-
-                  for (let attempt = 0; attempt < 12; attempt++) {
-                    const a = Math.random() * Math.PI * 2;
-                    const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
-                    const lx = Math.cos(a) * r;
-                    const lz = Math.sin(a) * r;
-
-                    if (!isPositionBlocked(curIslandCfg.id, lx, lz) &&
-                        !isPathBlocked(curIslandCfg.id, startLocalX, startLocalZ, lx, lz)) {
-                      tx = curCenter[0] + lx;
-                      tz = curCenter[2] + lz;
-                      foundValid = true;
-                      break;
-                    }
-                  }
-                  if (foundValid) {
-                    v.targetX = tx;
-                    v.targetZ = tz;
-                    v.state = 'wander';
-                  } else {
-                    v.waitTimer = 30;
+                  if (!isPositionBlocked(curIslandCfg.id, lx, lz) &&
+                      !isPathBlocked(curIslandCfg.id, startLocalX, startLocalZ, lx, lz)) {
+                    tx = curCenter[0] + lx;
+                    tz = curCenter[2] + lz;
+                    foundValid = true;
+                    break;
                   }
                 }
+                if (foundValid) {
+                  v.targetX = tx;
+                  v.targetZ = tz;
+                  v.state = 'wander';
+                } else {
+                  v.waitTimer = 30;
+                }
               }
+
+
             } else {
               const dx = v.targetX - v.currentX;
               const dz = v.targetZ - v.currentZ;
