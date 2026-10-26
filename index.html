@@ -3130,6 +3130,9 @@ function createSportLandmark() {
     let lastPhaseName = '';
     let dirLight, hemiLight;
 
+    let oceanMesh = null;
+    let oceanInitialZ = []; // 儲存海洋頂點的原始基準高度
+
     let isFocusing = false;
     let targetCameraPos = new THREE.Vector3(0, 36, 38);
     let targetLookAt = new THREE.Vector3(0, 0, 0);
@@ -3473,6 +3476,28 @@ function createSportLandmark() {
 
       // 加入外擴軌道與分層路基
       scene.add(createOuterLoopTrackAndCart());
+
+      // 🌟 在島嶼周圍加上海洋水面（細分 64x64 用於小波浪頂點起伏）
+      const oceanGeo = new THREE.PlaneGeometry(160, 160, 64, 64);
+      const oceanMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        roughness: 0.15,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.72
+      });
+      oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
+      oceanMesh.rotation.x = -Math.PI / 2; // 水平躺平
+      oceanMesh.position.y = -0.6;          // 基準高度（淹過沙灘下半部）
+      oceanMesh.receiveShadow = true;
+      scene.add(oceanMesh);
+
+      // 記錄每個頂點的初始位置供後續波浪計算
+      const posAttr = oceanGeo.attributes.position;
+      oceanInitialZ = [];
+      for (let i = 0; i < posAttr.count; i++) {
+        oceanInitialZ.push(posAttr.getZ(i));
+      }
 
       // 🌟 在島嶼周圍加上海洋水面（高度設在 Y = -0.6，剛好淹過沙灘下半部）
       const oceanGeo = new THREE.PlaneGeometry(160, 160, 32, 32);
@@ -3834,6 +3859,21 @@ const totalVillagers = 16;
         windTurbineBlades.forEach(blade => {
           blade.rotation.z += 0.04;
         });
+
+        // 🌊 海洋小波浪起伏動態效果
+        if (oceanMesh && oceanInitialZ.length > 0) {
+          const posAttr = oceanMesh.geometry.attributes.position;
+          for (let i = 0; i < posAttr.count; i++) {
+            const u = posAttr.getX(i);
+            const v = posAttr.getY(i);
+            // 結合雙重正弦波模擬微波漣漪（波高約 0.08m，速度與波長自然交錯）
+            const wave = Math.sin(u * 0.35 + time * 2.0) * 0.05 + 
+                         Math.cos(v * 0.45 + time * 1.5) * 0.04;
+            posAttr.setZ(i, oceanInitialZ[i] + wave);
+          }
+          posAttr.needsUpdate = true;
+          oceanMesh.geometry.computeVertexNormals(); // 重新計算光影法線，呈現波光粼粼感
+        }
 
         islandFlowers.forEach(fl => {
           const phase = time * fl.userData.swaySpeed + fl.userData.swayPhase;
