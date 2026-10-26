@@ -1350,8 +1350,8 @@ const texture = new THREE.CanvasTexture(canvas);
 
       const startIslandIdx = 4;
       const startIsland = ISLAND_CONFIG[startIslandIdx];
-      const spawnX = startIsland.pos[0] + 0.8;
-      const spawnZ = startIsland.pos[2] + 1.2;
+      const spawnX = startIsland.pos[0] + 2.3;
+      const spawnZ = startIsland.pos[2] + 2.3;
       person.position.set(spawnX, 0, spawnZ);
       scene.add(person);
       
@@ -1383,12 +1383,27 @@ const texture = new THREE.CanvasTexture(canvas);
         villagers.push(playerVillager);
       }
 
-// 🌟 給予初始漫步目標，讓角色登入後立即自然巡邏
+// 🌟 給予初始避障漫步目標，讓角色登入後立即自然巡邏
       const curIslandCfg = ISLAND_CONFIG[4];
-      const a = Math.random() * Math.PI * 2;
-      const r = 2.0 + Math.random() * (curIslandCfg.radius - 2.6);
-      playerVillager.targetX = curIslandCfg.pos[0] + Math.cos(a) * r;
-      playerVillager.targetZ = curIslandCfg.pos[2] + Math.sin(a) * r;
+      const curCenter = curIslandCfg.pos;
+      let foundValid = false;
+      for (let attempt = 0; attempt < 15; attempt++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = 2.8 + Math.random() * (curIslandCfg.radius - 3.4); // 半徑 2.8m 以上，完全避開中央神廟
+        const lx = Math.cos(a) * r;
+        const lz = Math.sin(a) * r;
+        if (!isPositionBlocked(curIslandCfg.id, lx, lz)) {
+          playerVillager.targetX = curCenter[0] + lx;
+          playerVillager.targetZ = curCenter[2] + lz;
+          foundValid = true;
+          break;
+        }
+      }
+      if (!foundValid) {
+        playerVillager.targetX = curCenter[0] + 3.0;
+        playerVillager.targetZ = curCenter[2] + 2.0;
+      }
+      playerVillager.waitTimer = 0; // 登入後立即起步走動
     }
     
     async function loadStudentRoster() {
