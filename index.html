@@ -3480,24 +3480,13 @@ function createSportLandmark() {
         group.position.set(...cfg.pos);
 
         const baseRadius = cfg.radius;
-        let baseMat;
-
-        if (cfg.isGaussian) {
-baseMat = new THREE.MeshStandardMaterial({ 
+const baseMat = new THREE.MeshStandardMaterial({ 
           color: cfg.color, 
           flatShading: true, 
-          roughness: 0.9,  // 👈 提高粗糙度，吸收過強白光反光
-          metalness: 0.0   // 👈 金屬度歸零
+          roughness: 0.85, 
+          metalness: 0.0 
         });
-        } else {
-          baseMat = new THREE.MeshStandardMaterial({ 
-            color: cfg.color, 
-            flatShading: true, 
-            roughness: 0.9, 
-            metalness: 0 
-          });
-        }
-
+        
         const base = new THREE.Mesh(
           new THREE.CylinderGeometry(baseRadius, baseRadius * 0.84, 4, 6),
           baseMat
