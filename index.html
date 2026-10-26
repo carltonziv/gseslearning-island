@@ -3518,6 +3518,7 @@ const canvas = document.createElement('canvas');
     }
 
     let cartGroup = null;
+    let trailerCarts = []; // 🌟 新增：存放後方 8 節連掛台車
     let cartProgress = 0;
     let trackCurve = null;
 
@@ -3658,13 +3659,14 @@ const canvas = document.createElement('canvas');
         system.add(tie);
       }
 
-      cartGroup = new THREE.Group();
+cartGroup = new THREE.Group();
       cartGroup.userData = { isCart: true };
 
       const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
       const ironFrameMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.85, roughness: 0.25 });
       const brassMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 });
 
+      // 🌟 1. 建立前端動力台車（母車，保留車頂與頭燈）
       const cartBody = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.55, 1.9), woodCartMat);
       cartBody.position.y = 0.45;
       cartBody.castShadow = true;
@@ -3706,7 +3708,7 @@ const canvas = document.createElement('canvas');
       bulbGlow.position.set(0, 0.75, 1.15);
       cartGroup.add(bulbGlow);
 
-        [[-0.35, 0.15, -0.55], [0.35, 0.15, -0.55], [-0.35, 0.15, 0.55], [0.35, 0.15, 0.55]].forEach(pos => {
+      [[-0.35, 0.15, -0.55], [0.35, 0.15, -0.55], [-0.35, 0.15, 0.55], [0.35, 0.15, 0.55]].forEach(pos => {
         const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.10, 16), ironFrameMat);
         wheel.rotation.z = Math.PI / 2;
         wheel.position.set(...pos);
@@ -3722,8 +3724,158 @@ const canvas = document.createElement('canvas');
       cartGroup.traverse(child => {
         child.userData.isCart = true;
       });
-
       system.add(cartGroup);
+
+// 🌟 2. 建立後方連掛的 8 節台車（前4台載客小木椅、後4台堆疊原木）
+      trailerCarts = [];
+      const TRAILER_COUNT = 8;
+      const thinPlankThickness = 0.55 / 5; // 板厚 0.11m
+      const woodSeatMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.7 });
+      const logBarkMat = new THREE.MeshStandardMaterial({ color: 0x5C4033, roughness: 0.85 }); // 原木樹皮色
+      const logCoreMat = new THREE.MeshStandardMaterial({ color: 0xD2B48C, roughness: 0.6 });  // 原木切面年輪色
+      const logRopeMat = new THREE.MeshBasicMaterial({ color: 0x27272A });                    // 固定鐵鍊/繩索
+
+      for (let i = 0; i < TRAILER_COUNT; i++) {
+        const trailer = new THREE.Group();
+        trailer.userData = { isCart: true };
+
+        // 薄型木質車底板 (厚度 0.11m)
+        const thinBody = new THREE.Mesh(
+          new THREE.BoxGeometry(1.3, thinPlankThickness, 1.9),
+          woodCartMat
+        );
+        thinBody.position.y = 0.2 + thinPlankThickness / 2;
+        thinBody.castShadow = true;
+        trailer.add(thinBody);
+
+        // 鋼構底框
+        const trailerFrame = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.06, 1.94), ironFrameMat);
+        trailerFrame.position.y = 0.18;
+        trailer.add(trailerFrame);
+
+        // 四支木質立柱
+        const pillarMat = new THREE.MeshStandardMaterial({ color: 0x4a3728, roughness: 0.8 });
+        [[-0.55, -0.75], [0.55, -0.75], [-0.55, 0.75], [0.55, 0.75]].forEach(([px, pz]) => {
+          const woodPillar = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.045, 0.05, 0.75, 8),
+            pillarMat
+          );
+          woodPillar.position.set(px, 0.2 + thinPlankThickness + 0.375, pz);
+          woodPillar.castShadow = true;
+          trailer.add(woodPillar);
+        });
+
+        // 四個鐵輪與輪轂
+        [[-0.35, 0.15, -0.55], [0.35, 0.15, -0.55], [-0.35, 0.15, 0.55], [0.35, 0.15, 0.55]].forEach(pos => {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.10, 16), ironFrameMat);
+          wheel.rotation.z = Math.PI / 2;
+          wheel.position.set(...pos);
+          wheel.castShadow = true;
+          trailer.add(wheel);
+
+          const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 8), brassMat);
+          hub.rotation.z = Math.PI / 2;
+          hub.position.set(...pos);
+          trailer.add(hub);
+        });
+
+        const floorY = 0.2 + thinPlankThickness; // 車底板表面高度
+
+        // ==========================================
+        // 前 4 節（i = 0, 1, 2, 3）：設置客運簡易小木椅（雙排木長凳）
+        // ==========================================
+        if (i < 4) {
+          [-0.45, 0.45].forEach(seatZ => {
+            const bench = new THREE.Group();
+            
+            // 椅面
+            const seatPlank = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.04, 0.32), woodSeatMat);
+            seatPlank.position.set(0, floorY + 0.22, seatZ);
+            seatPlank.castShadow = true;
+            bench.add(seatPlank);
+
+            // 椅背
+            const backRest = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.2, 0.03), woodSeatMat);
+            backRest.position.set(0, floorY + 0.36, seatZ + (seatZ < 0 ? -0.14 : 0.14));
+            backRest.castShadow = true;
+            bench.add(backRest);
+
+            // 四支椅腳
+            [[-0.4, -0.11], [0.4, -0.11], [-0.4, 0.11], [0.4, 0.11]].forEach(([lx, lz]) => {
+              const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.22, 6), woodSeatMat);
+              leg.position.set(lx, floorY + 0.11, seatZ + lz);
+              leg.castShadow = true;
+              bench.add(leg);
+            });
+
+            trailer.add(bench);
+          });
+        } 
+        // ==========================================
+        // 後 4 節（i = 4, 5, 6, 7）：堆疊運材原木（金字塔形雙層堆疊）
+        // ==========================================
+        else {
+          const logGroup = new THREE.Group();
+          const logRadius = 0.18;
+          const logLength = 1.6;
+
+          // 原木生成函式（含兩端橫切面年輪細節）
+          function createTimberLog(x, y, z) {
+            const singleLog = new THREE.Group();
+            // 樹幹本體
+            const logBark = new THREE.Mesh(
+              new THREE.CylinderGeometry(logRadius, logRadius, logLength, 12),
+              logBarkMat
+            );
+            logBark.rotation.x = Math.PI / 2; // 沿車廂前後方向放置
+            logBark.castShadow = true;
+            singleLog.add(logBark);
+
+            // 前後切面木質年輪盤
+            [-1, 1].forEach(dir => {
+              const cap = new THREE.Mesh(new THREE.CircleGeometry(logRadius * 0.95, 12), logCoreMat);
+              cap.position.set(0, 0, dir * (logLength / 2 + 0.002));
+              if (dir === -1) cap.rotation.y = Math.PI;
+              singleLog.add(cap);
+            });
+
+            singleLog.position.set(x, y, z);
+            return singleLog;
+          }
+
+          // 下層 3 根原木
+          const bottomY = floorY + logRadius + 0.02;
+          logGroup.add(createTimberLog(-0.34, bottomY, 0));
+          logGroup.add(createTimberLog(0, bottomY, 0));
+          logGroup.add(createTimberLog(0.34, bottomY, 0));
+
+          // 上層 2 根原木（交錯堆疊）
+          const topY = bottomY + logRadius * 1.65;
+          logGroup.add(createTimberLog(-0.17, topY, 0));
+          logGroup.add(createTimberLog(0.17, topY, 0));
+
+          // 綑綁原木的固定鐵鍊/鋼索（前後各一條）
+          [-0.45, 0.45].forEach(cz => {
+            const chain = new THREE.Mesh(
+              new THREE.TorusGeometry(0.55, 0.016, 6, 16, Math.PI),
+              logRopeMat
+            );
+            chain.position.set(0, floorY + 0.28, cz);
+            chain.castShadow = true;
+            logGroup.add(chain);
+          });
+
+          trailer.add(logGroup);
+        }
+
+        trailer.traverse(child => {
+          child.userData.isCart = true;
+        });
+
+        system.add(trailer);
+        trailerCarts.push(trailer);
+      }
+
       return system;
     }
 
@@ -4389,7 +4541,7 @@ if (mascotLeader) {
         }
 
 
-        // 台車行駛動畫（未暫停時前進）
+// 台車行駛動畫（未暫停時前進）
         if (cartGroup && trackCurve && !isCartPaused) {
           cartProgress = (cartProgress + 0.0005) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
@@ -4399,6 +4551,24 @@ if (mascotLeader) {
           cartGroup.position.y += 0.02;
           const lookTarget = pos.clone().add(tangent);
           cartGroup.lookAt(lookTarget);
+
+          // 🌟 讓後方 8 節台車依序等距跟隨（間隔 0.024 進度）
+          if (trailerCarts && trailerCarts.length > 0) {
+            const spacing = 0.024; // 車廂間距
+            trailerCarts.forEach((trailer, idx) => {
+              // 計算後方車廂進度（確保在 0.0 ~ 1.0 之間循環）
+              let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
+              if (tProg < 0) tProg += 1.0;
+
+              const tPos = trackCurve.getPointAt(tProg);
+              const tTan = trackCurve.getTangentAt(tProg);
+
+              trailer.position.copy(tPos);
+              trailer.position.y += 0.02;
+              const tTarget = tPos.clone().add(tTan);
+              trailer.lookAt(tTarget);
+            });
+          }
         }
 
 if (ropeMesh && jumperMan && jumpRopeGroup) {
