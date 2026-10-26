@@ -573,57 +573,42 @@
     .dpad-left  { top: 44px; left: 0; }
     .dpad-right { top: 44px; right: 0; }
 
-    /* 🌟 左下角五島微縮雷達投影圖 */
+/* 🌟 左下角純淨 2D 六角島嶼投影 */
     .minimap-container {
       position: absolute;
       bottom: 24px;
       left: 24px;
-      width: 140px;
-      height: 140px;
-      background: rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(8px);
-      border: 2px solid rgba(253, 224, 71, 0.5);
-      border-radius: 20px;
+      width: 120px;
+      height: 120px;
       z-index: 100;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      pointer-events: auto;
+      pointer-events: none; /* 讓空白處不阻擋場景操作 */
     }
     .minimap-svg {
-      width: 125px;
-      height: 125px;
+      width: 100%;
+      height: 100%;
       overflow: visible;
     }
     .minimap-island {
       cursor: pointer;
-      transition: fill 0.3s ease, stroke 0.3s ease, transform 0.2s ease;
+      pointer-events: auto; /* 僅六角形島嶼本體可點擊 */
+      transition: fill 0.3s ease, stroke 0.3s ease, transform 0.15s ease;
     }
     .minimap-island:hover {
-      filter: brightness(1.25);
+      filter: brightness(1.35);
+      stroke-width: 2.2;
     }
-    /* 任務開放且未完成：透明灰色 */
+    /* 任務開放（未完成）：透明灰色 */
     .minimap-open {
       fill: rgba(148, 163, 184, 0.45);
-      stroke: rgba(226, 232, 240, 0.85);
+      stroke: rgba(226, 232, 240, 0.9);
       stroke-width: 1.5;
     }
     /* 任務關閉或已完成：透明暗紅色 */
     .minimap-closed {
       fill: rgba(185, 28, 28, 0.55);
-      stroke: rgba(248, 113, 113, 0.85);
+      stroke: rgba(248, 113, 113, 0.9);
       stroke-width: 1.5;
     }
-    .minimap-label {
-      font-size: 8px;
-      font-weight: 800;
-      fill: #ffffff;
-      text-anchor: middle;
-      dominant-baseline: central;
-      pointer-events: none;
-    }
-
 
     
   </style>
@@ -674,47 +659,36 @@
     <span>| 點擊畫面物件、單指旋轉、雙指縮放移動</span>
   </div>
 
-  <!-- 🌟 左下角五島微縮雷達投影圖 -->
+  
+<!-- 🌟 左下角五島微縮雷達投影圖（純 2D 正六角形） -->
   <div id="minimap-panel" class="minimap-container">
     <svg class="minimap-svg" viewBox="-24 -24 48 48">
-      <!-- 連接走道微縮線 -->
-      <line x1="0" y1="0" x2="-11" y2="-6.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="1.5,1.5" />
-      <line x1="0" y1="0" x2="11" y2="-6.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="1.5,1.5" />
-      <line x1="0" y1="0" x2="-11" y2="6.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="1.5,1.5" />
-      <line x1="0" y1="0" x2="11" y2="6.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="1.5,1.5" />
-
-      <!-- 中央：戰鬥陀螺島 -->
-      <g id="mini-beyblade" class="minimap-island minimap-closed" onclick="focusOnIsland(ISLAND_CONFIG[0])">
-        <circle cx="0" cy="0" r="6.5" />
-        <text x="0" y="0" class="minimap-label">陀螺</text>
-      </g>
+      <!-- 中央：戰鬥陀螺島 (正六角形) -->
+      <polygon id="mini-beyblade" class="minimap-island minimap-closed" 
+               points="0,-6.5 5.63,-3.25 5.63,3.25 0,6.5 -5.63,3.25 -5.63,-3.25" 
+               onclick="focusOnIsland(ISLAND_CONFIG[0])" />
 
       <!-- 左上：生態科技島 -->
-      <g id="mini-nature" class="minimap-island minimap-open" onclick="focusOnIsland(ISLAND_CONFIG[1])">
-        <circle cx="-11" cy="-6.5" r="5.6" />
-        <text x="-11" y="-6.5" class="minimap-label">生態</text>
-      </g>
+      <polygon id="mini-nature" class="minimap-island minimap-open" 
+               points="-11.5,-12.4 -6.48,-9.5 -6.48,-3.7 -11.5,-0.8 -16.52,-3.7 -16.52,-9.5" 
+               onclick="focusOnIsland(ISLAND_CONFIG[1])" />
 
       <!-- 右上：健身運動島 -->
-      <g id="mini-sport" class="minimap-island minimap-open" onclick="focusOnIsland(ISLAND_CONFIG[2])">
-        <circle cx="11" cy="-6.5" r="5.6" />
-        <text x="11" y="-6.5" class="minimap-label">運動</text>
-      </g>
+      <polygon id="mini-sport" class="minimap-island minimap-open" 
+               points="11.5,-12.4 16.52,-9.5 16.52,-3.7 11.5,-0.8 6.48,-3.7 6.48,-9.5" 
+               onclick="focusOnIsland(ISLAND_CONFIG[2])" />
 
       <!-- 左下：閱讀島 -->
-      <g id="mini-reading" class="minimap-island minimap-open" onclick="focusOnIsland(ISLAND_CONFIG[3])">
-        <circle cx="-11" cy="6.5" r="5.6" />
-        <text x="-11" y="6.5" class="minimap-label">閱讀</text>
-      </g>
+      <polygon id="mini-reading" class="minimap-island minimap-open" 
+               points="-11.5,0.8 -6.48,3.7 -6.48,9.5 -11.5,12.4 -16.52,9.5 -16.52,3.7" 
+               onclick="focusOnIsland(ISLAND_CONFIG[3])" />
 
       <!-- 右下：優良公民島 -->
-      <g id="mini-civics" class="minimap-island minimap-open" onclick="focusOnIsland(ISLAND_CONFIG[4])">
-        <circle cx="11" cy="6.5" r="5.6" />
-        <text x="11" y="6.5" class="minimap-label">公民</text>
-      </g>
+      <polygon id="mini-civics" class="minimap-island minimap-open" 
+               points="11.5,0.8 16.52,3.7 16.52,9.5 11.5,12.4 6.48,9.5 6.48,3.7" 
+               onclick="focusOnIsland(ISLAND_CONFIG[4])" />
     </svg>
   </div>
-
 
 
   <!-- 左側即時賽事晉級圖側欄 -->
