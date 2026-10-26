@@ -1060,11 +1060,11 @@
     // 1. 群島配置（正六角形密合配置）
     // ==========================================
     const ISLAND_CONFIG = [
-      { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0x443423, pos: [0, 0, 0], radius: 5.2 },
-      { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0x3C421A, pos: [-7.8, 0, -4.5], radius: 4.8 },
-      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0x534818, pos: [7.8, 0, -4.5], radius: 4.8 },
+      { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0xFA8072, pos: [0, 0, 0], radius: 5.2 },
+      { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0xD9FFF2, pos: [-7.8, 0, -4.5], radius: 4.8 },
+      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0xF9F2D5, pos: [7.8, 0, -4.5], radius: 4.8 },
       { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', isGaussian: true, pos: [-7.8, 0, 4.5], radius: 4.8 },
-      { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0x4D3E2B, pos: [7.8, 0, 4.5], radius: 4.8 }
+      { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xF0EAD6, pos: [7.8, 0, 4.5], radius: 4.8 }
     ];
 
     // ==========================================
@@ -2267,9 +2267,9 @@ function updateNightClosedState() {
       const ctx = canvas.getContext('2d');
 
       const grad = ctx.createRadialGradient(256, 256, 10, 256, 256, 256);
-      grad.addColorStop(0.0, '#36454F');
-      grad.addColorStop(0.45, '#1B3B3F');
-      grad.addColorStop(1.0, '#00322F');
+      grad.addColorStop(0.0, '#F3F6F8');
+      grad.addColorStop(0.45, '#D6E2E7');
+      grad.addColorStop(1.0, '#AEC6CF');
 
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 512, 512);
