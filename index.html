@@ -3487,11 +3487,11 @@ const baseMat = new THREE.MeshStandardMaterial({
           metalness: 0.0 
         });
         
-        const base = new THREE.Mesh(
-          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.84, 4, 6),
+const base = new THREE.Mesh(
+          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.92, 0.9, 6),
           baseMat
         );
-        base.position.y = -2;
+        base.position.y = -0.45; // 中心點設在 -0.45，頂面為 0，底面為 -0.9
         base.rotation.y = Math.PI / 6;
         base.receiveShadow = true;
         group.add(base);
