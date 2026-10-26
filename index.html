@@ -573,6 +573,57 @@
     .dpad-left  { top: 44px; left: 0; }
     .dpad-right { top: 44px; right: 0; }
 
+    /* 🌟 左下角五島微縮雷達投影圖 */
+    .minimap-container {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      width: 140px;
+      height: 140px;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(8px);
+      border: 2px solid rgba(253, 224, 71, 0.5);
+      border-radius: 20px;
+      z-index: 100;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: auto;
+    }
+    .minimap-svg {
+      width: 125px;
+      height: 125px;
+      overflow: visible;
+    }
+    .minimap-island {
+      cursor: pointer;
+      transition: fill 0.3s ease, stroke 0.3s ease, transform 0.2s ease;
+    }
+    .minimap-island:hover {
+      filter: brightness(1.25);
+    }
+    /* 任務開放且未完成：透明灰色 */
+    .minimap-open {
+      fill: rgba(148, 163, 184, 0.45);
+      stroke: rgba(226, 232, 240, 0.85);
+      stroke-width: 1.5;
+    }
+    /* 任務關閉或已完成：透明暗紅色 */
+    .minimap-closed {
+      fill: rgba(185, 28, 28, 0.55);
+      stroke: rgba(248, 113, 113, 0.85);
+      stroke-width: 1.5;
+    }
+    .minimap-label {
+      font-size: 8px;
+      font-weight: 800;
+      fill: #ffffff;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+    }
+
 
     
   </style>
@@ -621,6 +672,47 @@
   <div class="hud-hint">
     <span id="time-badge">🕒 檢測時段中...</span>
     <span>| 點擊畫面物件、單指旋轉、雙指縮放移動</span>
+  </div>
+
+  <!-- 🌟 左下角五島微縮雷達投影圖 -->
+  <div id="minimap-panel" class="minimap-container">
+    <svg class="minimap-svg" viewBox="-24 -24 48 48">
+      <!-- 連接走道微縮線 -->
+      <line x1="0" y1="0" x2="-11" y2="-6.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="1.5,1.5" />
+      <line x1="0" y1="0" x2="11" y2="-6.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="1.5,1.5" />
+      <line x1="0" y1="0" x2="-11" y2="6.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="1.5,1.5" />
+      <line x1="0" y1="0" x2="11" y2="6.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="1.5,1.5" />
+
+      <!-- 中央：戰鬥陀螺島 -->
+      <g id="mini-beyblade" class="minimap-island minimap-closed" onclick="focusOnIsland(ISLAND_CONFIG[0])">
+        <circle cx="0" cy="0" r="6.5" />
+        <text x="0" y="0" class="minimap-label">陀螺</text>
+      </g>
+
+      <!-- 左上：生態科技島 -->
+      <g id="mini-nature" class="minimap-island minimap-open" onclick="focusOnIsland(ISLAND_CONFIG[1])">
+        <circle cx="-11" cy="-6.5" r="5.6" />
+        <text x="-11" y="-6.5" class="minimap-label">生態</text>
+      </g>
+
+      <!-- 右上：健身運動島 -->
+      <g id="mini-sport" class="minimap-island minimap-open" onclick="focusOnIsland(ISLAND_CONFIG[2])">
+        <circle cx="11" cy="-6.5" r="5.6" />
+        <text x="11" y="-6.5" class="minimap-label">運動</text>
+      </g>
+
+      <!-- 左下：閱讀島 -->
+      <g id="mini-reading" class="minimap-island minimap-open" onclick="focusOnIsland(ISLAND_CONFIG[3])">
+        <circle cx="-11" cy="6.5" r="5.6" />
+        <text x="-11" y="6.5" class="minimap-label">閱讀</text>
+      </g>
+
+      <!-- 右下：優良公民島 -->
+      <g id="mini-civics" class="minimap-island minimap-open" onclick="focusOnIsland(ISLAND_CONFIG[4])">
+        <circle cx="11" cy="6.5" r="5.6" />
+        <text x="11" y="6.5" class="minimap-label">公民</text>
+      </g>
+    </svg>
   </div>
 
 
@@ -1422,6 +1514,53 @@ const texture = new THREE.CanvasTexture(canvas);
       return true;
     }
 
+    // 🌟 更新左下角五島微縮投影圖狀態顏色
+    function updateMinimapStatus() {
+      const currentHour = new Date().getHours();
+      const isNightClosed = (currentHour >= 22 || currentHour < 7);
+      const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
+
+      // 1. 周圍四島判定
+      const islands = [
+        { id: 'nature', limit: 1 },
+        { id: 'sport', limit: 1, checkId: 'sport_exercise' },
+        { id: 'reading', limit: 3 },
+        { id: 'civics', limit: 1 }
+      ];
+
+      islands.forEach(item => {
+        const elem = document.getElementById(`mini-${item.id}`);
+        if (!elem) return;
+
+        let isCompleted = false;
+        if (item.id === 'sport') {
+          // 運動島只要增肌減脂或健康生活任一完成或累計達標
+          isCompleted = (getDailyCount('sport_exercise') >= 1) || (getDailyCount('sport_health') >= 1);
+        } else {
+          isCompleted = getDailyCount(item.id) >= item.limit;
+        }
+
+        // 關閉條件：深夜時段、陀螺錦標賽期間、或今日任務已完成
+        const isClosed = isNightClosed || isTournamentActive || isCompleted;
+
+        if (isClosed) {
+          elem.setAttribute('class', 'minimap-island minimap-closed');
+        } else {
+          elem.setAttribute('class', 'minimap-island minimap-open');
+        }
+      });
+
+      // 2. 中央戰鬥陀螺島判定（大賽開啟時為透明灰可點擊，平時休眠關閉為透明暗紅）
+      const bbElem = document.getElementById('mini-beyblade');
+      if (bbElem) {
+        if (isTournamentActive) {
+          bbElem.setAttribute('class', 'minimap-island minimap-open');
+        } else {
+          bbElem.setAttribute('class', 'minimap-island minimap-closed');
+        }
+      }
+    }
+
     const reflectionInput = document.getElementById('read-reflection');
     const reflectionCountText = document.getElementById('reflection-count');
     reflectionInput.addEventListener('input', () => {
@@ -1473,6 +1612,7 @@ const texture = new THREE.CanvasTexture(canvas);
       }
 
       closeDrawer();
+      updateMinimapStatus();
 
       currentStudent.myPoints = (currentStudent.myPoints || 0) + customPoints;
       sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
@@ -1697,7 +1837,8 @@ const texture = new THREE.CanvasTexture(canvas);
         renderBeybladeUI();
         updateBeybladeIslandDormancy();
         updateNightClosedState();
-        renderBracketSidebarContent();
+        updateMinimapStatus();
+        renderBracketSidebarContent();        
       });
     }
 
@@ -1733,6 +1874,7 @@ function updateNightClosedState() {
           }
         }
       });
+            updateMinimapStatus();
     }
     function updateBeybladeIslandDormancy() {
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
@@ -4186,6 +4328,7 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
     function startIslandApp() {
       init3D();
       initStudent();
+      updateMinimapStatus();
     }
 
     if (document.readyState === 'loading') {
