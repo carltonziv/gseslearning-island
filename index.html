@@ -2113,13 +2113,13 @@ function updateNightClosedState() {
       const hour = new Date().getHours();
       
       if (hour >= 3 && hour < 6) {
-        return { phase: 'dawn', name: '晨光微曦', bg: '#F3F6F8', light: 0.65, sun: 0xffedd5, hemi: 0xfffbeb };
+        return { phase: 'dawn', name: '晨光微曦', bg: '#F3F6F8', light: 0.65, sun: 0xffedd5, hemi: 0xf8fafc };
       } 
       else if (hour >= 6 && hour < 11) {
-        return { phase: 'morning', name: '溫煦上午', bg: '#B2D7E5', light: 0.7, sun: 0xfff7ed, hemi: 0xffffff };
+        return { phase: 'morning', name: '溫煦上午', bg: '#B2D7E5', light: 0.7, sun: 0xfff7ed, hemi: 0xf8fafc };
       } 
       else if (hour >= 11 && hour < 13) {
-        return { phase: 'noon', name: '耀眼正午', bg: '#80BDD3', light: 0.8, sun: 0xf8fafc, hemi: 0xfef08a };
+        return { phase: 'noon', name: '耀眼正午', bg: '#80BDD3', light: 0.8, sun: 0xf8fafc, hemi: 0xf8fafc };
       } 
       else if (hour >= 13 && hour < 17) {
         return { phase: 'afternoon', name: '金黃午後', bg: '#4CA3C1', light: 0.7, sun: 0xfde68a, hemi: 0xfef3c7 };
