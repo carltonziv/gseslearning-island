@@ -3525,7 +3525,7 @@ const baseMat = new THREE.MeshStandardMaterial({
         if (cfg.id === 'nature') landmark = createNatureLandmark();
         else if (cfg.id === 'beyblade') {
           landmark = createBeybladeModel();
-          beybladeBaseMesh = base;
+          beybladeBaseMesh = islandBase;
           beybladeLandmarkGroup = landmark;
         }
         else if (cfg.id === 'sport') landmark = createSportLandmark();
