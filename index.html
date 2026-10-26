@@ -2578,7 +2578,7 @@ function createNatureLandmark() {
 
       const ring = new THREE.Mesh(
         new THREE.CylinderGeometry(2.2, 1.7, 0.55, 6),
-        new THREE.MeshStandardMaterial({ color: 0x000080, metalness: 0.6, roughness: 0.2 })
+        new THREE.MeshStandardMaterial({ color: 0x000080, metalness: 0.6, roughness: 0.2, emissive: 0xFFF3B2, emissiveIntensity: 0.35 })
       );
       ring.position.y = 1.1;
       ring.castShadow = true;
