@@ -3499,7 +3499,77 @@ function createSportLandmark() {
         oceanInitialZ.push(posAttr.getZ(i));
       }
 
-      // 🌟 在島嶼周圍加上海洋水面（高度設在 Y = -0.6，剛好淹過沙灘下半部）
+     // 🌟 遠方不規則大陸陸地邊緣與丘陵群
+      function createDistantMainland() {
+        const continentGroup = new THREE.Group();
+
+        // 1. 遠景柔焦材質（低飽和暖綠灰，半透明霧化，不產生強烈高光）
+        const landMat = new THREE.MeshStandardMaterial({
+          color: 0x8FA48F,       // 帶藍灰調的遠山綠
+          roughness: 0.95,
+          metalness: 0.0,
+          flatShading: true,
+          transparent: true,
+          opacity: 0.85          // 與遠景霧氣融合
+        });
+
+        const foliageMat = new THREE.MeshStandardMaterial({
+          color: 0x6E8570,       // 遠處森林矮灌木色
+          roughness: 0.9,
+          flatShading: true,
+          transparent: true,
+          opacity: 0.8
+        });
+
+        // 2. 建立環形起伏丘陵網格（內徑 48m，外徑 78m）
+        const ringGeo = new THREE.RingGeometry(48, 78, 64, 8);
+        ringGeo.rotateX(-Math.PI / 2); // 轉為水平面
+
+        const pos = ringGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i);
+          const z = pos.getZ(i);
+          const dist = Math.hypot(x, z);
+          const angle = Math.atan2(z, x);
+
+          // 藉由多重正弦波製造不規則海岸線與起伏山脊
+          const noiseCoast = Math.sin(angle * 5) * 4.2 + Math.cos(angle * 9) * 2.5;
+          const hillHeight = Math.max(0, Math.sin(angle * 7) * 2.8 + Math.cos(angle * 3) * 3.5 + Math.sin(dist * 0.25) * 2.0);
+
+          // 靠近內側海岸線較低，向外延伸逐漸隆起為山丘
+          const blendFactor = Math.min(1, Math.max(0, (dist - 48) / 18));
+          const finalY = -0.55 + (hillHeight * blendFactor); // 底部貼齊海平面
+
+          pos.setY(i, finalY);
+        }
+        ringGeo.computeVertexNormals();
+
+        const mainlandMesh = new THREE.Mesh(ringGeo, landMat);
+        mainlandMesh.receiveShadow = false; // 遠景不需硬陰影，呈現朦朧感
+        continentGroup.add(mainlandMesh);
+
+        // 3. 在遠方丘陵頂部隨機撒上低多邊形小樹與灌木叢
+        const bushGeo = new THREE.DodecahedronGeometry(0.9, 0);
+        for (let j = 0; j < 65; j++) {
+          const bAngle = Math.random() * Math.PI * 2;
+          const bDist = 52 + Math.random() * 18;
+          const bx = Math.cos(bAngle) * bDist;
+          const bz = Math.sin(bAngle) * bDist;
+
+          const hOffset = Math.sin(bAngle * 7) * 2.8 + Math.cos(bAngle * 3) * 3.5;
+          const by = Math.max(0.2, hOffset * 0.7);
+
+          const bush = new THREE.Mesh(bushGeo, foliageMat);
+          bush.position.set(bx, by, bz);
+          const s = 0.8 + Math.random() * 1.6;
+          bush.scale.set(s, s * (0.8 + Math.random() * 0.6), s);
+          continentGroup.add(bush);
+        }
+
+        return continentGroup;
+      }
+
+      scene.add(createDistantMainland());
 
 
       // 生成正六角形島嶼
