@@ -2410,8 +2410,41 @@ function createNatureLandmark() {
 function createSportLandmark() {
       const group = new THREE.Group();
 
+// 🌟 建立啞鈴地標（槓心、雙層六角槓片與固定金屬環）
       const dbGroup = new THREE.Group();
-      // ...啞鈴部分保持不變...
+      const bar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.15, 2.6, 16),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 })
+      );
+      bar.rotation.z = Math.PI / 2;
+      bar.position.y = 0.75;
+      bar.castShadow = true;
+      dbGroup.add(bar);
+
+      const plateMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
+      const collarMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
+
+      [-0.9, 0.9].forEach((side) => {
+        const pBig = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.32, 6), plateMat);
+        pBig.rotation.z = Math.PI / 2;
+        pBig.position.set(side * 0.88, 0.75, 0);
+        pBig.castShadow = true;
+        dbGroup.add(pBig);
+
+        const pMed = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.28, 6), plateMat);
+        pMed.rotation.z = Math.PI / 2;
+        pMed.position.set(side * 1.2, 0.75, 0);
+        pMed.castShadow = true;
+        dbGroup.add(pMed);
+
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.14, 12), collarMat);
+        collar.rotation.z = Math.PI / 2;
+        collar.position.set(side * 1.36, 0.75, 0);
+        dbGroup.add(collar);
+      });
+
+      dbGroup.position.set(0, 0, -1.35);
+      dbGroup.rotation.y = 0.3;
       group.add(dbGroup);
       registerObstacle('sport', 0, -1.35, 1.6);
 
