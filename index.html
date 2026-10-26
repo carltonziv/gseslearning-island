@@ -5203,6 +5203,7 @@ function focusOnIsland(islandData) {
     function closeDrawer() {
       document.getElementById('side-drawer').classList.remove('open');
       isCartPaused = false;
+      isBoatPaused = false;
 
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
@@ -5235,6 +5236,7 @@ function focusOnIsland(islandData) {
       if (typeof closeDrawer === 'function') {
         document.getElementById('side-drawer').classList.remove('open');
         isCartPaused = false;
+        isBoatPaused = false;
       }
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
