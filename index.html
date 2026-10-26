@@ -3500,19 +3500,7 @@ function createSportLandmark() {
       }
 
       // 🌟 在島嶼周圍加上海洋水面（高度設在 Y = -0.6，剛好淹過沙灘下半部）
-      const oceanGeo = new THREE.PlaneGeometry(160, 160, 32, 32);
-      const oceanMat = new THREE.MeshStandardMaterial({
-        color: 0x38bdf8,       // 澄澈蔚藍海面色
-        roughness: 0.1,        // 水面低粗糙度，帶有水面波光感
-        metalness: 0.15,
-        transparent: true,
-        opacity: 0.72          // 半透明水感
-      });
-      const oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
-      oceanMesh.rotation.x = -Math.PI / 2; // 旋轉為水平面
-      oceanMesh.position.y = -0.6;          // 水面高度
-      oceanMesh.receiveShadow = true;
-      scene.add(oceanMesh);
+
 
       // 生成正六角形島嶼
       ISLAND_CONFIG.forEach(cfg => {
