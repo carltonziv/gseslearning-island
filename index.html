@@ -1190,7 +1190,7 @@
 
     function adminEndTournament() {
       if (!bbRef) return;
-      bbRef.set({
+bbRef.update({
         isOpen: false,
         deadline: '',
         status: 'closed',
@@ -1900,7 +1900,10 @@ const texture = new THREE.CanvasTexture(canvas);
         updateBeybladeIslandDormancy();
         updateNightClosedState();
         updateMinimapStatus();
-        renderBracketSidebarContent();        
+        renderBracketSidebarContent();       
+        if (typeof updateBeybladeChampionSignboard === 'function') {
+          updateBeybladeChampionSignboard(bbState.recent_champion);
+        }
       });
     }
 
@@ -2122,6 +2125,13 @@ function adminPickWinner(matchIdx, playerNum) {
 
       if (match.stageName && match.stageName.includes('總冠軍')) {
         alert(`🎉 狂賀！${winner.studentName} 奪得本屆戰鬥陀螺大賽總冠軍！錦標賽圓滿結束！`);
+        // 🌟 寫入冠軍名字與 3 天有效期的時間戳
+        if (bbRef) {
+          bbRef.child('recent_champion').set({
+            winnerName: winner.studentName,
+            winTime: firebase.database.ServerValue.TIMESTAMP
+          });
+        }
         adminEndTournament();
         return;
       }
@@ -4071,6 +4081,10 @@ const baseMat = new THREE.MeshStandardMaterial({
       });
 
       updateBeybladeIslandDormancy();
+
+      if (typeof updateBeybladeChampionSignboard === 'function') {
+      updateBeybladeChampionSignboard(bbState.recent_champion);
+    }
 
 const totalVillagers = 16;
 
