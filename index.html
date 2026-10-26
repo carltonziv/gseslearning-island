@@ -3486,15 +3486,40 @@ const baseMat = new THREE.MeshStandardMaterial({
           roughness: 0.85, 
           metalness: 0.0 
         });
+
         
-const base = new THREE.Mesh(
-          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.92, 0.9, 6),
+        
+// 🌟 1. 米白色沙灘基座（外圈半徑 +0.55m，暖調米白沙灘色）
+        const sandRadius = baseRadius + 0.55;
+        const sandMat = new THREE.MeshStandardMaterial({
+          color: 0xF3E5AB,
+          flatShading: true,
+          roughness: 0.95,
+          metalness: 0.0
+        });
+        const sandBase = new THREE.Mesh(
+          new THREE.CylinderGeometry(sandRadius, sandRadius * 0.92, 0.9, 6),
+          sandMat
+        );
+        sandBase.position.y = -0.45;
+        sandBase.rotation.y = Math.PI / 6;
+        sandBase.receiveShadow = true;
+        group.add(sandBase);
+
+        // 🌟 2. 島嶼核心地表（中央原本主題色）
+        const islandBase = new THREE.Mesh(
+          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.95, 0.9, 6),
           baseMat
         );
-        base.position.y = -0.45; // 中心點設在 -0.45，頂面為 0，底面為 -0.9
-        base.rotation.y = Math.PI / 6;
-        base.receiveShadow = true;
-        group.add(base);
+        islandBase.position.y = -0.43;
+        islandBase.rotation.y = Math.PI / 6;
+        islandBase.receiveShadow = true;
+        group.add(islandBase);
+
+        // 若為中央戰鬥陀螺島，記錄基座供開賽變色控制
+        if (cfg.id === 'beyblade') {
+          beybladeBaseMesh = islandBase;
+        }
 
         let landmark;
         if (cfg.id === 'nature') landmark = createNatureLandmark();
