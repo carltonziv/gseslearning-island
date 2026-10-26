@@ -3413,10 +3413,10 @@ function createSportLandmark() {
       controls.target.set(0, 0, 0);
       controls.update();
 
-      hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x1e293b, timePhase.light);
+      hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x1e293b, timePhase.light * 0.7);
       scene.add(hemiLight);
 
-      dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 1.3);
+      dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 0.85);
       dirLight.position.set(15, 48, 25);
       dirLight.castShadow = true;
       dirLight.shadow.mapSize.width = 1024;
@@ -3481,12 +3481,12 @@ function createSportLandmark() {
         let baseMat;
 
         if (cfg.isGaussian) {
-          baseMat = new THREE.MeshStandardMaterial({ 
-            map: createGaussianReadingTexture(), 
-            flatShading: true, 
-            roughness: 0.55, 
-            metalness: 0.1 
-          });
+baseMat = new THREE.MeshStandardMaterial({ 
+          color: cfg.color, 
+          flatShading: true, 
+          roughness: 0.9,  // 👈 提高粗糙度，吸收過強白光反光
+          metalness: 0.0   // 👈 金屬度歸零
+        });
         } else {
           baseMat = new THREE.MeshStandardMaterial({ 
             color: cfg.color, 
