@@ -1889,6 +1889,7 @@ const texture = new THREE.CanvasTexture(canvas);
     let beybladeBaseMesh = null;
     let beybladeLandmarkGroup = null;
     let mainBeybladeTop = null;
+    let championSignboard = null; // 🌟 冠軍木頭榮譽告示牌模型物件
     let beybladeDecorations = [];
     const COLOR_GRAY_DORMANT = 0xD1D0CE;
 
@@ -2705,6 +2706,91 @@ function createNatureLandmark() {
       });
 
       return bb;
+    }
+
+    function createChampionSignboardMesh(winnerName) {
+      const signGroup = new THREE.Group();
+      signGroup.name = "champion_signboard";
+
+      const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.85 });
+      const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.9 });
+
+      // 1. 左右兩根支撐木樁
+      [-0.9, 0.9].forEach(x => {
+        const post = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.065, 0.075, 1.6, 8),
+          darkWoodMat
+        );
+        post.position.set(x, 0.8, 0);
+        post.castShadow = true;
+        signGroup.add(post);
+
+        const cap = new THREE.Mesh(
+          new THREE.ConeGeometry(0.1, 0.12, 6),
+          darkWoodMat
+        );
+        cap.position.set(x, 1.65, 0);
+        signGroup.add(cap);
+      });
+
+      // 2. 木橫樑底板
+      const board = new THREE.Mesh(
+        new THREE.BoxGeometry(2.35, 1.05, 0.12),
+        woodMat
+      );
+      board.position.set(0, 1.05, 0);
+      board.castShadow = true;
+      signGroup.add(board);
+
+      // 3. 告示牌文字貼圖（Canvas）
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      ctx.clearRect(0, 0, 512, 256);
+
+      ctx.fillStyle = "#ffedd5";
+      ctx.beginPath();
+      ctx.roundRect(16, 16, 480, 224, 20);
+      ctx.fill();
+
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "#c2410c";
+      ctx.stroke();
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#fbbf24";
+      ctx.stroke();
+
+      ctx.font = "32px 'Segoe UI Emoji', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("🏆 戰鬥陀螺大賽總冠軍 🏆", 256, 68);
+
+      ctx.font = "bold 34px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+      ctx.fillStyle = "#7c2d12";
+      ctx.fillText(`恭喜【${winnerName}】`, 256, 135);
+
+      ctx.font = "bold 38px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+      ctx.fillStyle = "#dc2626";
+      ctx.fillText("榮獲總冠軍！", 256, 195);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const textPlaneMat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+
+      const textPlaneFront = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.95), textPlaneMat);
+      textPlaneFront.position.set(0, 1.05, 0.065);
+      signGroup.add(textPlaneFront);
+
+      const textPlaneBack = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.95), textPlaneMat);
+      textPlaneBack.position.set(0, 1.05, -0.065);
+      textPlaneBack.rotation.y = Math.PI;
+      signGroup.add(textPlaneBack);
+
+      signGroup.position.set(0, 0, 2.7);
+      signGroup.scale.setScalar(0.9);
+
+      return signGroup;
     }
 
     let jumpRopeGroup = null;
