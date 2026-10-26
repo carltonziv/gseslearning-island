@@ -3015,7 +3015,7 @@ function createIslandTitleSprite(text) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // 2. 繪製深色圓角藥丸背景（使用純色 #FFFEE8，避免半透明被環境影響）
-  ctx.fillStyle = "#FFFEE8";
+  ctx.fillStyle = "rgba(247, 247, 246, 0.75)";
   ctx.beginPath();
   ctx.roundRect(10, 10, 236, 50, 25);
   ctx.fill();
