@@ -1062,7 +1062,7 @@
     const ISLAND_CONFIG = [
       { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0xFA8072, pos: [0, 0, 0], radius: 5.2 },
       { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0xA0B4F0, pos: [-7.8, 0, -4.5], radius: 4.8 },
-      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0xF5DEB3, pos: [7.8, 0, -4.5], radius: 4.8 },
+      { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0xE7DA9D, pos: [7.8, 0, -4.5], radius: 4.8 },
       { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', color: 0xE9D8F4, pos: [-7.8, 0, 4.5], radius: 4.8 },
       { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xE8B4B8, pos: [7.8, 0, 4.5], radius: 4.8 }
     ];
@@ -2113,22 +2113,22 @@ function updateNightClosedState() {
       const hour = new Date().getHours();
       
       if (hour >= 3 && hour < 6) {
-        return { phase: 'dawn', name: '晨光微曦', bg: '#F7EDC4', light: 0.65, sun: 0xffedd5, hemi: 0xfffbeb };
+        return { phase: 'dawn', name: '晨光微曦', bg: '#F3F6F8', light: 0.65, sun: 0xffedd5, hemi: 0xfffbeb };
       } 
       else if (hour >= 6 && hour < 11) {
-        return { phase: 'morning', name: '溫煦上午', bg: '#F8E8CA', light: 0.85, sun: 0xfff7ed, hemi: 0xffffff };
+        return { phase: 'morning', name: '溫煦上午', bg: '#B2D7E5', light: 0.85, sun: 0xfff7ed, hemi: 0xffffff };
       } 
       else if (hour >= 11 && hour < 13) {
-        return { phase: 'noon', name: '耀眼正午', bg: '#FFEB80', light: 0.95, sun: 0xffffff, hemi: 0xfef08a };
+        return { phase: 'noon', name: '耀眼正午', bg: '#80BDD3', light: 0.95, sun: 0xffffff, hemi: 0xfef08a };
       } 
       else if (hour >= 13 && hour < 17) {
-        return { phase: 'afternoon', name: '金黃午後', bg: '#FEF0E8', light: 0.6, sun: 0xfde68a, hemi: 0xfef3c7 };
+        return { phase: 'afternoon', name: '金黃午後', bg: '#4CA3C1', light: 0.6, sun: 0xfde68a, hemi: 0xfef3c7 };
       } 
       else if (hour >= 17 && hour < 23) {
-        return { phase: 'night', name: '靜謐夜晚', bg: '#0F0F43', light: 0.5, sun: 0x93c5fd, hemi: 0x1e1b4b };
+        return { phase: 'night', name: '靜謐夜晚', bg: '#5E5E9B', light: 0.5, sun: 0x93c5fd, hemi: 0x1e1b4b };
       } 
       else {
-        return { phase: 'midnight', name: '幽深午夜', bg: '#001343', light: 0.4, sun: 0x60a5fa, hemi: 0x0f172a };
+        return { phase: 'midnight', name: '幽深午夜', bg: '#194470', light: 0.4, sun: 0x60a5fa, hemi: 0x0f172a };
       }
     }
 
