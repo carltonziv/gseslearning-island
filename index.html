@@ -2779,7 +2779,7 @@ function createNatureLandmark() {
 
       ctx.font = "bold 44px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
       ctx.fillStyle = "#dc2626";
-      ctx.fillText("榮獲總冠軍！", 256, 195);
+      ctx.fillText("榮獲總冠軍！", canvas.width / 2, canvas.height / 2);
 
       const texture = new THREE.CanvasTexture(canvas);
       const textPlaneMat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
