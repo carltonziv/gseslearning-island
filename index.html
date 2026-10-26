@@ -4255,16 +4255,26 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
     // ==========================================
     // 14. 島嶼與台車焦點運鏡與抽屜控制
     // ==========================================
-    function focusOnIsland(islandData) {
+function focusOnIsland(islandData) {
       isFocusing = true;
-      targetLookAt.set(islandData.pos[0], islandData.pos[1] + 1.2, islandData.pos[2]);
 
-      const zoomDist = islandData.radius * 1.7;
-      targetCameraPos.set(
-        islandData.pos[0] - 2.0,
-        islandData.pos[1] + 6.2,
-        islandData.pos[2] + zoomDist
-      );
+      if (islandData.id === 'sport') {
+        // 🌟 健身運動島專屬高視角：完美避開前方優良公民島標籤，並為右側抽屜留出中央視野
+        targetLookAt.set(islandData.pos[0], islandData.pos[1] + 0.5, islandData.pos[2]);
+        targetCameraPos.set(
+          islandData.pos[0] - 3.8,  // 向左微調，使島嶼置中在左半螢幕
+          islandData.pos[1] + 13.5, // 提高相機高度（俯瞰），完全越過前方標籤高度
+          islandData.pos[2] + 9.5   // 稍微拉開前後距離，維持如例圖般舒適的俯視視野
+        );
+      } else {
+        targetLookAt.set(islandData.pos[0], islandData.pos[1] + 1.2, islandData.pos[2]);
+        const zoomDist = islandData.radius * 1.7;
+        targetCameraPos.set(
+          islandData.pos[0] - 2.0,
+          islandData.pos[1] + 6.2,
+          islandData.pos[2] + zoomDist
+        );
+      }
 
       openDrawer(islandData);
     }
