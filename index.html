@@ -4731,7 +4731,7 @@ if (mascotLeader) {
 
 // 台車行駛動畫（未暫停時前進）
         if (cartGroup && trackCurve && !isCartPaused) {
-          cartProgress = (cartProgress + 0.0005) % 1.0;
+          cartProgress = (cartProgress + 0.0008) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
 
@@ -4761,9 +4761,12 @@ if (mascotLeader) {
 
         
 
-// 🌟 小巡邏艇航行動畫（未暫停時推進）
+// 🌟 小巡邏艇航行動畫（逆時針巡航）
         if (patrolBoat && boatCurve && !isBoatPaused) {
-          boatProgress = (boatProgress + 0.00035) % 1.0;
+          // 1. 進度改為遞減，並確保在 0.0 ~ 1.0 之間循環
+          boatProgress -= 0.00035;
+          if (boatProgress < 0) boatProgress += 1.0;
+
           const bPos = boatCurve.getPointAt(boatProgress);
           const bTan = boatCurve.getTangentAt(boatProgress);
 
@@ -4775,7 +4778,8 @@ if (mascotLeader) {
 
           patrolBoat.position.y += waveHeight;
 
-          const lookDir = bPos.clone().add(bTan);
+          // 2. 船頭朝向改為反向切線（扣除切線向量，使船頭正對逆時針前進方向）
+          const lookDir = bPos.clone().sub(bTan);
           patrolBoat.lookAt(lookDir);
 
           patrolBoat.rotation.x += wavePitch;
