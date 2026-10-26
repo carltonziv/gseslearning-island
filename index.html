@@ -3014,20 +3014,20 @@ function createIslandTitleSprite(text) {
   // 1. 完全清空畫布
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 2. 繪製深色圓角藥丸背景（使用純色 #0F172A，避免半透明被環境影響）
-  ctx.fillStyle = "#0f172a";
+  // 2. 繪製深色圓角藥丸背景（使用純色 #FFFEE8，避免半透明被環境影響）
+  ctx.fillStyle = "#FFFEE8";
   ctx.beginPath();
   ctx.roundRect(10, 10, 236, 50, 25);
   ctx.fill();
 
   // 金色亮眼邊框
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = "#fde047";
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#3A3B3C";
   ctx.stroke();
 
   // 3. 繪製純白文字
   ctx.font = "bold 26px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#3A3B3C";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(text, 128, 36);
