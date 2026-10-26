@@ -952,7 +952,7 @@
 
       <div id="bb-bracket-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="color:#dc2626;">🏆 雙淘汰大賽進行中</h3>
+          <h3 style="color:#dc2626;">🏆 大賽進行中</h3>
           <button class="btn-win" style="padding:4px 10px;" onclick="toggleBracketSidebar(true)">開啟全螢幕晉級圖</button>
         </div>
         <p style="font-size:0.85rem; color:#64748b;">賽程對陣與勝負判定已整合至左側晉級圖面板。</p>
@@ -2025,33 +2025,29 @@ function updateNightClosedState() {
       document.getElementById('bb-blade-name').value = '';
     }
 
-    function renderBracketSidebarContent() {
+function renderBracketSidebarContent() {
       const root = document.getElementById('bracket-tree-root');
       if (!bbState.matches || bbState.matches.length === 0) {
         root.innerHTML = `
           <div style="text-align:center; padding:40px 10px; color:#94a3b8;">
             <p style="font-size:2rem; margin-bottom:10px;">🎲</p>
             <p style="font-weight:bold;">賽程尚未生成</p>
-            <p style="font-size:0.8rem; margin-top:6px;">目前處於報名或籌備階段，待老師截止後抽籤產生對陣樹狀圖！</p>
+            <p style="font-size:0.8rem; margin-top:6px;">目前處於報名或籌備階段，待老師截止後抽籤產生單淘汰樹狀圖！</p>
           </div>
         `;
         return;
       }
 
-      const rounds = {
-        '首輪爭霸賽': [],
-        '準決賽階段': [],
-        '復活晉級賽': [],
-        '總決賽': []
-      };
-
+      // 依輪次歸類場次
+      const rounds = {};
       bbState.matches.forEach((m, idx) => {
         m.index = idx;
-        const s = m.stageName || '';
-        if (s.includes('首輪')) rounds['首輪爭霸賽'].push(m);
-        else if (s.includes('準決賽')) rounds['準決賽階段'].push(m);
-        else if (s.includes('復活')) rounds['復活晉級賽'].push(m);
-        else rounds['總決賽'].push(m);
+        const levelName = m.stageName.includes('總冠軍') ? '總冠軍決賽'
+                        : m.stageName.includes('準決賽') ? '四強準決賽'
+                        : m.stageName.includes('八強') ? '八強半準決賽'
+                        : `第 ${m.roundLevel + 1} 輪淘汰賽`;
+        if (!rounds[levelName]) rounds[levelName] = [];
+        rounds[levelName].push(m);
       });
 
       let html = '';
@@ -2088,7 +2084,7 @@ function updateNightClosedState() {
 
               <div class="bracket-slot ${m.winner && m.p2 && m.winner === m.p2.seatNumber ? 'winner' : ''}">
                 <div>
-                  <span class="slot-name">${m.p2 ? `${m.p2.seatNumber}號 ${m.p2.studentName}` : '（虛位待定）'}</span>
+                  <span class="slot-name">${m.p2 ? `${m.p2.seatNumber}號 ${m.p2.studentName}` : (m.p1 ? '（輪空・直接晉級）' : '（虛位待定）')}</span>
                   ${m.p2 ? `<span class="slot-blade">【${m.p2.bladeName}】</span>` : ''}
                 </div>
                 ${!m.winner && m.p1 && m.p2 ? `<button class="btn-win-sm" onclick="adminPickWinner(${m.index}, 2)">勝</button>` : ''}
@@ -2102,8 +2098,8 @@ function updateNightClosedState() {
 
       root.innerHTML = html;
     }
-
-    function adminPickWinner(matchIdx, playerNum) {
+    
+function adminPickWinner(matchIdx, playerNum) {
       const pwd = prompt('請輸入教師密碼以認證賽果：');
       if (pwd !== TEACHER_PASSWORD) { alert('密碼錯誤！'); return; }
 
@@ -2111,14 +2107,20 @@ function updateNightClosedState() {
       const winner = playerNum === 1 ? match.p1 : match.p2;
       match.winner = winner.seatNumber;
 
-      if (match.nextWinMatch !== undefined && bbState.matches[match.nextWinMatch]) {
-        const nextM = bbState.matches[match.nextWinMatch];
-        if (!nextM.p1) nextM.p1 = winner;
-        else if (!nextM.p2) nextM.p2 = winner;
+      // 將獲勝者自動帶入下一輪指定場次與位置
+      if (match.nextWinMatch !== undefined && match.nextWinMatch >= 0) {
+        const nextM = bbState.matches.find(m => m.id === match.nextWinMatch);
+        if (nextM) {
+          if (match.nextSlot === 1) {
+            nextM.p1 = winner;
+          } else {
+            nextM.p2 = winner;
+          }
+        }
       }
 
       if (match.stageName && match.stageName.includes('總冠軍')) {
-        alert(`🎉 狂賀！${winner.studentName} 奪得本屆戰鬥陀螺大賽總冠軍！錦標賽圓滿結束，四周島嶼即將重啟！`);
+        alert(`🎉 狂賀！${winner.studentName} 奪得本屆戰鬥陀螺大賽總冠軍！錦標賽圓滿結束！`);
         adminEndTournament();
         return;
       }
@@ -2165,31 +2167,95 @@ function updateNightClosedState() {
       alert('已更新報名截止時間！');
     }
 
-    function adminGenerateBracket() {
+function adminGenerateBracket() {
       if (!bbState.players || Object.keys(bbState.players).length < 2) {
         alert('至少需要 2 位報名選手才能生成賽程！');
         return;
       }
-      const playerList = Object.values(bbState.players).sort(() => Math.random() - 0.5);
-      const matches = [];
 
-      for (let i = 0; i < playerList.length; i += 2) {
-        matches.push({
-          stageName: `首輪 第 ${Math.floor(i/2)+1} 場`,
-          p1: playerList[i],
-          p2: playerList[i+1] || null,
-          winner: playerList[i+1] ? null : playerList[i].seatNumber,
-          nextWinMatch: Math.floor(playerList.length / 2) + Math.floor(i / 4)
-        });
+      // 隨機打散選手名單
+      const playerList = Object.values(bbState.players).sort(() => Math.random() - 0.5);
+      const N = playerList.length;
+
+      // 計算二元樹所需的滿籤人數（2, 4, 8, 16, 32...）
+      let totalSlots = 2;
+      while (totalSlots < N) {
+        totalSlots *= 2;
+      }
+      const totalRounds = Math.log2(totalSlots);
+
+      // 建立每一輪的場次佔位陣列
+      const roundMatches = [];
+      let matchCounter = 0;
+
+      for (let r = 0; r < totalRounds; r++) {
+        const matchesInRound = totalSlots / Math.pow(2, r + 1);
+        const list = [];
+        for (let m = 0; m < matchesInRound; m++) {
+          let stageTitle = '';
+          if (r === totalRounds - 1) stageTitle = '🏆 總冠軍決賽';
+          else if (r === totalRounds - 2) stageTitle = `準決賽 第 ${m + 1} 組`;
+          else if (r === totalRounds - 3) stageTitle = `八強賽 第 ${m + 1} 組`;
+          else stageTitle = `第 ${r + 1} 輪 第 ${m + 1} 場`;
+
+          list.push({
+            id: matchCounter++,
+            roundLevel: r,
+            stageName: stageTitle,
+            p1: null,
+            p2: null,
+            winner: null,
+            nextWinMatch: -1,
+            nextSlot: 1 // 晉級至下一場的 p1 還是 p2
+          });
+        }
+        roundMatches.push(list);
       }
 
-      matches.push({ stageName: '準決賽階段 第 1 組', p1: null, p2: null, winner: null, nextWinMatch: matches.length + 1 });
-      matches.push({ stageName: '敗者復活決賽', p1: null, p2: null, winner: null, nextWinMatch: matches.length + 1 });
-      matches.push({ stageName: '🏆 總決賽爭霸', p1: null, p2: null, winner: null });
+      // 串接各輪獲勝者的晉級指向（每兩場的勝者進入下一輪的同一場）
+      for (let r = 0; r < totalRounds - 1; r++) {
+        for (let m = 0; m < roundMatches[r].length; m++) {
+          const nextMatchIdx = Math.floor(m / 2);
+          const nextSlot = (m % 2 === 0) ? 1 : 2;
+          roundMatches[r][m].nextWinMatch = roundMatches[r + 1][nextMatchIdx].id;
+          roundMatches[r][m].nextSlot = nextSlot;
+        }
+      }
 
-      bbRef.child('matches').set(matches);
+      // 填入首輪選手與處理輪空（種子/輪空自動保送下一輪）
+      const firstRound = roundMatches[0];
+      for (let i = 0; i < totalSlots; i += 2) {
+        const matchIdx = i / 2;
+        const p1 = playerList[i] || null;
+        const p2 = playerList[i + 1] || null;
+
+        firstRound[matchIdx].p1 = p1;
+        firstRound[matchIdx].p2 = p2;
+
+        // 若無對手，則該名選手自動晉級下一輪
+        if (p1 && !p2) {
+          firstRound[matchIdx].winner = p1.seatNumber;
+          const nextMId = firstRound[matchIdx].nextWinMatch;
+          const nextSlot = firstRound[matchIdx].nextSlot;
+          // 直接將勝者放入下一輪
+          for (let r = 1; r < totalRounds; r++) {
+            const found = roundMatches[r].find(item => item.id === nextMId);
+            if (found) {
+              if (nextSlot === 1) found.p1 = p1;
+              else found.p2 = p1;
+              break;
+            }
+          }
+        }
+      }
+
+      // 攤平成一維陣列儲存至 Firebase
+      const allMatches = [];
+      roundMatches.forEach(r => allMatches.push(...r));
+
+      bbRef.child('matches').set(allMatches);
       bbRef.child('status').set('bracket_ready');
-      alert('🎲 雙淘汰賽程圖已隨機抽籤產生完成！即時晉級圖側邊欄已同步更新！');
+      alert(`🎲 單淘汰賽程圖已隨機抽籤產生完成！共 ${N} 位選手參賽！`);
       toggleBracketSidebar(true);
     }
 
