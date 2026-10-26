@@ -1091,6 +1091,45 @@
       </div>
     </div>
 
+    <!-- 8. 水上巡邏艇：防災避難指南面板 -->
+    <div id="panel-boat" style="display:none;">
+      <div style="background: linear-gradient(135deg, #fee2e2, #fecaca); border: 2px solid #ef4444; border-radius: 16px; padding: 14px; margin-bottom: 16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <span style="font-size:1.4rem;">🚤</span>
+          <strong style="color: #991b1b; font-size: 1.05rem;">水上守護・防災避難口訣</strong>
+        </div>
+        <p style="font-size: 0.85rem; color: #7f1d1d; line-height: 1.5;">巡邏艇守護著全島水域，記住口訣，地震來時沉著應對保平安！</p>
+      </div>
+
+      <div style="background:#ffffff; border:2px solid #cbd5e1; border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.06); line-height:1.8; color:#334155; font-size:0.92rem;">
+        <p style="font-weight:900; color:#dc2626; font-size:1.05rem; margin-bottom:12px; text-align:center; border-bottom:2px dashed #fca5a5; padding-bottom:8px;">
+          🛡️ 防災避難歌詞
+        </p>
+
+        <p style="margin-bottom:10px;">
+          地牛翻身別亂跑！趴下、掩護、抓緊桌腳！<br>
+          生死就在一瞬間，護好頭頸比誰都先！
+        </p>
+
+        <p style="margin-bottom:10px;">
+          在室內就往桌底鑽，雙手抓牢不怕翻<br>
+          等待安穩，誰說都沒個準<br>
+          一長四短不會變，護頭步向集合點<br>
+          冷靜集合是基本，確實點名不能省<br>
+          跌打損傷有急救站，安心不膽寒<br>
+          步驟仔細都做好，保命是王道！<br>
+          合作沉著五感集中心一專，<br>
+          拚搏平安保我度過難關！
+        </p>
+
+        <div style="background:#fef2f2; border-left:4px solid #ef4444; padding:8px 12px; border-radius:4px; font-weight:800; color:#b91c1c; margin-top:14px;">
+          ⚡ 趴下！掩護！穩住！<br>
+          搖晃暫停，護頭保命！
+        </div>
+      </div>
+    </div>
+ 
+
   </div> <!-- 抽屜 #side-drawer 結束 -->
 
   <!-- 教師控制台彈窗 -->
@@ -3521,6 +3560,7 @@ const canvas = document.createElement('canvas');
     let patrolBoat = null;
     let boatProgress = 0;
     let boatCurve = null;
+    let isBoatPaused = false; // 🌟 新增：巡邏艇暫停旗標
     let trailerCarts = []; // 🌟 新增：存放後方 8 節連掛台車
     let cartProgress = 0;
     let trackCurve = null;
@@ -3904,6 +3944,7 @@ cartGroup = new THREE.Group();
 
       // 2. 建立小巡邏艇模型
       patrolBoat = new THREE.Group();
+      patrolBoat.userData = { isBoat: true }; // 🌟 標記識別
 
       const hullMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.35 });
       const keelMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.4 });
@@ -3983,6 +4024,9 @@ cartGroup = new THREE.Group();
       patrolBoat.add(lifeRing);
 
       patrolBoat.scale.setScalar(1.2);
+      patrolBoat.traverse(child => {
+        child.userData.isBoat = true;
+      });
       boatSystem.add(patrolBoat);
 
       return boatSystem;
@@ -4504,6 +4548,38 @@ villagers.push({
           return;
         }
 
+        // 🌟 2-2. 巡邏艇點擊判定（停止行駛並開啟防災面板）
+        const boatHit = allIntersects.find(item => {
+          let curr = item.object;
+          while (curr) {
+            if (curr.userData && curr.userData.isBoat) return true;
+            curr = curr.parent;
+          }
+          return false;
+        });
+
+        if (boatHit && patrolBoat) {
+          showLiveBanner("🚤 巡護艇停靠：正在閱讀防災避難指引！");
+          confetti({ particleCount: 30, spread: 50 });
+
+          isBoatPaused = true; // 🌟 船隻停止前進
+
+          isFocusing = true;
+          targetLookAt.copy(patrolBoat.position).add(new THREE.Vector3(0, 0.5, 0));
+          targetCameraPos.set(
+            patrolBoat.position.x - 4.0,
+            patrolBoat.position.y + 4.5,
+            patrolBoat.position.z + 7.5
+          );
+
+          openDrawer({
+            id: 'boat',
+            title: '🚤 校園防災守護艇',
+            subtitle: '水域安全與地震防災避難要訣'
+          });
+          return;
+        }
+
         // 3. 島嶼點擊判斷
         if (allIntersects.length > 0) {
           for (let hit of allIntersects) {
@@ -4683,8 +4759,10 @@ if (mascotLeader) {
           }
         }
 
-        // 🌟 小巡邏艇航行動畫與隨波起伏
-        if (patrolBoat && boatCurve) {
+        
+
+// 🌟 小巡邏艇航行動畫（未暫停時推進）
+        if (patrolBoat && boatCurve && !isBoatPaused) {
           boatProgress = (boatProgress + 0.00035) % 1.0;
           const bPos = boatCurve.getPointAt(boatProgress);
           const bTan = boatCurve.getTangentAt(boatProgress);
@@ -4707,7 +4785,6 @@ if (mascotLeader) {
             patrolBoat.userData.radar.rotation.y += 0.08;
           }
         }
-
 if (ropeMesh && jumperMan && jumpRopeGroup) {
           const currentHour = new Date().getHours();
           const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
@@ -5107,8 +5184,9 @@ function focusOnIsland(islandData) {
       document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
 
       isCartPaused = (islandData.id === 'cart');
+      isBoatPaused = (islandData.id === 'boat');
 
-      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart'].forEach(id => {
+      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart', 'boat'].forEach(id => {
         const el = document.getElementById(`panel-${id}`);
         if (el) el.style.display = 'none';
       });
