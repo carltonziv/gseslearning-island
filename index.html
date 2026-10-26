@@ -3006,15 +3006,15 @@ function createSportLandmark() {
     }
     
 function createIslandTitleSprite(text) {
-  const canvas = document.createElement('canvas');
+const canvas = document.createElement('canvas');
   canvas.width = 224;
   canvas.height = 65;
   const ctx = canvas.getContext('2d');
 
   // 1. 完全清空畫布
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  //2. 自動計算置中座標與尺寸（留出邊框空間，兩側絕對不裁切）
+
+  // 2. 自動計算置中座標與尺寸（留出邊框空間，兩側絕對不裁切）
   const paddingX = 8;
   const paddingY = 8;
   const rectW = canvas.width - paddingX * 2;   // 224 - 16 = 208
