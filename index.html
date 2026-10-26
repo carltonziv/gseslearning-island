@@ -2749,7 +2749,7 @@ function createSportLandmark() {
     function createCivicsLandmark() {
       const group = new THREE.Group();
       const temple = new THREE.Group();
-      const marbleMat = new THREE.MeshStandardMaterial({ color: 0x928E85, roughness: 0.45 });
+      const marbleMat = new THREE.MeshStandardMaterial({ color: 0xDEDDDA, roughness: 0.45 });
       const trimMat = new THREE.MeshStandardMaterial({ color: 0xA8A49B, roughness: 0.35 });
 
       [3.6, 3.2, 2.8].forEach((w, i) => {
@@ -2805,7 +2805,7 @@ function createSportLandmark() {
 
       const log = new THREE.Mesh(
         new THREE.CylinderGeometry(0.4, 0.45, 0.28, 10),
-        new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 })
+        new THREE.MeshStandardMaterial({ color: 0xB7A69B, roughness: 0.9 })
       );
       log.position.y = 0.14;
       log.castShadow = true;
