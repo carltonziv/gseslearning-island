@@ -4258,8 +4258,8 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
 function focusOnIsland(islandData) {
       isFocusing = true;
 
-      if (islandData.id === 'sport') {
-        // 🌟 健身運動島專屬高視角：完美避開前方優良公民島標籤，並為右側抽屜留出中央視野
+      if (islandData.id === 'sport' || islandData.id === 'nature') {
+        // 🌟 運動島與生態島專屬高視角：越過南方島嶼標籤，並為右側抽屜留出中央視野
         targetLookAt.set(islandData.pos[0], islandData.pos[1] + 0.5, islandData.pos[2]);
         targetCameraPos.set(
           islandData.pos[0] - 3.8,  // 向左微調，使島嶼置中在左半螢幕
@@ -4275,6 +4275,9 @@ function focusOnIsland(islandData) {
           islandData.pos[2] + zoomDist
         );
       }
+
+      openDrawer(islandData);
+    }
 
       openDrawer(islandData);
     }
