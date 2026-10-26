@@ -3933,12 +3933,6 @@ cartGroup = new THREE.Group();
       hull.castShadow = true;
       patrolBoat.add(hull);
 
-      // C. 木質甲板平面
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.05, 2.1), deckMat);
-      deck.position.set(0, 0.28, -0.15);
-      deck.receiveShadow = true;
-      patrolBoat.add(deck);
-
       // D. 駕駛室 / 船橋
       const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       cabin.position.set(0, 0.52, -0.15);
