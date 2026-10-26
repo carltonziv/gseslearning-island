@@ -2793,6 +2793,33 @@ function createNatureLandmark() {
       return signGroup;
     }
 
+    function updateBeybladeChampionSignboard(champData) {
+      const beybladeGroup = islandGroups.find(g => g.userData && g.userData.id === 'beyblade');
+      if (!beybladeGroup) return;
+
+      // 若已有存在的告示牌，先清除舊模型
+      if (championSignboard) {
+        beybladeGroup.remove(championSignboard);
+        championSignboard = null;
+      }
+
+      if (!champData || !champData.winnerName || !champData.winTime) return;
+
+      const now = Date.now();
+      const threeDaysMs = 3 * 24 * 60 * 60 * 1000; // 3 天的毫秒數 (259,200,000 ms)
+
+      // 判斷是否在 3 天有效期之內
+      if (now - champData.winTime < threeDaysMs) {
+        championSignboard = createChampionSignboardMesh(champData.winnerName);
+        beybladeGroup.add(championSignboard);
+      } else {
+        // 🌟 超過 3 天，自動從雲端資料庫中移除紀錄，完成清理
+        if (bbRef) {
+          bbRef.child('recent_champion').remove();
+        }
+      }
+    }
+
     let jumpRopeGroup = null;
     let jumperMan = null;
     let ropeMesh = null;
