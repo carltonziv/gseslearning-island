@@ -2414,25 +2414,61 @@ function createNatureLandmark() {
   head.castShadow = true;
   group.add(head);
 
-  // 🌟 3. 背部黑色斑點（貼合上半球表面弧度）
-  const spotGeo = new THREE.SphereGeometry(0.24, 12, 12);
-  spotGeo.scale(1.0, 0.25, 1.0);
+// 🌟 3. 背部黑色斑點：隨機分佈在左右兩側，並嚴格貼合半球體表面
+      const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });
+      const spotCountEachSide = 3; // 左右兩邊各 3 顆（共 6 顆經典瓢蟲斑點）
 
-  const spotPositions = [
-    [-0.65, 0.75, 0.35], [0.65, 0.75, 0.35],
-    [-0.75, 0.55, -0.55], [0.75, 0.55, -0.55]
-  ];
-  spotPositions.forEach(pos => {
-    const spot = new THREE.Mesh(spotGeo, spotMat);
-    spot.position.set(...pos);
-    group.add(spot);
-  });
+      // 定義三組隨機或固定的球面角度 (緯度 theta: 0~PI/2，經度 phi)
+      // 角度 0 是頭頂最高點，PI/2 是接近地面
+      const spotsParams = [
+        { theta: 0.45, phi: 0.65, size: 0.22 },  // 前側上方
+        { theta: 0.75, phi: 1.35, size: 0.25 },  // 中側靠外
+        { theta: 0.55, phi: 2.35, size: 0.20 }   // 後側上方
+      ];
 
-  // 🌟 4. 背部中央分隔線（貼合半球體最高脊線）
-  const lineGeo = new THREE.BoxGeometry(0.06, 0.04, 2.7);
-  const lineMesh = new THREE.Mesh(lineGeo, spotMat);
-  lineMesh.position.set(0, 1.13, 0.05); // 貼在身體縮放後的最高頂點附近
-  group.add(lineMesh);
+      // 瓢蟲身體半徑與縮放比例（需與 body 相同）
+      const R = 1.5;
+      const scaleX = 1.0;
+      const scaleY = 0.75;
+      const scaleZ = 1.25;
+
+      spotsParams.forEach(param => {
+        // 左側與右側對稱各長一顆
+        [-1, 1].forEach(side => {
+          // 球面座標轉換
+          const phi = side === 1 ? param.phi : Math.PI - param.phi;
+          const sinT = Math.sin(param.theta);
+          const cosT = Math.cos(param.theta);
+
+          // 基礎球面座標
+          const nx = sinT * Math.cos(phi);
+          const ny = cosT;
+          const nz = sinT * Math.sin(phi);
+
+          // 乘上半球體縮放比例，外加微小偏移 0.02 確保浮在外殼表面，絕不穿透
+          const px = nx * R * scaleX * 1.02;
+          const py = ny * R * scaleY * 1.02;
+          const pz = nz * R * scaleZ * 1.02;
+
+          // 扁平圓盤斑點
+          const spotGeo = new THREE.CylinderGeometry(param.size, param.size, 0.04, 16);
+          const spotMesh = new THREE.Mesh(spotGeo, spotMat);
+          spotMesh.position.set(px, py, pz);
+
+          // 讓圓盤朝向半球表面法線（自然貼合曲面）
+          const normal = new THREE.Vector3(nx / scaleX, ny / scaleY, nz / scaleZ).normalize();
+          spotMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+
+          group.add(spotMesh);
+        });
+      });
+
+      // 🌟 4. 背部中央分隔線：改為細弧形或稍微壓扁緊貼中央頂部
+      const lineGeo = new THREE.BoxGeometry(0.06, 0.03, 3.2);
+      const lineMesh = new THREE.Mesh(lineGeo, spotMat);
+      // 高度剛好切在頂部：R(1.5) * scaleY(0.75) = 1.125
+      lineMesh.position.set(0, 1.12, 0); 
+      group.add(lineMesh);
 
   registerObstacle('nature', 0, 0, 2.0); // 避障範圍維持 2.0m
 
