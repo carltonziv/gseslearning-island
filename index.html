@@ -190,6 +190,36 @@
       align-items: center;
     }
 
+    .hud-tag-toggle-btn {
+      position: absolute;
+      top: 130px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+      padding: 8px 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #1e293b;
+      border: 2.5px solid #063d4e;
+      z-index: 100;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .hud-tag-toggle-btn:active {
+      transform: scale(0.95);
+    }
+    .hud-tag-toggle-btn.off {
+      background: rgba(15, 23, 42, 0.75);
+      color: #94a3b8;
+      border-color: #64748b;
+    }
+
     /* 左側即時賽程表側欄 */
     .bracket-sidebar-container {
       position: fixed;
@@ -652,6 +682,11 @@
         <span>🔑 教師控制台</span>
       </div>
     </div>
+  </div>
+
+  <div class="hud-tag-toggle-btn" id="toggle-tags-btn" onclick="toggleIslandLabels()">
+    <span id="tag-btn-icon">🏷️</span>
+    <span id="tag-btn-text">島名標籤：開</span>
   </div>
 
   <div class="hud-hint">
@@ -3145,6 +3180,8 @@ function createIslandTitleSprite(text) {
     // ==========================================
     let scene, camera, renderer, controls;
     let islandGroups = [];
+    let islandTitleSprites = [];
+    let areLabelsVisible = true;
     let villagers = [];
     let lastPhaseName = '';
     let dirLight, hemiLight;
@@ -3670,6 +3707,8 @@ const baseMat = new THREE.MeshStandardMaterial({
         const labelSprite = createIslandTitleSprite(cfg.title);
         labelSprite.position.set(0, 5.6, 0);
         group.add(labelSprite);
+        islandTitleSprites.push(labelSprite);
+        
 
         let treeCount;
         if (cfg.id === 'civics') {
@@ -4475,6 +4514,28 @@ function focusOnIsland(islandData) {
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 22, 46);
+    }
+
+    function toggleIslandLabels() {
+      areLabelsVisible = !areLabelsVisible;
+      
+      islandTitleSprites.forEach(sprite => {
+        if (sprite) sprite.visible = areLabelsVisible;
+      });
+
+      const btn = document.getElementById('toggle-tags-btn');
+      const btnText = document.getElementById('tag-btn-text');
+      const btnIcon = document.getElementById('tag-btn-icon');
+
+      if (areLabelsVisible) {
+        btn.classList.remove('off');
+        btnIcon.textContent = '🏷️';
+        btnText.textContent = '島名標籤：開';
+      } else {
+        btn.classList.add('off');
+        btnIcon.textContent = '🚫';
+        btnText.textContent = '島名標籤：關';
+      }
     }
 
     // 啟動保護機制
