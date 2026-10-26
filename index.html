@@ -1114,6 +1114,7 @@
           <button class="btn-action btn-green" onclick="adminSetBeybladeState(true)">強制開啟陀螺島錦標賽</button>
           <button class="btn-action btn-red" onclick="adminEndTournament()">結束錦標賽並恢復四島</button>
         </div>
+        <button class="btn-action btn-red" style="margin-bottom:8px; background:#b91c1c;" onclick="adminRemoveChampionSignboard()">🗑️ 手動移除冠軍榮譽告示牌</button>
         <label>設定報名截止日期時間</label>
         <input type="datetime-local" id="admin-bb-deadline">
         <button class="btn-action btn-blue" style="margin-top:8px;" onclick="adminSaveDeadline()">儲存截止時間</button>
@@ -2159,7 +2160,19 @@ function adminPickWinner(matchIdx, playerNum) {
         alert('全班共創能量已成功歸零！');
       }
     }
-
+function adminRemoveChampionSignboard() {
+      if (confirm('確定要提前移除戰鬥陀螺島前方的冠軍木頭告示牌嗎？')) {
+        if (bbRef) {
+          bbRef.child('recent_champion').remove();
+        }
+        const beybladeGroup = islandGroups.find(g => g.userData && g.userData.id === 'beyblade');
+        if (beybladeGroup && championSignboard) {
+          beybladeGroup.remove(championSignboard);
+          championSignboard = null;
+        }
+        alert('冠軍木頭告示牌已成功移除！');
+      }
+    }
     function adminSetBeybladeState(isOpen) {
       if (!bbRef) return;
       if (isOpen) {
