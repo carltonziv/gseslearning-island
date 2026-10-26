@@ -3932,16 +3932,10 @@ const totalVillagers = 16;
         const sleepX = Math.cos(sleepAngle) * sleepRadius;
         const sleepZ = Math.sin(sleepAngle) * sleepRadius;
 
-        villagers.push({
+villagers.push({
           obj: person,
           zzzSprite: zzzSprite,
-          villagers.push({
-          obj: person,
-          zzzSprite: zzzSprite,
-          homeIslandIdx: currentIslandIdx, // 🌟 加在這一行：記錄原本所屬的家鄉島嶼 (1~4)
-          currentIslandIdx: currentIslandIdx,
-          targetIslandIdx: currentIslandIdx,
-          state: 'wander',
+          homeIslandIdx: currentIslandIdx, // 🌟 記錄原本所屬的家鄉島嶼 (1~4)
           currentIslandIdx: currentIslandIdx,
           targetIslandIdx: currentIslandIdx,
           state: 'wander',
