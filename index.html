@@ -3919,6 +3919,13 @@ const totalVillagers = 16;
         villagers.push({
           obj: person,
           zzzSprite: zzzSprite,
+          villagers.push({
+          obj: person,
+          zzzSprite: zzzSprite,
+          homeIslandIdx: currentIslandIdx, // 🌟 加在這一行：記錄原本所屬的家鄉島嶼 (1~4)
+          currentIslandIdx: currentIslandIdx,
+          targetIslandIdx: currentIslandIdx,
+          state: 'wander',
           currentIslandIdx: currentIslandIdx,
           targetIslandIdx: currentIslandIdx,
           state: 'wander',
@@ -4409,20 +4416,35 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
               }
             }
           } 
-          else {
+else {
             v.obj.rotation.x = 0;
 
+            // 🌟 若剛從中央戰鬥陀螺島 (0) 比賽結束，指引走回各自家鄉島嶼
             if (v.currentIslandIdx === 0) {
-              v.currentIslandIdx = (idx % 4) + 1;
-              const resetIsland = ISLAND_CONFIG[v.currentIslandIdx];
-              v.currentX = resetIsland.pos[0] + (Math.random() - 0.5) * 2.5;
-              v.currentZ = resetIsland.pos[2] + (Math.random() - 0.5) * 2.5;
-              v.targetX = v.currentX;
-              v.targetZ = v.currentZ;
-              v.waitTimer = 40;
+              const targetIslandId = v.homeIslandIdx || ((idx % 4) + 1);
+              const homeCfg = ISLAND_CONFIG[targetIslandId];
+
+              // 若尚未設定返島目標或目標還停在中央島，選定家鄉島的一個安全漫步點
+              if (v.state !== 'returning_home') {
+                const ang = Math.random() * Math.PI * 2;
+                const rad = 2.0 + Math.random() * (homeCfg.radius - 2.8);
+                v.targetX = homeCfg.pos[0] + Math.cos(ang) * rad;
+                v.targetZ = homeCfg.pos[2] + Math.sin(ang) * rad;
+                v.state = 'returning_home';
+                v.waitTimer = 0; // 立即起步走回
+              }
+
+              // 移動中檢查是否已抵達家鄉島嶼範圍
+              const distToHomeCenter = Math.hypot(v.currentX - homeCfg.pos[0], v.currentZ - homeCfg.pos[2]);
+              if (distToHomeCenter <= homeCfg.radius) {
+                v.currentIslandIdx = targetIslandId;
+                v.state = 'wander';
+                v.waitTimer = Math.floor(Math.random() * 50) + 20;
+              }
             }
 
-            const curIslandCfg = ISLAND_CONFIG[v.currentIslandIdx];
+            // 目前所在（或正在前往）的島嶼設定
+            const curIslandCfg = ISLAND_CONFIG[v.currentIslandIdx === 0 ? (v.homeIslandIdx || 1) : v.currentIslandIdx];
 
             if (v.waitTimer > 0) {
               v.waitTimer--;
