@@ -3521,8 +3521,8 @@ function createSportLandmark() {
           opacity: 0.8
         });
 
-        // 2. 建立環形起伏丘陵網格（內徑 48m，外徑 78m）
-        const ringGeo = new THREE.RingGeometry(48, 78, 64, 8);
+// 2. 建立環形起伏丘陵網格（內徑 46m，外徑 82m）
+        const ringGeo = new THREE.RingGeometry(46, 82, 64, 10);
         ringGeo.rotateX(-Math.PI / 2); // 轉為水平面
 
         const pos = ringGeo.attributes.position;
@@ -3532,37 +3532,43 @@ function createSportLandmark() {
           const dist = Math.hypot(x, z);
           const angle = Math.atan2(z, x);
 
-          // 藉由多重正弦波製造不規則海岸線與起伏山脊
-          const noiseCoast = Math.sin(angle * 5) * 4.2 + Math.cos(angle * 9) * 2.5;
-          const hillHeight = Math.max(0, Math.sin(angle * 7) * 2.8 + Math.cos(angle * 3) * 3.5 + Math.sin(dist * 0.25) * 2.0);
+          // 🌟 1. 強化起伏丘陵波形（大幅增加山峰落差）
+          const hillWave = Math.sin(angle * 6) * 3.6 + Math.cos(angle * 10) * 2.2 + Math.sin(angle * 3) * 4.5;
+          // 確保即便在最深山谷也有 1.2m 以上的隆起高程
+          const baseElevation = Math.max(1.2, hillWave + 3.0);
 
-          // 靠近內側海岸線較低，向外延伸逐漸隆起為山丘
-          const blendFactor = Math.min(1, Math.max(0, (dist - 48) / 18));
-          const finalY = -0.55 + (hillHeight * blendFactor); // 底部貼齊海平面
+          // 🌟 2. 靠海沿岸為陡峭岩岸/台地，向陸地深處急遽隆起為高聳山脈 (最厚可達 6~9m)
+          const slopeFactor = Math.pow(Math.min(1, Math.max(0, (dist - 46) / 24)), 0.7);
+          
+          // 基準海岸台地高度設在 Y = -0.15（遠高於海洋波浪頂點 -0.40，徹底防止海水淹沒）
+          const finalY = -0.15 + (baseElevation * slopeFactor);
 
           pos.setY(i, finalY);
         }
         ringGeo.computeVertexNormals();
 
         const mainlandMesh = new THREE.Mesh(ringGeo, landMat);
-        mainlandMesh.receiveShadow = false; // 遠景不需硬陰影，呈現朦朧感
+        mainlandMesh.receiveShadow = false;
         continentGroup.add(mainlandMesh);
 
-        // 3. 在遠方丘陵頂部隨機撒上低多邊形小樹與灌木叢
-        const bushGeo = new THREE.DodecahedronGeometry(0.9, 0);
-        for (let j = 0; j < 65; j++) {
+        // 3. 在加高的遠方丘陵上分佈小樹與灌木叢
+        const bushGeo = new THREE.DodecahedronGeometry(1.2, 0);
+        for (let j = 0; j < 80; j++) {
           const bAngle = Math.random() * Math.PI * 2;
-          const bDist = 52 + Math.random() * 18;
+          const bDist = 50 + Math.random() * 26;
           const bx = Math.cos(bAngle) * bDist;
           const bz = Math.sin(bAngle) * bDist;
 
-          const hOffset = Math.sin(bAngle * 7) * 2.8 + Math.cos(bAngle * 3) * 3.5;
-          const by = Math.max(0.2, hOffset * 0.7);
+          // 計算對應位置的地表高程，讓樹木穩固立於陸地上方
+          const hillWave = Math.sin(bAngle * 6) * 3.6 + Math.cos(bAngle * 10) * 2.2 + Math.sin(bAngle * 3) * 4.5;
+          const baseElevation = Math.max(1.2, hillWave + 3.0);
+          const slopeFactor = Math.pow(Math.min(1, Math.max(0, (bDist - 46) / 24)), 0.7);
+          const groundY = -0.15 + (baseElevation * slopeFactor);
 
           const bush = new THREE.Mesh(bushGeo, foliageMat);
-          bush.position.set(bx, by, bz);
-          const s = 0.8 + Math.random() * 1.6;
-          bush.scale.set(s, s * (0.8 + Math.random() * 0.6), s);
+          bush.position.set(bx, groundY + 0.6, bz);
+          const s = 1.0 + Math.random() * 1.8;
+          bush.scale.set(s, s * (0.9 + Math.random() * 0.7), s);
           continentGroup.add(bush);
         }
 
