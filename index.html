@@ -2976,20 +2976,21 @@ function createIslandTitleSprite(text) {
   canvas.height = 70;
   const ctx = canvas.getContext('2d');
 
-  // 1. 確保畫布整張徹底清空為透明
+  // 1. 完全清空畫布
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 2. 繪製圓角藥丸底色與邊框
-  ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+  // 2. 繪製深色圓角藥丸背景（使用純色 #0F172A，避免半透明被環境影響）
+  ctx.fillStyle = "#0f172a";
   ctx.beginPath();
   ctx.roundRect(10, 10, 236, 50, 25);
   ctx.fill();
 
-  ctx.lineWidth = 4;
+  // 金色亮眼邊框
+  ctx.lineWidth = 5;
   ctx.strokeStyle = "#fde047";
   ctx.stroke();
 
-  // 3. 繪製文字
+  // 3. 繪製純白文字
   ctx.font = "bold 26px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
@@ -2998,18 +2999,20 @@ function createIslandTitleSprite(text) {
 
   const texture = new THREE.CanvasTexture(canvas);
   
-  // 4. 關鍵修正：加入 depthWrite: false，並可設定 depthTest: true
   const spriteMat = new THREE.SpriteMaterial({ 
     map: texture, 
     transparent: true,
-    depthWrite: false // 避免透明區域遮擋後方半透明的海洋水面
+    depthWrite: false, // 避免透明邊緣切斷後方物體
+    depthTest: true,   // 保留正常的遮擋判斷
+    fog: false         // 🌟 關鍵1：不受場景霧氣影響，永遠保持原本鮮豔飽和度
   });
   
   const sprite = new THREE.Sprite(spriteMat);
   sprite.scale.set(6.2, 1.8, 1);
+  sprite.renderOrder = 999; // 🌟 關鍵2：強制最後渲染，保證浮在半透明海洋水面之上！
+  
   return sprite;
 }
-
     const TREE_LEAF_COLORS = [0xd97706, 0xf59e0b, 0xea580c, 0xc2410c];
 
     function createTree() {
