@@ -3848,19 +3848,22 @@ const totalVillagers = 16;
           blade.rotation.z += 0.04;
         });
 
-        // 🌊 海洋小波浪起伏動態效果
-        if (oceanMesh && oceanInitialZ.length > 0) {
+// 🌊 海洋小波浪起伏動態效果（加大浪高與起伏頻率）
+        if (oceanMesh && oceanInitialZ && oceanInitialZ.length > 0) {
           const posAttr = oceanMesh.geometry.attributes.position;
           for (let i = 0; i < posAttr.count; i++) {
             const u = posAttr.getX(i);
             const v = posAttr.getY(i);
-            // 結合雙重正弦波模擬微波漣漪（波高約 0.08m，速度與波長自然交錯）
-            const wave = Math.sin(u * 0.35 + time * 2.0) * 0.05 + 
-                         Math.cos(v * 0.45 + time * 1.5) * 0.04;
-            posAttr.setZ(i, oceanInitialZ[i] + wave);
+            
+            // 🌟 1. 加大波幅至 0.18m～0.25m，並加入雙向流動波紋
+            const wave1 = Math.sin(u * 0.28 + time * 2.4) * 0.14;
+            const wave2 = Math.cos(v * 0.32 + time * 1.8) * 0.10;
+            const wave3 = Math.sin((u + v) * 0.2 + time * 1.2) * 0.06;
+            
+            posAttr.setZ(i, oceanInitialZ[i] + wave1 + wave2 + wave3);
           }
           posAttr.needsUpdate = true;
-          oceanMesh.geometry.computeVertexNormals(); // 重新計算光影法線，呈現波光粼粼感
+          oceanMesh.geometry.computeVertexNormals(); // 重新計算頂點法線，讓浪尖反射出波光
         }
 
         islandFlowers.forEach(fl => {
