@@ -1181,7 +1181,11 @@
       ctx.fillText(nameText, 128, 32);
 
       const texture = new THREE.CanvasTexture(canvas);
-      const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+      const spriteMat = new THREE.SpriteMaterial({ 
+        map: texture, 
+        transparent: true,
+        depthWrite: false 
+      });
       const sprite = new THREE.Sprite(spriteMat);
       sprite.scale.set(1.9, 0.5, 1);
       sprite.position.set(0, 1.6, 0);
