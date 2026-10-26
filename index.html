@@ -2383,30 +2383,29 @@ function updateNightClosedState() {
 function createNatureLandmark() {
   const group = new THREE.Group();
 
-  // 瓢蟲身體材質與斑點材質
+  // 1. 材質宣告（各宣告一次）
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3, metalness: 0.2 }); // 紅色亮面外殼
-  const headMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色頭部
-  const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 }); // 黑色斑點
+  const headMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });                  // 黑色頭部
+  const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });                  // 黑色斑點與線條
 
-  // 🌟 1. 瓢蟲身體改為「上半半球體」並貼齊地面 (Y = 0)
-  // SphereGeometry 參數說明：半徑 1.5, 寬度分段 24, 高度分段 16, phiStart 0, phiLength 2π, thetaStart 0, thetaLength π/2 (上半球)
+  // 2. 瓢蟲身體（上半半球體，貼齊地面 Y=0）
   const bodyGeo = new THREE.SphereGeometry(1.5, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
   const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.position.y = 0;              // 底部貼齊地面
-  body.scale.set(1.0, 0.75, 1.25);  // 水平稍長、高度微扁的甲蟲流線體型
+  body.position.y = 0;
+  body.scale.set(1.0, 0.75, 1.25);
   body.castShadow = true;
   body.receiveShadow = true;
   group.add(body);
 
-  // 底部封底平盤（防止俯瞰或鏡頭旋轉時內部穿幫鏤空）
+  // 底部封底平盤
   const bottomCapGeo = new THREE.CircleGeometry(1.5, 24);
   const bottomCap = new THREE.Mesh(bottomCapGeo, spotMat);
-  bottomCap.rotation.x = Math.PI / 2; // 水平躺平
+  bottomCap.rotation.x = Math.PI / 2;
   bottomCap.scale.set(1.0, 1.25, 1.0);
-  bottomCap.position.y = 0.01;        // 微高於地表避免破面
+  bottomCap.position.y = 0.01;
   group.add(bottomCap);
 
-  // 🌟 2. 黑色頭部（調整為半埋入地表的半球體外觀，接在前側）
+  // 3. 黑色頭部
   const headGeo = new THREE.SphereGeometry(0.7, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
   const head = new THREE.Mesh(headGeo, headMat);
   head.position.set(0, 0, 1.4);
@@ -2414,121 +2413,107 @@ function createNatureLandmark() {
   head.castShadow = true;
   group.add(head);
 
-// 🌟 3. 背部黑色斑點：隨機分佈在左右兩側，並嚴格貼合半球體表面
-      const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });
-      const spotCountEachSide = 3; // 左右兩邊各 3 顆（共 6 顆經典瓢蟲斑點）
+  // 4. 背部黑色斑點（對稱貼合在半球體表面）
+  const spotsParams = [
+    { theta: 0.45, phi: 0.65, size: 0.22 },  // 前側上方
+    { theta: 0.75, phi: 1.35, size: 0.25 },  // 中側靠外
+    { theta: 0.55, phi: 2.35, size: 0.20 }   // 後側上方
+  ];
 
-      // 定義三組隨機或固定的球面角度 (緯度 theta: 0~PI/2，經度 phi)
-      // 角度 0 是頭頂最高點，PI/2 是接近地面
-      const spotsParams = [
-        { theta: 0.45, phi: 0.65, size: 0.22 },  // 前側上方
-        { theta: 0.75, phi: 1.35, size: 0.25 },  // 中側靠外
-        { theta: 0.55, phi: 2.35, size: 0.20 }   // 後側上方
-      ];
+  const R = 1.5;
+  const scaleX = 1.0;
+  const scaleY = 0.75;
+  const scaleZ = 1.25;
 
-      // 瓢蟲身體半徑與縮放比例（需與 body 相同）
-      const R = 1.5;
-      const scaleX = 1.0;
-      const scaleY = 0.75;
-      const scaleZ = 1.25;
+  spotsParams.forEach(param => {
+    [-1, 1].forEach(side => {
+      const phi = side === 1 ? param.phi : Math.PI - param.phi;
+      const sinT = Math.sin(param.theta);
+      const cosT = Math.cos(param.theta);
 
-      spotsParams.forEach(param => {
-        // 左側與右側對稱各長一顆
-        [-1, 1].forEach(side => {
-          // 球面座標轉換
-          const phi = side === 1 ? param.phi : Math.PI - param.phi;
-          const sinT = Math.sin(param.theta);
-          const cosT = Math.cos(param.theta);
+      const nx = sinT * Math.cos(phi);
+      const ny = cosT;
+      const nz = sinT * Math.sin(phi);
 
-          // 基礎球面座標
-          const nx = sinT * Math.cos(phi);
-          const ny = cosT;
-          const nz = sinT * Math.sin(phi);
+      const px = nx * R * scaleX * 1.02;
+      const py = ny * R * scaleY * 1.02;
+      const pz = nz * R * scaleZ * 1.02;
 
-          // 乘上半球體縮放比例，外加微小偏移 0.02 確保浮在外殼表面，絕不穿透
-          const px = nx * R * scaleX * 1.02;
-          const py = ny * R * scaleY * 1.02;
-          const pz = nz * R * scaleZ * 1.02;
+      const spotGeo = new THREE.CylinderGeometry(param.size, param.size, 0.04, 16);
+      const spotMesh = new THREE.Mesh(spotGeo, spotMat);
+      spotMesh.position.set(px, py, pz);
 
-          // 扁平圓盤斑點
-          const spotGeo = new THREE.CylinderGeometry(param.size, param.size, 0.04, 16);
-          const spotMesh = new THREE.Mesh(spotGeo, spotMat);
-          spotMesh.position.set(px, py, pz);
+      const normal = new THREE.Vector3(nx / scaleX, ny / scaleY, nz / scaleZ).normalize();
+      spotMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
 
-          // 讓圓盤朝向半球表面法線（自然貼合曲面）
-          const normal = new THREE.Vector3(nx / scaleX, ny / scaleY, nz / scaleZ).normalize();
-          spotMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+      group.add(spotMesh);
+    });
+  });
 
-          group.add(spotMesh);
-        });
-      });
+  // 5. 背部中央分隔線
+  const lineGeo = new THREE.BoxGeometry(0.06, 0.03, 3.2);
+  const lineMesh = new THREE.Mesh(lineGeo, spotMat);
+  lineMesh.position.set(0, 1.12, 0); 
+  group.add(lineMesh);
 
-      // 🌟 4. 背部中央分隔線：改為細弧形或稍微壓扁緊貼中央頂部
-      const lineGeo = new THREE.BoxGeometry(0.06, 0.03, 3.2);
-      const lineMesh = new THREE.Mesh(lineGeo, spotMat);
-      // 高度剛好切在頂部：R(1.5) * scaleY(0.75) = 1.125
-      lineMesh.position.set(0, 1.12, 0); 
-      group.add(lineMesh);
+  registerObstacle('nature', 0, 0, 2.0);
 
-  registerObstacle('nature', 0, 0, 2.0); // 避障範圍維持 2.0m
+  // 6. 風力發電機（保留原樣）
+  const turbineCoords = [[-2.4, -1.8], [2.4, 1.8]];
+  turbineCoords.forEach(pos => {
+    const wt = new THREE.Group();
+    wt.position.set(pos[0], 0, pos[1]);
 
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.22, 4.0, 16),
+      new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.25, metalness: 0.2 })
+    );
+    pole.position.y = 2.0;
+    pole.castShadow = true;
+    wt.add(pole);
 
-      // 5. 保留原本的風力發電機（風車），放在瓢蟲身旁兩側
-      const turbineCoords = [[-2.4, -1.8], [2.4, 1.8]];
-      turbineCoords.forEach(pos => {
-        const wt = new THREE.Group();
-        wt.position.set(pos[0], 0, pos[1]);
+    const nacelle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.22, 0.75, 12),
+      new THREE.MeshStandardMaterial({ color: 0xf5f5f4, roughness: 0.3 })
+    );
+    nacelle.rotation.x = Math.PI / 2;
+    nacelle.position.set(0, 4.0, 0);
+    nacelle.castShadow = true;
+    wt.add(nacelle);
 
-        const pole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.09, 0.22, 4.0, 16),
-          new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.25, metalness: 0.2 })
-        );
-        pole.position.y = 2.0;
-        pole.castShadow = true;
-        wt.add(pole);
+    const noseCone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.16, 0.32, 16),
+      new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.6, roughness: 0.3 })
+    );
+    noseCone.rotation.x = Math.PI / 2;
+    noseCone.position.set(0, 4.0, 0.48);
+    wt.add(noseCone);
 
-        const nacelle = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.2, 0.22, 0.75, 12),
-          new THREE.MeshStandardMaterial({ color: 0xf5f5f4, roughness: 0.3 })
-        );
-        nacelle.rotation.x = Math.PI / 2;
-        nacelle.position.set(0, 4.0, 0);
-        nacelle.castShadow = true;
-        wt.add(nacelle);
+    const rotor = new THREE.Group();
+    rotor.position.set(0, 4.0, 0.42);
 
-        const noseCone = new THREE.Mesh(
-          new THREE.ConeGeometry(0.16, 0.32, 16),
-          new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.6, roughness: 0.3 })
-        );
-        noseCone.rotation.x = Math.PI / 2;
-        noseCone.position.set(0, 4.0, 0.48);
-        wt.add(noseCone);
-
-        const rotor = new THREE.Group();
-        rotor.position.set(0, 4.0, 0.42);
-
-        for (let b = 0; b < 3; b++) {
-          const blade = new THREE.Mesh(
-            new THREE.BoxGeometry(0.11, 1.7, 0.04),
-            new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.2 })
-          );
-          blade.position.y = 0.85;
-          blade.castShadow = true;
-          const bladePivot = new THREE.Group();
-          bladePivot.rotation.z = (b * Math.PI * 2) / 3;
-          bladePivot.add(blade);
-          rotor.add(bladePivot);
-        }
-        wt.add(rotor);
-        windTurbineBlades.push(rotor); // 讓風車葉片繼續參與旋轉動畫
-
-        group.add(wt);
-        registerObstacle('nature', pos[0], pos[1], 1.0);
-      });
-
-      return group;
+    for (let b = 0; b < 3; b++) {
+      const blade = new THREE.Mesh(
+        new THREE.BoxGeometry(0.11, 1.7, 0.04),
+        new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.2 })
+      );
+      blade.position.y = 0.85;
+      blade.castShadow = true;
+      const bladePivot = new THREE.Group();
+      bladePivot.rotation.z = (b * Math.PI * 2) / 3;
+      bladePivot.add(blade);
+      rotor.add(bladePivot);
     }
+    wt.add(rotor);
+    windTurbineBlades.push(rotor);
 
+    group.add(wt);
+    registerObstacle('nature', pos[0], pos[1], 1.0);
+  });
+
+  return group;
+}
+    
     let spinningMiniTops = [];
     function createBeybladeModel() {
       const bb = new THREE.Group();
