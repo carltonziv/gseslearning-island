@@ -1604,9 +1604,15 @@ person.position.set(spawnX, 0, spawnZ);
         }
       }
 
-      sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
+sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
       document.getElementById('login-modal').classList.add('hidden');
+
+      // 🌟 登入後將切換使用者按鈕隱藏（或禁止點擊）
+      const profileBtn = document.getElementById('profile-btn');
+      if (profileBtn) {
+        profileBtn.style.display = 'none'; // 直接隱藏
+      }
 
       spawnPlayerCharacter();
       initMultiplayerSync(); // 🌟 啟動多人連線同步
@@ -1618,10 +1624,7 @@ person.position.set(spawnX, 0, spawnZ);
       }
     });
 
-    document.getElementById('profile-btn').addEventListener('click', () => {
-      removePlayerCharacter();
-      document.getElementById('login-modal').classList.remove('hidden');
-    });
+
 
     // ==========================================
     // 4. 每日打卡限制
