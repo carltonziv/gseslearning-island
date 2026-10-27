@@ -3568,6 +3568,7 @@ const canvas = document.createElement('canvas');
     let boatProgress = 0;
     let boatCurve = null;
     let isBoatPaused = false; // 🌟 新增：巡邏艇暫停旗標
+    let boatWakeParticles = []; // 🌟 儲存船尾浪花泡沫粒子
     let trailerCarts = []; // 🌟 新增：存放後方 8 節連掛台車
     let cartProgress = 0;
     let trackCurve = null;
@@ -4040,6 +4041,40 @@ cartGroup = new THREE.Group();
       patrolBoat.traverse(child => {
         child.userData.isBoat = true;
       });
+      boatSystem.add(patrolBoat);
+
+      // 🌟 定義在船尾釋放浪花粒子的方法
+      patrolBoat.userData.emitWake = function() {
+        const pGeo = new THREE.PlaneGeometry(0.35, 0.35);
+        pGeo.rotateX(-Math.PI / 2); // 水平貼近海面
+
+        const pMat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.75,
+          depthWrite: false
+        });
+
+        // 左右兩側各產生一朵稍微散開的浪花
+        [-0.32, 0.32].forEach(sideOffset => {
+          const particle = new THREE.Mesh(pGeo, pMat.clone());
+          
+          // 計算船尾正後方世界座標（相對於船隻本地座標，中後段在 Z = -0.3 附近，船尾約在 Z = -1.15）
+          const localTail = new THREE.Vector3(sideOffset + (Math.random() - 0.5) * 0.15, -0.05, -1.15);
+          particle.position.copy(localTail);
+          patrolBoat.localToWorld(particle.position);
+
+          scene.add(particle);
+
+          boatWakeParticles.push({
+            mesh: particle,
+            life: 1.0,         // 生命值 1.0 -> 0.0
+            decay: 0.025,      // 消失速度
+            scaleRate: 1.03    // 隨時間往外擴散擴大
+          });
+        });
+      };
+
       boatSystem.add(patrolBoat);
 
       return boatSystem;
@@ -4845,6 +4880,53 @@ if (mascotLeader) {
           if (patrolBoat.userData.radar) {
             patrolBoat.userData.radar.rotation.y += 0.08;
           }
+          // 🌟 小巡邏艇航行動畫（逆時針巡航）
+        if (patrolBoat && boatCurve && !isBoatPaused) {
+          boatProgress -= 0.00015;
+          if (boatProgress < 0) boatProgress += 1.0;
+
+          const bPos = boatCurve.getPointAt(boatProgress);
+          const bTan = boatCurve.getTangentAt(boatProgress);
+
+          patrolBoat.position.copy(bPos);
+
+          const wavePitch = Math.sin(time * 3.2) * 0.06;
+          const waveRoll = Math.cos(time * 2.5) * 0.08;
+          const waveHeight = Math.sin(time * 2.8) * 0.05;
+
+          patrolBoat.position.y += waveHeight;
+
+          const lookDir = bPos.clone().sub(bTan);
+          patrolBoat.lookAt(lookDir);
+
+          patrolBoat.rotation.x += wavePitch;
+          patrolBoat.rotation.z += waveRoll;
+
+          if (patrolBoat.userData.radar) {
+            patrolBoat.userData.radar.rotation.y += 0.08;
+          }
+
+          // 🌟 每隔數幀在船尾噴發水花
+          if (Math.random() > 0.45 && typeof patrolBoat.userData.emitWake === 'function') {
+            patrolBoat.userData.emitWake();
+          }
+        }
+
+        // 🌟 更新並渲染水花生命週期（擴大並淡出）
+        for (let i = boatWakeParticles.length - 1; i >= 0; i--) {
+          const p = boatWakeParticles[i];
+          p.life -= p.decay;
+          p.mesh.scale.multiplyScalar(p.scaleRate);
+          p.mesh.material.opacity = p.life * 0.7;
+
+          // 生命週期結束時移除
+          if (p.life <= 0) {
+            scene.remove(p.mesh);
+            p.mesh.geometry.dispose();
+            p.mesh.material.dispose();
+            boatWakeParticles.splice(i, 1);
+          }
+        }
         }
 if (ropeMesh && jumperMan && jumpRopeGroup) {
           const currentHour = new Date().getHours();
