@@ -1157,6 +1157,14 @@
 
       <hr style="margin:16px 0; border:0; border-top:1px solid #e2e8f0;">
 
+      <!-- 🌟 新增：閱讀島待審心得管理區塊 -->
+      <div class="form-group">
+        <label>📚 閱讀島待審心得清單 (<span id="pending-reading-count">0</span> 筆)</label>
+        <div id="pending-reading-list" style="max-height: 220px; overflow-y: auto; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+          <p style="color:#94a3b8; font-size:0.85rem; text-align:center;">目前無待審核的閱讀心得</p>
+        </div>
+      </div>
+
       <div class="form-group">
         <label>🌪️ 戰鬥陀螺島賽事管理</label>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -2012,6 +2020,7 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
       document.getElementById('civics-verifier').value = '';
     }
 
+// 🌟 升級版：學生送出閱讀心得（進入待審核區，暫不加分）
     function submitReading() {
       if (!checkDailyLimit('reading')) return;
       const title = document.getElementById('read-title').value.trim();
@@ -2024,14 +2033,28 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
         return;
       }
 
-      rewardCheckin('reading', '閱讀島', `分享了《${title}》閱讀心得`, {
-        type: 'reading_reflection',
+      const today = getTodayKey();
+      const reviewPayload = {
         seatNumber: currentStudent.seatNumber,
         studentName: `${currentStudent.avatar} ${currentStudent.name}`,
         bookTitle: title,
         quote: quote,
-        reflection: reflection
-      }, 5);
+        reflection: reflection,
+        date: today,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      // 1. 推送到 Firebase 待審核節點
+      if (db) {
+        db.ref('pending_reviews/reading').push(reviewPayload).then(() => {
+          alert('📝 閱讀心得已成功送出！請靜待老師在後台審核，通過後將自動發放 5 點能量喔！');
+          closeDrawer();
+        }).catch(err => {
+          alert('送出失敗，請檢查網路：' + err.message);
+        });
+      }
+
+      // 2. 清空輸入欄位
       document.getElementById('read-title').value = '';
       document.getElementById('read-quote').value = '';
       document.getElementById('read-reflection').value = '';
@@ -2475,6 +2498,112 @@ function adminGenerateBracket() {
       bbRef.child('status').set('bracket_ready');
       alert(`🎲 單淘汰賽程圖已隨機抽籤產生完成！共 ${N} 位選手參賽！`);
       toggleBracketSidebar(true);
+    }
+
+    // ==========================================
+    // 🌟 閱讀島待審心得即時監聽與審核處理
+    // ==========================================
+    if (db) {
+      db.ref('pending_reviews/reading').on('value', snap => {
+        const data = snap.val() || {};
+        renderPendingReadingList(data);
+      });
+    }
+
+    function renderPendingReadingList(data) {
+      const container = document.getElementById('pending-reading-list');
+      const countSpan = document.getElementById('pending-reading-count');
+      if (!container || !countSpan) return;
+
+      const keys = Object.keys(data);
+      countSpan.textContent = keys.length;
+
+      if (keys.length === 0) {
+        container.innerHTML = '<p style="color:#94a3b8; font-size:0.85rem; text-align:center;">目前無待審核的閱讀心得</p>';
+        return;
+      }
+
+      let html = '';
+      keys.forEach(k => {
+        const item = data[k];
+        html += `
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:0.85rem; color:#334155;">
+            <div style="font-weight:bold; color:#0284c7; margin-bottom:4px;">
+              ${item.studentName} (${item.seatNumber}號) - 《${item.bookTitle}》
+            </div>
+            <div style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">
+              <strong>節錄：</strong>${item.quote}
+            </div>
+            <div style="font-size:0.82rem; background:#f1f5f9; padding:6px; border-radius:6px; margin-bottom:6px;">
+              <strong>心得：</strong>${item.reflection}
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:6px;">
+              <button style="background:#dc2626; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminRejectReading('${k}')">退件</button>
+              <button style="background:#16a34a; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminApproveReading('${k}')">通過 (+5分)</button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // 審核通過：補發能量、累計打卡防刷次數、備存 GAS 試算表並自待審區移除
+    function adminApproveReading(reviewKey) {
+      if (!db) return;
+      db.ref(`pending_reviews/reading/${reviewKey}`).once('value', snap => {
+        const item = snap.val();
+        if (!item) return;
+
+        const targetSeat = item.seatNumber;
+        const pts = 5;
+
+        // 1. 寫入該學生今日已完成閱讀打卡防刷次數 (+1)
+        const checkinRef = db.ref(`daily_checkins/${item.date}/seat_${targetSeat}/reading`);
+        checkinRef.transaction(cur => (cur || 0) + 1);
+
+        // 2. 增加全班共創能量 (+5)
+        if (totalEnergyRef) {
+          totalEnergyRef.transaction(current => {
+            let next = (current || 0) + pts;
+            if (next >= 5000) {
+              triggerTournamentMode();
+              return 0;
+            }
+            return next;
+          });
+        }
+
+        // 3. 廣播跑馬燈
+        if (liveFeedRef) {
+          liveFeedRef.push({
+            student: item.studentName,
+            msg: `閱讀心得《${item.bookTitle}》審核通過！ (+${pts} 能量)`,
+            time: firebase.database.ServerValue.TIMESTAMP
+          });
+        }
+
+        // 4. 備存到 Google 試算表 (GAS)
+        sendToGAS({
+          type: 'reading_reflection',
+          seatNumber: item.seatNumber,
+          studentName: item.studentName,
+          bookTitle: item.bookTitle,
+          quote: item.quote,
+          reflection: item.reflection
+        });
+
+        // 5. 從待審核清單中刪除
+        db.ref(`pending_reviews/reading/${reviewKey}`).remove();
+        alert(`✅ 已審核通過 ${item.studentName} 的心得！全班已獲取 5 點能量。`);
+      });
+    }
+
+    // 審核退件：直接從待審區刪除
+    function adminRejectReading(reviewKey) {
+      if (!confirm('確定要退回此篇心得嗎？退回後學生需重新撰寫。')) return;
+      if (db) {
+        db.ref(`pending_reviews/reading/${reviewKey}`).remove();
+      }
     }
 
   // ==========================================
