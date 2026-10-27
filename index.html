@@ -878,6 +878,7 @@
             <label class="checkbox-item"><input type="checkbox" id="chk-brush"> 🪥 睡前刷牙</label>
             <label class="checkbox-item"><input type="checkbox" id="chk-snack"> 🥗 少吃零食</label>
             <label class="checkbox-item"><input type="checkbox" id="chk-screen"> 📱 3C少於1小時</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-chore"> 🧹 做家事</label>
           </div>
           <div class="form-group" style="margin-top:14px;">
             <label>認證者（家長、老師或同學）</label>
@@ -1833,6 +1834,7 @@ const texture = new THREE.CanvasTexture(canvas);
       const c1 = document.getElementById('chk-brush').checked;
       const c2 = document.getElementById('chk-snack').checked;
       const c3 = document.getElementById('chk-screen').checked;
+      const c4 = document.getElementById('chk-chore').checked;
       const verifier = document.getElementById('health-verifier').value.trim();
 
       const checkedCount = (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0);
@@ -1850,7 +1852,7 @@ const texture = new THREE.CanvasTexture(canvas);
       if (checkedCount === 3) pts = 5;
       else if (checkedCount === 2) pts = 4;
 
-      const itemsDesc = [c1 ? '睡前刷牙' : '', c2 ? '少吃零食' : '', c3 ? '3C<1h' : ''].filter(Boolean).join('、');
+      const itemsDesc = [c1 ? '睡前刷牙' : '', c2 ? '少吃零食' : '', c3 ? '3C<1h' : '', c4 ? '做家事' : ''].filter(Boolean).join('、');
 
       rewardCheckin('sport_health', '健身運動島', `達成了健康生活(${itemsDesc})`, {
         type: 'task_complete',
@@ -1866,6 +1868,7 @@ const texture = new THREE.CanvasTexture(canvas);
       document.getElementById('chk-brush').checked = false;
       document.getElementById('chk-snack').checked = false;
       document.getElementById('chk-screen').checked = false;
+      document.getElementById('chk-chore').checked = false;
       document.getElementById('health-verifier').value = '';
     }
 
