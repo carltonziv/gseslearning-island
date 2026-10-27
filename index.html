@@ -1141,9 +1141,14 @@
         <button class="modal-close" onclick="closeAllModals()">×</button>
       </div>
 
-      <div class="form-group">
+<div class="form-group">
         <label>⚡ 全班共創能量控制</label>
         <button class="btn-action btn-red" onclick="adminResetEnergy()">手動將全班能量歸零</button>
+      </div>
+
+      <div class="form-group" style="margin-top: 10px;">
+        <label>👥 線上連線人物管理</label>
+        <button class="btn-action btn-red" style="background:#b91c1c;" onclick="adminClearAllOnlinePlayers()">🗑️ 清除所有線上使用者 NPC</button>
       </div>
 
       <hr style="margin:16px 0; border:0; border-top:1px solid #e2e8f0;">
@@ -2275,6 +2280,40 @@ function adminPickWinner(matchIdx, playerNum) {
         alert('全班共創能量已成功歸零！');
       }
     }
+
+    // 🌟 教師專用：一鍵清空所有在線使用者 NPC（貼在這個區間！）
+    function adminClearAllOnlinePlayers() {
+      if (!confirm('⚠️ 確定要清除所有在線學生的 NPC 嗎？\n這將重置所有在線玩家模型，並清理雲端 online_players 節點！')) {
+        return;
+      }
+
+      // 1. 清空 Firebase 上的 online_players 根節點
+      if (db) {
+        db.ref('online_players').remove()
+          .then(() => {
+            // 2. 本機即時移除畫面上所有其他同學的 3D 模型
+            if (typeof otherPlayers !== 'undefined' && otherPlayers) {
+              Object.keys(otherPlayers).forEach(key => {
+                if (otherPlayers[key] && otherPlayers[key].mesh) {
+                  scene.remove(otherPlayers[key].mesh);
+                }
+              });
+              otherPlayers = {};
+            }
+
+            // 3. 同步重置本機自己的角色模型（若有的話）
+            removePlayerCharacter();
+
+            alert('✅ 已成功清除所有線上使用者 NPC！所有在線畫面已同步重置。');
+          })
+          .catch(err => {
+            alert('清除失敗，請檢查網路或權限：' + err.message);
+          });
+      }
+    }
+
+
+    
 function adminRemoveChampionSignboard() {
       if (confirm('確定要提前移除戰鬥陀螺島前方的冠軍木頭告示牌嗎？')) {
         if (bbRef) {
