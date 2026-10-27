@@ -4764,7 +4764,7 @@ if (mascotLeader) {
 // 🌟 小巡邏艇航行動畫（逆時針巡航）
         if (patrolBoat && boatCurve && !isBoatPaused) {
           // 1. 進度改為遞減，並確保在 0.0 ~ 1.0 之間循環
-          boatProgress -= 0.00035;
+          boatProgress -= 0.00015;
           if (boatProgress < 0) boatProgress += 1.0;
 
           const bPos = boatCurve.getPointAt(boatProgress);
