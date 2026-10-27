@@ -6033,8 +6033,9 @@ function focusOnIsland(islandData) {
       const p = document.getElementById(`panel-${islandData.id}`);
       if (p) p.style.display = 'block';
 
-      // 🌟 確保打開面板時即時更新夜間或賽事關閉狀態
-      updateNightClosedState();
+      
+      updateNightClosedState();  // 確保打開面板時即時更新夜間或賽事關閉狀態
+      updateSportTabStatus();  // 打開抽屜時即時刷新運動島分頁標籤打勾狀態！
 
       document.getElementById('side-drawer').classList.add('open');
     }
