@@ -4227,15 +4227,15 @@ cartGroup = new THREE.Group();
         oceanInitialZ.push(oceanPos.getY(i)); // 旋轉後頂點高度為 Y 軸
       }
 
-// 🌟 遠方自然大陸：高山連綿、丘陵錯落、沙灘與岩岸自然分佈
+// 🌟 遠方自然大陸：360度完全閉合平滑、無斷層無破面、高山丘陵自然錯落
       function createDistantMainland() {
         const continentGroup = new THREE.Group();
 
         const landMat = new THREE.MeshStandardMaterial({
           vertexColors: true,     // 啟用頂點色彩漸變
-          roughness: 0.92,
+          roughness: 0.94,
           metalness: 0.05,
-          flatShading: true       // 低多邊形稜角立體陰影
+          flatShading: true       // 低多邊形立體陰影
         });
 
         const foliageMat = new THREE.MeshStandardMaterial({
@@ -4244,8 +4244,8 @@ cartGroup = new THREE.Group();
           flatShading: true
         });
 
-        // 建立更細緻的環形大陸地表
-        const ringGeo = new THREE.RingGeometry(38, 92, 140, 24);
+        // 建立環形網格（內徑 38m，外徑 96m，網格密合）
+        const ringGeo = new THREE.RingGeometry(38, 96, 144, 24);
         ringGeo.rotateX(-Math.PI / 2);
 
         const pos = ringGeo.attributes.position;
@@ -4256,70 +4256,73 @@ cartGroup = new THREE.Group();
         const colorWetRock = new THREE.Color(0x524841);    // 潮間帶暗褐礁岩
         const colorLowGrass = new THREE.Color(0x768A65);   // 平緩丘陵溫和綠
         const colorHighForest = new THREE.Color(0x3B5238); // 高海拔冷杉林墨綠
-        const colorPeakRock = new THREE.Color(0x8C8880);   // 高山山尖裸露灰岩
+        const colorPeakRock = new THREE.Color(0x8C8880);   // 高山裸露灰岩
 
         for (let i = 0; i < pos.count; i++) {
           let x = pos.getX(i);
           let z = pos.getZ(i);
           let dist = Math.hypot(x, z);
-          const angle = Math.atan2(z, x);
+          const angle = Math.atan2(z, x); // 角度範圍：-PI 到 PI
 
-          // 1. 海岸線自然曲折（大岬角 + 細微海蝕灣）
-          const coastNoise = Math.sin(angle * 3.5) * 5.2 + Math.cos(angle * 7.2) * 2.5 + Math.sin(angle * 14.0) * 1.1;
+          // 1. 嚴格整數倍頻率（確保 2π 環形 100% 平滑銜接，徹底消除接縫斷面）
+          const coastNoise = Math.sin(angle * 3) * 4.2 
+                           + Math.cos(angle * 5) * 2.6 
+                           + Math.sin(angle * 8) * 1.2;
           const innerBoundary = 45 + coastNoise;
 
-          // 徑向比例：0 (海岸) ~ 1 (大陸深處)
-          const normalizedR = Math.max(0, Math.min(1, (dist - 38) / (92 - 38)));
-          const adjustedDist = innerBoundary + normalizedR * (92 - innerBoundary);
+          // 徑向比例：0 (海岸淺灘) ~ 1 (大陸深處)
+          const normalizedR = Math.max(0, Math.min(1, (dist - 38) / (96 - 38)));
+          const adjustedDist = innerBoundary + normalizedR * (96 - innerBoundary);
 
           x = Math.cos(angle) * adjustedDist;
           z = Math.sin(angle) * adjustedDist;
           pos.setX(i, x);
           pos.setZ(i, z);
 
-          // 2. 多重頻率地形疊加（高山 + 錯落丘陵）
-          // 主要大山脊（產生少數雄偉的主峰）
-          const mountainWave = Math.sin(angle * 2.2 + 0.5) * 4.5 + Math.cos(angle * 4.1) * 3.8;
-          // 次級錯落丘陵波伏
-          const hillWave = Math.sin(angle * 8.5) * 2.0 + Math.cos(angle * 13.0) * 1.3;
-          // 微細地表擾動
-          const detailNoise = Math.sin(angle * 23.0 + dist * 0.4) * 0.6;
+          // 2. 多重平滑整數頻率地形（高山山脈 + 錯落丘陵，無奇異點與刀削破面）
+          // 宏觀主山脊（整數倍 2 與 4，形成連綿自然山脊）
+          const mainMountains = Math.sin(angle * 2) * 5.5 + Math.cos(angle * 4 + 0.8) * 4.2;
+          // 中型丘陵起伏（整數倍 6 與 9）
+          const midHills = Math.sin(angle * 6) * 2.2 + Math.cos(angle * 9) * 1.5;
+          // 縱深徑向起伏（沿大陸深處產生起伏褶皺，非單調斜坡）
+          const depthWave = Math.sin(normalizedR * Math.PI * 2.5) * 1.6;
+          // 微細地表擾動（整數倍 16）
+          const microNoise = Math.sin(angle * 16 + normalizedR * 10) * 0.4;
 
-          // 綜合高度：靠近海岸平緩、越往大陸內部山勢越雄偉，並加入銳利稜線（Ridged）
-          const baseHeight = Math.max(0, mountainWave * 1.5 + hillWave + 4.0);
-          const ridgeSharpen = Math.pow(Math.abs(Math.sin(angle * 3.2)), 1.8) * 4.0; // 形成嶙峋山脊
-          const elevationTotal = (baseHeight + ridgeSharpen + detailNoise);
+          // 基礎高程合成（加入平滑指數，讓山峰高聳但山腳柔和）
+          const rawHeight = Math.max(0, mainMountains + midHills + depthWave + 3.8);
+          const mountainSculpt = Math.pow(rawHeight / 12, 1.4) * 11.5 + microNoise;
 
-          // 地勢特徵判斷：凹入海灣為沙灘，凸出岬角為礁岩斷崖
-          const isCape = coastNoise > 0.4;
+          // 判斷海灣沙灘 vs 岬角礁岩
+          const isCape = coastNoise > 0.5;
           let finalY = -0.55;
           let vertexColor = new THREE.Color();
 
+          // 自然平滑過渡因子（Hermite 平滑漸變，杜絕陡壁突變）
+          const smoothCoast = normalizedR * normalizedR * (3 - 2 * normalizedR);
+
           if (isCape) {
             // === 陡峭岩岸岬角 ===
-            const cliffSlope = Math.pow(normalizedR, 0.42); // 岸邊直接陡峭拔起
-            finalY = -0.3 + elevationTotal * cliffSlope * 1.1;
+            finalY = -0.32 + mountainSculpt * Math.pow(normalizedR, 0.45) * 1.05;
 
             if (normalizedR < 0.12) {
-              vertexColor.copy(colorWetRock); // 水線礁岩
+              vertexColor.copy(colorWetRock);
             } else if (finalY > 9.5) {
-              vertexColor.copy(colorPeakRock); // 巍峨高山裸岩
-            } else if (finalY > 5.0) {
-              vertexColor.copy(colorHighForest); // 茂密深山
+              vertexColor.copy(colorPeakRock);
+            } else if (finalY > 4.8) {
+              vertexColor.copy(colorHighForest);
             } else {
               vertexColor.copy(colorLowGrass);
             }
           } else {
             // === 平緩沙灘海灣 ===
-            const beachSlope = Math.pow(normalizedR, 0.95); // 緩慢上升
-            finalY = -0.55 + elevationTotal * beachSlope * 0.85;
+            finalY = -0.55 + mountainSculpt * Math.pow(smoothCoast, 1.1) * 0.85;
 
             if (normalizedR < 0.28) {
-              // 潮間帶與海岸沙灘
               vertexColor.copy(colorSand);
-            } else if (finalY > 8.0) {
+            } else if (finalY > 8.5) {
               vertexColor.copy(colorPeakRock);
-            } else if (finalY > 4.0) {
+            } else if (finalY > 4.5) {
               vertexColor.copy(colorHighForest);
             } else {
               vertexColor.copy(colorLowGrass);
@@ -4337,29 +4340,27 @@ cartGroup = new THREE.Group();
         mainlandMesh.receiveShadow = true;
         continentGroup.add(mainlandMesh);
 
-        // 3. 散落植被與山林矮灌木（依海拔分佈）
+        // 3. 散落植被與山林矮灌木（分佈演算法同步改為整數閉合）
         const bushGeo = new THREE.DodecahedronGeometry(1.2, 0);
         for (let j = 0; j < 80; j++) {
           const bAngle = Math.random() * Math.PI * 2;
-          const coastNoise = Math.sin(bAngle * 3.5) * 5.2 + Math.cos(bAngle * 7.2) * 2.5;
+          const coastNoise = Math.sin(bAngle * 3) * 4.2 + Math.cos(bAngle * 5) * 2.6;
           const innerBoundary = 45 + coastNoise;
 
-          // 避開沙灘潮間帶，長在半山腰與丘陵上
           const bDist = innerBoundary + 5.5 + Math.random() * (85 - innerBoundary - 8);
           const bx = Math.cos(bAngle) * bDist;
           const bz = Math.sin(bAngle) * bDist;
 
-          const normalizedR = Math.min(1, Math.max(0, (bDist - innerBoundary) / (92 - innerBoundary)));
-          const mountainWave = Math.sin(bAngle * 2.2 + 0.5) * 4.5 + Math.cos(bAngle * 4.1) * 3.8;
-          const hillWave = Math.sin(bAngle * 8.5) * 2.0;
-          const groundY = -0.3 + (Math.max(1.2, mountainWave + hillWave + 4.0) * Math.pow(normalizedR, 0.7));
+          const normalizedR = Math.min(1, Math.max(0, (bDist - innerBoundary) / (96 - innerBoundary)));
+          const mountainElev = Math.sin(bAngle * 2) * 5.5 + Math.cos(bAngle * 4 + 0.8) * 4.2 + Math.sin(bAngle * 6) * 2.2;
+          const groundY = -0.3 + (Math.max(0, mountainElev + 3.8) * Math.pow(normalizedR, 0.65));
 
-          // 避免長在過高過陡的裸岩峰頂（> 9m）或水下沙灘
-          if (groundY > 0.5 && groundY < 8.8) {
+          // 植被生長在丘陵與中低海拔山坡
+          if (groundY > 0.6 && groundY < 8.2) {
             const bush = new THREE.Mesh(bushGeo, foliageMat);
             bush.position.set(bx, groundY + 0.5, bz);
-            const s = 0.9 + Math.random() * 1.6;
-            bush.scale.set(s, s * (0.8 + Math.random() * 0.5), s);
+            const s = 0.9 + Math.random() * 1.5;
+            bush.scale.set(s, s * (0.8 + Math.random() * 0.4), s);
             continentGroup.add(bush);
           }
         }
