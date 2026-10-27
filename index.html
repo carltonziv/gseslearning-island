@@ -1453,7 +1453,7 @@ const texture = new THREE.CanvasTexture(canvas);
           }
         }
 
-        person.position.set(spawnX, 0, spawnZ);
+person.position.set(spawnX, 0, spawnZ);
         scene.add(person);
 
         playerVillager = {
@@ -1475,6 +1475,7 @@ const texture = new THREE.CanvasTexture(canvas);
         // 立即給予地面漫步目標
         pickNextPlayerWanderTarget();
       }
+    } // 🌟 關鍵修正：補上這個 spawnPlayerCharacter() 的結尾大括號！
 
     // 🌟 為本機玩家挑選所屬島嶼上的下一個安全漫步點
     function pickNextPlayerWanderTarget() {
