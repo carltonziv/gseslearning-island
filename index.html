@@ -4079,15 +4079,7 @@ cartGroup = new THREE.Group();
       return boatSystem;
     }
 
-    // 🌟 動態生成像素荷葉波光水紋貼圖（含透明度與睡蓮光斑）
-    function createPixelWaterTexture() {
-      const size = 128;
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
 
-      const pixelSize = 2;
 
       // 1. 底層透明深海水藍（帶 0.75 半透明度）
       ctx.fillStyle = 'rgba(43, 92, 142, 0.75)';
@@ -4268,19 +4260,17 @@ cartGroup = new THREE.Group();
       scene.add(createPatrolBoatSystem());
 
 
-// 🌟 在島嶼周圍加上海洋水面（具備像素波光肌理）
-// 🌟 在島嶼周圍加上海洋水面（具備透明度與像素荷葉波光）
-      const oceanGeo = new THREE.PlaneGeometry(160, 160, 64, 64);
-      const pixelWaterTexture = createPixelWaterTexture();
+// ✅ 替換為乾淨純色水面材質
+const oceanGeo = new THREE.PlaneGeometry(160, 160, 64, 64);
 
-      const oceanMat = new THREE.MeshStandardMaterial({
-        map: pixelWaterTexture, // 🌟 套用荷葉波光貼圖
-        roughness: 0.25,
-        metalness: 0.1,
-        transparent: true,      // 🌟 開啟透明混合
-        opacity: 0.85,          // 🌟 微透光度（可隱約透出水下沙灘基座）
-        depthWrite: false       // 避免半透明面遮擋閃爍
-      });
+const oceanMat = new THREE.MeshStandardMaterial({
+  color: 0x2b5c8e,        // 🌊 經典澄澈海藍色（可依喜好微調深淺）
+  roughness: 0.15,        // 降低粗糙度，讓水面反射更通透光滑
+  metalness: 0.1,
+  transparent: true,
+  opacity: 0.82,          // 保留透光感，隱約透出水下沙灘基座
+  depthWrite: false
+});
 
       oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
       oceanMesh.rotation.x = -Math.PI / 2; // 水平躺平
@@ -4811,11 +4801,7 @@ villagers.push({
           posAttr.needsUpdate = true;
           oceanMesh.geometry.computeVertexNormals();
 
-          // 🌟 像素荷葉水波向外緩慢漂流
-          if (oceanMesh.material.map) {
-            oceanMesh.material.map.offset.x = (time * 0.012) % 1.0;
-            oceanMesh.material.map.offset.y = (time * 0.008) % 1.0;
-          }
+
         }
 
 
