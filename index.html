@@ -4675,8 +4675,23 @@ villagers.push({
         });
 
 const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
-        if (mainBeybladeTop && isTournamentActive) {
-          mainBeybladeTop.rotation.y += 0.015;
+        if (mainBeybladeTop) {
+          if (isTournamentActive) {
+            // 🌟 1. 比賽進行中：主陀螺持續高速自轉
+            mainBeybladeTop.rotation.y += 0.015;
+          } else {
+            // 🌟 2. 沒比賽（休賽）時：平滑回正，讓六邊形的邊正對前後（目標角度設為 30 度即 π/6 的整數對齊位）
+            // 計算最接近當前旋轉角度的「前後平邊」目標朝向
+            const step = Math.PI / 3; // 六角形每 60 度對稱一次
+            const offset = Math.PI / 6; // 偏移 30 度使邊正對前後（南北向）
+            
+            // 計算距離目前角度最近的平邊對齊目標角度
+            const currentY = mainBeybladeTop.rotation.y;
+            const targetY = Math.round((currentY - offset) / step) * step + offset;
+            
+            // 平滑緩速回正（差值插值）
+            mainBeybladeTop.rotation.y += (targetY - currentY) * 0.05;
+          }
         }
 
 // 🌟 陀螺頂部核心晶片動態呼吸燈（平時紅寶石色／比賽時電光藍脈動）
