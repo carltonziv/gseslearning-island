@@ -1778,26 +1778,50 @@ let isCompleted = false;
       if (bbElem) {
         if (isTournamentActive) {
           bbElem.setAttribute('class', 'minimap-island minimap-open');
-        } else {
-          bbElem.setAttribute('class', 'minimap-island minimap-closed');
-        }
+  } else {
+        bbElem.setAttribute('class', 'minimap-island minimap-closed');
       }
     }
 
-    const reflectionInput = document.getElementById('read-reflection');
-    const reflectionCountText = document.getElementById('reflection-count');
+    // 🌟 第二步：在 updateMinimapStatus 結尾處呼叫連動更新
+    updateSportTabStatus();
+  }
+
+  // 🌟 第一步：更新運動島分頁標籤按鈕的完成打勾（✓）狀態
+  function updateSportTabStatus() {
+    const btn1 = document.getElementById('tab-btn-sport1');
+    const btn2 = document.getElementById('tab-btn-sport2');
+    if (!btn1 || !btn2) return;
+
+    const doneExercise = getDailyCount('sport_exercise') >= 1;
+    const doneHealth = getDailyCount('sport_health') >= 1;
+
+    btn1.innerHTML = doneExercise 
+      ? '🏃 增肌減脂 <span style="color:#22c55e; font-weight:900;">✓</span>' 
+      : '🏃 增肌減脂';
+
+    btn2.innerHTML = doneHealth 
+      ? '🌙 健康生活 (18-22點) <span style="color:#22c55e; font-weight:900;">✓</span>' 
+      : '🌙 健康生活 (18-22點)';
+  }
+
+  // 只保留一份宣告，避免重複宣告報錯
+  const reflectionInput = document.getElementById('read-reflection');
+  const reflectionCountText = document.getElementById('reflection-count');
+  if (reflectionInput && reflectionCountText) {
     reflectionInput.addEventListener('input', () => {
       const len = reflectionInput.value.trim().length;
       reflectionCountText.textContent = `目前字數：${len} / 20 字`;
       if (len >= 20) reflectionCountText.classList.add('valid');
       else reflectionCountText.classList.remove('valid');
     });
+  }
 
-    // ==========================================
-    // 5. 能量光球發射、5000滿額歸零與打卡
-    // ==========================================
-    async function sendToGAS(payload) {
-      if (!GAS_API_URL || GAS_API_URL.includes("請替換")) return;
+  // ==========================================
+  // 5. 能量光球發射、5000滿額歸零與打卡
+  // ==========================================
+  async function sendToGAS(payload) {
+    if (!GAS_API_URL || GAS_API_URL.includes("請替換")) return;
       try {
         await fetch(GAS_API_URL, {
           method: 'POST',
