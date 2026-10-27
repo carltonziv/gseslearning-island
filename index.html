@@ -727,7 +727,7 @@
   </div>
 
   
-<!-- 🌟 左下角五島微縮雷達投影圖（邊與邊貼合） -->
+<!-- 🌟 左下角五島微縮雷達投影圖（邊與邊貼合，加入打勾圖示） -->
   <div id="minimap-panel" class="minimap-container">
     <svg class="minimap-svg" viewBox="-24 -24 48 48">
       <!-- 中央：戰鬥陀螺島 (中心 0, 0) -->
@@ -739,21 +739,25 @@
       <polygon id="mini-nature" class="minimap-island minimap-open" 
                points="-3.0,-5.2 -6.0,0 -12.0,0 -15.0,-5.2 -12.0,-10.39 -6.0,-10.39" 
                onclick="focusOnIsland(ISLAND_CONFIG[1])" />
+      <text id="mini-check-nature" x="-9.0" y="-4.2" text-anchor="middle" dominant-baseline="middle" font-size="5.2" font-weight="900" fill="#22c55e" style="display:none; pointer-events:none;">✓</text>
 
       <!-- 右上：健身運動島 (中心 9.0, -5.2) -->
       <polygon id="mini-sport" class="minimap-island minimap-open" 
                points="15.0,-5.2 12.0,0 6.0,0 3.0,-5.2 6.0,-10.39 12.0,-10.39" 
                onclick="focusOnIsland(ISLAND_CONFIG[2])" />
+      <text id="mini-check-sport" x="9.0" y="-4.2" text-anchor="middle" dominant-baseline="middle" font-size="5.2" font-weight="900" fill="#22c55e" style="display:none; pointer-events:none;">✓</text>
 
       <!-- 左下：閱讀島 (中心 -9.0, 5.2) -->
       <polygon id="mini-reading" class="minimap-island minimap-open" 
                points="-3.0,5.2 -6.0,10.39 -12.0,10.39 -15.0,5.2 -12.0,0 -6.0,0" 
                onclick="focusOnIsland(ISLAND_CONFIG[3])" />
+      <text id="mini-check-reading" x="-9.0" y="6.2" text-anchor="middle" dominant-baseline="middle" font-size="5.2" font-weight="900" fill="#22c55e" style="display:none; pointer-events:none;">✓</text>
 
       <!-- 右下：優良公民島 (中心 9.0, 5.2) -->
       <polygon id="mini-civics" class="minimap-island minimap-open" 
                points="15.0,5.2 12.0,10.39 6.0,10.39 3.0,5.2 6.0,0 12.0,0" 
                onclick="focusOnIsland(ISLAND_CONFIG[4])" />
+      <text id="mini-check-civics" x="9.0" y="6.2" text-anchor="middle" dominant-baseline="middle" font-size="5.2" font-weight="900" fill="#22c55e" style="display:none; pointer-events:none;">✓</text>
     </svg>
   </div>
 
