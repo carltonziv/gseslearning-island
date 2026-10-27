@@ -4679,18 +4679,18 @@ const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
           mainBeybladeTop.rotation.y += 0.015;
         }
 
-        // 🌟 沒比賽時：頂部核心晶片呈現「暗紅色呼吸燈」效果
+// 🌟 陀螺頂部核心晶片動態呼吸燈（平時紅寶石色／比賽時電光藍脈動）
         if (beybladeCoreMesh) {
           if (!isTournamentActive) {
-            // 平時休眠：設定自發光為紅寶石色
+            // 1. 平時休眠：深紅寶石色平緩呼吸（週期約 2.8 秒）
             beybladeCoreMesh.material.emissive.setHex(0x7C0E18);
-            // 透過正弦波產生平緩呼吸起伏（強度介於 0.15 ~ 0.7 之間）
             const pulse = (Math.sin(time * 2.2) + 1) * 0.5; // 0.0 ~ 1.0
             beybladeCoreMesh.material.emissiveIntensity = 0.15 + pulse * 0.55;
           } else {
-            // 比賽進行時：恢復原本的電光藍
+            // 2. 比賽進行時：電光藍熱血呼吸燈（加快頻率至 time * 4.0，產生強烈能量起伏）
             beybladeCoreMesh.material.emissive.setHex(0x2C75FF);
-            beybladeCoreMesh.material.emissiveIntensity = 0.7;
+            const battlePulse = (Math.sin(time * 4.0) + 1) * 0.5; // 0.0 ~ 1.0
+            beybladeCoreMesh.material.emissiveIntensity = 0.3 + battlePulse * 0.8; // 強度在 0.3 ~ 1.1 之間脈動
           }
         }
 
