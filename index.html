@@ -1930,6 +1930,7 @@ const texture = new THREE.CanvasTexture(canvas);
     let beybladeLandmarkGroup = null;
     let mainBeybladeTop = null;
     let championSignboard = null; // 🌟 冠軍木頭榮譽告示牌模型物件
+    let beybladeCoreMesh = null; // 🌟 記錄陀螺頂部核心晶片
     let beybladeDecorations = [];
     const COLOR_GRAY_DORMANT = 0xD1D0CE;
 
@@ -2728,6 +2729,7 @@ function createNatureLandmark() {
       core.position.y = 1.75;
       core.castShadow = true;
       mainBeybladeTop.add(core);
+      beybladeCoreMesh = core; // 🌟 記錄核心晶片供呼吸燈動畫使用
 
       mainBeybladeTop.scale.setScalar(1.1);
       bb.add(mainBeybladeTop);
@@ -4671,9 +4673,24 @@ villagers.push({
           mini.position.y = Math.sin(time * 3.0 + idx) * 0.04;
         });
 
-        const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
+const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
         if (mainBeybladeTop && isTournamentActive) {
           mainBeybladeTop.rotation.y += 0.015;
+        }
+
+        // 🌟 沒比賽時：頂部核心晶片呈現「暗紅色呼吸燈」效果
+        if (beybladeCoreMesh) {
+          if (!isTournamentActive) {
+            // 平時休眠：設定自發光為深邃暗紅色
+            beybladeCoreMesh.material.emissive.setHex(0x8B0000);
+            // 透過正弦波產生平緩呼吸起伏（強度介於 0.15 ~ 0.7 之間）
+            const pulse = (Math.sin(time * 2.2) + 1) * 0.5; // 0.0 ~ 1.0
+            beybladeCoreMesh.material.emissiveIntensity = 0.15 + pulse * 0.55;
+          } else {
+            // 比賽進行時：恢復原本的亮金黃色光芒
+            beybladeCoreMesh.material.emissive.setHex(0xFACC15);
+            beybladeCoreMesh.material.emissiveIntensity = 0.7;
+          }
         }
 
 if (mascotLeader) {
