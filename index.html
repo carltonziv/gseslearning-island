@@ -1992,6 +1992,7 @@ function updateNightClosedState() {
       if (beybladeLandmarkGroup) {
         beybladeLandmarkGroup.traverse(child => {
           if (child.isMesh && child.material) {
+            if (child === beybladeCoreMesh) return;
             if (!child.userData.origColor) {
               child.userData.origColor = child.material.color.getHex();
             }
@@ -2003,7 +2004,7 @@ function updateNightClosedState() {
       beybladeDecorations.forEach(obj => {
         obj.traverse(child => {
           if (child.isMesh && child.material) {
-            if (!child.userData.origColor) {
+             if (!child.userData.origColor) {
               child.userData.origColor = child.material.color.getHex();
             }
             child.material.color.setHex(isTournamentActive ? child.userData.origColor : COLOR_GRAY_DORMANT);
