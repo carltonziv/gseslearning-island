@@ -1389,63 +1389,71 @@ const texture = new THREE.CanvasTexture(canvas);
       const companionSprite = createCompanionSprite(currentStudent.avatar);
       person.add(companionSprite);
 
-      const startIslandIdx = 4;
-      const startIsland = ISLAND_CONFIG[startIslandIdx];
-      const spawnX = startIsland.pos[0] + 2.3;
-      const spawnZ = startIsland.pos[2] + 2.3;
+// 🌟 1. 隨機選取周圍四島之一 (1: 生態科技島, 2: 健身運動島, 3: 閱讀島, 4: 優良公民島)
+      const allowedIslands = [1, 2, 3, 4];
+      const randomIslandIdx = allowedIslands[Math.floor(Math.random() * allowedIslands.length)];
+      const startIsland = ISLAND_CONFIG[randomIslandIdx];
+
+      // 🌟 2. 在該島上挑選一個未被地標阻擋的隨機出生點
+      let spawnX = startIsland.pos[0];
+      let spawnZ = startIsland.pos[2];
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = 2.0 + Math.random() * (startIsland.radius - 2.8);
+        const lx = Math.cos(a) * r;
+        const lz = Math.sin(a) * r;
+        if (!isPositionBlocked(startIsland.id, lx, lz)) {
+          spawnX = startIsland.pos[0] + lx;
+          spawnZ = startIsland.pos[2] + lz;
+          break;
+        }
+      }
+
       person.position.set(spawnX, 0, spawnZ);
       scene.add(person);
-      
+
+      // 🌟 3. 建立玩家專屬漫步控制物件 (獨立維護，不再塞入 background villagers)
       playerVillager = {
         obj: person,
-        zzzSprite: null,
-        homeIslandIdx: 4,
-        companionSprite: companionSprite,
-        currentIslandIdx: 4,
-        targetIslandIdx: 4,
-        state: 'wander',
+        homeIslandIdx: randomIslandIdx,
+        currentIslandIdx: randomIslandIdx,
         currentX: spawnX,
         currentZ: spawnZ,
         targetX: spawnX,
         targetZ: spawnZ,
-        bridgeEndTarget: null,
         walkCycle: 0,
-        waitTimer: 1,
-        speed: 0.024,
-        isJogging: false,
+        waitTimer: 0,
+        speed: 0.022,
         isSkirt: isGirl,
-        cheerType: 'jump_both',
-        stadiumPos: { x: 2.8, z: 0.5 },
-        sleepPos: { x: 2.6, z: 0.5 },
-        cheerPhase: 0,
-        sleepBreathPhase: 0
+        companionSprite: companionSprite
       };
 
-      if (typeof villagers !== 'undefined' && villagers) {
-        villagers.push(playerVillager);
-      }
+      // 立即給予玩家第一個安全的漫步目標點
+      pickNextPlayerWanderTarget();
+    }
 
-// 🌟 給予初始避障漫步目標，讓角色登入後立即自然巡邏
-      const curIslandCfg = ISLAND_CONFIG[4];
-      const curCenter = curIslandCfg.pos;
-      let foundValid = false;
+    // 🌟 為本機玩家挑選所屬島嶼上的下一個安全漫步點
+    function pickNextPlayerWanderTarget() {
+      if (!playerVillager) return;
+      const curIsland = ISLAND_CONFIG[playerVillager.currentIslandIdx];
+      const center = curIsland.pos;
+      const startLx = playerVillager.currentX - center[0];
+      const startLz = playerVillager.currentZ - center[2];
+
       for (let attempt = 0; attempt < 15; attempt++) {
         const a = Math.random() * Math.PI * 2;
-        const r = 2.8 + Math.random() * (curIslandCfg.radius - 3.4); // 半徑 2.8m 以上，完全避開中央神廟
+        const r = 1.8 + Math.random() * (curIsland.radius - 2.6);
         const lx = Math.cos(a) * r;
         const lz = Math.sin(a) * r;
-        if (!isPositionBlocked(curIslandCfg.id, lx, lz)) {
-          playerVillager.targetX = curCenter[0] + lx;
-          playerVillager.targetZ = curCenter[2] + lz;
-          foundValid = true;
-          break;
+
+        if (!isPositionBlocked(curIsland.id, lx, lz) &&
+            !isPathBlocked(curIsland.id, startLx, startLz, lx, lz)) {
+          playerVillager.targetX = center[0] + lx;
+          playerVillager.targetZ = center[2] + lz;
+          return;
         }
       }
-      if (!foundValid) {
-        playerVillager.targetX = curCenter[0] + 3.0;
-        playerVillager.targetZ = curCenter[2] + 2.0;
-      }
-      playerVillager.waitTimer = 0; // 登入後立即起步走動
+      playerVillager.waitTimer = 30;
     }
     
     async function loadStudentRoster() {
@@ -5604,6 +5612,78 @@ else {
             }
           }
         });
+
+// ==========================================
+        // 🌟 本機玩家角色獨立自然漫步與擺臂動畫
+        // ==========================================
+        if (playerVillager && playerVillager.obj) {
+          const limbs = playerVillager.obj.userData.limbs;
+          const curIsland = ISLAND_CONFIG[playerVillager.currentIslandIdx];
+
+          if (playerVillager.waitTimer > 0) {
+            // 停步待機：手腳自然收合歸位
+            playerVillager.waitTimer--;
+            if (limbs) {
+              limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
+              limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
+              limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
+              limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
+              if (limbs.skirt) limbs.skirt.rotation.x = 0;
+            }
+            if (playerVillager.waitTimer <= 0) {
+              pickNextPlayerWanderTarget(); // 待機結束，挑選下一個目標
+            }
+          } else {
+            // 正在移動邁步
+            const dx = playerVillager.targetX - playerVillager.currentX;
+            const dz = playerVillager.targetZ - playerVillager.currentZ;
+            const dist = Math.hypot(dx, dz);
+
+            if (dist > 0.08) {
+              playerVillager.currentX += (dx / dist) * playerVillager.speed;
+              playerVillager.currentZ += (dz / dist) * playerVillager.speed;
+
+              // 障礙物排斥防穿模
+              const localPos = {
+                x: playerVillager.currentX - curIsland.pos[0],
+                z: playerVillager.currentZ - curIsland.pos[2]
+              };
+              const wasBlocked = applyRepulsionForce(curIsland.id, localPos);
+              playerVillager.currentX = curIsland.pos[0] + localPos.x;
+              playerVillager.currentZ = curIsland.pos[2] + localPos.z;
+
+              playerVillager.obj.position.x = playerVillager.currentX;
+              playerVillager.obj.position.z = playerVillager.currentZ;
+
+              if (wasBlocked) {
+                // 遇到障礙物立即停步並重新尋找新路徑
+                playerVillager.targetX = playerVillager.currentX;
+                playerVillager.targetZ = playerVillager.currentZ;
+                playerVillager.waitTimer = Math.floor(Math.random() * 30) + 15;
+              } else {
+                playerVillager.obj.rotation.y = Math.atan2(dx, dz); // 面向行走方向
+              }
+
+              // 手臂與雙腿交替擺動
+              playerVillager.walkCycle += 0.18;
+              const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+              const armSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+
+              if (limbs) {
+                limbs.leftLeg.rotation.x = legSwing;
+                limbs.rightLeg.rotation.x = -legSwing;
+                limbs.leftArm.rotation.x = -armSwing;
+                limbs.rightArm.rotation.x = armSwing;
+                if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(playerVillager.walkCycle * 2) * 0.1;
+              }
+              playerVillager.obj.position.y = Math.abs(Math.sin(playerVillager.walkCycle)) * 0.04; // 微幅上下彈跳步態
+            } else {
+              // 抵達目標點，隨機停留 2~5 秒
+              playerVillager.waitTimer = Math.floor(Math.random() * 120) + 60;
+            }
+          }
+        }
+
 
         // 平滑更新其他在線同學的位置
 Object.values(otherPlayers).forEach(p => {
