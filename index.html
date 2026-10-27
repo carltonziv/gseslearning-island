@@ -1931,6 +1931,7 @@ const texture = new THREE.CanvasTexture(canvas);
     let mainBeybladeTop = null;
     let championSignboard = null; // 🌟 冠軍木頭榮譽告示牌模型物件
     let beybladeCoreMesh = null; // 🌟 記錄陀螺頂部核心晶片
+    let beybladeRingMesh = null; // 🌟 新增：記錄陀螺下層攻擊環
     const colorBattleBlue = new THREE.Color(0x2C75FF);  // 🌟 比賽電光藍
     const colorBattleWhite = new THREE.Color(0xC0D6FF); // 🌟 比賽高光白
     let beybladeDecorations = [];
@@ -2716,6 +2717,7 @@ function createNatureLandmark() {
       ring.position.y = 1.1;
       ring.castShadow = true;
       mainBeybladeTop.add(ring);
+      beybladeRingMesh = ring; // 🌟 記錄攻擊環供同步微弱呼吸動畫使用
 
       const top = new THREE.Mesh(
         new THREE.CylinderGeometry(1.5, 2.0, 0.38, 6),
@@ -4703,6 +4705,11 @@ const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
             beybladeCoreMesh.material.emissive.setHex(0x7C0E18);
             const pulse = (Math.sin(time * 2.2) + 1) * 0.5; // 0.0 ~ 1.0
             beybladeCoreMesh.material.emissiveIntensity = 0.15 + pulse * 0.55;
+
+            // 🌟 平時攻擊環維持原本安靜暗光
+            if (beybladeRingMesh) {
+              beybladeRingMesh.material.emissiveIntensity = 0.15;
+            }
           } else {
             // 2. 比賽進行時：電光藍 ⇋ 耀眼白 能量呼吸循環
             const cyclePhase = (Math.sin(time * 3.5) + 1) * 0.5; // 0.0 ~ 1.0 之間平滑來回
@@ -4712,6 +4719,11 @@ const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
             // 自發光強度同步隨週期起伏（從 0.4 到 1.15 脈動）
             beybladeCoreMesh.material.emissiveIntensity = 0.4 + cyclePhase * 0.75;
+
+            // 🌟 攻擊環同步微弱呼吸：強度在 0.25 ~ 0.55 之間溫和起伏
+            if (beybladeRingMesh) {
+              beybladeRingMesh.material.emissiveIntensity = 0.25 + cyclePhase * 0.3;
+            }
           }
         }
 
