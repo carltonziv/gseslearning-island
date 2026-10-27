@@ -1346,8 +1346,19 @@ const texture = new THREE.CanvasTexture(canvas);
       sprite.position.set(-1.15, 1.6, 0);
       return sprite;
     }
-    let playerVillager = null;
+let playerVillager = null;
     function removePlayerCharacter() {
+      // 🌟 1. 主動通知 Firebase 立即刪除該使用者的線上人物節點
+      if (myPlayerRef) {
+        myPlayerRef.remove();
+        myPlayerRef = null;
+      }
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
+
+      // 🌟 2. 清除本機 3D 模型
       if (playerVillager) {
         if (typeof scene !== 'undefined' && scene) {
           scene.remove(playerVillager.obj);
