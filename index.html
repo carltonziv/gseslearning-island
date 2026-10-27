@@ -4858,18 +4858,18 @@ if (oceanMesh && oceanInitialZ && oceanInitialZ.length > 0) {
     posAttr.setZ(i, oceanInitialZ[i] + totalWave);
   } // 👈 for 迴圈到這裡結束！
 
-  // 🌟 2. 標記頂點更新並重新計算法線（放在 for 迴圈外）
+  // 🌟 2. 標記頂點更新並重新計算法線
   posAttr.needsUpdate = true; //[cite: 3]
   oceanMesh.geometry.computeVertexNormals(); //[cite: 3]
 
-          // 👇 加在 computeVertexNormals() 正下方：像素荷葉水波向外緩慢漂流
+          //像素荷葉水波向外緩慢漂流
           if (oceanMesh.material.map) {
             oceanMesh.material.map.offset.x = (time * 0.012) % 1.0;
             oceanMesh.material.map.offset.y = (time * 0.008) % 1.0;
           }
         }
 
-  // 🌟 3. 像素波光貼圖向外緩慢流動（放在 for 迴圈外，每幀只執行一次）
+  // 🌟 3. 像素波光貼圖向外緩慢流動（每幀只執行一次）
   if (oceanMesh.material.map) {
     oceanMesh.material.map.offset.x = (time * 0.02) % 1.0;
     oceanMesh.material.map.offset.y = (time * 0.015) % 1.0;
