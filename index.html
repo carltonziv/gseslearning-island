@@ -4683,7 +4683,7 @@ const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
         if (beybladeCoreMesh) {
           if (!isTournamentActive) {
             // 平時休眠：設定自發光為紅寶石色
-            beybladeCoreMesh.material.emissive.setHex(0x9B111E);
+            beybladeCoreMesh.material.emissive.setHex(0x7C0E18);
             // 透過正弦波產生平緩呼吸起伏（強度介於 0.15 ~ 0.7 之間）
             const pulse = (Math.sin(time * 2.2) + 1) * 0.5; // 0.0 ~ 1.0
             beybladeCoreMesh.material.emissiveIntensity = 0.15 + pulse * 0.55;
