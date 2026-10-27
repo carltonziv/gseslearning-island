@@ -1624,11 +1624,8 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
       updateHudProfile();
       document.getElementById('login-modal').classList.add('hidden');
 
-      // 🌟 登入後將切換使用者按鈕隱藏（或禁止點擊）
-      const profileBtn = document.getElementById('profile-btn');
-      if (profileBtn) {
-        profileBtn.style.display = 'none'; // 直接隱藏
-      }
+      // 🌟 登入後立即拉取雲端今日打卡紀錄，防重整重複解任務
+      syncDailyCheckinsFromCloud(currentStudent.seatNumber);
 
       spawnPlayerCharacter();
       initMultiplayerSync(); // 🌟 啟動多人連線同步
@@ -1642,27 +1639,55 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
 
 
 
-    // ==========================================
-    // 4. 每日打卡限制
+// ==========================================
+    // 4. 每日打卡限制（綁定座號 + 雲端同步防刷）
     // ==========================================
     function getTodayKey() {
       const d = new Date();
-      return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${d.getFullYear()}-${m}-${day}`;
     }
 
+    // 依「學生座號」與「今日日期」取得該任務打卡次數
     function getDailyCount(islandId) {
+      if (!currentStudent || !currentStudent.seatNumber) return 0;
+      const seat = currentStudent.seatNumber;
       const today = getTodayKey();
-      const raw = localStorage.getItem(`island_checkin_${today}`);
+      const raw = localStorage.getItem(`island_checkin_${seat}_${today}`);
       const data = raw ? JSON.parse(raw) : {};
       return data[islandId] || 0;
     }
 
     function addDailyCount(islandId) {
+      if (!currentStudent || !currentStudent.seatNumber) return;
+      const seat = currentStudent.seatNumber;
       const today = getTodayKey();
-      const raw = localStorage.getItem(`island_checkin_${today}`);
+      const key = `island_checkin_${seat}_${today}`;
+      const raw = localStorage.getItem(key);
       const data = raw ? JSON.parse(raw) : {};
       data[islandId] = (data[islandId] || 0) + 1;
-      localStorage.setItem(`island_checkin_${today}`, JSON.stringify(data));
+      localStorage.setItem(key, JSON.stringify(data));
+
+      // 🌟 同步寫入 Firebase 雲端防刷節點
+      if (db) {
+        const cloudRef = db.ref(`daily_checkins/${today}/seat_${seat}/${islandId}`);
+        cloudRef.transaction(current => (current || 0) + 1);
+      }
+    }
+
+    // 🌟 登入或初始化時，從 Firebase 雲端拉取今日已完成次數同步到 localStorage
+    function syncDailyCheckinsFromCloud(seat) {
+      if (!db || !seat) return;
+      const today = getTodayKey();
+      db.ref(`daily_checkins/${today}/seat_${seat}`).once('value', snap => {
+        const val = snap.val();
+        if (val) {
+          const key = `island_checkin_${seat}_${today}`;
+          localStorage.setItem(key, JSON.stringify(val));
+          updateMinimapStatus();
+        }
+      });
     }
 
     function checkDailyLimit(islandId) {
@@ -1672,7 +1697,6 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
         return false;
       }
 
-      // 🌟 新增：每日 22:00 至次日 07:00 關閉周圍四島任務
       const currentHour = new Date().getHours();
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
       if (isNightClosed && islandId !== 'beyblade') {
@@ -1682,9 +1706,15 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
 
       const count = getDailyCount(islandId);
       if (islandId === 'reading') {
-        if (count >= 3) { alert('📖 閱讀島今天已經挑戰 3 次囉！明天再繼續加油！'); return false; }
+        if (count >= 3) { 
+          alert('📖 閱讀島今天已經挑戰 3 次囉！明天再繼續加油！'); 
+          return false; 
+        }
       } else {
-        if (count >= 1) { alert('⭐ 這項任務今天已經挑戰過囉！把機會留給其他任務吧！'); return false; }
+        if (count >= 1) { 
+          alert('⭐ 這項任務你今天已經完成過囉！每位同學每天只能完成 1 次，把機會留給其他島嶼吧！'); 
+          return false; 
+        }
       }
       return true;
     }
