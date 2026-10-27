@@ -3961,25 +3961,39 @@ cartGroup = new THREE.Group();
       const metalMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, metalness: 0.85, roughness: 0.2 });
       const yellowMat = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
 
-      // A. 下部船底
-      const keelGeo = new THREE.ConeGeometry(0.72, 2.6, 4);
-      keelGeo.rotateY(Math.PI / 4);
-      keelGeo.rotateX(Math.PI / 2);
-      keelGeo.scale(1.0, 0.45, 1.0);
-      const keel = new THREE.Mesh(keelGeo, keelMat);
-      keel.position.set(0, -0.08, 0);
-      keel.castShadow = true;
-      patrolBoat.add(keel);
+// 🌟 A. 下部紅色船底（長方底 + 尖銳首）
+      // A1. 中後段長方形船底
+      const keelAft = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.22, 1.6), keelMat);
+      keelAft.position.set(0, -0.08, -0.3);
+      keelAft.castShadow = true;
+      patrolBoat.add(keelAft);
 
-      // B. 上部主船身
-      const hullGeo = new THREE.ConeGeometry(0.85, 2.7, 4);
-      hullGeo.rotateY(Math.PI / 4);
-      hullGeo.rotateX(Math.PI / 2);
-      hullGeo.scale(1.0, 0.5, 1.0);
-      const hull = new THREE.Mesh(hullGeo, hullMat);
-      hull.position.set(0, 0.12, 0);
-      hull.castShadow = true;
-      patrolBoat.add(hull);
+      // A2. 前段收尖船底
+      const keelBowGeo = new THREE.ConeGeometry(0.62, 1.1, 4);
+      keelBowGeo.rotateY(Math.PI / 4);
+      keelBowGeo.rotateX(Math.PI / 2);
+      keelBowGeo.scale(1.0, 0.35, 1.0);
+      const keelBow = new THREE.Mesh(keelBowGeo, keelMat);
+      keelBow.position.set(0, -0.08, 0.95);
+      keelBow.castShadow = true;
+      patrolBoat.add(keelBow);
+
+      // 🌟 B. 上部白色主船身（長方主體 + 尖銳首）
+      // B1. 中後段長方形船身
+      const hullAft = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.26, 1.6), hullMat);
+      hullAft.position.set(0, 0.14, -0.3);
+      hullAft.castShadow = true;
+      patrolBoat.add(hullAft);
+
+      // B2. 前段收尖主船首
+      const hullBowGeo = new THREE.ConeGeometry(0.68, 1.1, 4);
+      hullBowGeo.rotateY(Math.PI / 4);
+      hullBowGeo.rotateX(Math.PI / 2);
+      hullBowGeo.scale(1.0, 0.38, 1.0);
+      const hullBow = new THREE.Mesh(hullBowGeo, hullMat);
+      hullBow.position.set(0, 0.14, 0.95);
+      hullBow.castShadow = true;
+      patrolBoat.add(hullBow);
 
       // D. 駕駛室 / 船橋
       const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
