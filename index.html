@@ -1723,7 +1723,7 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
       return true;
     }
 
-    // 🌟 更新左下角五島微縮投影圖狀態顏色
+// 🌟 更新左下角五島微縮投影圖狀態顏色與完成打勾標記
     function updateMinimapStatus() {
       const currentHour = new Date().getHours();
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
@@ -1732,24 +1732,30 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
       // 1. 周圍四島判定
       const islands = [
         { id: 'nature', limit: 1 },
-        { id: 'sport', limit: 1, checkId: 'sport_exercise' },
+        { id: 'sport', limit: 1 },
         { id: 'reading', limit: 3 },
         { id: 'civics', limit: 1 }
       ];
 
       islands.forEach(item => {
         const elem = document.getElementById(`mini-${item.id}`);
+        const checkIcon = document.getElementById(`mini-check-${item.id}`);
         if (!elem) return;
 
         let isCompleted = false;
         if (item.id === 'sport') {
-          // 運動島只要增肌減脂或健康生活任一完成或累計達標
+          // 運動健身島：增肌減脂或健康生活完成任一項即判定達成
           isCompleted = (getDailyCount('sport_exercise') >= 1) || (getDailyCount('sport_health') >= 1);
         } else {
           isCompleted = getDailyCount(item.id) >= item.limit;
         }
 
-        // 關閉條件：深夜時段、陀螺錦標賽期間、或今日任務已完成
+        // 🌟 核心：若當日已完成該島任務，顯示鮮綠色打勾「✓」
+        if (checkIcon) {
+          checkIcon.style.display = isCompleted ? 'inline' : 'none';
+        }
+
+        // 關閉條件：深夜時段、陀螺錦標賽期間、或今日任務已全數完成
         const isClosed = isNightClosed || isTournamentActive || isCompleted;
 
         if (isClosed) {
@@ -1759,7 +1765,7 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
         }
       });
 
-      // 2. 中央戰鬥陀螺島判定（大賽開啟時為透明灰可點擊，平時休眠關閉為透明暗紅）
+      // 2. 中央戰鬥陀螺島判定
       const bbElem = document.getElementById('mini-beyblade');
       if (bbElem) {
         if (isTournamentActive) {
