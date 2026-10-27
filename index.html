@@ -4029,7 +4029,7 @@ cartGroup = new THREE.Group();
       searchLight.target = targetObj;
       patrolBoat.add(searchLight);
 
-      // G. 救生圈
+// G. 救生圈
       const lifeRingGeo = new THREE.TorusGeometry(0.12, 0.035, 8, 16);
       const lifeRingMat = new THREE.MeshStandardMaterial({ color: 0xEA580C, roughness: 0.3 });
       const lifeRing = new THREE.Mesh(lifeRingGeo, lifeRingMat);
@@ -4055,11 +4055,8 @@ cartGroup = new THREE.Group();
           depthWrite: false
         });
 
-        // 左右兩側各產生一朵稍微散開的浪花
         [-0.32, 0.32].forEach(sideOffset => {
           const particle = new THREE.Mesh(pGeo, pMat.clone());
-          
-          // 計算船尾正後方世界座標（相對於船隻本地座標，中後段在 Z = -0.3 附近，船尾約在 Z = -1.15）
           const localTail = new THREE.Vector3(sideOffset + (Math.random() - 0.5) * 0.15, -0.05, -1.15);
           particle.position.copy(localTail);
           patrolBoat.localToWorld(particle.position);
@@ -4068,32 +4065,26 @@ cartGroup = new THREE.Group();
 
           boatWakeParticles.push({
             mesh: particle,
-            life: 1.0,         // 生命值 1.0 -> 0.0
-            decay: 0.025,      // 消失速度
-            scaleRate: 1.03    // 隨時間往外擴散擴大
+            life: 1.0,
+            decay: 0.025,
+            scaleRate: 1.03
           });
         });
       };
 
       boatSystem.add(patrolBoat);
-
       return boatSystem;
     }
 
-    boatSystem.add(patrolBoat);
-
-      return boatSystem;
-    }
-
-    // 🌟 加在此處：動態生成像素荷葉波光水紋貼圖（含透明度與睡蓮光斑）
+    // 🌟 動態生成像素荷葉波光水紋貼圖（含透明度與睡蓮光斑）
     function createPixelWaterTexture() {
-      const size = 128; // 貼圖尺寸
+      const size = 128;
       const canvas = document.createElement('canvas');
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext('2d');
 
-      const pixelSize = 2; // 像素顆粒大小
+      const pixelSize = 2;
 
       // 1. 底層透明深海水藍（帶 0.75 半透明度）
       ctx.fillStyle = 'rgba(43, 92, 142, 0.75)';
@@ -4134,13 +4125,13 @@ cartGroup = new THREE.Group();
           const edgeDist = d2 - d1;
 
           if (edgeDist < 2.5) {
-            ctx.fillStyle = 'rgba(186, 230, 253, 0.9)'; // 亮白藍網紋脊線
+            ctx.fillStyle = 'rgba(186, 230, 253, 0.9)';
             ctx.fillRect(x, y, pixelSize, pixelSize);
           } else if (edgeDist < 5.0) {
-            ctx.fillStyle = 'rgba(56, 189, 248, 0.75)';  // 天藍色光暈
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.75)';
             ctx.fillRect(x, y, pixelSize, pixelSize);
           } else if (edgeDist < 7.5) {
-            ctx.fillStyle = 'rgba(30, 58, 138, 0.45)';   // 深藍過渡
+            ctx.fillStyle = 'rgba(30, 58, 138, 0.45)';
             ctx.fillRect(x, y, pixelSize, pixelSize);
           }
         }
@@ -4178,7 +4169,7 @@ cartGroup = new THREE.Group();
       const texture = new THREE.CanvasTexture(canvas);
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(16, 16); // 密度
+      texture.repeat.set(16, 16);
       return texture;
     }
 
