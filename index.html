@@ -1931,6 +1931,8 @@ const texture = new THREE.CanvasTexture(canvas);
     let mainBeybladeTop = null;
     let championSignboard = null; // 🌟 冠軍木頭榮譽告示牌模型物件
     let beybladeCoreMesh = null; // 🌟 記錄陀螺頂部核心晶片
+    const colorBattleBlue = new THREE.Color(0x2C75FF);  // 🌟 比賽電光藍
+    const colorBattleWhite = new THREE.Color(0xFFFFFF); // 🌟 比賽高光白
     let beybladeDecorations = [];
     const COLOR_GRAY_DORMANT = 0xD1D0CE;
 
@@ -4694,18 +4696,22 @@ const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
           }
         }
 
-// 🌟 陀螺頂部核心晶片動態呼吸燈（平時紅寶石色／比賽時電光藍脈動）
+// 🌟 陀螺頂部核心晶片動態呼吸燈（平時紅寶石色／比賽時電光藍與純白循環脈動）
         if (beybladeCoreMesh) {
           if (!isTournamentActive) {
-            // 1. 平時休眠：深紅寶石色平緩呼吸（週期約 2.8 秒）
+            // 1. 平時休眠：深紅寶石色平緩呼吸
             beybladeCoreMesh.material.emissive.setHex(0x7C0E18);
             const pulse = (Math.sin(time * 2.2) + 1) * 0.5; // 0.0 ~ 1.0
             beybladeCoreMesh.material.emissiveIntensity = 0.15 + pulse * 0.55;
           } else {
-            // 2. 比賽進行時：電光藍熱血呼吸燈（加快頻率至 time * 4.0，產生強烈能量起伏）
-            beybladeCoreMesh.material.emissive.setHex(0x2C75FF);
-            const battlePulse = (Math.sin(time * 4.0) + 1) * 0.5; // 0.0 ~ 1.0
-            beybladeCoreMesh.material.emissiveIntensity = 0.3 + battlePulse * 0.8; // 強度在 0.3 ~ 1.1 之間脈動
+            // 2. 比賽進行時：電光藍 ⇋ 耀眼白 能量呼吸循環
+            const cyclePhase = (Math.sin(time * 3.5) + 1) * 0.5; // 0.0 ~ 1.0 之間平滑來回
+
+            // 顏色在電光藍 (0.0) 與白色 (1.0) 之間線性漸變
+            beybladeCoreMesh.material.emissive.copy(colorBattleBlue).lerp(colorBattleWhite, cyclePhase);
+
+            // 自發光強度同步隨週期起伏（從 0.4 到 1.15 脈動）
+            beybladeCoreMesh.material.emissiveIntensity = 0.4 + cyclePhase * 0.75;
           }
         }
 
