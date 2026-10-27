@@ -1750,10 +1750,10 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
         const checkIcon = document.getElementById(`mini-check-${item.id}`);
         if (!elem) return;
 
-        let isCompleted = false;
+let isCompleted = false;
         if (item.id === 'sport') {
-          // 運動健身島：增肌減脂或健康生活完成任一項即判定達成
-          isCompleted = (getDailyCount('sport_exercise') >= 1) || (getDailyCount('sport_health') >= 1);
+          // 🌟 運動健身島：增肌減脂與健康生活「兩項皆完成」才判定達成
+          isCompleted = (getDailyCount('sport_exercise') >= 1) && (getDailyCount('sport_health') >= 1);
         } else {
           isCompleted = getDailyCount(item.id) >= item.limit;
         }
