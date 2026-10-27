@@ -3977,13 +3977,13 @@ cartGroup = new THREE.Group();
       hullAft.castShadow = true;
       patrolBoat.add(hullAft);
 
-      // B2. 前段純白尖銳船首（加厚高度至 0.65m，平滑向下覆蓋至吃水線）
+// B2. 前段純白尖銳船首（精準頂面齊平）
       const hullBowGeo = new THREE.ConeGeometry(0.68, 1.1, 4);
       hullBowGeo.rotateY(Math.PI / 4);
       hullBowGeo.rotateX(Math.PI / 2);
-      hullBowGeo.scale(1.0, 0.65, 1.0); // 🌟 加大 Y 軸厚度，向下覆蓋原本紅底高度
+      hullBowGeo.scale(1.0, 0.7, 1.0); // 🌟 調整厚度比例
       const hullBow = new THREE.Mesh(hullBowGeo, hullMat);
-      hullBow.position.set(0, 0.05, 0.95); // 🌟 稍微下調中心 Y 位置，保持船首一體飽滿
+      hullBow.position.set(0, 0.032, 0.95); // 🌟 中心 Y 設為 0.032，使上方精確平齊於 Y = 0.27
       hullBow.castShadow = true;
       patrolBoat.add(hullBow);
 
