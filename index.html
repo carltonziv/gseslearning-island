@@ -1389,48 +1389,92 @@ const texture = new THREE.CanvasTexture(canvas);
       const companionSprite = createCompanionSprite(currentStudent.avatar);
       person.add(companionSprite);
 
-// 🌟 1. 隨機選取周圍四島之一 (1: 生態科技島, 2: 健身運動島, 3: 閱讀島, 4: 優良公民島)
-      const allowedIslands = [1, 2, 3, 4];
-      const randomIslandIdx = allowedIslands[Math.floor(Math.random() * allowedIslands.length)];
-      const startIsland = ISLAND_CONFIG[randomIslandIdx];
+// 🌟 1. 出生選項：周圍四島 (1~4) + 台車第2節車廂 ('cart')
+      // 依權重抽取：周圍四島各佔一份，台車佔一份
+      const spawnOptions = [1, 2, 3, 4, 'cart'];
+      const chosenSpawn = spawnOptions[Math.floor(Math.random() * spawnOptions.length)];
 
-      // 🌟 2. 在該島上挑選一個未被地標阻擋的隨機出生點
-      let spawnX = startIsland.pos[0];
-      let spawnZ = startIsland.pos[2];
-      for (let attempt = 0; attempt < 20; attempt++) {
-        const a = Math.random() * Math.PI * 2;
-        const r = 2.0 + Math.random() * (startIsland.radius - 2.8);
-        const lx = Math.cos(a) * r;
-        const lz = Math.sin(a) * r;
-        if (!isPositionBlocked(startIsland.id, lx, lz)) {
-          spawnX = startIsland.pos[0] + lx;
-          spawnZ = startIsland.pos[2] + lz;
-          break;
+      if (chosenSpawn === 'cart' && trailerCarts && trailerCarts.length >= 2) {
+        // === 🚂 生成在台車列車第 2 節車廂（trailerCarts[1] 為第2節連掛車）===
+        const targetCart = trailerCarts[1];
+
+        // 綁定到該車廂內，人偶自動隨車移動與旋轉
+        targetCart.add(person);
+
+        // 放置在後排長凳的椅面上 (坐姿座標)
+        // 車廂內部座標：X=0(中央靠左微偏), Y=0.48(椅面高度), Z=-0.45(前座木椅)
+        person.position.set(-0.15, 0.48, -0.45);
+        person.rotation.set(0, 0, 0); // 面向車頭前進方向
+
+        // 設定為屈膝坐姿
+        const limbs = person.userData.limbs;
+        if (limbs) {
+          limbs.leftLeg.rotation.x = -1.45;
+          limbs.rightLeg.rotation.x = -1.45;
+          limbs.leftArm.rotation.x = -0.3;
+          limbs.rightArm.rotation.x = -0.3;
+          if (limbs.skirt) limbs.skirt.rotation.x = -0.55;
         }
+
+        // 建立乘車狀態的玩家物件
+        playerVillager = {
+          obj: person,
+          isOnCart: true,           // 標記在車上
+          parentCart: targetCart,
+          homeIslandIdx: 1,
+          currentIslandIdx: 1,
+          currentX: 0,
+          currentZ: 0,
+          targetX: 0,
+          targetZ: 0,
+          walkCycle: 0,
+          waitTimer: 99999,         // 在車上不執行隨機漫步
+          speed: 0,
+          isSkirt: isGirl,
+          companionSprite: companionSprite
+        };
+
+      } else {
+        // === 🏝️ 生成在周圍四島之一（自然地面漫步）===
+        const islandIdx = (typeof chosenSpawn === 'number') ? chosenSpawn : 1;
+        const startIsland = ISLAND_CONFIG[islandIdx];
+
+        let spawnX = startIsland.pos[0];
+        let spawnZ = startIsland.pos[2];
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const a = Math.random() * Math.PI * 2;
+          const r = 2.0 + Math.random() * (startIsland.radius - 2.8);
+          const lx = Math.cos(a) * r;
+          const lz = Math.sin(a) * r;
+          if (!isPositionBlocked(startIsland.id, lx, lz)) {
+            spawnX = startIsland.pos[0] + lx;
+            spawnZ = startIsland.pos[2] + lz;
+            break;
+          }
+        }
+
+        person.position.set(spawnX, 0, spawnZ);
+        scene.add(person);
+
+        playerVillager = {
+          obj: person,
+          isOnCart: false,
+          homeIslandIdx: islandIdx,
+          currentIslandIdx: islandIdx,
+          currentX: spawnX,
+          currentZ: spawnZ,
+          targetX: spawnX,
+          targetZ: spawnZ,
+          walkCycle: 0,
+          waitTimer: 0,
+          speed: 0.022,
+          isSkirt: isGirl,
+          companionSprite: companionSprite
+        };
+
+        // 立即給予地面漫步目標
+        pickNextPlayerWanderTarget();
       }
-
-      person.position.set(spawnX, 0, spawnZ);
-      scene.add(person);
-
-      // 🌟 3. 建立玩家專屬漫步控制物件 (獨立維護，不再塞入 background villagers)
-      playerVillager = {
-        obj: person,
-        homeIslandIdx: randomIslandIdx,
-        currentIslandIdx: randomIslandIdx,
-        currentX: spawnX,
-        currentZ: spawnZ,
-        targetX: spawnX,
-        targetZ: spawnZ,
-        walkCycle: 0,
-        waitTimer: 0,
-        speed: 0.022,
-        isSkirt: isGirl,
-        companionSprite: companionSprite
-      };
-
-      // 立即給予玩家第一個安全的漫步目標點
-      pickNextPlayerWanderTarget();
-    }
 
     // 🌟 為本機玩家挑選所屬島嶼上的下一個安全漫步點
     function pickNextPlayerWanderTarget() {
@@ -5823,8 +5867,8 @@ function initMultiplayerSync() {
         name: currentStudent.name,
         avatar: currentStudent.avatar,
         gender: currentStudent.gender,
-        x: playerVillager.currentX,
-        z: playerVillager.currentZ,
+        x: playerVillager.isOnCart ? playerVillager.obj.getWorldPosition(new THREE.Vector3()).x : playerVillager.currentX,
+        z: playerVillager.isOnCart ? playerVillager.obj.getWorldPosition(new THREE.Vector3()).z : playerVillager.currentZ,
         lastSeen: firebase.database.ServerValue.TIMESTAMP
       });
     }
