@@ -4045,12 +4045,8 @@ cartGroup = new THREE.Group();
       });
       boatSystem.add(patrolBoat);
 
-      // 🌟 定義在船尾釋放浪花粒子的方法
+// 🌟 定義在船尾釋放浪花粒子的方法
       patrolBoat.userData.emitWake = function() {
-[-0.32, 0.32].forEach(sideOffset => {
-  const particle = new THREE.Mesh(WAKE_PLANE_GEO, pMat.clone());
-  const localTail = new THREE.Vector3(sideOffset + (Math.random() - 0.5) * 0.15, -0.05, -1.15);
-
         const pMat = new THREE.MeshBasicMaterial({
           color: 0xffffff,
           transparent: true,
@@ -4059,7 +4055,7 @@ cartGroup = new THREE.Group();
         });
 
         [-0.32, 0.32].forEach(sideOffset => {
-          const particle = new THREE.Mesh(pGeo, pMat.clone());
+          const particle = new THREE.Mesh(WAKE_PLANE_GEO, pMat.clone());
           const localTail = new THREE.Vector3(sideOffset + (Math.random() - 0.5) * 0.15, -0.05, -1.15);
           particle.position.copy(localTail);
           patrolBoat.localToWorld(particle.position);
@@ -4081,92 +4077,6 @@ cartGroup = new THREE.Group();
 
 
 
-      // 1. 底層透明深海水藍（帶 0.75 半透明度）
-      ctx.fillStyle = 'rgba(43, 92, 142, 0.75)';
-      ctx.fillRect(0, 0, size, size);
-
-      // 2. 細胞狀焦散網紋（模擬陽光穿透水面的像素光網）
-      const numCells = 6;
-      const seedPoints = [];
-      for (let i = 0; i < numCells; i++) {
-        for (let j = 0; j < numCells; j++) {
-          seedPoints.push({
-            x: (i + 0.5 + Math.sin(i * 3 + j) * 0.35) * (size / numCells),
-            y: (j + 0.5 + Math.cos(i + j * 3) * 0.35) * (size / numCells)
-          });
-        }
-      }
-
-      for (let y = 0; y < size; y += pixelSize) {
-        for (let x = 0; x < size; x += pixelSize) {
-          let d1 = 999, d2 = 999;
-          
-          for (let p of seedPoints) {
-            for (let ox of [-size, 0, size]) {
-              for (let oy of [-size, 0, size]) {
-                const dx = x - (p.x + ox);
-                const dy = y - (p.y + oy);
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < d1) {
-                  d2 = d1;
-                  d1 = dist;
-                } else if (dist < d2) {
-                  d2 = dist;
-                }
-              }
-            }
-          }
-
-          const edgeDist = d2 - d1;
-
-          if (edgeDist < 2.5) {
-            ctx.fillStyle = 'rgba(186, 230, 253, 0.9)';
-            ctx.fillRect(x, y, pixelSize, pixelSize);
-          } else if (edgeDist < 5.0) {
-            ctx.fillStyle = 'rgba(56, 189, 248, 0.75)';
-            ctx.fillRect(x, y, pixelSize, pixelSize);
-          } else if (edgeDist < 7.5) {
-            ctx.fillStyle = 'rgba(30, 58, 138, 0.45)';
-            ctx.fillRect(x, y, pixelSize, pixelSize);
-          }
-        }
-      }
-
-      // 3. 繪製像素風格的睡蓮荷葉與小白花
-      function drawPixelLilyPad(cx, cy, r) {
-        ctx.fillStyle = '#65a30d';
-        for (let py = -r; py <= r; py += pixelSize) {
-          for (let px = -r; px <= r; px += pixelSize) {
-            if (px * px + py * py <= r * r) {
-              if (!(px > 0 && Math.abs(py) < pixelSize * 2)) {
-                if (px * px + py * py < (r * 0.5) * (r * 0.5)) {
-                  ctx.fillStyle = '#84cc16';
-                } else {
-                  ctx.fillStyle = '#4d7c0f';
-                }
-                ctx.fillRect(cx + px, cy + py, pixelSize, pixelSize);
-              }
-            }
-          }
-        }
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(cx - 2, cy - 2, 4, 4);
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(cx - 1, cy - 1, 2, 2);
-      }
-
-      drawPixelLilyPad(32, 28, 10);
-      drawPixelLilyPad(42, 22, 7);
-      drawPixelLilyPad(96, 75, 11);
-      drawPixelLilyPad(86, 82, 8);
-      drawPixelLilyPad(24, 98, 9);
-
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(16, 16);
-      return texture;
-    }
 
 
     function init3D() {
@@ -4954,33 +4864,6 @@ if (mascotLeader) {
 
 // 🌟 小巡邏艇航行動畫（逆時針巡航）
         if (patrolBoat && boatCurve && !isBoatPaused) {
-          // 1. 進度改為遞減，並確保在 0.0 ~ 1.0 之間循環
-          boatProgress -= 0.00015;
-          if (boatProgress < 0) boatProgress += 1.0;
-
-          const bPos = boatCurve.getPointAt(boatProgress);
-          const bTan = boatCurve.getTangentAt(boatProgress);
-
-          patrolBoat.position.copy(bPos);
-
-          const wavePitch = Math.sin(time * 3.2) * 0.06;
-          const waveRoll = Math.cos(time * 2.5) * 0.08;
-          const waveHeight = Math.sin(time * 2.8) * 0.05;
-
-          patrolBoat.position.y += waveHeight;
-
-          // 2. 船頭朝向改為反向切線（扣除切線向量，使船頭正對逆時針前進方向）
-          const lookDir = bPos.clone().sub(bTan);
-          patrolBoat.lookAt(lookDir);
-
-          patrolBoat.rotation.x += wavePitch;
-          patrolBoat.rotation.z += waveRoll;
-
-          if (patrolBoat.userData.radar) {
-            patrolBoat.userData.radar.rotation.y += 0.08;
-          }
-          // 🌟 小巡邏艇航行動畫（逆時針巡航）
-        if (patrolBoat && boatCurve && !isBoatPaused) {
           boatProgress -= 0.00015;
           if (boatProgress < 0) boatProgress += 1.0;
 
@@ -5005,25 +4888,24 @@ if (mascotLeader) {
             patrolBoat.userData.radar.rotation.y += 0.08;
           }
 
-          // 🌟 每隔數幀在船尾噴發水花
+          // 每隔數幀在船尾噴發水花
           if (Math.random() > 0.45 && typeof patrolBoat.userData.emitWake === 'function') {
             patrolBoat.userData.emitWake();
           }
         }
 
-        // 🌟 更新並渲染水花生命週期（擴大並淡出）
+        // 🌟 更新並渲染水花生命週期
         for (let i = boatWakeParticles.length - 1; i >= 0; i--) {
           const p = boatWakeParticles[i];
           p.life -= p.decay;
           p.mesh.scale.multiplyScalar(p.scaleRate);
           p.mesh.material.opacity = p.life * 0.7;
 
-          // 生命週期結束時移除
-if (p.life <= 0) {
-  scene.remove(p.mesh);
-  p.mesh.material.dispose(); // ✅ 只釋放獨立的 material
-  boatWakeParticles.splice(i, 1);
-}
+          if (p.life <= 0) {
+            scene.remove(p.mesh);
+            p.mesh.material.dispose();
+            boatWakeParticles.splice(i, 1);
+          }
         }
         
 if (ropeMesh && jumperMan && jumpRopeGroup) {
