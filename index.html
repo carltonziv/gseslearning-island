@@ -2707,7 +2707,7 @@ function createNatureLandmark() {
 
       const ring = new THREE.Mesh(
         new THREE.CylinderGeometry(2.2, 1.7, 0.55, 6),
-        new THREE.MeshStandardMaterial({ color: 0x000080, metalness: 0.6, roughness: 0.2, emissive: 0xFFF3B2, emissiveIntensity: 0.35 })
+        new THREE.MeshStandardMaterial({ color: 0x000080, metalness: 0.6, roughness: 0.2, emissive: 0x2C75FF, emissiveIntensity: 0.35 })
       );
       ring.position.y = 1.1;
       ring.castShadow = true;
@@ -2715,7 +2715,7 @@ function createNatureLandmark() {
 
       const top = new THREE.Mesh(
         new THREE.CylinderGeometry(1.5, 2.0, 0.38, 6),
-        new THREE.MeshStandardMaterial({ color: 0xFAF9F6, metalness: 0.65, roughness: 0.25 })
+        new THREE.MeshStandardMaterial({ color: 0xFAF9F6, metalness: 0.65, roughness: 0.25, emissive: 0xFFFFFF,emissiveIntensity: 0.5 })
       );
       top.position.y = 1.48;
       top.castShadow = true;
@@ -2723,7 +2723,7 @@ function createNatureLandmark() {
 
       const core = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0x5B0425, metalness: 0.9, roughness: 0.1, emissive: 0xfacc15,emissiveIntensity: 0.6 })
+        new THREE.MeshStandardMaterial({ color: 0x5B0425, metalness: 0.9, roughness: 0.1, emissive: 0x9B111E,emissiveIntensity: 0.5 })
       );
       core.position.y = 1.75;
       core.castShadow = true;
