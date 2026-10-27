@@ -4682,14 +4682,14 @@ const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
         // 🌟 沒比賽時：頂部核心晶片呈現「暗紅色呼吸燈」效果
         if (beybladeCoreMesh) {
           if (!isTournamentActive) {
-            // 平時休眠：設定自發光為深邃暗紅色
-            beybladeCoreMesh.material.emissive.setHex(0x8B0000);
+            // 平時休眠：設定自發光為紅寶石色
+            beybladeCoreMesh.material.emissive.setHex(0x9B111E);
             // 透過正弦波產生平緩呼吸起伏（強度介於 0.15 ~ 0.7 之間）
             const pulse = (Math.sin(time * 2.2) + 1) * 0.5; // 0.0 ~ 1.0
             beybladeCoreMesh.material.emissiveIntensity = 0.15 + pulse * 0.55;
           } else {
-            // 比賽進行時：恢復原本的亮金黃色光芒
-            beybladeCoreMesh.material.emissive.setHex(0xFACC15);
+            // 比賽進行時：恢復原本的法拉利紅光芒
+            beybladeCoreMesh.material.emissive.setHex(0xFF2800);
             beybladeCoreMesh.material.emissiveIntensity = 0.7;
           }
         }
