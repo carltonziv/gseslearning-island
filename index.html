@@ -4862,9 +4862,6 @@ if (oceanMesh && oceanInitialZ && oceanInitialZ.length > 0) {
   posAttr.needsUpdate = true; //[cite: 3]
   oceanMesh.geometry.computeVertexNormals(); //[cite: 3]
 
-  posAttr.needsUpdate = true;
-          oceanMesh.geometry.computeVertexNormals();
-
           // 👇 加在 computeVertexNormals() 正下方：像素荷葉水波向外緩慢漂流
           if (oceanMesh.material.map) {
             oceanMesh.material.map.offset.x = (time * 0.012) % 1.0;
