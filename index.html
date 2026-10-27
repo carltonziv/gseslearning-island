@@ -4814,12 +4814,7 @@ villagers.push({
             oceanMesh.material.map.offset.y = (time * 0.008) % 1.0;
           }
         }
-  // 🌟 3. 像素波光貼圖向外緩慢流動（每幀只執行一次）
-  if (oceanMesh.material.map) {
-    oceanMesh.material.map.offset.x = (time * 0.02) % 1.0;
-    oceanMesh.material.map.offset.y = (time * 0.015) % 1.0;
-  }
-}
+
 
         islandFlowers.forEach(fl => {
           const phase = time * fl.userData.swaySpeed + fl.userData.swayPhase;
