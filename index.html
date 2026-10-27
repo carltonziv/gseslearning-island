@@ -3569,6 +3569,8 @@ const canvas = document.createElement('canvas');
     let boatCurve = null;
     let isBoatPaused = false; // 🌟 新增：巡邏艇暫停旗標
     let boatWakeParticles = []; // 🌟 儲存船尾浪花泡沫粒子
+    const WAKE_PLANE_GEO = new THREE.PlaneGeometry(0.35, 0.35);
+    WAKE_PLANE_GEO.rotateX(-Math.PI / 2);
     let trailerCarts = []; // 🌟 新增：存放後方 8 節連掛台車
     let cartProgress = 0;
     let trackCurve = null;
@@ -4045,8 +4047,9 @@ cartGroup = new THREE.Group();
 
       // 🌟 定義在船尾釋放浪花粒子的方法
       patrolBoat.userData.emitWake = function() {
-        const pGeo = new THREE.PlaneGeometry(0.35, 0.35);
-        pGeo.rotateX(-Math.PI / 2); // 水平貼近海面
+[-0.32, 0.32].forEach(sideOffset => {
+  const particle = new THREE.Mesh(WAKE_PLANE_GEO, pMat.clone());
+  const localTail = new THREE.Vector3(sideOffset + (Math.random() - 0.5) * 0.15, -0.05, -1.15);
 
         const pMat = new THREE.MeshBasicMaterial({
           color: 0xffffff,
@@ -4917,6 +4920,8 @@ if (mascotLeader) {
 
           if (orb.progress >= 1.0) {
             scene.remove(orb.mesh);
+            orb.mesh.geometry.dispose();
+            orb.mesh.material.dispose();
             energyOrbs.splice(i, 1);
             confetti({ particleCount: 20, spread: 45, origin: { x: 0.5, y: 0.5 } });
           }
@@ -5028,14 +5033,13 @@ if (mascotLeader) {
           p.mesh.material.opacity = p.life * 0.7;
 
           // 生命週期結束時移除
-          if (p.life <= 0) {
-            scene.remove(p.mesh);
-            p.mesh.geometry.dispose();
-            p.mesh.material.dispose();
-            boatWakeParticles.splice(i, 1);
-          }
+if (p.life <= 0) {
+  scene.remove(p.mesh);
+  p.mesh.material.dispose(); // ✅ 只釋放獨立的 material
+  boatWakeParticles.splice(i, 1);
+}
         }
-        }
+        
 if (ropeMesh && jumperMan && jumpRopeGroup) {
           const currentHour = new Date().getHours();
           const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
@@ -5405,6 +5409,7 @@ else {
     // 14. 島嶼與台車焦點運鏡與抽屜控制
     // ==========================================
 function focusOnIsland(islandData) {
+  if (!islandData || !islandData.pos) return; // ✅ 防呆攔截
       isFocusing = true;
 
       if (islandData.id === 'sport' || islandData.id === 'nature') {
@@ -5417,6 +5422,7 @@ function focusOnIsland(islandData) {
         );
       } else {
         targetLookAt.set(islandData.pos[0], islandData.pos[1] + 1.2, islandData.pos[2]);
+        const radius = islandData.radius || 4.8; // ✅ 給予預設半徑防呆
         const zoomDist = islandData.radius * 1.7;
         targetCameraPos.set(
           islandData.pos[0] - 2.0,
