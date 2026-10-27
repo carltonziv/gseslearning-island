@@ -4351,8 +4351,26 @@ cartGroup = new THREE.Group();
         mainlandMesh.receiveShadow = true;
         continentGroup.add(mainlandMesh);
 
-        // 2. 🌿 灌木叢：尺寸再放大 1 倍（半徑 1.44m）、飽滿茂盛
-        const bushGeo = new THREE.DodecahedronGeometry(1.44, 1);
+// 2. 🌿 薩爾達風格：3種造型多樣、不規則形狀的有機灌木叢群
+        // 準備多樣化材質：深嫩綠與飽和草綠交錯
+        const foliageMatAlt = new THREE.MeshStandardMaterial({
+          color: 0x3F7A44, // 略深一層的陰影野灌木綠
+          roughness: 0.82,
+          flatShading: true
+        });
+
+        // 預先建立 3 種不規則幾何型態供共用（避免記憶體開銷）
+        // 型態 A：扁平蔓生狀（壓扁拉寬）
+        const bushGeoA = new THREE.DodecahedronGeometry(1.4, 0);
+        bushGeoA.scale(1.4, 0.65, 1.1);
+
+        // 型態 B：雙球/三球複合團塊
+        const bushGeoB = new THREE.DodecahedronGeometry(1.2, 1);
+        bushGeoB.scale(1.2, 0.85, 0.9);
+
+        // 型態 C：高聳野草型（略向上拔尖）
+        const bushGeoC = new THREE.ConeGeometry(1.1, 2.2, 6);
+
         for (let j = 0; j < 220; j++) {
           const bAngle = Math.random() * Math.PI * 2;
           const coastCurve = Math.sin(bAngle * 3) * 4.0 + Math.cos(bAngle * 5) * 2.2;
@@ -4370,11 +4388,42 @@ cartGroup = new THREE.Group();
           const onBeach = aDiff < 0.5 && normalizedR < 0.35;
 
           if (groundY > 0.4 && groundY < 6.8 && !onBeach) {
-            const bush = new THREE.Mesh(bushGeo, foliageMat);
-            bush.position.set(bx, groundY + 0.8, bz);
-            const s = 0.85 + Math.random() * 0.45;
-            bush.scale.set(s, s * (0.8 + Math.random() * 0.35), s);
-            continentGroup.add(bush);
+            const bushType = j % 3; // 依序輪替 3 種不規則造型
+            const pickedMat = Math.random() > 0.45 ? foliageMat : foliageMatAlt;
+            let bushMesh;
+
+            if (bushType === 0) {
+              // 形態 1：橫向匍匐生長的蔓生灌木
+              bushMesh = new THREE.Mesh(bushGeoA, pickedMat);
+              bushMesh.position.set(bx, groundY + 0.5, bz);
+              bushMesh.rotation.y = Math.random() * Math.PI * 2;
+              bushMesh.rotation.z = (Math.random() - 0.5) * 0.15;
+            } else if (bushType === 1) {
+              // 形態 2：高低兩團交錯的不規則複合叢（Group）
+              bushMesh = new THREE.Group();
+              bushMesh.position.set(bx, groundY + 0.6, bz);
+              bushMesh.rotation.y = Math.random() * Math.PI * 2;
+
+              const part1 = new THREE.Mesh(bushGeoB, pickedMat);
+              part1.scale.set(0.95, 0.95, 0.95);
+              bushMesh.add(part1);
+
+              const part2 = new THREE.Mesh(bushGeoB, pickedMat);
+              part2.scale.set(0.65, 0.65, 0.75);
+              part2.position.set(0.9, -0.2, (Math.random() - 0.5) * 0.6);
+              bushMesh.add(part2);
+            } else {
+              // 形態 3：不規則六面多稜錐簇
+              bushMesh = new THREE.Mesh(bushGeoC, pickedMat);
+              bushMesh.position.set(bx, groundY + 0.9, bz);
+              bushMesh.rotation.y = Math.random() * Math.PI * 2;
+              bushMesh.rotation.x = (Math.random() - 0.5) * 0.2; // 略帶風吹傾角
+            }
+
+            // 尺寸隨機微調
+            const s = 0.85 + Math.random() * 0.4;
+            bushMesh.scale.multiplyScalar(s);
+            continentGroup.add(bushMesh);
           }
         }
 
