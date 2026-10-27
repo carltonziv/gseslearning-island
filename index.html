@@ -1147,6 +1147,10 @@
 
 <div class="form-group">
         <label>⚡ 全班共創能量控制</label>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="number" id="admin-energy-input" placeholder="輸入指定數值 (0~5000)" style="flex:1;">
+          <button class="btn-action btn-blue" style="width:auto; padding:0 16px;" onclick="adminSetCustomEnergy()">設定數值</button>
+        </div>
         <button class="btn-action btn-red" onclick="adminResetEnergy()">手動將全班能量歸零</button>
       </div>
 
@@ -2366,6 +2370,33 @@ function adminPickWinner(matchIdx, playerNum) {
         if (totalEnergyRef) totalEnergyRef.set(0);
         alert('全班共創能量已成功歸零！');
       }
+    }
+
+    // 🌟 手動自訂全班共創能量數值
+    function adminSetCustomEnergy() {
+      const input = document.getElementById('admin-energy-input');
+      const val = parseInt(input.value, 10);
+
+      if (isNaN(val) || val < 0) {
+        alert('請輸入大於或等於 0 的有效數字！');
+        return;
+      }
+
+      if (!confirm(`確定要將全班總能量手動修改為【${val}】嗎？`)) {
+        return;
+      }
+
+      if (totalEnergyRef) {
+        if (val >= 5000) {
+          triggerTournamentMode();
+          totalEnergyRef.set(0);
+          alert('能量已達 5000，戰鬥陀螺大賽已啟動，能量已依規則自動歸零！');
+        } else {
+          totalEnergyRef.set(val);
+          alert(`全班共創能量已成功更新為 ${val}！`);
+        }
+      }
+      input.value = '';
     }
 
     // 🌟 教師專用：一鍵清空所有在線使用者 NPC（貼在這個區間！）
