@@ -1555,6 +1555,7 @@ const texture = new THREE.CanvasTexture(canvas);
       document.getElementById('login-modal').classList.add('hidden');
 
       spawnPlayerCharacter();
+      initMultiplayerSync(); // 🌟 啟動多人連線同步
 
       if (bbState.isOpen || bbState.status === 'bracket_ready') {
         setTimeout(() => {
@@ -5601,6 +5602,12 @@ else {
           }
         });
 
+        // 平滑更新其他在線同學的位置
+Object.values(otherPlayers).forEach(p => {
+  p.mesh.position.x = THREE.MathUtils.lerp(p.mesh.position.x, p.targetX, 0.15);
+  p.mesh.position.z = THREE.MathUtils.lerp(p.mesh.position.z, p.targetZ, 0.15);
+});
+
         renderer.render(scene, camera);
       }
       animate();
@@ -5707,6 +5714,96 @@ function focusOnIsland(islandData) {
       initStudent();
       updateMinimapStatus();
     }
+
+    // ==========================================
+// 🌟 多人線上即時人物同步模組
+// ==========================================
+let otherPlayers = {}; // 存放其他在線同學的 3D 模型與資料
+let myPlayerRef = null;
+let heartbeatTimer = null;
+
+function initMultiplayerSync() {
+  if (!db || !currentStudent.seatNumber) return;
+
+  const playerId = `seat_${currentStudent.seatNumber}`;
+  myPlayerRef = db.ref(`online_players/${playerId}`);
+
+  // 1. 斷線/關閉視窗時自動從雲端清除
+  myPlayerRef.onDisconnect().remove();
+
+  // 2. 定期上傳自身位置與狀態 (每 0.5 秒同步一次)
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(() => {
+    if (playerVillager && myPlayerRef) {
+      myPlayerRef.update({
+        seatNumber: currentStudent.seatNumber,
+        name: currentStudent.name,
+        avatar: currentStudent.avatar,
+        gender: currentStudent.gender,
+        x: playerVillager.currentX,
+        z: playerVillager.currentZ,
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+  }, 500);
+
+  // 3. 監聽其他同學加入
+  db.ref('online_players').on('child_added', snap => {
+    const data = snap.val();
+    if (!data || data.seatNumber === currentStudent.seatNumber) return;
+    spawnOtherPlayer(snap.key, data);
+  });
+
+  // 4. 監聽其他同學移動位置
+  db.ref('online_players').on('child_changed', snap => {
+    const data = snap.val();
+    if (!data || data.seatNumber === currentStudent.seatNumber) return;
+    updateOtherPlayerPos(snap.key, data);
+  });
+
+  // 5. 監聽同學離線下線
+  db.ref('online_players').on('child_removed', snap => {
+    removeOtherPlayer(snap.key);
+  });
+}
+
+// 建立其他同學的 3D 人偶與名牌
+function spawnOtherPlayer(key, data) {
+  if (otherPlayers[key]) return;
+  const isGirl = (data.gender === 'girl');
+  const mesh = createCharacterMesh(isGirl);
+  
+  const displayName = data.seatNumber === '訪客' 
+    ? `${data.avatar} ${data.name}` 
+    : `${data.seatNumber}號 ${data.name}`;
+  mesh.add(createPlayerNameplateSprite(displayName));
+  mesh.add(createCompanionSprite(data.avatar));
+
+  mesh.position.set(data.x, 0, data.z);
+  scene.add(mesh);
+
+  otherPlayers[key] = {
+    mesh: mesh,
+    targetX: data.x,
+    targetZ: data.z
+  };
+}
+
+// 更新同學的目標位置 (供 animate 進行平滑插值)
+function updateOtherPlayerPos(key, data) {
+  if (otherPlayers[key]) {
+    otherPlayers[key].targetX = data.x;
+    otherPlayers[key].targetZ = data.z;
+  }
+}
+
+// 移除下線同學
+function removeOtherPlayer(key) {
+  if (otherPlayers[key]) {
+    scene.remove(otherPlayers[key].mesh);
+    delete otherPlayers[key];
+  }
+}
 
     if (document.readyState === 'loading') {
       window.addEventListener('DOMContentLoaded', startIslandApp);
