@@ -4079,6 +4079,112 @@ cartGroup = new THREE.Group();
 
       return boatSystem;
     }
+
+    boatSystem.add(patrolBoat);
+
+      return boatSystem;
+    }
+
+    // 🌟 加在此處：動態生成像素荷葉波光水紋貼圖（含透明度與睡蓮光斑）
+    function createPixelWaterTexture() {
+      const size = 128; // 貼圖尺寸
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const pixelSize = 2; // 像素顆粒大小
+
+      // 1. 底層透明深海水藍（帶 0.75 半透明度）
+      ctx.fillStyle = 'rgba(43, 92, 142, 0.75)';
+      ctx.fillRect(0, 0, size, size);
+
+      // 2. 細胞狀焦散網紋（模擬陽光穿透水面的像素光網）
+      const numCells = 6;
+      const seedPoints = [];
+      for (let i = 0; i < numCells; i++) {
+        for (let j = 0; j < numCells; j++) {
+          seedPoints.push({
+            x: (i + 0.5 + Math.sin(i * 3 + j) * 0.35) * (size / numCells),
+            y: (j + 0.5 + Math.cos(i + j * 3) * 0.35) * (size / numCells)
+          });
+        }
+      }
+
+      for (let y = 0; y < size; y += pixelSize) {
+        for (let x = 0; x < size; x += pixelSize) {
+          let d1 = 999, d2 = 999;
+          
+          for (let p of seedPoints) {
+            for (let ox of [-size, 0, size]) {
+              for (let oy of [-size, 0, size]) {
+                const dx = x - (p.x + ox);
+                const dy = y - (p.y + oy);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < d1) {
+                  d2 = d1;
+                  d1 = dist;
+                } else if (dist < d2) {
+                  d2 = dist;
+                }
+              }
+            }
+          }
+
+          const edgeDist = d2 - d1;
+
+          if (edgeDist < 2.5) {
+            ctx.fillStyle = 'rgba(186, 230, 253, 0.9)'; // 亮白藍網紋脊線
+            ctx.fillRect(x, y, pixelSize, pixelSize);
+          } else if (edgeDist < 5.0) {
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.75)';  // 天藍色光暈
+            ctx.fillRect(x, y, pixelSize, pixelSize);
+          } else if (edgeDist < 7.5) {
+            ctx.fillStyle = 'rgba(30, 58, 138, 0.45)';   // 深藍過渡
+            ctx.fillRect(x, y, pixelSize, pixelSize);
+          }
+        }
+      }
+
+      // 3. 繪製像素風格的睡蓮荷葉與小白花
+      function drawPixelLilyPad(cx, cy, r) {
+        ctx.fillStyle = '#65a30d';
+        for (let py = -r; py <= r; py += pixelSize) {
+          for (let px = -r; px <= r; px += pixelSize) {
+            if (px * px + py * py <= r * r) {
+              if (!(px > 0 && Math.abs(py) < pixelSize * 2)) {
+                if (px * px + py * py < (r * 0.5) * (r * 0.5)) {
+                  ctx.fillStyle = '#84cc16';
+                } else {
+                  ctx.fillStyle = '#4d7c0f';
+                }
+                ctx.fillRect(cx + px, cy + py, pixelSize, pixelSize);
+              }
+            }
+          }
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - 2, cy - 2, 4, 4);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - 1, cy - 1, 2, 2);
+      }
+
+      drawPixelLilyPad(32, 28, 10);
+      drawPixelLilyPad(42, 22, 7);
+      drawPixelLilyPad(96, 75, 11);
+      drawPixelLilyPad(86, 82, 8);
+      drawPixelLilyPad(24, 98, 9);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(16, 16); // 密度
+      return texture;
+    }
+
+    function init3D() {
+
+    
     function createPixelWaterTexture() {
       const size = 128;
       const canvas = document.createElement('canvas');
@@ -4210,17 +4316,19 @@ cartGroup = new THREE.Group();
       // 🌟 加入海洋巡邏艇系統
       scene.add(createPatrolBoatSystem());
 
-      // 🌟 在島嶼周圍加上海洋水面（細分 64x64 用於小波浪頂點起伏）
+
 // 🌟 在島嶼周圍加上海洋水面（具備像素波光肌理）
+// 🌟 在島嶼周圍加上海洋水面（具備透明度與像素荷葉波光）
       const oceanGeo = new THREE.PlaneGeometry(160, 160, 64, 64);
-      const pixelWaterTexture = createPixelWaterTexture(); // 👈 呼叫剛剛建立的函式生成貼圖
+      const pixelWaterTexture = createPixelWaterTexture();
 
       const oceanMat = new THREE.MeshStandardMaterial({
-        map: pixelWaterTexture,    // 🌟 賦予像素波光肌理貼圖
-        roughness: 0.3,
+        map: pixelWaterTexture, // 🌟 套用荷葉波光貼圖
+        roughness: 0.25,
         metalness: 0.1,
-        transparent: true,
-        opacity: 0.82
+        transparent: true,      // 🌟 開啟透明混合
+        opacity: 0.85,          // 🌟 微透光度（可隱約透出水下沙灘基座）
+        depthWrite: false       // 避免半透明面遮擋閃爍
       });
 
       oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
@@ -4753,6 +4861,16 @@ if (oceanMesh && oceanInitialZ && oceanInitialZ.length > 0) {
   // 🌟 2. 標記頂點更新並重新計算法線（放在 for 迴圈外）
   posAttr.needsUpdate = true; //[cite: 3]
   oceanMesh.geometry.computeVertexNormals(); //[cite: 3]
+
+  posAttr.needsUpdate = true;
+          oceanMesh.geometry.computeVertexNormals();
+
+          // 👇 加在 computeVertexNormals() 正下方：像素荷葉水波向外緩慢漂流
+          if (oceanMesh.material.map) {
+            oceanMesh.material.map.offset.x = (time * 0.012) % 1.0;
+            oceanMesh.material.map.offset.y = (time * 0.008) % 1.0;
+          }
+        }
 
   // 🌟 3. 像素波光貼圖向外緩慢流動（放在 for 迴圈外，每幀只執行一次）
   if (oceanMesh.material.map) {
