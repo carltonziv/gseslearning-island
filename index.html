@@ -5739,9 +5739,9 @@ if (mascotLeader) {
           const lookTarget = pos.clone().add(tangent);
           cartGroup.lookAt(lookTarget);
 
-          // 🌟 讓後方 8 節台車依序等距跟隨（間隔 0.024 進度）
+// 🌟 縮短車廂間距：由原本的 0.024 縮減至 0.0175，讓列車緊密連掛
           if (trailerCarts && trailerCarts.length > 0) {
-            const spacing = 0.024; // 車廂間距
+            const spacing = 0.0175; // 緊湊連掛間距
             trailerCarts.forEach((trailer, idx) => {
               // 計算後方車廂進度（確保在 0.0 ~ 1.0 之間循環）
               let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
