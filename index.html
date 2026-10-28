@@ -221,7 +221,7 @@
     }
 
     /* 左側重置鏡頭按鈕（排列在標籤開關按鈕下方） */
-    .hud-reset-cam-btn {
+    .hud-reset-cam-btn {      
       position: absolute;
       top: 178px;
       left: 16px;
@@ -245,6 +245,38 @@
     .hud-reset-cam-btn:active {
       transform: scale(0.95);
       background: #e2e8f0;
+    }
+
+    /* 左側搭上台車按鈕（排列在回到全景按鈕下方） */
+    .hud-ride-cart-btn {
+      position: absolute;
+      top: 226px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+      padding: 8px 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #1e293b;
+      border: 2.5px solid #063d4e;
+      z-index: 100;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .hud-ride-cart-btn:active {
+      transform: scale(0.95);
+      background: #e2e8f0;
+    }
+    .hud-ride-cart-btn.riding {
+      background: #f59e0b;
+      color: #ffffff;
+      border-color: #b45309;
     }
 
     /* 左側即時賽程表側欄 */
@@ -719,6 +751,11 @@
   <div class="hud-reset-cam-btn" id="reset-cam-btn" onclick="resetToDefaultCamera()">
     <span>🧭</span>
     <span>回到全景</span>
+  </div>
+
+  <div class="hud-ride-cart-btn" id="ride-cart-btn" onclick="toggleRideCart()">
+    <span id="ride-cart-icon">🚋</span>
+    <span id="ride-cart-text">搭上台車</span>
   </div>
 
   <div class="hud-hint">
@@ -4125,6 +4162,32 @@ function applyWeatherEffect(wData) {
       return road;
     }
 
+    let isRidingCart = false; // 是否處於台車搭乘視角
+
+    function toggleRideCart() {
+      isRidingCart = !isRidingCart;
+      const btn = document.getElementById('ride-cart-btn');
+      const text = document.getElementById('ride-cart-text');
+      const icon = document.getElementById('ride-cart-icon');
+
+      if (isRidingCart) {
+        // 如果側邊抽屜開著，先關閉
+        if (typeof closeDrawer === 'function') closeDrawer();
+        isFocusing = false;
+        controls.enabled = false; // 搭車時暫時由鏡頭鎖定行進視角
+        if (btn) btn.classList.add('riding');
+        if (text) text.textContent = '離開台車';
+        if (icon) icon.textContent = '🚶';
+        showLiveBanner("🚋 已搭上龜山台車！正在環島欣賞沿途島嶼景色～");
+      } else {
+        controls.enabled = true; // 恢復手動操作
+        if (btn) btn.classList.remove('riding');
+        if (text) text.textContent = '搭上台車';
+        if (icon) icon.textContent = '🚋';
+        resetToDefaultCamera();
+      }
+    }
+
     let cartGroup = null;
     let patrolBoat = null;
     let boatProgress = 0;
@@ -6308,6 +6371,19 @@ Object.values(otherPlayers).forEach(p => {
           rainGeo.attributes.position.needsUpdate = true;
         }
 
+        // 🌟 乘客搭車視角：相機跟隨第 2 節載客車廂，視線朝向中央群島
+        if (isRidingCart && trailerCarts && trailerCarts.length >= 2) {
+          const seatCart = trailerCarts[1]; // 跟隨第 2 節車廂
+          const cartWorldPos = new THREE.Vector3();
+          seatCart.getWorldPosition(cartWorldPos);
+
+          // 相機位置：坐在車廂座位上方（Y + 1.25m）
+          camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.35, cartWorldPos.z);
+
+          // 視線目標：朝向中央陀螺島 (0, 1.2, 0)
+          camera.lookAt(0, 1.2, 0);
+        }
+
         renderer.render(scene, camera);
       }
       animate();
@@ -6399,7 +6475,17 @@ function focusOnIsland(islandData) {
       }
     }
 
-    function resetToDefaultCamera() {
+function resetToDefaultCamera() {
+      if (isRidingCart) {
+        isRidingCart = false;
+        controls.enabled = true;
+        const btn = document.getElementById('ride-cart-btn');
+        const text = document.getElementById('ride-cart-text');
+        const icon = document.getElementById('ride-cart-icon');
+        if (btn) btn.classList.remove('riding');
+        if (text) text.textContent = '搭上台車';
+        if (icon) icon.textContent = '🚋';
+      }
       if (typeof closeDrawer === 'function') {
         document.getElementById('side-drawer').classList.remove('open');
         isCartPaused = false;
