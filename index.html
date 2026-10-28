@@ -2690,22 +2690,22 @@ function adminGenerateBracket() {
       const hour = new Date().getHours();
       
       if (hour >= 3 && hour < 6) {
-        return { phase: 'dawn', name: '晨光微曦', bg: '#F3F6F8', light: 0.65, sun: 0xffedd5, hemi: 0xf8fafc };
+        return { phase: 'dawn', name: '透早', bg: '#F3F6F8', light: 0.65, sun: 0xffedd5, hemi: 0xf8fafc };
       } 
       else if (hour >= 6 && hour < 11) {
-        return { phase: 'morning', name: '溫煦上午', bg: '#B2D7E5', light: 0.7, sun: 0xfff7ed, hemi: 0xf8fafc };
+        return { phase: 'morning', name: '頂晡', bg: '#B2D7E5', light: 0.7, sun: 0xfff7ed, hemi: 0xf8fafc };
       } 
       else if (hour >= 11 && hour < 13) {
-        return { phase: 'noon', name: '耀眼正午', bg: '#80BDD3', light: 0.8, sun: 0xf8fafc, hemi: 0xf8fafc };
+        return { phase: 'noon', name: '中晝時', bg: '#80BDD3', light: 0.8, sun: 0xf8fafc, hemi: 0xf8fafc };
       } 
       else if (hour >= 13 && hour < 17) {
-        return { phase: 'afternoon', name: '金黃午後', bg: '#4CA3C1', light: 0.7, sun: 0xFFFEF1, hemi: 0xfef3c7 };
+        return { phase: 'afternoon', name: '下晝', bg: '#4CA3C1', light: 0.7, sun: 0xFFFEF1, hemi: 0xfef3c7 };
       } 
       else if (hour >= 17 && hour < 23) {
-        return { phase: 'night', name: '靜謐夜晚', bg: '#5E5E9B', light: 0.5, sun: 0x93c5fd, hemi: 0x1e1b4b };
+        return { phase: 'night', name: '下昏', bg: '#5E5E9B', light: 0.5, sun: 0x93c5fd, hemi: 0x1e1b4b };
       } 
       else {
-        return { phase: 'midnight', name: '幽深午夜', bg: '#194470', light: 0.3, sun: 0x60a5fa, hemi: 0x0f172a };
+        return { phase: 'midnight', name: '半暝三更', bg: '#194470', light: 0.3, sun: 0x60a5fa, hemi: 0x0f172a };
       }
     }
 
