@@ -5210,10 +5210,13 @@ const baseMat = new THREE.MeshStandardMaterial({
           group.add(mascotBox);
         }
 
-        const labelSprite = createIslandTitleSprite(cfg.title);
-        labelSprite.position.set(0, 5.6, 0);
-        group.add(labelSprite);
-        islandTitleSprites.push(labelSprite);
+// 🌟 兩座荒地暫不生成懸浮標籤
+        if (cfg.id !== 'wasteland_n' && cfg.id !== 'wasteland_s') {
+          const labelSprite = createIslandTitleSprite(cfg.title);
+          labelSprite.position.set(0, 5.6, 0);
+          group.add(labelSprite);
+          islandTitleSprites.push(labelSprite);
+        }
         
 
         let treeCount;
