@@ -5563,10 +5563,24 @@ if (mascotLeader) {
             }
 
           } else {
-            // ☀️ 白天正常活動：元氣上下跳動、自然打招呼擺頭
+         // ☀️ 白天醒著時：原地活力彈跳，身體永遠朝向攝影機鏡頭
             mascotLeader.position.set(0, 0.28 + Math.max(0, Math.sin(time * 3.0)) * 0.18, 0);
             mascotLeader.rotation.x = 0;
-            mascotLeader.rotation.y = Math.sin(time * 1.5) * 0.35;
+
+            // 🌟 即時面向鏡頭計算（世界座標轉局部座標角度）
+            if (camera && mascotLeader.parent) {
+              const camWorldPos = new THREE.Vector3();
+              camera.getWorldPosition(camWorldPos);
+
+              const camLocalPos = mascotLeader.parent.worldToLocal(camWorldPos);
+              const targetAngleY = Math.atan2(
+                camLocalPos.x - mascotLeader.position.x,
+                camLocalPos.z - mascotLeader.position.z
+              );
+
+              // 朝向相機並帶有微幅活潑說話小晃動
+              mascotLeader.rotation.y = targetAngleY + Math.sin(time * 2.2) * 0.08;
+            }
 
             if (mascotLimbs) {
               mascotLimbs.leftLeg.rotation.x = 0;
