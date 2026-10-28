@@ -1541,6 +1541,10 @@ person.position.set(spawnX, 0, spawnZ);
         if (data.status === 'success' && data.students) {
           rosterList = data.students;
           renderSelectOptions();
+          // 🌟 接收並啟動新店即時天氣
+          if (data.weather) {
+            applyWeatherEffect(data.weather);
+          }
         } else {
           fallbackRoster();
         }
@@ -3861,6 +3865,68 @@ const canvas = document.createElement('canvas');
       return lamp;
     }
 
+    // 🌧️ 新店即時天氣與雨滴系統變數
+let currentWeather = { type: 'sunny', text: '新店 偵測中...' };
+let rainSystem = null;
+let rainGeo = null;
+const RAIN_COUNT = 1200;
+
+function setupRainSystem() {
+  const rainCoords = [];
+  for (let i = 0; i < RAIN_COUNT; i++) {
+    rainCoords.push(
+      (Math.random() - 0.5) * 60, // 涵蓋全島範圍 X
+      Math.random() * 25 + 1,     // 高度 Y
+      (Math.random() - 0.5) * 60  // 涵蓋全島範圍 Z
+    );
+  }
+
+  rainGeo = new THREE.BufferGeometry();
+  rainGeo.setAttribute('position', new THREE.Float32BufferAttribute(rainCoords, 3));
+
+  const rainMat = new THREE.PointsMaterial({
+    color: 0x93c5fd,
+    size: 0.18,
+    transparent: true,
+    opacity: 0.75,
+    depthWrite: false
+  });
+
+  rainSystem = new THREE.Points(rainGeo, rainMat);
+  rainSystem.visible = false;
+  scene.add(rainSystem);
+}
+
+// 依照 GAS 回傳的天氣微調 3D 氛圍
+function applyWeatherEffect(wData) {
+  if (!wData) return;
+  currentWeather = wData;
+
+  // 1. 更新底部 HUD 標籤文字
+  const timeBadge = document.getElementById('time-badge');
+  if (timeBadge) {
+    const curPhase = getTimePhase();
+    timeBadge.textContent = `🕒 ${curPhase.name} ｜ 📍 ${wData.text}`;
+  }
+
+  // 2. 若新店正在下雨，開啟下雨粒子與陰天薄霧
+  if (wData.isRaining) {
+    if (rainSystem) rainSystem.visible = true;
+    if (scene && scene.fog) {
+      scene.fog.near = 25;
+      scene.fog.far = 100;
+    }
+  } else if (wData.type === 'cloudy') {
+    if (rainSystem) rainSystem.visible = false;
+    if (scene && scene.fog) {
+      scene.fog.near = 35;
+      scene.fog.far = 130;
+    }
+  } else {
+    if (rainSystem) rainSystem.visible = false;
+  }
+}
+
     // ==========================================
     // 13. 道路、雙層道碴碎石與土地層系統
     // ==========================================
@@ -3880,7 +3946,7 @@ const canvas = document.createElement('canvas');
     let targetLookAt = new THREE.Vector3(0, 0, 0);
 
     let isCartPaused = false; // 台車暫停旗標
-
+  
     function createConnectingWalkway(p1, p2) {
       const road = new THREE.Group();
       const v1 = new THREE.Vector3(...p1);
@@ -4972,6 +5038,7 @@ cartGroup = new THREE.Group();
       
       scene.add(createDistantMainland());
 
+      
 
       // 生成正六角形島嶼
       ISLAND_CONFIG.forEach(cfg => {
@@ -5139,6 +5206,8 @@ const baseMat = new THREE.MeshStandardMaterial({
       if (typeof updateBeybladeChampionSignboard === 'function') {
       updateBeybladeChampionSignboard(bbState.recent_champion);
     }
+
+      setupRainSystem(); // 🌟 初始化下雨粒子系統
 
 const totalVillagers = 16;
 
@@ -6030,6 +6099,18 @@ Object.values(otherPlayers).forEach(p => {
   p.mesh.position.x = THREE.MathUtils.lerp(p.mesh.position.x, p.targetX, 0.15);
   p.mesh.position.z = THREE.MathUtils.lerp(p.mesh.position.z, p.targetZ, 0.15);
 });
+
+        // 🌧️ 雨滴持續落下更新
+        if (rainSystem && rainSystem.visible && rainGeo) {
+          const positions = rainGeo.attributes.position.array;
+          for (let i = 1; i < positions.length; i += 3) {
+            positions[i] -= 0.75; // 下落速度
+            if (positions[i] < 0) {
+              positions[i] = 25; // 掉到水面後重新回到天空
+            }
+          }
+          rainGeo.attributes.position.needsUpdate = true;
+        }
 
         renderer.render(scene, camera);
       }
