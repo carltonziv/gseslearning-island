@@ -727,40 +727,49 @@
   </div>
 
   
-<!-- 🌟 左下角五島微縮雷達投影圖（邊與邊貼合，加入打勾圖示） -->
-  <div id="minimap-panel" class="minimap-container">
-    <svg class="minimap-svg" viewBox="-24 -24 48 48">
-      <!-- 中央：戰鬥陀螺島 (中心 0, 0) -->
+<!-- 🌟 左下角七島微縮雷達投影圖（完整蜂巢六角密合，含正北與正南荒地） -->
+  <div id="minimap-panel" class="minimap-container" style="height: 135px;">
+    <svg class="minimap-svg" viewBox="-24 -28 48 56">
+      <!-- 1. 中央：戰鬥陀螺島 (中心 0, 0) -->
       <polygon id="mini-beyblade" class="minimap-island minimap-closed" 
                points="6.0,0 3.0,5.2 -3.0,5.2 -6.0,0 -3.0,-5.2 3.0,-5.2" 
                onclick="focusOnIsland(ISLAND_CONFIG[0])" />
 
-      <!-- 左上：生態科技島 (中心 -9.0, -5.2) -->
+      <!-- 2. 正北：荒地一 (中心 0, -10.39) -->
+      <polygon id="mini-wasteland_n" class="minimap-island minimap-open" 
+               points="6.0,-10.39 3.0,-5.2 -3.0,-5.2 -6.0,-10.39 -3.0,-15.59 3.0,-15.59" 
+               onclick="focusOnIsland(ISLAND_CONFIG[5])" />
+
+      <!-- 3. 左上：生態科技島 (中心 -9.0, -5.2) -->
       <polygon id="mini-nature" class="minimap-island minimap-open" 
                points="-3.0,-5.2 -6.0,0 -12.0,0 -15.0,-5.2 -12.0,-10.39 -6.0,-10.39" 
                onclick="focusOnIsland(ISLAND_CONFIG[1])" />
       <text id="mini-check-nature" x="-9.0" y="-4.2" text-anchor="middle" dominant-baseline="middle" font-size="5.2" font-weight="900" fill="#22c55e" style="display:none; pointer-events:none;">✓</text>
 
-      <!-- 右上：健身運動島 (中心 9.0, -5.2) -->
+      <!-- 4. 右上：健身運動島 (中心 9.0, -5.2) -->
       <polygon id="mini-sport" class="minimap-island minimap-open" 
                points="15.0,-5.2 12.0,0 6.0,0 3.0,-5.2 6.0,-10.39 12.0,-10.39" 
                onclick="focusOnIsland(ISLAND_CONFIG[2])" />
       <text id="mini-check-sport" x="9.0" y="-4.2" text-anchor="middle" dominant-baseline="middle" font-size="5.2" font-weight="900" fill="#22c55e" style="display:none; pointer-events:none;">✓</text>
 
-      <!-- 左下：閱讀島 (中心 -9.0, 5.2) -->
+      <!-- 5. 左下：閱讀島 (中心 -9.0, 5.2) -->
       <polygon id="mini-reading" class="minimap-island minimap-open" 
                points="-3.0,5.2 -6.0,10.39 -12.0,10.39 -15.0,5.2 -12.0,0 -6.0,0" 
                onclick="focusOnIsland(ISLAND_CONFIG[3])" />
       <text id="mini-check-reading" x="-9.0" y="6.2" text-anchor="middle" dominant-baseline="middle" font-size="5.2" font-weight="900" fill="#22c55e" style="display:none; pointer-events:none;">✓</text>
 
-      <!-- 右下：優良公民島 (中心 9.0, 5.2) -->
+      <!-- 6. 右下：優良公民島 (中心 9.0, 5.2) -->
       <polygon id="mini-civics" class="minimap-island minimap-open" 
                points="15.0,5.2 12.0,10.39 6.0,10.39 3.0,5.2 6.0,0 12.0,0" 
                onclick="focusOnIsland(ISLAND_CONFIG[4])" />
       <text id="mini-check-civics" x="9.0" y="6.2" text-anchor="middle" dominant-baseline="middle" font-size="5.2" font-weight="900" fill="#22c55e" style="display:none; pointer-events:none;">✓</text>
+
+      <!-- 7. 正南：荒地二 (中心 0, 10.39) -->
+      <polygon id="mini-wasteland_s" class="minimap-island minimap-open" 
+               points="6.0,10.39 3.0,15.59 -3.0,15.59 -6.0,10.39 -3.0,5.2 3.0,5.2" 
+               onclick="focusOnIsland(ISLAND_CONFIG[6])" />
     </svg>
   </div>
-
 
   <!-- 左側即時賽事晉級圖側欄 -->
   <div id="bracket-sidebar" class="bracket-sidebar-container">
@@ -1796,13 +1805,13 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
       return true;
     }
 
-// 🌟 更新左下角五島微縮投影圖狀態顏色與完成打勾標記
+// 🌟 更新左下角七島微縮投影圖狀態顏色與完成打勾標記
     function updateMinimapStatus() {
       const currentHour = new Date().getHours();
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
-      // 1. 周圍四島判定
+      // 1. 周圍四島任務判定
       const islands = [
         { id: 'nature', limit: 1 },
         { id: 'sport', limit: 1 },
@@ -1815,22 +1824,18 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
         const checkIcon = document.getElementById(`mini-check-${item.id}`);
         if (!elem) return;
 
-let isCompleted = false;
+        let isCompleted = false;
         if (item.id === 'sport') {
-          // 🌟 運動健身島：增肌減脂與健康生活「兩項皆完成」才判定達成
           isCompleted = (getDailyCount('sport_exercise') >= 1) && (getDailyCount('sport_health') >= 1);
         } else {
           isCompleted = getDailyCount(item.id) >= item.limit;
         }
 
-        // 🌟 核心：若當日已完成該島任務，顯示鮮綠色打勾「✓」
         if (checkIcon) {
           checkIcon.style.display = isCompleted ? 'inline' : 'none';
         }
 
-        // 關閉條件：深夜時段、陀螺錦標賽期間、或今日任務已全數完成
         const isClosed = isNightClosed || isTournamentActive || isCompleted;
-
         if (isClosed) {
           elem.setAttribute('class', 'minimap-island minimap-closed');
         } else {
@@ -1843,14 +1848,21 @@ let isCompleted = false;
       if (bbElem) {
         if (isTournamentActive) {
           bbElem.setAttribute('class', 'minimap-island minimap-open');
-  } else {
-        bbElem.setAttribute('class', 'minimap-island minimap-closed');
+        } else {
+          bbElem.setAttribute('class', 'minimap-island minimap-closed');
+        }
       }
-    }
 
-    // 🌟 第二步：在 updateMinimapStatus 結尾處呼叫連動更新
-    updateSportTabStatus();
-  }
+      // 🌟 3. 兩座荒地雷達判定（常態維持開放探索狀態）
+      ['wasteland_n', 'wasteland_s'].forEach(id => {
+        const wElem = document.getElementById(`mini-${id}`);
+        if (wElem) {
+          wElem.setAttribute('class', 'minimap-island minimap-open');
+        }
+      });
+
+      updateSportTabStatus();
+    }
 
   // 🌟 第一步：更新運動島分頁標籤按鈕的完成打勾（✓）狀態
   function updateSportTabStatus() {
