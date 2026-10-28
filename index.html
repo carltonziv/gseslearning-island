@@ -4101,17 +4101,18 @@ function applyWeatherEffect(wData) {
       const system = new THREE.Group();
       const TRACK_Y = 0.2;
 
+// 🌟 加大軌道範圍：南北擴展至 17.5m、東西擴展至 19.8m，全線距島嶼邊緣保留 2m 以上安全海域
       const points = [
-        new THREE.Vector3(0, TRACK_Y, -14.2),
-        new THREE.Vector3(10.5, TRACK_Y, -12.5),
-        new THREE.Vector3(16.5, TRACK_Y, -5.5),
-        new THREE.Vector3(16.5, TRACK_Y, 5.5),
-        new THREE.Vector3(10.5, TRACK_Y, 12.5),
-        new THREE.Vector3(0, TRACK_Y, 14.2),
-        new THREE.Vector3(-10.5, TRACK_Y, 12.5),
-        new THREE.Vector3(-16.5, TRACK_Y, 5.5),
-        new THREE.Vector3(-16.5, TRACK_Y, -5.5),
-        new THREE.Vector3(-10.5, TRACK_Y, -12.5)
+        new THREE.Vector3(0, TRACK_Y, -17.5),
+        new THREE.Vector3(12.5, TRACK_Y, -14.8),
+        new THREE.Vector3(19.8, TRACK_Y, -6.5),
+        new THREE.Vector3(19.8, TRACK_Y, 6.5),
+        new THREE.Vector3(12.5, TRACK_Y, 14.8),
+        new THREE.Vector3(0, TRACK_Y, 17.5),
+        new THREE.Vector3(-12.5, TRACK_Y, 14.8),
+        new THREE.Vector3(-19.8, TRACK_Y, 6.5),
+        new THREE.Vector3(-19.8, TRACK_Y, -6.5),
+        new THREE.Vector3(-12.5, TRACK_Y, -14.8)
       ];
 
       trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.25);
@@ -4459,17 +4460,18 @@ cartGroup = new THREE.Group();
 
       // 1. 定義水面巡航曲線路徑
       const BOAT_Y = -0.45;
+// 🌟 巡邏艇航線同步外擴，航行於鐵道外側的安全海域
       const boatWaypoints = [
-        new THREE.Vector3(0, BOAT_Y, -20.5),
-        new THREE.Vector3(15.5, BOAT_Y, -17.5),
-        new THREE.Vector3(23.5, BOAT_Y, -7.0),
-        new THREE.Vector3(23.5, BOAT_Y, 7.0),
-        new THREE.Vector3(15.5, BOAT_Y, 17.5),
-        new THREE.Vector3(0, BOAT_Y, 20.5),
-        new THREE.Vector3(-15.5, BOAT_Y, 17.5),
-        new THREE.Vector3(-23.5, BOAT_Y, 7.0),
-        new THREE.Vector3(-23.5, BOAT_Y, -7.0),
-        new THREE.Vector3(-15.5, BOAT_Y, -17.5)
+        new THREE.Vector3(0, BOAT_Y, -23.5),
+        new THREE.Vector3(18.0, BOAT_Y, -19.5),
+        new THREE.Vector3(26.5, BOAT_Y, -8.0),
+        new THREE.Vector3(26.5, BOAT_Y, 8.0),
+        new THREE.Vector3(18.0, BOAT_Y, 19.5),
+        new THREE.Vector3(0, BOAT_Y, 23.5),
+        new THREE.Vector3(-18.0, BOAT_Y, 19.5),
+        new THREE.Vector3(-26.5, BOAT_Y, 8.0),
+        new THREE.Vector3(-26.5, BOAT_Y, -8.0),
+        new THREE.Vector3(-18.0, BOAT_Y, -19.5)
       ];
       boatCurve = new THREE.CatmullRomCurve3(boatWaypoints, true, 'centripetal', 0.3);
 
