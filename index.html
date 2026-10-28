@@ -1857,8 +1857,8 @@ let isCompleted = false;
       addDailyCount(islandId);
       confetti({ particleCount: 75, spread: 70, origin: { y: 0.7 } });
 
-      const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
-      if (islandCfg) {
+const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
+      if (islandCfg && currentStudent.seatNumber !== '訪客') {
         spawnEnergyOrb(islandCfg.pos, [0, 1.5, 0]);
       }
 
@@ -1868,6 +1868,24 @@ let isCompleted = false;
       currentStudent.myPoints = (currentStudent.myPoints || 0) + customPoints;
       sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
+
+      // 🌟 僅有正式學生（非訪客）才將能量計入全班共創能量與發送跑馬燈
+      if (currentStudent.seatNumber !== '訪客' && totalEnergyRef) {
+        totalEnergyRef.transaction(current => {
+          let next = (current || 0) + customPoints;
+          if (next >= 5000) {
+            triggerTournamentMode();
+            return 0;
+          }
+          return next;
+        });
+
+        liveFeedRef.push({
+          student: `${currentStudent.seatNumber}號 ${currentStudent.avatar} ${currentStudent.name}`,
+          msg: `${message} (+${customPoints} 能量)`,
+          time: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
 
       if (totalEnergyRef) {
         totalEnergyRef.transaction(current => {
