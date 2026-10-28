@@ -3651,10 +3651,22 @@ function createSportLandmark() {
       log.userData = { isMascot: true };
       boxGroup.add(log);
 
-      mascotLeader = createCharacterMesh(false, 0xF5D0A9, 0xd97706, 0xEBA937);
+mascotLeader = createCharacterMesh(false, 0xF5D0A9, 0xd97706, 0xEBA937);
       mascotLeader.position.set(0, 0.28, 0);
-      mascotLeader.userData = { isMascot: true };
-      
+      mascotLeader.userData.isMascot = true;
+
+      // 🌟 在島嶼之星胸前加上專屬金黃色星星徽章
+      const starShape = createStarShape(0.09, 0.045);
+      const starGeo = new THREE.ShapeGeometry(starShape);
+      const starMat = new THREE.MeshBasicMaterial({ 
+        color: 0xFDE047,  // 鮮亮金色
+        side: THREE.DoubleSide 
+      });
+      const chestStar = new THREE.Mesh(starGeo, starMat);
+      // 放置在胸口位置 (身體中心 Y=0.62，胸前 Z=0.125)
+      chestStar.position.set(0, 0.65, 0.125);
+      mascotLeader.add(chestStar);
+
       mascotLeader.traverse(child => {
         child.userData.isMascot = true;
       });
