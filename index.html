@@ -1426,7 +1426,7 @@ let playerVillager = null;
       const spawnOptions = [1, 2, 3, 4, 'cart'];
       const chosenSpawn = spawnOptions[Math.floor(Math.random() * spawnOptions.length)];
 
-      if (chosenSpawn === 'cart' && trailerCarts && trailerCarts.length >= 2) {
+if (chosenSpawn === 'cart' && trailerCarts && trailerCarts.length >= 2) {
         // === 🚂 生成在台車列車第 2 節車廂（trailerCarts[1] 為第2節連掛車）===
         const targetCart = trailerCarts[1];
 
@@ -6026,6 +6026,8 @@ else {
         // 🌟 本機玩家角色獨立自然漫步與擺臂動畫
         // ==========================================
         if (playerVillager && playerVillager.obj) {
+          // 🛑 關鍵修正：若玩家正在台車上，跳過漫步更新，保持端坐姿態
+          if (playerVillager.isOnCart) return;
           const limbs = playerVillager.obj.userData.limbs;
           const curIsland = ISLAND_CONFIG[playerVillager.currentIslandIdx];
 
