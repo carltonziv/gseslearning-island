@@ -1133,6 +1133,29 @@
         </div>
       </div>
     </div>
+
+    <!-- 9. 荒地內容面板 -->
+    <div id="panel-wasteland_n" style="display:none;">
+      <div style="background: linear-gradient(135deg, #fef3c7, #fed7aa); border: 2px dashed #d97706; border-radius: 16px; padding: 18px; text-align: center; color: #9a3412;">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🏜️</span>
+        <h3 style="margin-bottom: 6px; font-weight: 800;">尚未開墾的荒蕪秘境</h3>
+        <p style="font-size: 0.88rem; line-height: 1.6; color: #7c2d12;">
+          這裡目前雜草叢生、碎石遍佈，四周一片沉寂。<br>
+          島嶼核心似乎缺少了某種能量啟動器，未來或許能建造新的學習聚落？探險家先四處逛逛吧！
+        </p>
+      </div>
+    </div>
+
+    <div id="panel-wasteland_s" style="display:none;">
+      <div style="background: linear-gradient(135deg, #fef3c7, #fed7aa); border: 2px dashed #d97706; border-radius: 16px; padding: 18px; text-align: center; color: #9a3412;">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🪨</span>
+        <h3 style="margin-bottom: 6px; font-weight: 800;">風蝕石原荒地</h3>
+        <p style="font-size: 0.88rem; line-height: 1.6; color: #7c2d12;">
+          狂風不斷吹拂著這片沉睡的土地，偶爾能看見枯黃的雜草搖曳。<br>
+          據說龜山台車經過這裡時總會放慢速度，誰也不知道未來這裡會誕生什麼樣的奇蹟！
+        </p>
+      </div>
+    </div>
  
 
   </div> <!-- 抽屜 #side-drawer 結束 -->
@@ -1193,7 +1216,9 @@
       { id: 'nature',   title: '生態科技島', subtitle: '校園昆蟲與植物探索', color: 0xA0B4F0, pos: [-7.8, 0, -4.5], radius: 4.8 },
       { id: 'sport',    title: '健身運動島', subtitle: '個人增肌減脂與健康生活', color: 0xE7DA9D, pos: [7.8, 0, -4.5], radius: 4.8 },
       { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', color: 0xE9D8F4, pos: [-7.8, 0, 4.5], radius: 4.8 },
-      { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xE8B4B8, pos: [7.8, 0, 4.5], radius: 4.8 }
+      { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xE8B4B8, pos: [7.8, 0, 4.5], radius: 4.8 },
+      { id: 'wasteland_n', title: '荒地', subtitle: '這片土地沉睡已久，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [0, 0, -9.0], radius: 4.8 },
+      { id: 'wasteland_s', title: '荒地', subtitle: '狂風吹過揚起陣陣塵土，據說地下深處隱藏著未知的古代祕密？', color: 0xC2B280, pos: [0, 0, 9.0], radius: 4.8 }
     ];
 
     // ==========================================
@@ -1423,7 +1448,7 @@ let playerVillager = null;
 
 // 🌟 1. 出生選項：周圍四島 (1~4) + 台車第2節車廂 ('cart')
       // 依權重抽取：周圍四島各佔一份，台車佔一份
-      const spawnOptions = [1, 2, 3, 4, 'cart'];
+      const spawnOptions = [1, 2, 3, 4, 5, 6, 'cart'];
       const chosenSpawn = spawnOptions[Math.floor(Math.random() * spawnOptions.length)];
 
 if (chosenSpawn === 'cart' && trailerCarts && trailerCarts.length >= 2) {
@@ -1507,30 +1532,62 @@ person.position.set(spawnX, 0, spawnZ);
         // 立即給予地面漫步目標
         pickNextPlayerWanderTarget();
       }
-    } // 🌟 關鍵修正：補上這個 spawnPlayerCharacter() 的結尾大括號！
+    } 
 
-    // 🌟 為本機玩家挑選所屬島嶼上的下一個安全漫步點
+// 0:中央陀螺島, 1:生態, 2:健身, 3:閱讀, 4:公民, 5:北荒地, 6:南荒地
+    const ISLAND_NEIGHBORS = {
+      0: [1, 2, 3, 4, 5, 6], // 中央島四通八達，可通往周圍六島
+      1: [0, 3, 5],          // 生態島相鄰：中央、閱讀島、北荒地
+      2: [0, 4, 5],          // 健身島相鄰：中央、公民島、北荒地
+      3: [0, 1, 6],          // 閱讀島相鄰：中央、生態島、南荒地
+      4: [0, 2, 6],          // 公民島相鄰：中央、健身島、南荒地
+      5: [0, 1, 2],          // 北荒地相鄰：中央、生態島、健身島
+      6: [0, 3, 4]           // 南荒地相鄰：中央、閱讀島、公民島
+    };
+
+    // 🌟 為本機玩家挑選下一個目標點（支援原島漫步或跨島旅行）
     function pickNextPlayerWanderTarget() {
-      if (!playerVillager) return;
-      const curIsland = ISLAND_CONFIG[playerVillager.currentIslandIdx];
-      const center = curIsland.pos;
-      const startLx = playerVillager.currentX - center[0];
-      const startLz = playerVillager.currentZ - center[2];
+      if (!playerVillager || playerVillager.isOnCart) return;
 
-      for (let attempt = 0; attempt < 15; attempt++) {
+      const currentIdx = playerVillager.currentIslandIdx;
+      let targetIdx = currentIdx;
+
+      // 🌟 25% 的機率決定前往相鄰的下一座島嶼旅行
+      const willTravel = Math.random() < 0.25;
+      if (willTravel && ISLAND_NEIGHBORS[currentIdx]) {
+        const neighbors = ISLAND_NEIGHBORS[currentIdx];
+        targetIdx = neighbors[Math.floor(Math.random() * neighbors.length)];
+      }
+
+      const targetIsland = ISLAND_CONFIG[targetIdx];
+      const center = targetIsland.pos;
+      let foundValid = false;
+      let tx = 0, tz = 0;
+
+      for (let attempt = 0; attempt < 20; attempt++) {
         const a = Math.random() * Math.PI * 2;
-        const r = 1.8 + Math.random() * (curIsland.radius - 2.6);
+        // 抓取目標島的安全活動半徑
+        const r = 1.8 + Math.random() * (targetIsland.radius - 2.8);
         const lx = Math.cos(a) * r;
         const lz = Math.sin(a) * r;
 
-        if (!isPositionBlocked(curIsland.id, lx, lz) &&
-            !isPathBlocked(curIsland.id, startLx, startLz, lx, lz)) {
-          playerVillager.targetX = center[0] + lx;
-          playerVillager.targetZ = center[2] + lz;
-          return;
+        // 檢查目標點是否踩到該島的地標障礙物
+        if (!isPositionBlocked(targetIsland.id, lx, lz)) {
+          tx = center[0] + lx;
+          tz = center[2] + lz;
+          foundValid = true;
+          break;
         }
       }
-      playerVillager.waitTimer = 30;
+
+      if (foundValid) {
+        playerVillager.targetX = tx;
+        playerVillager.targetZ = tz;
+        // 記錄預計前往的目標島嶼索引
+        playerVillager.targetIslandIdx = targetIdx;
+      } else {
+        playerVillager.waitTimer = 30;
+      }
     }
     
     async function loadStudentRoster() {
@@ -3520,6 +3577,52 @@ function createSportLandmark() {
       return group;
     }
 
+    // ==========================================
+    // 🌟 貼在這裡：荒地專屬地貌工廠函式
+    // ==========================================
+    function createWastelandLandmark(islandId) {
+      const group = new THREE.Group();
+      
+      // 1. 中央風化大岩石
+      const rockMat = new THREE.MeshStandardMaterial({ color: 0x8C7B6B, roughness: 0.9, flatShading: true });
+      const mainRock = new THREE.Mesh(new THREE.DodecahedronGeometry(1.2, 0), rockMat);
+      mainRock.scale.set(1.4, 0.9, 1.1);
+      mainRock.position.set(0, 0.6, 0);
+      mainRock.rotation.set(0.2, 0.5, 0.1);
+      mainRock.castShadow = true;
+      group.add(mainRock);
+
+      // 散落碎石
+      [[-1.1, 0.25, 0.8], [0.9, 0.2, -0.7], [-0.6, 0.18, -1.0]].forEach(pos => {
+        const smRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.35, 0), rockMat);
+        smRock.position.set(...pos);
+        smRock.rotation.set(Math.random(), Math.random(), 0);
+        smRock.castShadow = true;
+        group.add(smRock);
+      });
+
+      // 2. 稀疏的枯草簇
+      const dryGrassMat = new THREE.MeshStandardMaterial({ color: 0x968B4B, roughness: 0.85, flatShading: true });
+      for (let g = 0; g < 6; g++) {
+        const grassTuft = new THREE.Group();
+        const a = (g / 6) * Math.PI * 2;
+        const dist = 1.6 + (g % 2) * 0.5;
+        grassTuft.position.set(Math.cos(a) * dist, 0, Math.sin(a) * dist);
+
+        for (let b = 0; b < 4; b++) {
+          const blade = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.45, 4), dryGrassMat);
+          blade.position.set((b - 1.5) * 0.05, 0.22, 0);
+          blade.rotation.z = (b - 1.5) * 0.2;
+          grassTuft.add(blade);
+        }
+        group.add(grassTuft);
+      }
+
+      registerObstacle(islandId, 0, 0, 1.6);
+      return group;
+    }
+
+
     let mascotLeader = null;
     function createMascotSoapbox() {
       const boxGroup = new THREE.Group();
@@ -5097,6 +5200,9 @@ const baseMat = new THREE.MeshStandardMaterial({
         else if (cfg.id === 'sport') landmark = createSportLandmark();
         else if (cfg.id === 'reading') landmark = createReadingLandmark();
         else if (cfg.id === 'civics') landmark = createCivicsLandmark();
+        else if (cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s') {
+          landmark = createWastelandLandmark(cfg.id);
+        }
         group.add(landmark);
 
         if (cfg.id === 'civics') {
@@ -5113,6 +5219,9 @@ const baseMat = new THREE.MeshStandardMaterial({
         let treeCount;
         if (cfg.id === 'civics') {
           treeCount = 1;
+        // 🌟 補上這兩行：荒地不長茂密綠樹
+        } else if (cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s') {
+          treeCount = 0;
         } else if (cfg.id === 'reading') {
           treeCount = Math.floor(Math.random() * 2) + 2;
         } else {
@@ -6053,77 +6162,86 @@ else {
         });
 
 // ==========================================
-        // 🌟 本機玩家角色獨立自然漫步與擺臂動畫
-        // ==========================================
-        if (playerVillager && playerVillager.obj) {
-          // 🛑 關鍵修正：若玩家正在台車上，跳過漫步更新，保持端坐姿態
-          if (playerVillager.isOnCart) return;
-          const limbs = playerVillager.obj.userData.limbs;
-          const curIsland = ISLAND_CONFIG[playerVillager.currentIslandIdx];
+// 🌟 本機玩家角色獨立自然漫步與擺臂動畫
+// ==========================================
+if (playerVillager && playerVillager.obj) {
+  // 🛑 關鍵修正：若玩家正在台車上，跳過漫步更新，保持端坐姿態
+  if (playerVillager.isOnCart) return;
 
-          if (playerVillager.waitTimer > 0) {
-            // 停步待機：手腳自然收合歸位
-            playerVillager.waitTimer--;
-            if (limbs) {
-              limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
-              limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
-              limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
-              limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
-              if (limbs.skirt) limbs.skirt.rotation.x = 0;
-            }
-            if (playerVillager.waitTimer <= 0) {
-              pickNextPlayerWanderTarget(); // 待機結束，挑選下一個目標
-            }
-          } else {
-            // 正在移動邁步
-            const dx = playerVillager.targetX - playerVillager.currentX;
-            const dz = playerVillager.targetZ - playerVillager.currentZ;
-            const dist = Math.hypot(dx, dz);
+  const limbs = playerVillager.obj.userData.limbs;
+  const curIsland = ISLAND_CONFIG[playerVillager.currentIslandIdx];
 
-            if (dist > 0.08) {
-              playerVillager.currentX += (dx / dist) * playerVillager.speed;
-              playerVillager.currentZ += (dz / dist) * playerVillager.speed;
+  if (playerVillager.waitTimer > 0) {
+    // 停步待機：手腳自然收合歸位
+    playerVillager.waitTimer--;
+    if (limbs) {
+      limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
+      limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
+      limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
+      limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
+      if (limbs.skirt) limbs.skirt.rotation.x = 0;
+    }
+    if (playerVillager.waitTimer <= 0) {
+      pickNextPlayerWanderTarget(); // 待機結束，挑選下一個目標
+    }
+  } else {
+    // 正在移動邁步
+    const dx = playerVillager.targetX - playerVillager.currentX;
+    const dz = playerVillager.targetZ - playerVillager.currentZ;
+    const dist = Math.hypot(dx, dz);
 
-              // 障礙物排斥防穿模
-              const localPos = {
-                x: playerVillager.currentX - curIsland.pos[0],
-                z: playerVillager.currentZ - curIsland.pos[2]
-              };
-              const wasBlocked = applyRepulsionForce(curIsland.id, localPos);
-              playerVillager.currentX = curIsland.pos[0] + localPos.x;
-              playerVillager.currentZ = curIsland.pos[2] + localPos.z;
+    if (dist > 0.08) {
+      playerVillager.currentX += (dx / dist) * playerVillager.speed;
+      playerVillager.currentZ += (dz / dist) * playerVillager.speed;
 
-              playerVillager.obj.position.x = playerVillager.currentX;
-              playerVillager.obj.position.z = playerVillager.currentZ;
+      // 🌟 跨島移動時：根據「目標島嶼」判定障礙物排斥，避免跨島過程中被原島中心拉扯
+      const checkIsland = (playerVillager.targetIslandIdx !== undefined) 
+        ? ISLAND_CONFIG[playerVillager.targetIslandIdx] 
+        : curIsland;
 
-              if (wasBlocked) {
-                // 遇到障礙物立即停步並重新尋找新路徑
-                playerVillager.targetX = playerVillager.currentX;
-                playerVillager.targetZ = playerVillager.currentZ;
-                playerVillager.waitTimer = Math.floor(Math.random() * 30) + 15;
-              } else {
-                playerVillager.obj.rotation.y = Math.atan2(dx, dz); // 面向行走方向
-              }
+      const localPos = {
+        x: playerVillager.currentX - checkIsland.pos[0],
+        z: playerVillager.currentZ - checkIsland.pos[2]
+      };
+      const wasBlocked = applyRepulsionForce(checkIsland.id, localPos);
+      playerVillager.currentX = checkIsland.pos[0] + localPos.x;
+      playerVillager.currentZ = checkIsland.pos[2] + localPos.z;
 
-              // 手臂與雙腿交替擺動
-              playerVillager.walkCycle += 0.18;
-              const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
-              const armSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+      playerVillager.obj.position.x = playerVillager.currentX;
+      playerVillager.obj.position.z = playerVillager.currentZ;
 
-              if (limbs) {
-                limbs.leftLeg.rotation.x = legSwing;
-                limbs.rightLeg.rotation.x = -legSwing;
-                limbs.leftArm.rotation.x = -armSwing;
-                limbs.rightArm.rotation.x = armSwing;
-                if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(playerVillager.walkCycle * 2) * 0.1;
-              }
-              playerVillager.obj.position.y = Math.abs(Math.sin(playerVillager.walkCycle)) * 0.04; // 微幅上下彈跳步態
-            } else {
-              // 抵達目標點，隨機停留 2~5 秒
-              playerVillager.waitTimer = Math.floor(Math.random() * 120) + 60;
-            }
-          }
-        }
+      if (wasBlocked) {
+        // 遇到障礙物立即停步並重新尋找新路徑
+        playerVillager.targetX = playerVillager.currentX;
+        playerVillager.targetZ = playerVillager.currentZ;
+        playerVillager.waitTimer = Math.floor(Math.random() * 30) + 15;
+      } else {
+        playerVillager.obj.rotation.y = Math.atan2(dx, dz); // 面向行走方向
+      }
+
+      // 手臂與雙腿交替擺動
+      playerVillager.walkCycle += 0.18;
+      const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+      const armSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+
+      if (limbs) {
+        limbs.leftLeg.rotation.x = legSwing;
+        limbs.rightLeg.rotation.x = -legSwing;
+        limbs.leftArm.rotation.x = -armSwing;
+        limbs.rightArm.rotation.x = armSwing;
+        if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(playerVillager.walkCycle * 2) * 0.1;
+      }
+      playerVillager.obj.position.y = Math.abs(Math.sin(playerVillager.walkCycle)) * 0.04; // 微幅上下彈跳步態
+    } else {
+      // 🌟 抵達目標點：如果剛剛完成跨島，正式將目前所在島嶼索引切換為目標島嶼
+      if (playerVillager.targetIslandIdx !== undefined) {
+        playerVillager.currentIslandIdx = playerVillager.targetIslandIdx;
+      }
+      // 抵達目標點，隨機停留 2~5 秒
+      playerVillager.waitTimer = Math.floor(Math.random() * 120) + 60;
+    }
+  }
+}
 
 
         // 平滑更新其他在線同學的位置
@@ -6187,7 +6305,8 @@ function focusOnIsland(islandData) {
       isCartPaused = (islandData.id === 'cart');
       isBoatPaused = (islandData.id === 'boat');
 
-      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart', 'boat'].forEach(id => {
+// 🌟 將兩座荒島的面板 ID 加入清單中，確保開啟其他島嶼時荒地面板會被隱藏
+      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart', 'boat', 'wasteland_n', 'wasteland_s'].forEach(id => {
         const el = document.getElementById(`panel-${id}`);
         if (el) el.style.display = 'none';
       });
