@@ -3632,10 +3632,25 @@ function createSportLandmark() {
         group.add(grassTuft);
       }
 
-      registerObstacle(islandId, 0, 0, 1.6);
+registerObstacle(islandId, 0, 0, 1.6);
       return group;
     }
 
+    // 🌟 補回遺漏的五角星形狀生成函式
+    function createStarShape(radius, innerRadius) {
+      const shape = new THREE.Shape();
+      const points = 5;
+      for (let i = 0; i < points * 2; i++) {
+        const r = (i % 2 === 0) ? radius : innerRadius;
+        const angle = (i * Math.PI) / points - Math.PI / 2;
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r;
+        if (i === 0) shape.moveTo(x, y);
+        else shape.lineTo(x, y);
+      }
+      shape.closePath();
+      return shape;
+    }
 
     let mascotLeader = null;
     function createMascotSoapbox() {
