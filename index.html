@@ -5771,7 +5771,7 @@ if (mascotLeader) {
 
 // 台車行駛動畫（未暫停時前進）
         if (cartGroup && trackCurve && !isCartPaused) {
-          cartProgress = (cartProgress + 0.0008) % 1.0;
+          cartProgress = (cartProgress + 0.0006) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
 
