@@ -962,26 +962,63 @@
       </div>
     </div>
 
-    <!-- 4. 閱讀島內容 -->
+<!-- 4. 閱讀島內容（升級雙模式：今日讀報 AI 挑戰 + 自由閱讀心得） -->
     <div id="panel-reading" style="display:none;">
       <div id="pause-notice-reading" class="paused-banner" style="display:none;">
         ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
       </div>
+
       <div id="task-content-reading">
-        <div class="form-group">
-          <label>閱讀書名或文章標題</label>
-          <input type="text" id="read-title" placeholder="例如: 達克比辦案、國語日報">
+        <!-- 頂部分頁切換按鈕 -->
+        <div class="tab-header">
+          <button type="button" class="tab-btn active" id="tab-btn-read-daily" onclick="switchReadingTab('daily')">📰 今日讀報挑戰</button>
+          <button type="button" class="tab-btn" id="tab-btn-read-free" onclick="switchReadingTab('free')">📝 自由閱讀心得</button>
         </div>
-        <div class="form-group">
-          <label>節錄文章重要段落</label>
-          <textarea id="read-quote" rows="2" placeholder="抄寫或節錄書中一句精采段落..."></textarea>
+
+        <!-- 分頁 1：國語日報每日 AI 挑戰 -->
+        <div id="subtab-read-daily">
+          <!-- 題目展示卡片 -->
+          <div id="daily-q-card" style="background: linear-gradient(135deg, #f3e8ff, #ede9fe); border: 2px solid #c084fc; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span id="daily-q-edition" style="font-size:0.78rem; font-weight:800; background:#9333ea; color:#fff; padding:3px 8px; border-radius:8px;">國語日報 第2版</span>
+              <span style="font-size:0.75rem; color:#7e22ce; font-weight:700;">+5 EXP</span>
+            </div>
+            <h4 id="daily-q-title" style="color:#581c87; font-size:1.05rem; margin-bottom:8px;">載入今日篇名中...</h4>
+            <div style="background:rgba(255,255,255,0.85); border-radius:12px; padding:10px; border-left:4px solid #a855f7;">
+              <strong style="color:#6b21a8; font-size:0.86rem; display:block; margin-bottom:4px;">💡 今日閱讀理解問題：</strong>
+              <p id="daily-q-text" style="color:#374151; font-size:0.9rem; line-height:1.5;">請翻開今日實體報紙閱讀後回答問題...</p>
+            </div>
+          </div>
+
+          <!-- 作答輸入區 -->
+          <div class="form-group">
+            <label>你的作答內容（根據實體報紙內容回答）：</label>
+            <textarea id="daily-q-answer" rows="4" placeholder="請寫下你的想法或在文章中找到的答案..."></textarea>
+          </div>
+
+          <!-- AI 即時回饋提示框（預設隱藏） -->
+          <div id="ai-feedback-box" style="display:none; border-radius:12px; padding:12px; margin-bottom:14px; font-size:0.88rem; line-height:1.5;"></div>
+
+          <button class="btn-action btn-purple" id="btn-submit-daily-read" onclick="submitDailyReadingAnswer()">🤖 送交 AI 批改認證 (+5 能量)</button>
         </div>
-        <div class="form-group">
-          <label>個人心得與收穫（至少需滿 20 個中文字）</label>
-          <textarea id="read-reflection" rows="4" placeholder="寫下讀完後的想法與你的看法"></textarea>
-          <div id="reflection-count" class="char-count">目前字數：0 / 20 字</div>
+
+        <!-- 分頁 2：原有的自由閱讀心得 -->
+        <div id="subtab-read-free" style="display:none;">
+          <div class="form-group">
+            <label>閱讀書名或文章標題</label>
+            <input type="text" id="read-title" placeholder="例如: 達克比辦案、國語日報">
+          </div>
+          <div class="form-group">
+            <label>節錄文章重要段落</label>
+            <textarea id="read-quote" rows="2" placeholder="抄寫或節錄書中一句精采段落..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>個人心得與收穫（至少需滿 20 個中文字）</label>
+            <textarea id="read-reflection" rows="4" placeholder="寫下讀完後的想法與你的看法"></textarea>
+            <div id="reflection-count" class="char-count">目前字數：0 / 20 字</div>
+          </div>
+          <button class="btn-action btn-purple" id="btn-submit-reading" onclick="submitReading()">📝 完成任務 (+5 能量)</button>
         </div>
-        <button class="btn-action btn-purple" id="btn-submit-reading" onclick="submitReading()">📝 完成任務 (+5 能量)</button>
       </div>
     </div>
 
@@ -1287,6 +1324,8 @@
     let db = null, totalEnergyRef = null, liveFeedRef = null, bbRef = null;
     let bbState = { isOpen: false, deadline: '', status: 'closed', players: {}, matches: [] };
     let rosterList = [];
+
+    let currentDailyQuestion = null; // 存放當日題目
 
     try {
       firebase.initializeApp(firebaseConfig);
@@ -1643,6 +1682,11 @@ person.position.set(spawnX, 0, spawnZ);
         const data = await res.json();
         if (data.status === 'success' && data.students) {
           rosterList = data.students;
+          // 🌟 接收今日國語日報題目
+          if (data.dailyQuestion) {
+            currentDailyQuestion = data.dailyQuestion;
+            renderDailyQuestionUI();
+          }
           renderSelectOptions();
           // 🌟 接收並啟動新店即時天氣
           if (data.weather) {
@@ -2176,6 +2220,117 @@ const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
       document.getElementById('civics-verifier').value = '';
     }
 
+    // 🌟 切換閱讀島分頁
+    function switchReadingTab(tab) {
+      document.getElementById('tab-btn-read-daily').classList.toggle('active', tab === 'daily');
+      document.getElementById('tab-btn-read-free').classList.toggle('active', tab === 'free');
+      document.getElementById('subtab-read-daily').style.display = (tab === 'daily' ? 'block' : 'none');
+      document.getElementById('subtab-read-free').style.display = (tab === 'free' ? 'block' : 'none');
+    }
+
+    // 🌟 渲染今日題目卡片
+    function renderDailyQuestionUI() {
+      const editionElem = document.getElementById('daily-q-edition');
+      const titleElem = document.getElementById('daily-q-title');
+      const textElem = document.getElementById('daily-q-text');
+      const btnSubmit = document.getElementById('btn-submit-daily-read');
+      if (!editionElem || !titleElem || !textElem) return;
+
+      if (currentDailyQuestion && currentDailyQuestion.hasQuestion) {
+        editionElem.textContent = currentDailyQuestion.edition || '國語日報';
+        titleElem.textContent = `《${currentDailyQuestion.title}》`;
+        textElem.textContent = currentDailyQuestion.question;
+        btnSubmit.disabled = false;
+        btnSubmit.style.opacity = '1';
+      } else {
+        editionElem.textContent = '今日無指定篇目';
+        titleElem.textContent = '今日尚無讀報挑戰題目';
+        textElem.textContent = '探險家可點選上方「自由閱讀心得」分頁，記錄自己喜歡的書籍心得喔！';
+        btnSubmit.disabled = true;
+        btnSubmit.style.opacity = '0.5';
+      }
+    }
+
+    // 🌟 送出答案給後端 Gemini 批改
+    async function submitDailyReadingAnswer() {
+      if (!checkDailyLimit('reading')) return;
+
+      if (!currentDailyQuestion || !currentDailyQuestion.hasQuestion) {
+        alert('今日尚未指派讀報挑戰題目喔！');
+        return;
+      }
+
+      const answerInput = document.getElementById('daily-q-answer');
+      const studentAns = answerInput.value.trim();
+      const feedbackBox = document.getElementById('ai-feedback-box');
+      const btnSubmit = document.getElementById('btn-submit-daily-read');
+
+      if (!studentAns) {
+        alert('請先填寫你的作答內容喔！');
+        return;
+      }
+
+      // UI 顯示等待狀態
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = '⏳ AI 老師正在仔細閱讀批改中...';
+      feedbackBox.style.display = 'none';
+
+      try {
+        const payload = {
+          type: 'daily_reading_ai_eval',
+          seatNumber: currentStudent.seatNumber,
+          studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+          answer: studentAns
+        };
+
+        const res = await fetch(GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const evalResult = await res.json();
+
+        feedbackBox.style.display = 'block';
+
+        if (evalResult.passed) {
+          // 🎉 通過：給予綠色稱讚框、發放 5 點能量
+          feedbackBox.style.background = '#dcfce7';
+          feedbackBox.style.border = '2px solid #22c55e';
+          feedbackBox.style.color = '#15803d';
+          feedbackBox.innerHTML = `<strong>🎉 恭喜通過！</strong><br>${evalResult.feedback}`;
+
+          rewardCheckin('reading', '閱讀島', `通過讀報挑戰《${currentDailyQuestion.title}》`, {
+            type: 'task_complete',
+            seatNumber: currentStudent.seatNumber,
+            studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+            islandTitle: '閱讀島',
+            taskTitle: '每日讀報挑戰',
+            points: 5,
+            detail1: currentDailyQuestion.title,
+            detail2: studentAns,
+            verifier: 'Gemini AI'
+          }, 5);
+
+          answerInput.value = '';
+        } else {
+         
+          // 💡 未通過：給予溫暖提示框，不扣分，引導再次翻報紙
+          feedbackBox.style.background = '#fef3c7';
+          feedbackBox.style.border = '2px solid #f59e0b';
+          feedbackBox.style.color = '#b45309';
+          feedbackBox.innerHTML = `<strong>💡 AI 老師的提示：</strong><br>${evalResult.feedback}<br><small style="color:#78350f;">再翻開報紙看一看，修改後可以再次送出喔！</small>`;
+        }
+
+      } catch (err) {
+        alert('批改連線超時，請檢查網路後再試一次！');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = '🤖 送交 AI 批改認證 (+5 能量)';
+      }
+    }
+
+    
 // 🌟 升級版：學生送出閱讀心得（進入待審核區，暫不加分）
     function submitReading() {
       if (!checkDailyLimit('reading')) return;
@@ -6439,6 +6594,9 @@ function focusOnIsland(islandData) {
       
       updateNightClosedState();  // 確保打開面板時即時更新夜間或賽事關閉狀態
       updateSportTabStatus();  // 打開抽屜時即時刷新運動島分頁標籤打勾狀態！
+      if (islandData.id === 'reading') {
+        renderDailyQuestionUI();
+      }
 
       document.getElementById('side-drawer').classList.add('open');
     }
