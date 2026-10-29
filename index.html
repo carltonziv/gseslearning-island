@@ -4008,7 +4008,7 @@ mascotLeader = createCharacterMesh(false, 0xF5D0A9, 0xd97706, 0xEBA937);
     }
 
     
-function sendMascotMessage() {
+async function sendMascotMessage() {
       const input = document.getElementById('mascot-user-input');
       if (!input) return;
       const text = input.value.trim();
@@ -4017,16 +4017,37 @@ function sendMascotMessage() {
       appendMascotMessage('user', text);
       input.value = '';
 
-      appendMascotMessage('mascot', '島嶼之星正在思考中...');
+      appendMascotMessage('mascot', '⏳ 島嶼之星正在翻閱航海地圖思考中...');
 
-      setTimeout(() => {
+      try {
+        const payload = {
+          type: 'mascot_chat',
+          message: text
+        };
+
+        const res = await fetch(GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
         const chatBox = document.getElementById('mascot-chat-box');
+
         if (chatBox && chatBox.lastElementChild) {
-          const reply = getMascotLocalResponse(text);
+          const reply = (data && data.reply) ? data.reply : getMascotLocalResponse(text);
           chatBox.lastElementChild.innerHTML = reply.replace(/\n/g, '<br>');
           chatBox.scrollTop = chatBox.scrollHeight;
         }
-      }, 350);
+      } catch (err) {
+        // 斷網或連線逾時由原本的本地題庫備援接手
+        const chatBox = document.getElementById('mascot-chat-box');
+        if (chatBox && chatBox.lastElementChild) {
+          const fallbackReply = getMascotLocalResponse(text);
+          chatBox.lastElementChild.innerHTML = fallbackReply.replace(/\n/g, '<br>');
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      }
     }
 
     function createSleepZzzSprite() {
