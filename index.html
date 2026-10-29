@@ -2323,40 +2323,36 @@ const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
 
         feedbackBox.style.display = 'block';
 
-        if (evalResult.passed) {
-       feedbackBox.style.background = '#dcfce7';
-       feedbackBox.style.border = '2px solid #22c55e';
-       feedbackBox.style.color = '#15803d';
-       feedbackBox.innerHTML = `<strong>🎉 恭喜通過！</strong><br>${evalResult.feedback}`;
+if (evalResult.passed) {
+          feedbackBox.style.background = '#dcfce7';
+          feedbackBox.style.border = '2px solid #22c55e';
+          feedbackBox.style.color = '#15803d';
+          feedbackBox.innerHTML = `<strong>🎉 恭喜通過！</strong><br>${evalResult.feedback || "回答得非常棒！"}`;
 
-       // 🌟 記錄 reading_daily 完成次數
-       rewardCheckin('reading_daily', '閱讀島', `通過讀報挑戰《${currentDailyQuestion.title}》`, {
-         type: 'task_complete',
-         seatNumber: currentStudent.seatNumber,
-         studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-         islandTitle: '閱讀島',
-         taskTitle: '每日讀報挑戰',
-         points: 5,
-         detail1: currentDailyQuestion.title,
-         detail2: studentAns,
-         verifier: 'Gemini AI'
-       }, 5);
+          rewardCheckin('reading_daily', '閱讀島', `通過讀報挑戰《${currentDailyQuestion.title}》`, {
+            type: 'task_complete',
+            seatNumber: currentStudent.seatNumber,
+            studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+            islandTitle: '閱讀島',
+            taskTitle: '每日讀報挑戰',
+            points: 5,
+            detail1: currentDailyQuestion.title,
+            detail2: studentAns,
+            verifier: 'AI 批改'
+          }, 5);
 
-       answerInput.value = '';
-
-       // 🌟 答對後立即鎖定按鈕與文字框
-       answerInput.disabled = true;
-       btnSubmit.disabled = true;
-       btnSubmit.style.opacity = '0.6';
-       btnSubmit.textContent = '✅ 今日讀報挑戰已完成 (+5 能量已領取)';
-     
+          answerInput.value = '';
+          answerInput.disabled = true;
+          btnSubmit.disabled = true;
+          btnSubmit.style.opacity = '0.6';
+          btnSubmit.textContent = '✅ 今日讀報挑戰已完成 (+5 能量已領取)';
         } else {
-         
-          // 💡 未通過：給予溫暖提示框，不扣分，引導再次翻報紙
+          // 💡 未達 80%：給予溫柔引導提示，不扣分，可重複修改送出
           feedbackBox.style.background = '#fef3c7';
           feedbackBox.style.border = '2px solid #f59e0b';
           feedbackBox.style.color = '#b45309';
-          feedbackBox.innerHTML = `<strong>💡 AI 老師的提示：</strong><br>${evalResult.feedback}<br><small style="color:#78350f;">再翻開文章看一看，修改後可以再次送出喔！</small>`;
+          const tip = evalResult.feedback || evalResult.message || "再翻開文章看一看，修改後可以再次送出喔！";
+          feedbackBox.innerHTML = `<strong>💡 AI 老師的提示：</strong><br>${tip}`;
         }
 
       } catch (err) {
