@@ -2896,7 +2896,7 @@ function adminGenerateBracket() {
       }
 
       let html = '';
-      keys.forEach(k => {
+keys.forEach(k => {
         const item = data[k];
         html += `
           <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:0.85rem; color:#334155;">
@@ -2911,7 +2911,7 @@ function adminGenerateBracket() {
             </div>
             <div style="display:flex; justify-content:flex-end; gap:6px;">
               <button style="background:#dc2626; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminRejectReading('${k}')">退件</button>
-              <button style="background:#16a34a; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminApproveReading('${k}')">通過 (+5分)</button>
+              <button style="background:#16a34a; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminApproveReading('${k}')">通過 (+10分)</button>
             </div>
           </div>
         `;
