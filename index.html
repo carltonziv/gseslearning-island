@@ -4385,6 +4385,7 @@ function applyWeatherEffect(wData) {
 
     function setupAmbientMotesSystem() {
       const positions = [];
+      const colors = [];
       motesData.length = 0;
 
       for (let i = 0; i < MOTES_COUNT; i++) {
@@ -4396,13 +4397,17 @@ function applyWeatherEffect(wData) {
         const z = Math.sin(ang) * dist;
 
         positions.push(x, y, z);
+        colors.push(1.0, 0.95, 0.7);
 
         motesData.push({
           baseX: x,
           baseZ: z,
-          speedY: 0.008 + Math.random() * 0.012, // 緩慢沉降速度
-          phase: Math.random() * Math.PI * 2,    // 水平微風飄動相位
-          swayRadius: 0.4 + Math.random() * 0.8
+          speedY: 0.008 + Math.random() * 0.012,
+          phase: Math.random() * Math.PI * 2,
+          swayRadius: 0.4 + Math.random() * 0.8,
+          // 🌟 每顆微粒專屬的隨機閃爍頻率與起始相位
+          twinkleSpeed: 1.5 + Math.random() * 3.0, // 閃爍快慢不同 (1.5 ~ 4.5)
+          twinklePhase: Math.random() * Math.PI * 2 // 起始時間完全錯開
         });
       }
 
@@ -4427,6 +4432,7 @@ function applyWeatherEffect(wData) {
         color: 0xfffbeb,
         size: 0.18,
         map: motesTexture,
+        vertexColors: true,
         transparent: true,
         opacity: 0.65,
         blending: THREE.AdditiveBlending, // 🌟 疊加發光混合，透出靈動亮光
@@ -6774,6 +6780,38 @@ if (playerVillager && playerVillager.obj) {
           rainGeo.attributes.position.needsUpdate = true;
         }
 
+        // 🌟 王國之淚金色微塵：微風漂浮、沉降與「非同步隨機閃爍」
+        if (ambientMotesSystem && motesGeo) {
+          const posArr = motesGeo.attributes.position.array;
+          const colArr = motesGeo.attributes.color.array; // 🌟 取得色彩陣列
+
+          for (let i = 0; i < MOTES_COUNT; i++) {
+            const data = motesData[i];
+            const idx = i * 3;
+
+            // 1. 緩速沉降與飄動
+            posArr[idx + 1] -= data.speedY;
+            data.phase += 0.02;
+            posArr[idx] = data.baseX + Math.sin(data.phase) * data.swayRadius;
+            posArr[idx + 2] = data.baseZ + Math.cos(data.phase * 0.8) * data.swayRadius;
+
+            if (posArr[idx + 1] < 0.6) {
+              posArr[idx + 1] = 16.0 + Math.random() * 3.0;
+            }
+
+            // 🌟 2. 獨立計算每顆微塵當下的明暗強度 (0.2 ~ 1.0)
+            const brightness = 0.2 + (Math.sin(time * data.twinkleSpeed + data.twinklePhase) + 1) * 0.4;
+
+            // 金色基礎調 (R:1.0, G:0.92, B:0.6) 乘上個別亮度
+            colArr[idx] = 1.0 * brightness;
+            colArr[idx + 1] = 0.92 * brightness;
+            colArr[idx + 2] = 0.6 * brightness;
+          }
+
+          motesGeo.attributes.position.needsUpdate = true;
+          motesGeo.attributes.color.needsUpdate = true; // 🌟 通知 GPU 顏色更新
+        }
+
         // 🌟 王國之淚金色微塵：微風漂浮與沉降循環
         if (ambientMotesSystem && motesGeo) {
           const posArr = motesGeo.attributes.position.array;
@@ -6796,9 +6834,7 @@ if (playerVillager && playerVillager.obj) {
           }
           motesGeo.attributes.position.needsUpdate = true;
 
-          // 微塵整體微幅呼吸明暗變化
-          ambientMotesSystem.material.opacity = 0.4 + Math.sin(time * 1.8) * 0.2;
-        }
+         }
 
         // 🌟 乘客搭車視角：相機跟隨第 2 節載客車廂，視線朝向中央群島
         if (isRidingCart && trailerCarts && trailerCarts.length >= 2) {
