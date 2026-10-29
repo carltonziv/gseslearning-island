@@ -6564,12 +6564,43 @@ if (playerVillager && playerVillager.obj) {
 }
 
 
-        // 平滑更新其他在線同學的位置
-Object.values(otherPlayers).forEach(p => {
-  p.mesh.position.x = THREE.MathUtils.lerp(p.mesh.position.x, p.targetX, 0.15);
-  p.mesh.position.z = THREE.MathUtils.lerp(p.mesh.position.z, p.targetZ, 0.15);
-});
+// 🌟 平滑更新其他在線同學的位置，並驅動走路擺臂動作
+        Object.values(otherPlayers).forEach(p => {
+          const oldX = p.mesh.position.x;
+          const oldZ = p.mesh.position.z;
 
+          p.mesh.position.x = THREE.MathUtils.lerp(p.mesh.position.x, p.targetX, 0.15);
+          p.mesh.position.z = THREE.MathUtils.lerp(p.mesh.position.z, p.targetZ, 0.15);
+
+          const moveDist = Math.hypot(p.mesh.position.x - oldX, p.mesh.position.z - oldZ);
+          const limbs = p.mesh.userData.limbs;
+
+          if (moveDist > 0.005) {
+            // 移動中：面向行進方向並擺動四肢
+            p.mesh.rotation.y = Math.atan2(p.targetX - oldX, p.targetZ - oldZ);
+            p.walkCycle = (p.walkCycle || 0) + 0.18;
+            const swing = Math.sin(p.walkCycle) * 0.5;
+
+            if (limbs) {
+              limbs.leftLeg.rotation.x = swing;
+              limbs.rightLeg.rotation.x = -swing;
+              limbs.leftArm.rotation.x = -swing;
+              limbs.rightArm.rotation.x = swing;
+              if (limbs.skirt) limbs.skirt.rotation.x = Math.sin(p.walkCycle * 2) * 0.1;
+            }
+            p.mesh.position.y = Math.abs(Math.sin(p.walkCycle)) * 0.04;
+          } else {
+            // 停步：手腳平滑歸位
+            if (limbs) {
+              limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
+              limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
+              limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
+              limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
+            }
+          }
+        });
+
+        
         // 🌧️ 雨滴持續落下更新
         if (rainSystem && rainSystem.visible && rainGeo) {
           const positions = rainGeo.attributes.position.array;
