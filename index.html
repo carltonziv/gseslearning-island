@@ -2919,8 +2919,8 @@ keys.forEach(k => {
       container.innerHTML = html;
     }
 
-    // 審核通過：補發能量、累計打卡防刷次數、備存 GAS 試算表並自待審區移除
-function adminApproveReading(reviewKey) {
+// 審核通過：補發能量、累計打卡防刷次數、備存 GAS 試算表並自待審區移除
+    function adminApproveReading(reviewKey) {
       if (!db) return;
       db.ref(`pending_reviews/reading/${reviewKey}`).once('value', snap => {
         const item = snap.val();
@@ -2969,22 +2969,6 @@ function adminApproveReading(reviewKey) {
         db.ref(`pending_reviews/reading/${reviewKey}`).remove();
         alert(`✅ 已審核通過 ${item.studentName} 的心得！全班已獲取 ${pts} 點能量。`);
       });
-    
-
-        // 4. 備存到 Google 試算表 (GAS)
-        sendToGAS({
-          type: 'reading_reflection',
-          seatNumber: item.seatNumber,
-          studentName: item.studentName,
-          bookTitle: item.bookTitle,
-          quote: item.quote,
-          reflection: item.reflection
-        });
-
-        // 5. 從待審核清單中刪除
-        db.ref(`pending_reviews/reading/${reviewKey}`).remove();
-        alert(`✅ 已審核通過 ${item.studentName} 的心得！全班已獲取 5 點能量。`);
-      });
     }
 
     // 審核退件：直接從待審區刪除
@@ -2994,7 +2978,6 @@ function adminApproveReading(reviewKey) {
         db.ref(`pending_reviews/reading/${reviewKey}`).remove();
       }
     }
-
   // ==========================================
     // 9. 6 個時段背景色彩精準判定（下午 #FEF0E8）
     // ==========================================
