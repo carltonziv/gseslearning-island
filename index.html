@@ -999,7 +999,7 @@
           <!-- AI 即時回饋提示框（預設隱藏） -->
           <div id="ai-feedback-box" style="display:none; border-radius:12px; padding:12px; margin-bottom:14px; font-size:0.88rem; line-height:1.5;"></div>
 
-          <button class="btn-action btn-purple" id="btn-submit-daily-read" onclick="submitDailyReadingAnswer()">🤖 送交 島嶼之星 批改認證 (+10 能量)</button>
+          <button class="btn-action btn-purple" id="btn-submit-daily-read" onclick="submitDailyReadingAnswer()">🤖 送交 島嶼之星 批改認證 (+5 能量)</button>
         </div>
 
         <!-- 分頁 2：原有的自由閱讀心得 -->
@@ -1017,7 +1017,7 @@
             <textarea id="read-reflection" rows="4" placeholder="寫下讀完後的想法與你的看法"></textarea>
             <div id="reflection-count" class="char-count">目前字數：0 / 20 字</div>
           </div>
-          <button class="btn-action btn-purple" id="btn-submit-reading" onclick="submitReading()">📝 完成任務 (+5 能量)</button>
+          <button class="btn-action btn-purple" id="btn-submit-reading" onclick="submitReading()">📝 完成任務 (+10 能量)</button>
         </div>
       </div>
     </div>
@@ -2920,19 +2920,20 @@ keys.forEach(k => {
     }
 
     // 審核通過：補發能量、累計打卡防刷次數、備存 GAS 試算表並自待審區移除
-    function adminApproveReading(reviewKey) {
+function adminApproveReading(reviewKey) {
       if (!db) return;
       db.ref(`pending_reviews/reading/${reviewKey}`).once('value', snap => {
         const item = snap.val();
         if (!item) return;
 
         const targetSeat = item.seatNumber;
-        const pts = 10;
+        const pts = 10; // 🌟 點數調整為 10
 
-        // 🌟 改為記錄 reading_free 次數
+        // 1. 記錄 reading_free 次數
         const checkinRef = db.ref(`daily_checkins/${item.date}/seat_${targetSeat}/reading_free`);
         checkinRef.transaction(cur => (cur || 0) + 1);
-        // 2. 增加全班共創能量 (+5)
+
+        // 2. 增加全班共創能量 (+10)
         if (totalEnergyRef) {
           totalEnergyRef.transaction(current => {
             let next = (current || 0) + pts;
@@ -2952,6 +2953,23 @@ keys.forEach(k => {
             time: firebase.database.ServerValue.TIMESTAMP
           });
         }
+
+        // 4. 備存到 Google 試算表 (GAS)
+        sendToGAS({
+          type: 'reading_reflection',
+          seatNumber: item.seatNumber,
+          studentName: item.studentName,
+          bookTitle: item.bookTitle,
+          quote: item.quote,
+          reflection: item.reflection,
+          points: pts
+        });
+
+        // 5. 從待審核清單中刪除
+        db.ref(`pending_reviews/reading/${reviewKey}`).remove();
+        alert(`✅ 已審核通過 ${item.studentName} 的心得！全班已獲取 ${pts} 點能量。`);
+      });
+    }
 
         // 4. 備存到 Google 試算表 (GAS)
         sendToGAS({
@@ -4006,7 +4024,8 @@ mascotLeader = createCharacterMesh(false, 0xF5D0A9, 0xd97706, 0xEBA937);
       return defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
     }
 
-    function sendMascotMessage() {
+    
+function sendMascotMessage() {
       const input = document.getElementById('mascot-user-input');
       if (!input) return;
       const text = input.value.trim();
