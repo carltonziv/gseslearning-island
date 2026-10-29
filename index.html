@@ -999,7 +999,7 @@
           <!-- AI 即時回饋提示框（預設隱藏） -->
           <div id="ai-feedback-box" style="display:none; border-radius:12px; padding:12px; margin-bottom:14px; font-size:0.88rem; line-height:1.5;"></div>
 
-          <button class="btn-action btn-purple" id="btn-submit-daily-read" onclick="submitDailyReadingAnswer()">🤖 送交 島嶼之星 批改認證 (+5 能量)</button>
+          <button class="btn-action btn-purple" id="btn-submit-daily-read" onclick="submitDailyReadingAnswer()">🤖 送交 島嶼之星 批改認證 (+10 能量)</button>
         </div>
 
         <!-- 分頁 2：原有的自由閱讀心得 -->
@@ -2392,7 +2392,7 @@ if (evalResult.passed) {
       // 1. 推送到 Firebase 待審核節點
       if (db) {
         db.ref('pending_reviews/reading').push(reviewPayload).then(() => {
-          alert('📝 閱讀心得已成功送出！請靜待老師在後台審核，通過後將自動發放 5 點能量喔！');
+          alert('📝 閱讀心得已成功送出！請靜待老師在後台審核，通過後將自動發放 10 點能量喔！');
           closeDrawer();
         }).catch(err => {
           alert('送出失敗，請檢查網路：' + err.message);
@@ -2927,7 +2927,7 @@ function adminGenerateBracket() {
         if (!item) return;
 
         const targetSeat = item.seatNumber;
-        const pts = 5;
+        const pts = 10;
 
         // 🌟 改為記錄 reading_free 次數
         const checkinRef = db.ref(`daily_checkins/${item.date}/seat_${targetSeat}/reading_free`);
