@@ -1324,6 +1324,7 @@
     let db = null, totalEnergyRef = null, liveFeedRef = null, bbRef = null;
     let bbState = { isOpen: false, deadline: '', status: 'closed', players: {}, matches: [] };
     let rosterList = [];
+    let currentClassEnergy = 0; // 🌟 新增：記錄目前全班累積能量
 
     let currentDailyQuestion = null; // 存放當日題目
 
@@ -2713,6 +2714,7 @@ function adminPickWinner(matchIdx, playerNum) {
         if (val >= 5000) {
           triggerTournamentMode();
           totalEnergyRef.set(0);
+          currentClassEnergy = val;
           alert('能量已達 5000，戰鬥陀螺大賽已啟動，能量已依規則自動歸零！');
         } else {
           totalEnergyRef.set(val);
@@ -5986,35 +5988,48 @@ const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
           }
         }
 
-// 🌟 陀螺頂部核心晶片動態呼吸燈（平時紅寶石色／比賽時電光藍與純白循環脈動）
-        if (beybladeCoreMesh) {
+if (beybladeCoreMesh) {
           if (!isTournamentActive) {
-            // 1. 平時休眠：深紅寶石色平緩呼吸
-            beybladeCoreMesh.material.emissive.setHex(0x7C0E18);
-            const pulse = (Math.sin(time * 2.2) + 1) * 0.5; // 0.0 ~ 1.0
-            beybladeCoreMesh.material.emissiveIntensity = 0.15 + pulse * 0.55;
+            // 🌟 1. 平時休賽階段：依據全班共創能量階段呈現充能呼吸燈
+            let stageColor = 0x7C0E18; // 預設 0~999: 深紅寶石色
+            let breathSpeed = 2.0;
 
-            // 🌟 平時攻擊環維持原本安靜暗光
-            if (beybladeRingMesh) {
-              beybladeRingMesh.material.emissiveIntensity = 0.15;
+            if (currentClassEnergy >= 4000) {
+              stageColor = 0x005F60; // 4000~4999: 深海藍綠色 (Teal)
+              breathSpeed = 3.2;    // 能量越高，呼吸節奏微幅加快，展現充沛感
+            } else if (currentClassEnergy >= 3000) {
+              stageColor = 0x14532D; // 3000~3999: 暗森林綠色
+              breathSpeed = 2.8;
+            } else if (currentClassEnergy >= 2000) {
+              stageColor = 0x78350F; // 2000~2999: 咖啡琥珀色
+              breathSpeed = 2.5;
+            } else if (currentClassEnergy >= 1000) {
+              stageColor = 0xC2410C; // 1000~1999: 暗橘色
+              breathSpeed = 2.2;
             }
+
+            beybladeCoreMesh.material.emissive.setHex(stageColor);
+            const pulse = (Math.sin(time * breathSpeed) + 1) * 0.5; // 0.0 ~ 1.0
+            beybladeCoreMesh.material.emissiveIntensity = 0.2 + pulse * 0.65;
+
+            // 下層攻擊環同步微弱呼應核心顏色與微光
+            if (beybladeRingMesh) {
+              beybladeRingMesh.material.emissive.setHex(stageColor);
+              beybladeRingMesh.material.emissiveIntensity = 0.12 + pulse * 0.25;
+            }
+
           } else {
-            // 2. 比賽進行時：電光藍 ⇋ 耀眼白 能量呼吸循環
-            const cyclePhase = (Math.sin(time * 3.5) + 1) * 0.5; // 0.0 ~ 1.0 之間平滑來回
-
-            // 顏色在電光藍 (0.0) 與白色 (1.0) 之間線性漸變
+            // 🌟 2. 5000滿額大賽進行時：電光藍 ⇋ 耀眼白 激戰呼吸循環
+            const cyclePhase = (Math.sin(time * 3.5) + 1) * 0.5;
             beybladeCoreMesh.material.emissive.copy(colorBattleBlue).lerp(colorBattleWhite, cyclePhase);
-
-            // 自發光強度同步隨週期起伏（從 0.4 到 1.15 脈動）
             beybladeCoreMesh.material.emissiveIntensity = 0.4 + cyclePhase * 0.75;
 
-            // 🌟 攻擊環同步微弱呼吸：強度在 0.25 ~ 0.55 之間溫和起伏
             if (beybladeRingMesh) {
+              beybladeRingMesh.material.emissive.copy(colorBattleBlue);
               beybladeRingMesh.material.emissiveIntensity = 0.25 + cyclePhase * 0.3;
             }
           }
         }
-
 if (mascotLeader) {
           const currentHour = new Date().getHours();
           const isMascotSleeping = (currentHour >= 22 || currentHour < 7);
@@ -6651,7 +6666,6 @@ if (playerVillager && playerVillager.obj) {
           applyWorldRepulsion(otherPos, 0.3);
           p.mesh.position.x = otherPos.x;
           p.mesh.position.z = otherPos.z;
-        });
 
           const moveDist = Math.hypot(p.mesh.position.x - oldX, p.mesh.position.z - oldZ);
           const limbs = p.mesh.userData.limbs;
