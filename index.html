@@ -4376,13 +4376,13 @@ function applyWeatherEffect(wData) {
     if (rainSystem) rainSystem.visible = false;
   }
 }
-    // ==========================================
-    // 🌟 王國之淚風格：金色環境微塵飄浮粒子系統
+// ==========================================
+    // 🌟 王國之淚風格：金色環境微塵飄浮粒子系統（高亮可見版）
     // ==========================================
     let ambientMotesSystem = null;
     let motesGeo = null;
-    const MOTES_COUNT = 160;
-    const motesData = []; // 儲存每顆微塵的漂浮速度與相位
+    const MOTES_COUNT = 180;
+    const motesData = [];
 
     function setupAmbientMotesSystem() {
       const positions = [];
@@ -4390,57 +4390,59 @@ function applyWeatherEffect(wData) {
       motesData.length = 0;
 
       for (let i = 0; i < MOTES_COUNT; i++) {
-        // 分佈在群島上空（水平半徑約 35m，高度 1m ~ 18m）
+        // 分佈在七島核心上空（半徑 22m，高度 0.8m ~ 12m）
         const ang = Math.random() * Math.PI * 2;
-        const dist = Math.random() * 32;
+        const dist = Math.random() * 22;
         const x = Math.cos(ang) * dist;
-        const y = 1.0 + Math.random() * 16.0;
+        const y = 0.8 + Math.random() * 11.0;
         const z = Math.sin(ang) * dist;
 
         positions.push(x, y, z);
-        colors.push(1.0, 0.95, 0.7);
+        colors.push(1.0, 0.88, 0.35); // 飽和黃金光
 
         motesData.push({
           baseX: x,
           baseZ: z,
-          speedY: 0.008 + Math.random() * 0.012,
+          speedY: 0.006 + Math.random() * 0.01,
           phase: Math.random() * Math.PI * 2,
-          swayRadius: 0.4 + Math.random() * 0.8,
-          // 🌟 每顆微粒專屬的隨機閃爍頻率與起始相位
-          twinkleSpeed: 1.5 + Math.random() * 3.0, // 閃爍快慢不同 (1.5 ~ 4.5)
-          twinklePhase: Math.random() * Math.PI * 2 // 起始時間完全錯開
+          swayRadius: 0.3 + Math.random() * 0.6,
+          twinkleSpeed: 2.0 + Math.random() * 2.5,
+          twinklePhase: Math.random() * Math.PI * 2
         });
       }
 
       motesGeo = new THREE.BufferGeometry();
       motesGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      motesGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
-      // 產生帶有羽化光暈的圓形金色粒子貼圖
+      // 🌟 升級為 64x64 清晰星芒光核，中心實心白、外圍高亮金光，絕不被抗鋸齒吃掉
       const canvas = document.createElement('canvas');
-      canvas.width = 32;
-      canvas.height = 32;
+      canvas.width = 64;
+      canvas.height = 64;
       const ctx = canvas.getContext('2d');
-      const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-      grad.addColorStop(0.0, 'rgba(254, 240, 138, 1.0)'); // 中心亮淡金
-      grad.addColorStop(0.4, 'rgba(245, 158, 11, 0.7)');  // 外環暖橘金
-      grad.addColorStop(1.0, 'rgba(245, 158, 11, 0.0)');  // 邊緣透明
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');  // 中心極亮純白
+      grad.addColorStop(0.25, 'rgba(254, 240, 138, 0.95)'); // 內核亮金
+      grad.addColorStop(0.6, 'rgba(245, 158, 11, 0.6)');    // 外環金光
+      grad.addColorStop(1.0, 'rgba(245, 158, 11, 0.0)');    // 邊緣淡出
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 32, 32);
+      ctx.fillRect(0, 0, 64, 64);
 
       const motesTexture = new THREE.CanvasTexture(canvas);
 
       const motesMat = new THREE.PointsMaterial({
-        color: 0xfffbeb,
-        size: 0.25,
+        size: 0.85,            // 🌟 尺寸加大到 0.85，遠近皆清晰如星火！
         map: motesTexture,
         vertexColors: true,
         transparent: true,
-        opacity: 0.7,
-        blending: THREE.AdditiveBlending, // 🌟 疊加發光混合，透出靈動亮光
-        depthWrite: false
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending, // 疊加發光
+        depthWrite: false,
+        fog: false             // 🌟 免疫全場景霧氣，不被夜間/午夜深藍背景吞掉！
       });
 
       ambientMotesSystem = new THREE.Points(motesGeo, motesMat);
+      ambientMotesSystem.renderOrder = 998; // 🌟 確保在半透明水面之上繪製！
       scene.add(ambientMotesSystem);
     }
 
@@ -6801,14 +6803,13 @@ if (playerVillager && playerVillager.obj) {
               posArr[idx + 1] = 16.0 + Math.random() * 3.0;
             }
 
-            // 🌟 2. 獨立計算每顆微塵當下的明暗強度 (0.2 ~ 1.0)
-            const brightness = 0.2 + (Math.sin(time * data.twinkleSpeed + data.twinklePhase) + 1) * 0.4;
+// 🌟 獨立計算每顆微塵當下的明暗強度 (0.45 ~ 1.05)，避免完全熄滅
+            const brightness = 0.45 + (Math.sin(time * data.twinkleSpeed + data.twinklePhase) + 1) * 0.3;
 
-            // 金色基礎調 (R:1.0, G:0.92, B:0.6) 乘上個別亮度
+            // 濃郁金色 (R:1.0, G:0.88, B:0.35)
             colArr[idx] = 1.0 * brightness;
-            colArr[idx + 1] = 0.92 * brightness;
-            colArr[idx + 2] = 0.6 * brightness;
-          }
+            colArr[idx + 1] = 0.88 * brightness;
+            colArr[idx + 2] = 0.35 * brightness;
 
           motesGeo.attributes.position.needsUpdate = true;
           motesGeo.attributes.color.needsUpdate = true; // 🌟 通知 GPU 顏色更新
