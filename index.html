@@ -1770,10 +1770,14 @@ person.position.set(spawnX, 0, spawnZ);
       const selVal = document.getElementById('select-identity').value;
       if (!selVal) { alert('請先選擇你的座號身分喔！'); return; }
 
-      if (selVal === 'guest') {
+if (selVal === 'guest') {
         const guestName = document.getElementById('input-guest-name').value.trim();
         if (!guestName) { alert('訪客請填寫你的暱稱喔！'); return; }
+        
+        // 🌟 生成訪客專屬唯一 ID（暱稱 + 隨機4碼，避免相同暱稱也撞車）
+        const randomCode = Math.random().toString(36).substring(2, 6);
         currentStudent.seatNumber = '訪客';
+        currentStudent.guestId = `guest_${guestName}_${randomCode}`; // 專屬 ID
         currentStudent.name = guestName;
         currentStudent.myPoints = 0;
         currentStudent.beybladeRank = '';
@@ -1781,6 +1785,7 @@ person.position.set(spawnX, 0, spawnZ);
         const matched = rosterList.find(s => String(s.seatNumber) === String(selVal));
         if (matched) {
           currentStudent.seatNumber = matched.seatNumber;
+          currentStudent.guestId = `seat_${matched.seatNumber}`;
           currentStudent.name = matched.name;
           currentStudent.myPoints = matched.points || 0;
           currentStudent.beybladeRank = matched.rank || '';
@@ -1816,29 +1821,33 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
       return `${d.getFullYear()}-${m}-${day}`;
     }
 
-    // 依「學生座號」與「今日日期」取得該任務打卡次數
-    function getDailyCount(islandId) {
-      if (!currentStudent || !currentStudent.seatNumber) return 0;
-      const seat = currentStudent.seatNumber;
+function getDailyCount(islandId) {
+      if (!currentStudent) return 0;
+      // 🌟 訪客使用 guestId，一般學生使用座號
+      const userKey = currentStudent.guestId || currentStudent.seatNumber;
+      if (!userKey) return 0;
+
       const today = getTodayKey();
-      const raw = localStorage.getItem(`island_checkin_${seat}_${today}`);
+      const raw = localStorage.getItem(`island_checkin_${userKey}_${today}`);
       const data = raw ? JSON.parse(raw) : {};
       return data[islandId] || 0;
     }
 
     function addDailyCount(islandId) {
-      if (!currentStudent || !currentStudent.seatNumber) return;
-      const seat = currentStudent.seatNumber;
+      if (!currentStudent) return;
+      const userKey = currentStudent.guestId || currentStudent.seatNumber;
+      if (!userKey) return;
+
       const today = getTodayKey();
-      const key = `island_checkin_${seat}_${today}`;
+      const key = `island_checkin_${userKey}_${today}`;
       const raw = localStorage.getItem(key);
       const data = raw ? JSON.parse(raw) : {};
       data[islandId] = (data[islandId] || 0) + 1;
       localStorage.setItem(key, JSON.stringify(data));
 
-      // 🌟 同步寫入 Firebase 雲端防刷節點
-      if (db) {
-        const cloudRef = db.ref(`daily_checkins/${today}/seat_${seat}/${islandId}`);
+      // 只有正式學生才同步至 Firebase 防刷節點，訪客不污染全班名冊
+      if (db && currentStudent.seatNumber !== '訪客') {
+        const cloudRef = db.ref(`daily_checkins/${today}/seat_${currentStudent.seatNumber}/${islandId}`);
         cloudRef.transaction(current => (current || 0) + 1);
       }
     }
@@ -6756,9 +6765,11 @@ let myPlayerRef = null;
 let heartbeatTimer = null;
 
 function initMultiplayerSync() {
-  if (!db || !currentStudent.seatNumber) return;
+  if (!db || !currentStudent) return;
 
-  const playerId = `seat_${currentStudent.seatNumber}`;
+  // 🌟 原本是: const playerId = `seat_${currentStudent.seatNumber}`;
+  // 🌟 改為優先使用專屬 guestId：
+  const playerId = currentStudent.guestId || `seat_${currentStudent.seatNumber}`;
   myPlayerRef = db.ref(`online_players/${playerId}`);
 
   // 1. 斷線/關閉視窗時自動從雲端清除
@@ -6769,6 +6780,7 @@ function initMultiplayerSync() {
   heartbeatTimer = setInterval(() => {
     if (playerVillager && myPlayerRef) {
       myPlayerRef.update({
+        playerId: playerId, // 記錄專屬 ID
         seatNumber: currentStudent.seatNumber,
         name: currentStudent.name,
         avatar: currentStudent.avatar,
@@ -6780,21 +6792,21 @@ function initMultiplayerSync() {
     }
   }, 500);
 
-  // 3. 監聽其他同學加入
+  // 3. 監聽其他同學/訪客加入（以 playerId 比對，不再以座號比對）
   db.ref('online_players').on('child_added', snap => {
     const data = snap.val();
-    if (!data || data.seatNumber === currentStudent.seatNumber) return;
+    if (!data || snap.key === playerId) return; // 避免生成自己
     spawnOtherPlayer(snap.key, data);
   });
 
-  // 4. 監聽其他同學移動位置
+  // 4. 監聽其他同學/訪客移動位置
   db.ref('online_players').on('child_changed', snap => {
     const data = snap.val();
-    if (!data || data.seatNumber === currentStudent.seatNumber) return;
+    if (!data || snap.key === playerId) return;
     updateOtherPlayerPos(snap.key, data);
   });
 
-  // 5. 監聽同學離線下線
+  // 5. 監聽下線
   db.ref('online_players').on('child_removed', snap => {
     removeOtherPlayer(snap.key);
   });
