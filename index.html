@@ -1479,7 +1479,7 @@ const texture = new THREE.CanvasTexture(canvas);
       return sprite;
     }
 let playerVillager = null;
-    function removePlayerCharacter() {
+function removePlayerCharacter() {
       // 🌟 1. 主動通知 Firebase 立即刪除該使用者的線上人物節點
       if (myPlayerRef) {
         myPlayerRef.remove();
@@ -1488,6 +1488,10 @@ let playerVillager = null;
       if (heartbeatTimer) {
         clearInterval(heartbeatTimer);
         heartbeatTimer = null;
+      }
+      if (cleanupTimer) { // 🌟 新增：清除幽靈 NPC 定時巡檢計時器
+        clearInterval(cleanupTimer);
+        cleanupTimer = null;
       }
 
       // 🌟 2. 清除本機 3D 模型
@@ -6843,18 +6847,16 @@ function resetToDefaultCamera() {
       updateMinimapStatus();
     }
 
-    // ==========================================
-// 🌟 多人線上即時人物同步模組
-// ==========================================
 let otherPlayers = {}; // 存放其他在線同學的 3D 模型與資料
 let myPlayerRef = null;
 let heartbeatTimer = null;
+let cleanupTimer = null; // 🌟 新增：定時清理幽靈 NPC 計時器
+
+const GHOST_TIMEOUT_MS = 10 * 60 * 1000; // 🌟 10 分鐘逾時設定 (600,000 ms)
 
 function initMultiplayerSync() {
   if (!db || !currentStudent) return;
 
-  // 🌟 原本是: const playerId = `seat_${currentStudent.seatNumber}`;
-  // 🌟 改為優先使用專屬 guestId：
   const playerId = currentStudent.guestId || `seat_${currentStudent.seatNumber}`;
   myPlayerRef = db.ref(`online_players/${playerId}`);
 
@@ -6866,7 +6868,7 @@ function initMultiplayerSync() {
   heartbeatTimer = setInterval(() => {
     if (playerVillager && myPlayerRef) {
       myPlayerRef.update({
-        playerId: playerId, // 記錄專屬 ID
+        playerId: playerId,
         seatNumber: currentStudent.seatNumber,
         name: currentStudent.name,
         avatar: currentStudent.avatar,
@@ -6878,23 +6880,55 @@ function initMultiplayerSync() {
     }
   }, 500);
 
-  // 3. 監聽其他同學/訪客加入（以 playerId 比對，不再以座號比對）
+  // 🌟 3. 定時清理逾時 10 分鐘的幽靈玩家 (每 60 秒巡檢一次)
+  if (cleanupTimer) clearInterval(cleanupTimer);
+  cleanupTimer = setInterval(() => {
+    cleanUpGhostPlayers();
+  }, 60000);
+
+  // 4. 監聽其他同學/訪客加入（若逾時直接刪除並不生成）
   db.ref('online_players').on('child_added', snap => {
     const data = snap.val();
-    if (!data || snap.key === playerId) return; // 避免生成自己
+    if (!data || snap.key === playerId) return;
+
+    const now = Date.now();
+    if (data.lastSeen && (now - data.lastSeen > GHOST_TIMEOUT_MS)) {
+      // 🌟 已超過 10 分鐘未更新，判定為幽靈人物，從 Firebase 雲端踢除
+      db.ref(`online_players/${snap.key}`).remove();
+      return;
+    }
+
     spawnOtherPlayer(snap.key, data);
   });
 
-  // 4. 監聽其他同學/訪客移動位置
+  // 5. 監聽其他同學/訪客移動位置
   db.ref('online_players').on('child_changed', snap => {
     const data = snap.val();
     if (!data || snap.key === playerId) return;
     updateOtherPlayerPos(snap.key, data);
   });
 
-  // 5. 監聽下線
+  // 6. 監聽下線
   db.ref('online_players').on('child_removed', snap => {
     removeOtherPlayer(snap.key);
+  });
+}
+
+// 🌟 新增：巡檢並清理所有超過 10 分鐘未活動的幽靈人物函式
+function cleanUpGhostPlayers() {
+  if (!db) return;
+  const now = Date.now();
+  db.ref('online_players').once('value', snap => {
+    const players = snap.val() || {};
+    Object.keys(players).forEach(key => {
+      const p = players[key];
+      if (p.lastSeen && (now - p.lastSeen > GHOST_TIMEOUT_MS)) {
+        // 從雲端刪除
+        db.ref(`online_players/${key}`).remove();
+        // 若本機畫面上還留著模型，同步拔除
+        removeOtherPlayer(key);
+      }
+    });
   });
 }
 
