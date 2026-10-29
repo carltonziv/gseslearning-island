@@ -3660,10 +3660,16 @@ function createSportLandmark() {
       jumpRopeGroup.add(jumperMan);
       jumpRopeGroup.userData.zzzJumper = zzzJumper;
 
-      const ropeGeo = new THREE.TorusGeometry(1.65, 0.038, 6, 24, Math.PI);
+// 🌟 改為動態管狀繩索材質
       const ropeMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+      // 初始先給予一個簡單的樣條
+      const initialCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-1.65, 0.7, 0),
+        new THREE.Vector3(0, 0.2, 0),
+        new THREE.Vector3(1.65, 0.7, 0)
+      ]);
+      const ropeGeo = new THREE.TubeGeometry(initialCurve, 24, 0.035, 6, false);
       ropeMesh = new THREE.Mesh(ropeGeo, ropeMat);
-      ropeMesh.position.set(0, 0.38, 0);
       jumpRopeGroup.add(ropeMesh);
 
       group.add(jumpRopeGroup);
@@ -6183,14 +6189,19 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
           const zzzJumper = jumpRopeGroup.userData.zzzJumper;
 
           if (isJumperSleeping) {
-            // 🌙 夜間：跳繩水平平躺在地面上
-            ropeMesh.rotation.set(Math.PI / 2, 0, 0); // 旋轉 90 度平貼地面
-            ropeMesh.position.set(0, 0.04, 0);       // 貼近地面高度（0.04 避免與草地產生 Z-fighting 閃爍）
+            // 🌙 夜間休息狀態
+            const pStart = new THREE.Vector3(-1.45, 0.05, 0);
+            const pMid = new THREE.Vector3(0, 0.05, 0.1);
+            const pEnd = new THREE.Vector3(1.45, 0.05, 0);
 
-            // 呼吸微幅起伏
+            const sleepCurve = new THREE.CatmullRomCurve3([pStart, pMid, pEnd]);
+            ropeMesh.geometry.dispose();
+            ropeMesh.geometry = new THREE.TubeGeometry(sleepCurve, 20, 0.03, 6, false);
+            ropeMesh.position.set(0, 0, 0);
+            ropeMesh.rotation.set(0, 0, 0);
+
+            // （下方保留原本坐下入睡的動畫程式碼）...
             const sleepBreath = Math.sin(time * 2.0) * 0.015;
-
-            // 1. 中間跳繩者坐下低頭
             jumperMan.position.set(0, -0.15 + sleepBreath, 0);
             jumperMan.rotation.x = 0.25;
             if (jumperMan.userData.limbs) {
@@ -6199,8 +6210,6 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
               jumperMan.userData.limbs.leftArm.rotation.x = -0.3;
               jumperMan.userData.limbs.rightArm.rotation.x = -0.3;
             }
-
-            // 2. 搖繩手 A 坐下入睡
             if (swingerA) {
               swingerA.position.y = -0.15 + sleepBreath;
               swingerA.rotation.x = 0.2;
@@ -6208,12 +6217,8 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
                 swingerA.userData.limbs.leftLeg.rotation.x = -1.45;
                 swingerA.userData.limbs.rightLeg.rotation.x = -1.45;
                 swingerA.userData.limbs.rightArm.rotation.x = -0.3;
-                swingerA.userData.limbs.rightArm.rotation.y = 0;
-                swingerA.userData.limbs.rightArm.rotation.z = 0;
               }
             }
-
-            // 3. 搖繩手 B 坐下入睡
             if (swingerB) {
               swingerB.position.y = -0.15 + sleepBreath;
               swingerB.rotation.x = 0.2;
@@ -6221,12 +6226,8 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
                 swingerB.userData.limbs.leftLeg.rotation.x = -1.45;
                 swingerB.userData.limbs.rightLeg.rotation.x = -1.45;
                 swingerB.userData.limbs.leftArm.rotation.x = -0.3;
-                swingerB.userData.limbs.leftArm.rotation.y = 0;
-                swingerB.userData.limbs.leftArm.rotation.z = 0;
               }
             }
-
-            // 4. 顯示 Zzz 微光動畫
             [zzzA, zzzB, zzzJumper].forEach((zzz, i) => {
               if (zzz) {
                 zzz.visible = true;
@@ -6235,15 +6236,14 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
                 zzz.material.opacity = Math.sin(floatProgress * Math.PI) * 0.85;
               }
             });
-          } else {
-            // ☀️ 白天：恢復立體直立旋轉
-            ropeMesh.position.set(0, 0.38, 0);
-            const ropeAngle = time * 5.0;
-            ropeMesh.rotation.set(ropeAngle, 0, 0);
 
+          } else {
+            // ☀️ 白天運動狀態：繩子隨搖手旋轉
+            const ropeAngle = time * 5.0;
+
+            // 1. 中間跳躍者
             jumperMan.rotation.x = 0;
             jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
-
             if (jumperMan.userData.limbs) {
               jumperMan.userData.limbs.leftLeg.rotation.x = 0;
               jumperMan.userData.limbs.rightLeg.rotation.x = 0;
@@ -6251,30 +6251,45 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
               jumperMan.userData.limbs.rightArm.rotation.x = 0;
             }
 
-            if (swingerA && swingerB) {
-              swingerA.rotation.x = 0;
-              swingerB.rotation.x = 0;
-              swingerA.position.y = 0;
-              swingerB.position.y = 0;
+            // 2. 搖繩手手臂動作
+            const circleY = Math.sin(ropeAngle) * 0.22;
+            const circleZ = Math.cos(ropeAngle) * 0.22;
 
-              const circleY = Math.sin(ropeAngle) * 0.22;
-              const circleZ = Math.cos(ropeAngle) * 0.22;
-
-              if (swingerA.userData.limbs) {
-                swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
-                swingerA.userData.limbs.rightArm.rotation.y = circleY;
-                swingerA.userData.limbs.leftLeg.rotation.x = 0;
-                swingerA.userData.limbs.rightLeg.rotation.x = 0;
-              }
-              if (swingerB.userData.limbs) {
-                swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
-                swingerB.userData.limbs.leftArm.rotation.y = -circleY;
-                swingerB.userData.limbs.leftLeg.rotation.x = 0;
-                swingerB.userData.limbs.rightLeg.rotation.x = 0;
-              }
+            if (swingerA && swingerA.userData.limbs) {
+              swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
+              swingerA.userData.limbs.rightArm.rotation.y = circleY;
+            }
+            if (swingerB && swingerB.userData.limbs) {
+              swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
+              swingerB.userData.limbs.leftArm.rotation.y = -circleY;
             }
 
-            // 隱藏 Zzz
+            // 🌟 3. 精確計算手前端世界座標，並建立動態拋物弧線
+            // 手臂長度約 0.45m，手掌末端相對於樞紐的相對位置：
+            const handLocalOffset = new THREE.Vector3(0, -0.42, 0.1);
+            
+            // 取得 A 搖手手掌世界座標，轉回 jumpRopeGroup 局部坐標
+            const handPosA = new THREE.Vector3();
+            swingerA.userData.limbs.rightArm.localToWorld(handPosA.copy(handLocalOffset));
+            jumpRopeGroup.worldToLocal(handPosA);
+
+            // 取得 B 搖手手掌世界座標，轉回 jumpRopeGroup 局部坐標
+            const handPosB = new THREE.Vector3();
+            swingerB.userData.limbs.leftArm.localToWorld(handPosB.copy(handLocalOffset));
+            jumpRopeGroup.worldToLocal(handPosB);
+
+            // 計算繩子中央甩動的最高/最低點
+            const midY = 0.6 + Math.cos(ropeAngle) * 0.85;
+            const midZ = Math.sin(ropeAngle) * 0.85;
+            const handMid = new THREE.Vector3(0, midY, midZ);
+
+            // 🌟 透過三點動態生成曲線，兩端緊緊咬合在雙手手心
+            const activeCurve = new THREE.CatmullRomCurve3([handPosA, handMid, handPosB]);
+            ropeMesh.geometry.dispose();
+            ropeMesh.geometry = new THREE.TubeGeometry(activeCurve, 24, 0.035, 6, false);
+            ropeMesh.position.set(0, 0, 0);
+            ropeMesh.rotation.set(0, 0, 0);
+
             if (zzzA) zzzA.visible = false;
             if (zzzB) zzzB.visible = false;
             if (zzzJumper) zzzJumper.visible = false;
