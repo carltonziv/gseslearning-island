@@ -2088,9 +2088,10 @@ const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
       sendToGAS(gasData);
     }
 
-    if (totalEnergyRef) {
+if (totalEnergyRef) {
       totalEnergyRef.on('value', snap => {
         const val = snap.val() || 0;
+        currentClassEnergy = val; // 🌟 同步更新全域能量數值
         const max = 5000;
         const pct = Math.min((val / max) * 100, 100);
         document.getElementById('class-energy-bar').style.width = `${pct}%`;
@@ -6780,13 +6781,14 @@ if (playerVillager && playerVillager.obj) {
           rainGeo.attributes.position.needsUpdate = true;
         }
 
-        // 🌟 王國之淚金色微塵：微風漂浮、沉降與「非同步隨機閃爍」
-        if (ambientMotesSystem && motesGeo) {
+// 🌟 王國之淚金色微塵：微風漂浮、沉降與「非同步隨機閃爍」
+        if (ambientMotesSystem && motesGeo && motesGeo.attributes.position && motesGeo.attributes.color) {
           const posArr = motesGeo.attributes.position.array;
           const colArr = motesGeo.attributes.color.array; // 🌟 取得色彩陣列
 
           for (let i = 0; i < MOTES_COUNT; i++) {
             const data = motesData[i];
+            if (!data) continue;
             const idx = i * 3;
 
             // 1. 緩速沉降與飄動
