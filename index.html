@@ -2969,7 +2969,7 @@ function adminApproveReading(reviewKey) {
         db.ref(`pending_reviews/reading/${reviewKey}`).remove();
         alert(`✅ 已審核通過 ${item.studentName} 的心得！全班已獲取 ${pts} 點能量。`);
       });
-    }
+    
 
         // 4. 備存到 Google 試算表 (GAS)
         sendToGAS({
