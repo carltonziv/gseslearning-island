@@ -1630,14 +1630,13 @@ person.position.set(spawnX, 0, spawnZ);
       6: [0, 3, 4]           // 南荒地相鄰：中央、閱讀島、公民島
     };
 
-    // 🌟 為本機玩家挑選下一個目標點（支援原島漫步或跨島旅行）
-    function pickNextPlayerWanderTarget() {
+function pickNextPlayerWanderTarget() {
       if (!playerVillager || playerVillager.isOnCart) return;
 
       const currentIdx = playerVillager.currentIslandIdx;
       let targetIdx = currentIdx;
 
-      // 🌟 25% 的機率決定前往相鄰的下一座島嶼旅行
+      // 25% 機率跨島漫步
       const willTravel = Math.random() < 0.25;
       if (willTravel && ISLAND_NEIGHBORS[currentIdx]) {
         const neighbors = ISLAND_NEIGHBORS[currentIdx];
@@ -1649,17 +1648,16 @@ person.position.set(spawnX, 0, spawnZ);
       let foundValid = false;
       let tx = 0, tz = 0;
 
-      for (let attempt = 0; attempt < 20; attempt++) {
+      for (let attempt = 0; attempt < 30; attempt++) {
         const a = Math.random() * Math.PI * 2;
-        // 抓取目標島的安全活動半徑
-        const r = 1.8 + Math.random() * (targetIsland.radius - 2.8);
-        const lx = Math.cos(a) * r;
-        const lz = Math.sin(a) * r;
+        const r = 2.0 + Math.random() * (targetIsland.radius - 2.8);
+        const wx = center[0] + Math.cos(a) * r;
+        const wz = center[2] + Math.sin(a) * r;
 
-        // 檢查目標點是否踩到該島的地標障礙物
-        if (!isPositionBlocked(targetIsland.id, lx, lz)) {
-          tx = center[0] + lx;
-          tz = center[2] + lz;
+        // 🌟 嚴格檢驗：不能踩在地標或任何樹木的世界半徑內
+        if (!isWorldPosBlocked(wx, wz, 0.5)) {
+          tx = wx;
+          tz = wz;
           foundValid = true;
           break;
         }
@@ -1668,7 +1666,6 @@ person.position.set(spawnX, 0, spawnZ);
       if (foundValid) {
         playerVillager.targetX = tx;
         playerVillager.targetZ = tz;
-        // 記錄預計前往的目標島嶼索引
         playerVillager.targetIslandIdx = targetIdx;
       } else {
         playerVillager.waitTimer = 30;
@@ -3165,6 +3162,45 @@ keys.forEach(k => {
     // 11. 地標模型工廠與障礙物管理
     // ==========================================
     let islandObstacles = {}; 
+
+    // 🌟 升級版：全域世界座標障礙物清單
+    let globalWorldObstacles = [];
+
+    // 註冊世界座標障礙物（地標、樹木）
+    function registerGlobalObstacle(worldX, worldZ, radius) {
+      globalWorldObstacles.push({ x: worldX, z: worldZ, r: radius });
+    }
+
+    // 檢查點是否在障礙物內（世界座標）
+    function isWorldPosBlocked(wx, wz, extraPadding = 0.3) {
+      for (let i = 0; i < globalWorldObstacles.length; i++) {
+        const obs = globalWorldObstacles[i];
+        if (Math.hypot(wx - obs.x, wz - obs.z) < (obs.r + extraPadding)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // 實體碰撞排斥力：若碰到物體，強制彈開並回傳是否碰撞
+    function applyWorldRepulsion(posObj, extraRadius = 0.25) {
+      let collided = false;
+      for (let i = 0; i < globalWorldObstacles.length; i++) {
+        const obs = globalWorldObstacles[i];
+        const dx = posObj.x - obs.x;
+        const dz = posObj.z - obs.z;
+        const dist = Math.hypot(dx, dz);
+        const minDist = obs.r + extraRadius;
+
+        if (dist < minDist && dist > 0.0001) {
+          const push = (minDist - dist) + 0.05;
+          posObj.x += (dx / dist) * push;
+          posObj.z += (dz / dist) * push;
+          collided = true;
+        }
+      }
+      return collided;
+    }
 
     function registerObstacle(islandId, localX, localZ, radius) {
       if (!islandObstacles[islandId]) islandObstacles[islandId] = [];
@@ -5531,6 +5567,10 @@ const baseMat = new THREE.MeshStandardMaterial({
         }
         group.add(landmark);
 
+        // 🌟 將島嶼中央地標註冊為全域實體阻擋區
+        const landmarkRadius = (cfg.id === 'beyblade') ? 2.8 : (cfg.id === 'civics' ? 2.5 : 2.2);
+        registerGlobalObstacle(cfg.pos[0], cfg.pos[2], landmarkRadius);
+
         if (cfg.id === 'civics') {
           const mascotBox = createMascotSoapbox();
           group.add(mascotBox);
@@ -5594,6 +5634,8 @@ const baseMat = new THREE.MeshStandardMaterial({
             tree.position.set(tx, 0, tz);
             tree.scale.setScalar(0.7 + Math.random() * 0.35);
             group.add(tree);
+            // 🌟 將每棵樹木轉為世界座標註冊至全域障礙物
+            registerGlobalObstacle(cfg.pos[0] + tx, cfg.pos[2] + tz, 0.7);
             if (cfg.id === 'beyblade') beybladeDecorations.push(tree);
 
             // 將新樹木自身也註冊為障礙物，防止後續的樹木互相穿透
@@ -6523,27 +6565,37 @@ if (playerVillager && playerVillager.obj) {
       playerVillager.currentX += (dx / dist) * playerVillager.speed;
       playerVillager.currentZ += (dz / dist) * playerVillager.speed;
 
-      // 🌟 跨島移動時：根據「目標島嶼」判定障礙物排斥，避免跨島過程中被原島中心拉扯
-      const checkIsland = (playerVillager.targetIslandIdx !== undefined) 
-        ? ISLAND_CONFIG[playerVillager.targetIslandIdx] 
-        : curIsland;
+      
 
-      const localPos = {
-        x: playerVillager.currentX - checkIsland.pos[0],
-        z: playerVillager.currentZ - checkIsland.pos[2]
-      };
-      const wasBlocked = applyRepulsionForce(checkIsland.id, localPos);
-      playerVillager.currentX = checkIsland.pos[0] + localPos.x;
-      playerVillager.currentZ = checkIsland.pos[2] + localPos.z;
+// 🌟 檢測地標與樹木碰撞（全域世界座標判定）
+      const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
+      const wasBlocked = applyWorldRepulsion(currentPos, 0.35);
+      playerVillager.currentX = currentPos.x;
+      playerVillager.currentZ = currentPos.z;
+
+      // 🌟 檢測與其他在線同學的身體碰撞（互相推擠，不重疊）
+      Object.values(otherPlayers).forEach(other => {
+        if (!other || !other.mesh) return;
+        const dx = playerVillager.currentX - other.mesh.position.x;
+        const dz = playerVillager.currentZ - other.mesh.position.z;
+        const dist = Math.hypot(dx, dz);
+        const bodyRadius = 0.55; // 兩人身體的安全防撞半徑
+
+        if (dist < bodyRadius && dist > 0.001) {
+          const push = (bodyRadius - dist) * 0.5;
+          playerVillager.currentX += (dx / dist) * push;
+          playerVillager.currentZ += (dz / dist) * push;
+        }
+      });
 
       playerVillager.obj.position.x = playerVillager.currentX;
       playerVillager.obj.position.z = playerVillager.currentZ;
 
       if (wasBlocked) {
-        // 遇到障礙物立即停步並重新尋找新路徑
+        // 遇到地標/樹木時立即轉向，重新選取新漫步點
         playerVillager.targetX = playerVillager.currentX;
         playerVillager.targetZ = playerVillager.currentZ;
-        playerVillager.waitTimer = Math.floor(Math.random() * 30) + 15;
+        playerVillager.waitTimer = 20;
       } else {
         playerVillager.obj.rotation.y = Math.atan2(dx, dz); // 面向行走方向
       }
@@ -6580,6 +6632,12 @@ if (playerVillager && playerVillager.obj) {
 
           p.mesh.position.x = THREE.MathUtils.lerp(p.mesh.position.x, p.targetX, 0.15);
           p.mesh.position.z = THREE.MathUtils.lerp(p.mesh.position.z, p.targetZ, 0.15);
+
+          const otherPos = { x: p.mesh.position.x, z: p.mesh.position.z };
+          applyWorldRepulsion(otherPos, 0.3);
+          p.mesh.position.x = otherPos.x;
+          p.mesh.position.z = otherPos.z;
+        });
 
           const moveDist = Math.hypot(p.mesh.position.x - oldX, p.mesh.position.z - oldZ);
           const limbs = p.mesh.userData.limbs;
