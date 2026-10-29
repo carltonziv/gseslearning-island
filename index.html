@@ -1921,6 +1921,9 @@ function checkDailyLimit(islandId) {
         let isCompleted = false;
         if (item.id === 'sport') {
           isCompleted = (getDailyCount('sport_exercise') >= 1) && (getDailyCount('sport_health') >= 1);
+          } else if (item.id === 'reading') {
+          // 🌟 讀報挑戰完成(1次) 或 自由心得寫滿(3次)，地圖即顯示綠色勾勾
+          isCompleted = (getDailyCount('reading_daily') >= 1) || (getDailyCount('reading_free') >= 3);
         } else {
           isCompleted = getDailyCount(item.id) >= item.limit;
         }
