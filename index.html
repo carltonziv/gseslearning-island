@@ -6812,29 +6812,7 @@ if (playerVillager && playerVillager.obj) {
           motesGeo.attributes.color.needsUpdate = true; // 🌟 通知 GPU 顏色更新
         }
 
-        // 🌟 王國之淚金色微塵：微風漂浮與沉降循環
-        if (ambientMotesSystem && motesGeo) {
-          const posArr = motesGeo.attributes.position.array;
-          for (let i = 0; i < MOTES_COUNT; i++) {
-            const data = motesData[i];
-            const idx = i * 3;
 
-            // 緩速沉降
-            posArr[idx + 1] -= data.speedY;
-
-            // 隨風水平微幅旋轉晃動
-            data.phase += 0.02;
-            posArr[idx] = data.baseX + Math.sin(data.phase) * data.swayRadius;
-            posArr[idx + 2] = data.baseZ + Math.cos(data.phase * 0.8) * data.swayRadius;
-
-            // 若沉降落入海面或島面，自動重置回上空重新飄落
-            if (posArr[idx + 1] < 0.6) {
-              posArr[idx + 1] = 16.0 + Math.random() * 3.0;
-            }
-          }
-          motesGeo.attributes.position.needsUpdate = true;
-
-         }
 
         // 🌟 乘客搭車視角：相機跟隨第 2 節載客車廂，視線朝向中央群島
         if (isRidingCart && trailerCarts && trailerCarts.length >= 2) {
