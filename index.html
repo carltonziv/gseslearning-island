@@ -1857,7 +1857,7 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
       });
     }
 
-    function checkDailyLimit(islandId) {
+function checkDailyLimit(islandId) {
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
       if (isTournamentActive && islandId !== 'beyblade') {
         alert('⚔️ 目前為戰鬥陀螺大賽期間，本島任務暫停，請前往戰鬥陀螺島！');
@@ -1871,17 +1871,30 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
         return false;
       }
 
+      // 🌟 今日讀報挑戰：每日限 1 次
+      if (islandId === 'reading_daily') {
+        const count = getDailyCount('reading_daily');
+        if (count >= 1) {
+          alert('📰 今日讀報挑戰你今天已經完成過囉！明天再來看新報紙挑戰吧！');
+          return false;
+        }
+        return true;
+      }
+
+      // 🌟 自由閱讀心得：每日限 3 次
+      if (islandId === 'reading_free') {
+        const count = getDailyCount('reading_free');
+        if (count >= 3) {
+          alert('📖 自由閱讀心得今天已經打卡 3 次囉！明天再繼續加油！');
+          return false;
+        }
+        return true;
+      }
+
       const count = getDailyCount(islandId);
-      if (islandId === 'reading') {
-        if (count >= 3) { 
-          alert('📖 閱讀島今天已經挑戰 3 次囉！明天再繼續加油！'); 
-          return false; 
-        }
-      } else {
-        if (count >= 1) { 
-          alert('⭐ 這項任務你今天已經完成過囉！每位同學每天只能完成 1 次，把機會留給其他島嶼吧！'); 
-          return false; 
-        }
+      if (count >= 1) { 
+        alert('⭐ 這項任務你今天已經完成過囉！每位同學每天只能完成 1 次，把機會留給其他島嶼吧！'); 
+        return false; 
       }
       return true;
     }
@@ -2234,14 +2247,28 @@ const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
       const titleElem = document.getElementById('daily-q-title');
       const textElem = document.getElementById('daily-q-text');
       const btnSubmit = document.getElementById('btn-submit-daily-read');
+      const answerInput = document.getElementById('daily-q-answer');
       if (!editionElem || !titleElem || !textElem) return;
+
+      // 🌟 檢查今天是否已經完成過讀報挑戰
+      const isDailyDone = getDailyCount('reading_daily') >= 1;
 
       if (currentDailyQuestion && currentDailyQuestion.hasQuestion) {
         editionElem.textContent = currentDailyQuestion.edition || '國語日報';
         titleElem.textContent = `《${currentDailyQuestion.title}》`;
         textElem.textContent = currentDailyQuestion.question;
-        btnSubmit.disabled = false;
-        btnSubmit.style.opacity = '1';
+
+        if (isDailyDone) {
+          if (answerInput) answerInput.disabled = true;
+          btnSubmit.disabled = true;
+          btnSubmit.style.opacity = '0.6';
+          btnSubmit.textContent = '✅ 今日讀報挑戰已完成 (+5 能量已領取)';
+        } else {
+          if (answerInput) answerInput.disabled = false;
+          btnSubmit.disabled = false;
+          btnSubmit.style.opacity = '1';
+          btnSubmit.textContent = '🤖 送交 島嶼之星 批改認證 (+5 能量)';
+        }
       } else {
         editionElem.textContent = '今日無指定篇目';
         titleElem.textContent = '今日尚無讀報挑戰題目';
@@ -2253,7 +2280,7 @@ const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
 
     // 🌟 送出答案給後端 Gemini 批改
     async function submitDailyReadingAnswer() {
-      if (!checkDailyLimit('reading')) return;
+      if (!checkDailyLimit('reading_daily')) return;
 
       if (!currentDailyQuestion || !currentDailyQuestion.hasQuestion) {
         alert('今日尚未指派讀報挑戰題目喔！');
@@ -2272,7 +2299,7 @@ const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
 
       // UI 顯示等待狀態
       btnSubmit.disabled = true;
-      btnSubmit.textContent = '⏳ AI 老師正在仔細閱讀批改中...';
+      btnSubmit.textContent = '⏳ 島嶼之星 正在仔細閱讀批改中...';
       feedbackBox.style.display = 'none';
 
       try {
@@ -2294,46 +2321,54 @@ const islandCfg = ISLAND_CONFIG.find(c => c.id === islandId);
         feedbackBox.style.display = 'block';
 
         if (evalResult.passed) {
-          // 🎉 通過：給予綠色稱讚框、發放 5 點能量
-          feedbackBox.style.background = '#dcfce7';
-          feedbackBox.style.border = '2px solid #22c55e';
-          feedbackBox.style.color = '#15803d';
-          feedbackBox.innerHTML = `<strong>🎉 恭喜通過！</strong><br>${evalResult.feedback}`;
+       feedbackBox.style.background = '#dcfce7';
+       feedbackBox.style.border = '2px solid #22c55e';
+       feedbackBox.style.color = '#15803d';
+       feedbackBox.innerHTML = `<strong>🎉 恭喜通過！</strong><br>${evalResult.feedback}`;
 
-          rewardCheckin('reading', '閱讀島', `通過讀報挑戰《${currentDailyQuestion.title}》`, {
-            type: 'task_complete',
-            seatNumber: currentStudent.seatNumber,
-            studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-            islandTitle: '閱讀島',
-            taskTitle: '每日讀報挑戰',
-            points: 5,
-            detail1: currentDailyQuestion.title,
-            detail2: studentAns,
-            verifier: 'Gemini AI'
-          }, 5);
+       // 🌟 記錄 reading_daily 完成次數
+       rewardCheckin('reading_daily', '閱讀島', `通過讀報挑戰《${currentDailyQuestion.title}》`, {
+         type: 'task_complete',
+         seatNumber: currentStudent.seatNumber,
+         studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+         islandTitle: '閱讀島',
+         taskTitle: '每日讀報挑戰',
+         points: 5,
+         detail1: currentDailyQuestion.title,
+         detail2: studentAns,
+         verifier: 'Gemini AI'
+       }, 5);
 
-          answerInput.value = '';
+       answerInput.value = '';
+
+       // 🌟 答對後立即鎖定按鈕與文字框
+       answerInput.disabled = true;
+       btnSubmit.disabled = true;
+       btnSubmit.style.opacity = '0.6';
+       btnSubmit.textContent = '✅ 今日讀報挑戰已完成 (+5 能量已領取)';
+     }
         } else {
          
           // 💡 未通過：給予溫暖提示框，不扣分，引導再次翻報紙
           feedbackBox.style.background = '#fef3c7';
           feedbackBox.style.border = '2px solid #f59e0b';
           feedbackBox.style.color = '#b45309';
-          feedbackBox.innerHTML = `<strong>💡 AI 老師的提示：</strong><br>${evalResult.feedback}<br><small style="color:#78350f;">再翻開報紙看一看，修改後可以再次送出喔！</small>`;
+          feedbackBox.innerHTML = `<strong>💡 AI 老師的提示：</strong><br>${evalResult.feedback}<br><small style="color:#78350f;">再翻開文章看一看，修改後可以再次送出喔！</small>`;
         }
 
       } catch (err) {
         alert('批改連線超時，請檢查網路後再試一次！');
       } finally {
         btnSubmit.disabled = false;
-        btnSubmit.textContent = '🤖 送交 AI 批改認證 (+5 能量)';
+        btnSubmit.textContent = '🤖 送交 島嶼之星 批改認證 (+5 能量)';
       }
     }
 
     
 // 🌟 升級版：學生送出閱讀心得（進入待審核區，暫不加分）
     function submitReading() {
-      if (!checkDailyLimit('reading')) return;
+      if (!checkDailyLimit('reading_free')) return;
+
       const title = document.getElementById('read-title').value.trim();
       const quote = document.getElementById('read-quote').value.trim();
       const reflection = document.getElementById('read-reflection').value.trim();
@@ -2895,10 +2930,9 @@ function adminGenerateBracket() {
         const targetSeat = item.seatNumber;
         const pts = 5;
 
-        // 1. 寫入該學生今日已完成閱讀打卡防刷次數 (+1)
-        const checkinRef = db.ref(`daily_checkins/${item.date}/seat_${targetSeat}/reading`);
+        // 🌟 改為記錄 reading_free 次數
+        const checkinRef = db.ref(`daily_checkins/${item.date}/seat_${targetSeat}/reading_free`);
         checkinRef.transaction(cur => (cur || 0) + 1);
-
         // 2. 增加全班共創能量 (+5)
         if (totalEnergyRef) {
           totalEnergyRef.transaction(current => {
