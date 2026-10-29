@@ -6786,7 +6786,7 @@ if (playerVillager && playerVillager.obj) {
 // 🌟 王國之淚金色微塵：微風漂浮、沉降與「非同步隨機閃爍」
         if (ambientMotesSystem && motesGeo && motesGeo.attributes.position && motesGeo.attributes.color) {
           const posArr = motesGeo.attributes.position.array;
-          const colArr = motesGeo.attributes.color.array; // 🌟 取得色彩陣列
+          const colArr = motesGeo.attributes.color.array;
 
           for (let i = 0; i < MOTES_COUNT; i++) {
             const data = motesData[i];
@@ -6800,21 +6800,21 @@ if (playerVillager && playerVillager.obj) {
             posArr[idx + 2] = data.baseZ + Math.cos(data.phase * 0.8) * data.swayRadius;
 
             if (posArr[idx + 1] < 0.6) {
-              posArr[idx + 1] = 16.0 + Math.random() * 3.0;
+              posArr[idx + 1] = 14.0 + Math.random() * 3.0;
             }
 
-// 🌟 獨立計算每顆微塵當下的明暗強度 (0.45 ~ 1.05)，避免完全熄滅
+            // 2. 獨立計算每顆微塵當下的明暗強度 (0.45 ~ 1.05)
             const brightness = 0.45 + (Math.sin(time * data.twinkleSpeed + data.twinklePhase) + 1) * 0.3;
 
             // 濃郁金色 (R:1.0, G:0.88, B:0.35)
             colArr[idx] = 1.0 * brightness;
             colArr[idx + 1] = 0.88 * brightness;
             colArr[idx + 2] = 0.35 * brightness;
+          } 
 
           motesGeo.attributes.position.needsUpdate = true;
-          motesGeo.attributes.color.needsUpdate = true; // 🌟 通知 GPU 顏色更新
-        }
-
+          motesGeo.attributes.color.needsUpdate = true;
+        } 
 
 
         // 🌟 乘客搭車視角：相機跟隨第 2 節載客車廂，視線朝向中央群島
