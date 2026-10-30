@@ -4446,6 +4446,102 @@ function applyWeatherEffect(wData) {
       scene.add(ambientMotesSystem);
     }
 
+// ==========================================
+    // 🌟 王國之淚風格：空島下層倒錐岩體與垂藤工廠
+    // ==========================================
+    let islandVinesList = []; // 供逐幀微風擺動的垂藤清單
+
+    // 1. 生成不規則倒錐浮空岩底座
+    function createIslandUnderbellyMesh(radius, islandColorHex) {
+      const rockGroup = new THREE.Group();
+
+      // 岩石採用帶有些微風化斑駁質感的深灰岩石材質
+      const rockMat = new THREE.MeshStandardMaterial({
+        color: 0x5C5446,
+        roughness: 0.9,
+        metalness: 0.05,
+        flatShading: true // 🌟 賽璐珞硬邊稜角感
+      });
+
+      // 主倒錐：六稜錐形，深度約 2.8m，頂部貼合格網基座底面
+      const coneGeo = new THREE.ConeGeometry(radius * 0.94, 2.8, 6);
+      coneGeo.rotateX(Math.PI); // 倒轉向下
+      const mainCone = new THREE.Mesh(coneGeo, rockMat);
+      mainCone.position.y = -1.85; // 接續在島面 Y = -0.45 之下
+      mainCone.rotation.y = Math.PI / 6;
+      mainCone.receiveShadow = true;
+      rockGroup.add(mainCone);
+
+      // 側邊嵌合的破碎石塊（打破平滑幾何體，呈現自然崩裂岩層）
+      const subRockGeo = new THREE.DodecahedronGeometry(0.7, 0);
+      for (let i = 0; i < 5; i++) {
+        const ang = (i / 5) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+        const dist = radius * (0.6 + Math.random() * 0.25);
+        const subRock = new THREE.Mesh(subRockGeo, rockMat);
+        subRock.position.set(
+          Math.cos(ang) * dist,
+          -1.1 - Math.random() * 0.7,
+          Math.sin(ang) * dist
+        );
+        subRock.rotation.set(Math.random(), Math.random(), Math.random());
+        subRock.scale.set(0.9 + Math.random() * 0.5, 1.2 + Math.random() * 0.6, 0.8 + Math.random() * 0.4);
+        rockGroup.add(subRock);
+      }
+
+      return rockGroup;
+    }
+
+    // 2. 生成島緣下垂藤蔓
+    function createHangingVines(radius) {
+      const vineGroup = new THREE.Group();
+
+      const vineColors = [0x2E7D32, 0x1B5E20, 0x388E3C];
+      const vineGeo = new THREE.PlaneGeometry(0.22, 1.8);
+      vineGeo.translate(0, -0.9, 0); // 將旋轉軸移至頂部節點，方便自然擺動
+
+      // 沿島緣挑選 3 ~ 4 處叢生垂藤
+      const clustersCount = 3 + Math.floor(Math.random() * 2);
+      for (let c = 0; c < clustersCount; c++) {
+        const baseAng = (c / clustersCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
+        const clusterR = radius + 0.15;
+
+        // 每個叢集有 2 ~ 3 條長短不一的藤蔓
+        const strands = 2 + Math.floor(Math.random() * 2);
+        for (let s = 0; s < strands; s++) {
+          const mat = new THREE.MeshStandardMaterial({
+            color: vineColors[Math.floor(Math.random() * vineColors.length)],
+            roughness: 0.8,
+            side: THREE.DoubleSide,
+            flatShading: true
+          });
+
+          const vineMesh = new THREE.Mesh(vineGeo, mat);
+          const strandAng = baseAng + (s - 0.5) * 0.08;
+          vineMesh.position.set(
+            Math.cos(strandAng) * clusterR,
+            -0.45,
+            Math.sin(strandAng) * clusterR
+          );
+          vineMesh.rotation.y = -strandAng + Math.PI / 2; // 正面朝向外海
+
+          // 隨機長度縮放
+          const scaleY = 0.65 + Math.random() * 0.65;
+          vineMesh.scale.set(0.85, scaleY, 1.0);
+
+          vineMesh.userData = {
+            swaySpeed: 1.2 + Math.random() * 0.6,
+            swayPhase: Math.random() * Math.PI * 2,
+            maxAngle: 0.12 + Math.random() * 0.08
+          };
+
+          vineGroup.add(vineMesh);
+          islandVinesList.push(vineMesh);
+        }
+      }
+
+      return vineGroup;
+    }
+    
     // ==========================================
     // 13. 道路、雙層道碴碎石與土地層系統
     // ==========================================
@@ -5619,6 +5715,16 @@ const baseMat = new THREE.MeshStandardMaterial({
         sandBase.receiveShadow = true;
         group.add(sandBase);
 
+        // 🌟 注入王國之淚空島底座：下層倒錐岩體與島緣垂藤
+        const underbelly = createIslandUnderbellyMesh(baseRadius, cfg.color);
+        group.add(underbelly);
+
+        // 荒地不長茂密垂藤，其餘島嶼加入自然垂藤
+        if (cfg.id !== 'wasteland_n' && cfg.id !== 'wasteland_s') {
+          const vines = createHangingVines(sandRadius);
+          group.add(vines);
+        }
+
         // 🌟 2. 島嶼核心地表（中央原本主題色）
         const islandBase = new THREE.Mesh(
           new THREE.CylinderGeometry(baseRadius, baseRadius * 0.95, 0.9, 6),
@@ -6009,6 +6115,12 @@ villagers.push({
 
         windTurbineBlades.forEach(blade => {
           blade.rotation.z += 0.04;
+        });
+
+        // 🌟 王國之淚：島緣垂藤微風拂動
+        islandVinesList.forEach(vine => {
+          const sway = Math.sin(time * vine.userData.swaySpeed + vine.userData.swayPhase) * vine.userData.maxAngle;
+          vine.rotation.z = sway;
         });
 
 
