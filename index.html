@@ -4718,32 +4718,29 @@ function applyWeatherEffect(wData) {
       const coneGeo = new THREE.ConeGeometry(radius * 0.94, coneDepth, 6);
       coneGeo.rotateX(Math.PI); // 倒轉向下
       const mainCone = new THREE.Mesh(coneGeo, rockMat);
-      // 🌟 頂部需維持貼齊島底 (-0.45)，中心點 Y = -0.45 - (coneDepth / 2) = -3.25
-      mainCone.position.y = -3.25; 
+      mainCone.position.y = -0.45 - (coneDepth / 2); 
       mainCone.rotation.y = Math.PI / 6;
       mainCone.receiveShadow = true;
       rockGroup.add(mainCone);
 
-      // 🌟 2. 讓側邊碎石也沿著更深的錐體向下散佈延伸
-      const subRockGeo = new THREE.DodecahedronGeometry(0.75, 0);
-      for (let i = 0; i < 8; i++) {
-        const ang = (i / 8) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-        // 越往下層岩石向中心收窄
-        const depthRatio = Math.random(); // 0(上方) ~ 1(深處)
-        const dist = radius * (0.7 - depthRatio * 0.35);
+// 🌟 2. 較小塊碎石：全部聚集在靠近水面、島嶼下方的淺水層 (Y: -0.75 ~ -1.65)
+      const subRockGeo = new THREE.DodecahedronGeometry(0.7, 0);
+      for (let i = 0; i < 6; i++) {
+        const ang = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+        // 碎石環繞在島緣內側附近 (半徑 0.65 ~ 0.88 倍)
+        const dist = radius * (0.65 + Math.random() * 0.23);
         const subRock = new THREE.Mesh(subRockGeo, rockMat);
+        
         subRock.position.set(
           Math.cos(ang) * dist,
-          -0.8 - depthRatio * 3.8, // 向下延伸分佈至 -4.6 深度
+          -0.75 - Math.random() * 0.85, // 🌟 深度鎖定在 -0.75 到 -1.60 之間（緊鄰水面下方）
           Math.sin(ang) * dist
         );
         subRock.rotation.set(Math.random(), Math.random(), Math.random());
-        subRock.scale.set(0.8 + Math.random() * 0.6, 1.4 + Math.random() * 0.8, 0.8 + Math.random() * 0.5);
+        // 隨機碎裂長寬比
+        subRock.scale.set(0.85 + Math.random() * 0.45, 0.9 + Math.random() * 0.5, 0.85 + Math.random() * 0.45);
         rockGroup.add(subRock);
       }
-
-      return rockGroup;
-    }
 
     // 2. 生成島緣下垂藤蔓
     function createHangingVines(radius) {
