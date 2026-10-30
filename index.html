@@ -6314,16 +6314,14 @@ villagers.push({
 
 const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
         zonaiRunesList.forEach((rune, rIdx) => {
-          // 1. 若非比賽期間，完全隱藏符文與擴散光環，不消耗多餘效能
+          // 1. 若非比賽期間，直接隱藏整個左納烏群組
           if (!isTournamentActive) {
-            rune.mainMesh.visible = false;
-            rune.pulseRing.visible = false;
+            rune.group.visible = false;
             return;
           }
 
-          // 2. 比賽進行中：開啟顯示並運算左納烏呼吸流光與擴散波
-          rune.mainMesh.visible = true;
-          rune.pulseRing.visible = true;
+          // 2. 比賽進行中：顯示群組並運算自轉、呼吸與擴散光環
+          rune.group.visible = true;
 
           // 緩速自轉
           rune.mainMesh.rotation.y += rune.rotateSpeed;
