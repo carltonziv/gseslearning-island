@@ -4713,28 +4713,32 @@ function applyWeatherEffect(wData) {
         flatShading: true // 🌟 賽璐珞硬邊稜角感
       });
 
-      // 主倒錐：六稜錐形，深度約 2.8m，頂部貼合格網基座底面
-      const coneGeo = new THREE.ConeGeometry(radius * 0.94, 2.8, 6);
+// 🌟 1. 將主倒錐長度由 2.8m 加長至 5.6m（深度增加一倍）
+      const coneDepth = 5.6; 
+      const coneGeo = new THREE.ConeGeometry(radius * 0.94, coneDepth, 6);
       coneGeo.rotateX(Math.PI); // 倒轉向下
       const mainCone = new THREE.Mesh(coneGeo, rockMat);
-      mainCone.position.y = -1.85; // 接續在島面 Y = -0.45 之下
+      // 🌟 頂部需維持貼齊島底 (-0.45)，中心點 Y = -0.45 - (coneDepth / 2) = -3.25
+      mainCone.position.y = -3.25; 
       mainCone.rotation.y = Math.PI / 6;
       mainCone.receiveShadow = true;
       rockGroup.add(mainCone);
 
-      // 側邊嵌合的破碎石塊（打破平滑幾何體，呈現自然崩裂岩層）
-      const subRockGeo = new THREE.DodecahedronGeometry(0.7, 0);
-      for (let i = 0; i < 5; i++) {
-        const ang = (i / 5) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-        const dist = radius * (0.6 + Math.random() * 0.25);
+      // 🌟 2. 讓側邊碎石也沿著更深的錐體向下散佈延伸
+      const subRockGeo = new THREE.DodecahedronGeometry(0.75, 0);
+      for (let i = 0; i < 8; i++) {
+        const ang = (i / 8) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+        // 越往下層岩石向中心收窄
+        const depthRatio = Math.random(); // 0(上方) ~ 1(深處)
+        const dist = radius * (0.7 - depthRatio * 0.35);
         const subRock = new THREE.Mesh(subRockGeo, rockMat);
         subRock.position.set(
           Math.cos(ang) * dist,
-          -1.1 - Math.random() * 0.7,
+          -0.8 - depthRatio * 3.8, // 向下延伸分佈至 -4.6 深度
           Math.sin(ang) * dist
         );
         subRock.rotation.set(Math.random(), Math.random(), Math.random());
-        subRock.scale.set(0.9 + Math.random() * 0.5, 1.2 + Math.random() * 0.6, 0.8 + Math.random() * 0.4);
+        subRock.scale.set(0.8 + Math.random() * 0.6, 1.4 + Math.random() * 0.8, 0.8 + Math.random() * 0.5);
         rockGroup.add(subRock);
       }
 
