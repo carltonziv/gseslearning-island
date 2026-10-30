@@ -4713,6 +4713,15 @@ function applyWeatherEffect(wData) {
         flatShading: true // 🌟 賽璐珞硬邊稜角感
       });
 
+      const mossRockMat = new THREE.MeshStandardMaterial({
+        color: 0x485838,      // 帶灰綠調的沉積苔石色
+        roughness: 0.92,
+        metalness: 0.03,
+        flatShading: true,
+        emissive: 0x182410,   // 微微泛出古老水生苔蘚青綠感
+        emissiveIntensity: 0.22
+      });
+
 // 🌟 1. 將主倒錐長度由 2.8m 加長至 5.6m（深度增加一倍）
       const coneDepth = 5.6; 
       const coneGeo = new THREE.ConeGeometry(radius * 0.94, coneDepth, 6);
@@ -4729,7 +4738,10 @@ function applyWeatherEffect(wData) {
         const ang = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
         // 碎石環繞在島緣內側附近 (半徑 0.65 ~ 0.88 倍)
         const dist = radius * (0.65 + Math.random() * 0.23);
-        const subRock = new THREE.Mesh(subRockGeo, rockMat);
+
+        // 🌟 隨機賦予約 70% 的碎石帶有綠色苔蘚質感
+        const pickedMat = Math.random() > 0.3 ? mossRockMat : rockMat;
+        const subRock = new THREE.Mesh(subRockGeo, pickedMat);
         
         subRock.position.set(
           Math.cos(ang) * dist,
@@ -4737,10 +4749,12 @@ function applyWeatherEffect(wData) {
           Math.sin(ang) * dist
         );
         subRock.rotation.set(Math.random(), Math.random(), Math.random());
-        // 隨機碎裂長寬比
         subRock.scale.set(0.85 + Math.random() * 0.45, 0.9 + Math.random() * 0.5, 0.85 + Math.random() * 0.45);
         rockGroup.add(subRock);
       }
+
+      return rockGroup; // 🌟 補上這行
+    }
 
     // 2. 生成島緣下垂藤蔓
     function createHangingVines(radius) {
@@ -5447,7 +5461,7 @@ function createSeaMonster() {
   monsterGroup.add(monsterBodyMesh);
 
 // 3. 兩側胸鰭（向後朝向尾部傾斜）
-  [-1, 1].forEach(side => {
+[-1, 1].forEach(side => {
     const finGeo = new THREE.PlaneGeometry(3.2, 7.5);
     finGeo.rotateX(-Math.PI / 2);
     // 將幾何中心稍微向後平移，讓旋轉軸心自然落在肩膀接合處
