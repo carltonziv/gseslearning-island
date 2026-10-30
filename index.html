@@ -5385,7 +5385,92 @@ cartGroup = new THREE.Group();
       return boatSystem;
     }
 
+// ==========================================
+// 🌊 深海巨型不明生物陰影系統
+// ==========================================
+let seaMonster = null;
+let monsterFins = [];
+let monsterState = {
+  active: false,
+  timer: 30, // 初次進入後約 30 秒觸發第一次
+  progress: 0,
+  speed: 0.0018, // 游動速度（緩慢深沉）
+  startPos: new THREE.Vector3(),
+  endPos: new THREE.Vector3(),
+  currentAngle: 0
+};
 
+function createSeaMonster() {
+  const monsterGroup = new THREE.Group();
+  monsterFins = [];
+
+  // 深邃半透明陰影材質（renderOrder = 0，沉在海水 1 的下方）
+  const shadowMat = new THREE.MeshBasicMaterial({
+    color: 0x01131e,
+    transparent: true,
+    opacity: 0.0,
+    depthWrite: false
+  });
+
+  // 1. 巨大梭形主身軀 (長約 22m、寬約 5.5m)
+  const bodyGeo = new THREE.PlaneGeometry(5.5, 22, 12, 12);
+  bodyGeo.rotateX(-Math.PI / 2); // 平鋪於水底
+  const bodyMesh = new THREE.Mesh(bodyGeo, shadowMat);
+  monsterGroup.add(bodyMesh);
+
+  // 2. 兩側巨型側鰭
+  const finGeo = new THREE.PlaneGeometry(4.0, 6.0);
+  finGeo.rotateX(-Math.PI / 2);
+
+  [-1, 1].forEach(side => {
+    const fin = new THREE.Mesh(finGeo, shadowMat);
+    fin.position.set(side * 3.2, 0, -2.0);
+    fin.rotation.y = side * 0.35;
+    monsterGroup.add(fin);
+    monsterFins.push({ mesh: fin, side: side });
+  });
+
+  // 3. 巨型分叉尾鰭
+  const tailGeo = new THREE.PlaneGeometry(5.0, 4.5);
+  tailGeo.rotateX(-Math.PI / 2);
+  const tail = new THREE.Mesh(tailGeo, shadowMat);
+  tail.position.set(0, 0, -11.5);
+  monsterGroup.add(tail);
+  monsterFins.push({ mesh: tail, isTail: true });
+
+  monsterGroup.position.set(0, -2.0, 0); // 位於海面下深處
+  monsterGroup.renderOrder = 0; // 確保在海面下渲染，產生透光陰影質感
+  monsterGroup.visible = false;
+
+  scene.add(monsterGroup);
+  seaMonster = monsterGroup;
+  seaMonster.userData.mat = shadowMat;
+}
+
+// 啟動巨獸巡游事件
+function triggerSeaMonsterEncounter() {
+  if (!seaMonster) return;
+
+  // 隨機自外環海域的一端游向對角外環（半徑約 38m）
+  const startAng = Math.random() * Math.PI * 2;
+  const endAng = startAng + Math.PI + (Math.random() - 0.5) * 0.8; // 穿過群島底層對角
+
+  const radius = 38;
+  monsterState.startPos.set(Math.cos(startAng) * radius, -1.8, Math.sin(startAng) * radius);
+  monsterState.endPos.set(Math.cos(endAng) * radius, -2.2, Math.sin(endAng) * radius);
+
+  monsterState.currentAngle = Math.atan2(
+    monsterState.endPos.x - monsterState.startPos.x,
+    monsterState.endPos.z - monsterState.startPos.z
+  );
+
+  seaMonster.position.copy(monsterState.startPos);
+  seaMonster.rotation.y = monsterState.currentAngle;
+  seaMonster.visible = true;
+
+  monsterState.progress = 0;
+  monsterState.active = true;
+}
 
 
 
@@ -5533,6 +5618,7 @@ const oceanMat = new THREE.MeshPhysicalMaterial({
       oceanMesh.receiveShadow = true;
       oceanMesh.renderOrder = 1;
       scene.add(oceanMesh);
+      createSeaMonster(); // 🌟 初始化深海巨獸陰影
 
       // 記錄基準高度供波浪起伏動態使用
       oceanInitialZ = [];
@@ -6380,6 +6466,55 @@ villagers.push({
         windTurbineBlades.forEach(blade => {
           blade.rotation.z += 0.04;
         });
+
+        // 🌟 深海巨獸定時出沒與擺尾游動更新
+if (seaMonster) {
+  if (!monsterState.active) {
+    // 倒數計時（非活動期間每秒遞減）
+    monsterState.timer -= 0.016;
+    if (monsterState.timer <= 0) {
+      triggerSeaMonsterEncounter();
+    }
+  } else {
+    // 巡游中：沿路徑推進
+    monsterState.progress += monsterState.speed;
+    const p = monsterState.progress;
+
+    // 線性插值計算位置
+    seaMonster.position.lerpVectors(monsterState.startPos, monsterState.endPos, p);
+
+    // 巨大的深海身軀波浪起伏擺動 (Undulation)
+    const sway = Math.sin(time * 1.6) * 0.12;
+    seaMonster.rotation.y = monsterState.currentAngle + sway;
+
+    // 巨型鰭與尾部撥水拍打
+    monsterFins.forEach(f => {
+      if (f.isTail) {
+        f.mesh.rotation.y = Math.sin(time * 2.2) * 0.28;
+      } else {
+        f.mesh.rotation.z = Math.sin(time * 1.8) * 0.2 * f.side;
+      }
+    });
+
+    // 透明度淡入淡出（進場時 0 -> 0.42，出場時 0.42 -> 0）
+    let currentOpacity = 0;
+    if (p < 0.25) {
+      currentOpacity = (p / 0.25) * 0.42;
+    } else if (p > 0.75) {
+      currentOpacity = ((1.0 - p) / 0.25) * 0.42;
+    } else {
+      currentOpacity = 0.42;
+    }
+    seaMonster.userData.mat.opacity = currentOpacity;
+
+    // 巡游結束，重新隨機等待 45～90 秒
+    if (p >= 1.0) {
+      monsterState.active = false;
+      seaMonster.visible = false;
+      monsterState.timer = 45 + Math.random() * 45;
+    }
+  }
+}
 
         // 🌟 王國之淚：島緣垂藤微風拂動
         islandVinesList.forEach(vine => {
