@@ -5278,13 +5278,13 @@ cartGroup = new THREE.Group();
 
 const oceanMat = new THREE.MeshPhysicalMaterial({
         vertexColors: true,
-        roughness: 0.05,        // 🌟 如鏡面般的平靜古潭，反射天空與微塵
+        roughness: 0.05,
         metalness: 0.08,
-        transmission: 0.55,     // 🌟 降低透光（0.85 -> 0.55），讓深處顯得深不可測、看不穿底
+        transmission: 0.25,     // 🌟 大幅降低透光率（0.55 -> 0.30），水下物件隱約可見但不通透
         ior: 1.333,
         transparent: true,
-        opacity: 0.82,          // 🌟 保留厚重深邃的水體質量感
-        emissive: 0x011b24,     // 🌟 加入一抹極微弱的冷青自發光底色，增添奇幻幽光氛圍
+        opacity: 0.94,          // 🌟 提高不透明度（0.82 -> 0.94），呈現深潭厚重質感
+        emissive: 0x011b24,
         emissiveIntensity: 0.45,
         depthWrite: false
       });
