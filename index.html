@@ -1436,11 +1436,13 @@ bbRef.update({
       const spriteMat = new THREE.SpriteMaterial({ 
         map: texture, 
         transparent: true,
-        depthWrite: false 
+        depthWrite: false,
+        depthTest: false
       });
       const sprite = new THREE.Sprite(spriteMat);
       sprite.scale.set(1.9, 0.5, 1);
       sprite.position.set(0, 1.6, 0);
+      sprite.renderOrder = 999;
       return sprite;
     }
 
@@ -1488,6 +1490,7 @@ const texture = new THREE.CanvasTexture(canvas);
       const sprite = new THREE.Sprite(spriteMat);
       sprite.scale.set(0.65, 0.65, 1);
       sprite.position.set(-1.15, 1.6, 0);
+      sprite.renderOrder = 999;
       return sprite;
     }
 let playerVillager = null;
