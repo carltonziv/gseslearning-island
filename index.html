@@ -4528,30 +4528,33 @@ function applyWeatherEffect(wData) {
       return texture;
     }
 
-    // 2. 建立地面左納烏符文流光法陣
-    function createZonaiRuneCircle(radius = 4.2) {
+// 2. 建立地面左納烏符文流光法陣
+    function createZonaiRuneCircle(radius = 4.5) {
       const group = new THREE.Group();
       const texture = createZonaiRuneTexture();
 
-      // 🌟 主符文盤：使用 MeshStandardMaterial 帶高飽和發光
+      // 🌟 主符文盤：啟用 polygonOffset 確保永遠浮貼在金色草皮上方，不被地面遮擋
       const runeMat = new THREE.MeshStandardMaterial({
         map: texture,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.95,
         color: 0x2dd4bf,               // 左納烏翡翠碧青
         emissive: 0x14b8a6,            // 核心自發光
-        emissiveIntensity: 0.8,
+        emissiveIntensity: 1.2,
         roughness: 0.2,
         metalness: 0.1,
         blending: THREE.AdditiveBlending, // 疊加發光
-        depthWrite: false,
+        depthWrite: false,             // 🌟 不寫入深度，避免被基座吃掉
+        polygonOffset: true,           // 🌟 強制向前偏移
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
         side: THREE.DoubleSide
       });
 
       const planeGeo = new THREE.PlaneGeometry(radius * 2, radius * 2);
       planeGeo.rotateX(-Math.PI / 2); // 平鋪於地面
       const runeMesh = new THREE.Mesh(planeGeo, runeMat);
-      runeMesh.position.y = 0.02; // 浮貼於島嶼地表上方，避免 Z-fighting 破面
+      runeMesh.position.y = 0.05; // 🌟 高度抬升到 0.05m，徹底脫離地面
       group.add(runeMesh);
 
       // 🌟 外部能量擴散脈衝光環（Ring）
@@ -4560,16 +4563,20 @@ function applyWeatherEffect(wData) {
       const pulseMat = new THREE.MeshBasicMaterial({
         color: 0x5eead4,
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.45,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -5,
+        polygonOffsetUnits: -5,
         side: THREE.DoubleSide
       });
       const pulseRing = new THREE.Mesh(pulseGeo, pulseMat);
-      pulseRing.position.y = 0.025;
+      pulseRing.position.y = 0.055;
       group.add(pulseRing);
 
       const runeData = {
+        group: group, // 🌟 記錄整個父物件
         mainMesh: runeMesh,
         pulseRing: pulseRing,
         baseRadius: radius,
@@ -5892,10 +5899,9 @@ const baseMat = new THREE.MeshStandardMaterial({
         }
         group.add(landmark);
 
-// 🌟 僅在中央戰鬥陀螺島生成左納烏科技符文法陣，平時預設隱藏
+// 🌟 僅在中央戰鬥陀螺島生成左納烏科技符文法陣
         if (cfg.id === 'beyblade') {
           const zonaiCircle = createZonaiRuneCircle(4.5);
-          zonaiCircle.visible = false; // 👈 預設隱藏
           group.add(zonaiCircle);
         }
 
@@ -6273,23 +6279,6 @@ villagers.push({
           vine.rotation.z = sway;
         });
 
-        // 🌟 王國之淚：左納烏符文呼吸燈與能量擴散脈衝
-        zonaiRunesList.forEach((rune, rIdx) => {
-          // 1. 緩速自轉（古代星象盤旋轉感）
-          rune.mainMesh.rotation.y += rune.rotateSpeed;
-
-          // 2. 呼吸起伏：正弦波控制亮度（0.4 ~ 1.6 之間呼吸律動）
-          const breathWave = (Math.sin(time * 2.2 + rIdx * 1.5) + 1) * 0.5;
-          rune.mainMesh.material.emissiveIntensity = 0.5 + breathWave * 0.9;
-          rune.mainMesh.material.opacity = 0.65 + breathWave * 0.3;
-
-          // 3. 能量光環向外擴散與漸隱消散（Pulse Wave）
-          rune.pulseProgress = (rune.pulseProgress + 0.008) % 1.0;
-          const currentScale = 0.2 + rune.pulseProgress * 0.95;
-          rune.pulseRing.scale.set(currentScale, 1.0, currentScale);
-          // 邊擴散邊淡出
-          rune.pulseRing.material.opacity = Math.sin(rune.pulseProgress * Math.PI) * 0.45;
-        });
 
 
         // 🌊 海洋微波起伏
