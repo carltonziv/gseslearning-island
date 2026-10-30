@@ -3888,14 +3888,14 @@ function createSportLandmark() {
     // ==========================================
     // 🌟 貼在這裡：荒地專屬地貌工廠函式
     // ==========================================
-    function createWastelandLandmark(islandId) {
+function createWastelandLandmark(islandId) {
       const group = new THREE.Group();
       
-      // 1. 中央風化大岩石
+      // 1. 中央風化大岩石（尺寸縮小一半：半徑 1.2 -> 0.6，高度貼地調整為 0.3）
       const rockMat = new THREE.MeshStandardMaterial({ color: 0x8C7B6B, roughness: 0.9, flatShading: true });
-      const mainRock = new THREE.Mesh(new THREE.DodecahedronGeometry(1.2, 0), rockMat);
+      const mainRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6, 0), rockMat);
       mainRock.scale.set(1.4, 0.9, 1.1);
-      mainRock.position.set(0, 0.6, 0);
+      mainRock.position.set(0, 0.3, 0); // 🌟 配合半徑縮小，貼地高度降為 0.3m
       mainRock.rotation.set(0.2, 0.5, 0.1);
       mainRock.castShadow = true;
       group.add(mainRock);
