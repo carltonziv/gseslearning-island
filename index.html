@@ -3926,7 +3926,7 @@ function createWastelandLandmark(islandId) {
         group.add(grassTuft);
       }
 
-registerObstacle(islandId, 0, 0, 1.6);
+registerObstacle(islandId, 0, 0, 0.9); // 🌟 隨岩石縮小，將防撞半徑調為 0.9m，活動更自然
       return group;
     }
 
@@ -4588,6 +4588,62 @@ function applyWeatherEffect(wData) {
       return group;
     }
 
+    // ==========================================
+    // 🌟 王國之淚風格：腳底微煙塵粒子系統
+    // ==========================================
+    let footstepDustList = []; // 存放畫面上所有活動煙塵粒子
+
+    // 動態繪製柔軟邊緣的圓形白煙貼圖 (64x64)
+    function createDustParticleTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0.0, 'rgba(245, 245, 240, 0.85)'); // 核心柔和米白土灰
+      grad.addColorStop(0.4, 'rgba(235, 230, 220, 0.45)');
+      grad.addColorStop(1.0, 'rgba(235, 230, 220, 0.0)');  // 邊緣柔化漸隱
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    const dustSharedTexture = createDustParticleTexture();
+
+    // 在指定世界座標產生一朵小煙塵
+    function spawnFootstepDust(worldX, worldY, worldZ) {
+      const dustMat = new THREE.SpriteMaterial({
+        map: dustSharedTexture,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false
+      });
+
+      const sprite = new THREE.Sprite(dustMat);
+      // 貼齊腳底稍微浮起 0.04m，避免與草地破面
+      sprite.position.set(
+        worldX + (Math.random() - 0.5) * 0.12,
+        worldY + 0.04,
+        worldZ + (Math.random() - 0.5) * 0.12
+      );
+
+      const initScale = 0.22 + Math.random() * 0.1;
+      sprite.scale.set(initScale, initScale, 1.0);
+      scene.add(sprite);
+
+      footstepDustList.push({
+        sprite: sprite,
+        scale: initScale,
+        maxScale: initScale * 2.3, // 向上飄散時擴散變大
+        life: 1.0,                 // 生命週期 1.0 -> 0.0
+        decay: 0.035,              // 消散速度
+        vx: (Math.random() - 0.5) * 0.008,
+        vy: 0.006 + Math.random() * 0.004, // 向上緩升
+        vz: (Math.random() - 0.5) * 0.008
+      });
+    }
     
 // ==========================================
     // 🌟 王國之淚風格：空島下層倒錐岩體與垂藤工廠
@@ -6560,6 +6616,31 @@ if (mascotLeader) {
             boatWakeParticles.splice(i, 1);
           }
         }
+
+        // 🌟 逐幀更新腳底微煙塵：微升、擴散膨脹並透明淡出
+        for (let i = footstepDustList.length - 1; i >= 0; i--) {
+          const d = footstepDustList[i];
+          d.life -= d.decay;
+
+          // 1. 微微往上飄移與空氣阻力緩速
+          d.sprite.position.x += d.vx;
+          d.sprite.position.y += d.vy;
+          d.sprite.position.z += d.vz;
+
+          // 2. 隨時間膨脹擴散
+          d.scale += (d.maxScale - d.scale) * 0.08;
+          d.sprite.scale.set(d.scale, d.scale, 1.0);
+
+          // 3. 透明度線性消散淡出
+          d.sprite.material.opacity = d.life * 0.55;
+
+          // 4. 生命結束：自場景中移除並銷毀材質釋放顯存
+          if (d.life <= 0) {
+            scene.remove(d.sprite);
+            d.sprite.material.dispose();
+            footstepDustList.splice(i, 1);
+          }
+        }
         
 if (ropeMesh && jumperMan && jumpRopeGroup) {
           const currentHour = new Date().getHours();
@@ -7002,6 +7083,16 @@ if (playerVillager && playerVillager.obj) {
       playerVillager.walkCycle += 0.18;
       const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
       const armSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+
+      // 🌟 判定左右腳踏地節奏：每當正弦波跨越零點或接近波峰時在腳跟噴發一團微煙塵
+      const currentCycle = playerVillager.walkCycle;
+      if (Math.abs(Math.sin(currentCycle)) > 0.88 && Math.random() < 0.35) {
+        // 計算角色身後 0.15m 處的世界座標作為落腳點
+        const rotY = playerVillager.obj.rotation.y;
+        const heelX = playerVillager.currentX - Math.sin(rotY) * 0.18;
+        const heelZ = playerVillager.currentZ - Math.cos(rotY) * 0.18;
+        spawnFootstepDust(heelX, 0, heelZ);
+      }
 
       if (limbs) {
         limbs.leftLeg.rotation.x = legSwing;
