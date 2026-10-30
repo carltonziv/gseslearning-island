@@ -4456,6 +4456,132 @@ function applyWeatherEffect(wData) {
       scene.add(ambientMotesSystem);
     }
 
+    // ==========================================
+    // 🌟 王國之淚：左納烏科技符文呼吸流光系統
+    // ==========================================
+    let zonaiRunesList = []; // 存放所有左納烏流光物件
+
+    // 1. 動態繪製左納烏幾何能量符文貼圖 (512x512)
+    function createZonaiRuneTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      const cx = 256, cy = 256;
+
+      ctx.clearRect(0, 0, 512, 512);
+
+      // 左納烏專屬亮青綠發光線條
+      ctx.strokeStyle = "#5eead4";
+      ctx.shadowColor = "#2dd4bf";
+      ctx.shadowBlur = 12;
+
+      // 外環與刻度齒輪
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 230, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 外環幾何刻度線
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 36; i++) {
+        const ang = (i / 36) * Math.PI * 2;
+        const r1 = (i % 3 === 0) ? 210 : 220;
+        const r2 = 230;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
+        ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
+        ctx.stroke();
+      }
+
+      // 中環：同心圓與同心菱形（左納烏特有的方圓交錯）
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 170, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 旋轉交錯的雙重正方形（古代能量結界）
+      [0, Math.PI / 4].forEach(rot => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.strokeRect(-110, -110, 220, 220);
+        ctx.restore();
+      });
+
+      // 內環：神秘古代渦流幾何眼
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 80, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 核心古代十字能量核心
+      ctx.lineWidth = 6;
+      [-40, 40].forEach(offset => {
+        ctx.beginPath();
+        ctx.moveTo(cx + offset, cy - 60);
+        ctx.lineTo(cx + offset, cy + 60);
+        ctx.stroke();
+      });
+
+      const texture = new THREE.CanvasTexture(canvas);
+      return texture;
+    }
+
+    // 2. 建立地面左納烏符文流光法陣
+    function createZonaiRuneCircle(radius = 4.2) {
+      const group = new THREE.Group();
+      const texture = createZonaiRuneTexture();
+
+      // 🌟 主符文盤：使用 MeshStandardMaterial 帶高飽和發光
+      const runeMat = new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.9,
+        color: 0x2dd4bf,               // 左納烏翡翠碧青
+        emissive: 0x14b8a6,            // 核心自發光
+        emissiveIntensity: 0.8,
+        roughness: 0.2,
+        metalness: 0.1,
+        blending: THREE.AdditiveBlending, // 疊加發光
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+
+      const planeGeo = new THREE.PlaneGeometry(radius * 2, radius * 2);
+      planeGeo.rotateX(-Math.PI / 2); // 平鋪於地面
+      const runeMesh = new THREE.Mesh(planeGeo, runeMat);
+      runeMesh.position.y = 0.02; // 浮貼於島嶼地表上方，避免 Z-fighting 破面
+      group.add(runeMesh);
+
+      // 🌟 外部能量擴散脈衝光環（Ring）
+      const pulseGeo = new THREE.RingGeometry(radius * 0.2, radius * 0.98, 32);
+      pulseGeo.rotateX(-Math.PI / 2);
+      const pulseMat = new THREE.MeshBasicMaterial({
+        color: 0x5eead4,
+        transparent: true,
+        opacity: 0.35,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      const pulseRing = new THREE.Mesh(pulseGeo, pulseMat);
+      pulseRing.position.y = 0.025;
+      group.add(pulseRing);
+
+      const runeData = {
+        mainMesh: runeMesh,
+        pulseRing: pulseRing,
+        baseRadius: radius,
+        pulseProgress: 0,
+        rotateSpeed: 0.003
+      };
+
+      zonaiRunesList.push(runeData);
+      return group;
+    }
+
+    
 // ==========================================
     // 🌟 王國之淚風格：空島下層倒錐岩體與垂藤工廠
     // ==========================================
@@ -5766,6 +5892,19 @@ const baseMat = new THREE.MeshStandardMaterial({
         }
         group.add(landmark);
 
+        // 若為中央戰鬥陀螺島，鋪設左納烏古代科技法陣
+        if (cfg.id === 'beyblade') {
+          const zonaiCircle = createZonaiRuneCircle(4.5);
+          group.add(zonaiCircle);
+        }
+
+        // 若為優良公民島，在神殿基座前也鋪設一圈
+        if (cfg.id === 'civics') {
+          const zonaiCircle = createZonaiRuneCircle(3.2);
+          zonaiCircle.position.set(0, 0.02, 0);
+          group.add(zonaiCircle);
+        }
+
         // 🌟 將島嶼中央地標註冊為全域實體阻擋區
         const landmarkRadius = (cfg.id === 'beyblade') ? 2.8 : (cfg.id === 'civics' ? 2.5 : 2.2);
         registerGlobalObstacle(cfg.pos[0], cfg.pos[2], landmarkRadius);
@@ -6136,6 +6275,24 @@ villagers.push({
         islandVinesList.forEach(vine => {
           const sway = Math.sin(time * vine.userData.swaySpeed + vine.userData.swayPhase) * vine.userData.maxAngle;
           vine.rotation.z = sway;
+        });
+
+        // 🌟 王國之淚：左納烏符文呼吸燈與能量擴散脈衝
+        zonaiRunesList.forEach((rune, rIdx) => {
+          // 1. 緩速自轉（古代星象盤旋轉感）
+          rune.mainMesh.rotation.y += rune.rotateSpeed;
+
+          // 2. 呼吸起伏：正弦波控制亮度（0.4 ~ 1.6 之間呼吸律動）
+          const breathWave = (Math.sin(time * 2.2 + rIdx * 1.5) + 1) * 0.5;
+          rune.mainMesh.material.emissiveIntensity = 0.5 + breathWave * 0.9;
+          rune.mainMesh.material.opacity = 0.65 + breathWave * 0.3;
+
+          // 3. 能量光環向外擴散與漸隱消散（Pulse Wave）
+          rune.pulseProgress = (rune.pulseProgress + 0.008) % 1.0;
+          const currentScale = 0.2 + rune.pulseProgress * 0.95;
+          rune.pulseRing.scale.set(currentScale, 1.0, currentScale);
+          // 邊擴散邊淡出
+          rune.pulseRing.material.opacity = Math.sin(rune.pulseProgress * Math.PI) * 0.45;
         });
 
 
