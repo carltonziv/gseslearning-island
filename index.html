@@ -1436,13 +1436,13 @@ bbRef.update({
       const spriteMat = new THREE.SpriteMaterial({ 
         map: texture, 
         transparent: true,
-        depthWrite: false,
-        depthTest: false
+        depthWrite: false, // 避免透明貼圖的方形邊緣裁切身後物體
+        depthTest: true    // 🌟 關鍵：必須開啟深度測試，NPC 在物體後方時標籤會正常被遮擋
       });
       const sprite = new THREE.Sprite(spriteMat);
       sprite.scale.set(1.9, 0.5, 1);
       sprite.position.set(0, 1.6, 0);
-      sprite.renderOrder = 999;
+      sprite.renderOrder = 10;
       return sprite;
     }
 
@@ -1485,12 +1485,13 @@ bbRef.update({
       ctx.fillText(avatarEmoji, 64, 64);
       ctx.restore();
 
-const texture = new THREE.CanvasTexture(canvas);
-      const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false,
+        depthTest: true });
       const sprite = new THREE.Sprite(spriteMat);
       sprite.scale.set(0.65, 0.65, 1);
       sprite.position.set(-1.15, 1.6, 0);
-      sprite.renderOrder = 999;
+      sprite.renderOrder = 10;
       return sprite;
     }
 let playerVillager = null;
@@ -5530,6 +5531,7 @@ const oceanMat = new THREE.MeshPhysicalMaterial({
       oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
       oceanMesh.position.y = -0.52; // 海平面高度
       oceanMesh.receiveShadow = true;
+      oceanMesh.renderOrder = 1;
       scene.add(oceanMesh);
 
       // 記錄基準高度供波浪起伏動態使用
