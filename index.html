@@ -1331,7 +1331,7 @@
     };
 
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxpgYPXZQAyR2Qn1OLejnUMekxvOW1Bf9-U6DyBwFoaw-st0tkQT7K8yxsU3zyXhrGj/exec";
-    const TEACHER_PASSWORD = "4840";
+    
 
     let db = null, totalEnergyRef = null, liveFeedRef = null, bbRef = null;
     let bbState = { isOpen: false, deadline: '', status: 'closed', players: {}, matches: [] };
@@ -2038,6 +2038,26 @@ function checkDailyLimit(islandId) {
       } catch(e) {}
     }
 
+    // 🌟 教師密碼雲端後端安全驗證（避免前端明文外洩）
+    async function verifyTeacherPasswordWithBackend(inputPwd) {
+      if (!inputPwd) return false;
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            type: 'admin_verify_password',
+            password: inputPwd
+          })
+        });
+        const result = await res.json();
+        return result && result.authorized === true;
+      } catch (err) {
+        alert('雲端安全驗證連線失敗，請檢查網路！');
+        return false;
+      }
+    }
+
     let energyOrbs = [];
     function spawnEnergyOrb(fromPos, toPos) {
       const orbGeo = new THREE.SphereGeometry(0.35, 12, 12);
@@ -2669,9 +2689,16 @@ function renderBracketSidebarContent() {
       root.innerHTML = html;
     }
     
-function adminPickWinner(matchIdx, playerNum) {
+async function adminPickWinner(matchIdx, playerNum) {
       const pwd = prompt('請輸入教師密碼以認證賽果：');
-      if (pwd !== TEACHER_PASSWORD) { alert('密碼錯誤！'); return; }
+      if (pwd === null) return;
+
+      showLiveBanner("🔒 正在驗證賽果認證權限...");
+      const isAuth = await verifyTeacherPasswordWithBackend(pwd);
+      if (!isAuth) { 
+        alert('❌ 密碼錯誤，無權限判定賽果！'); 
+        return; 
+      }
 
       const match = bbState.matches[matchIdx];
       const winner = playerNum === 1 ? match.p1 : match.p2;
@@ -2710,12 +2737,17 @@ function adminPickWinner(matchIdx, playerNum) {
     // ==========================================
     // 8. 教師後台控制邏輯
     // ==========================================
-    document.getElementById('teacher-menu-btn').addEventListener('click', () => {
+document.getElementById('teacher-menu-btn').addEventListener('click', async () => {
       const pwd = prompt('請輸入教師管理密碼：');
-      if (pwd === TEACHER_PASSWORD) {
+      if (pwd === null) return;
+
+      showLiveBanner("🔒 正在向雲端核心驗證管理員身分...");
+      const isAuth = await verifyTeacherPasswordWithBackend(pwd);
+
+      if (isAuth) {
         document.getElementById('modal-teacher').classList.remove('hidden');
-      } else if (pwd !== null) {
-        alert('密碼錯誤！');
+      } else {
+        alert('❌ 密碼錯誤，身分認證失敗！');
       }
     });
 
