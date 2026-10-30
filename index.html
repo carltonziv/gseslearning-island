@@ -5445,15 +5445,21 @@ function createSeaMonster() {
   monsterBodyMesh.position.set(0, 0, 3.5);
   monsterGroup.add(monsterBodyMesh);
 
-  // 3. 兩側胸鰭（微縮拉長的柔邊羽化橢圓）
+// 3. 兩側胸鰭（向後朝向尾部傾斜）
   [-1, 1].forEach(side => {
     const finGeo = new THREE.PlaneGeometry(3.2, 7.5);
     finGeo.rotateX(-Math.PI / 2);
+    // 將幾何中心稍微向後平移，讓旋轉軸心自然落在肩膀接合處
+    finGeo.translate(side * 0.6, 0, -2.5);
+
     const fin = new THREE.Mesh(finGeo, shadowMat);
-    fin.position.set(side * 4.2, 0, 3.5);
-    fin.rotation.y = side * 0.45;
+    // 位置稍微後移（Z 軸從 3.5 移至 2.0）
+    fin.position.set(side * 3.8, 0, 2.0);
+    // 🌟 關鍵：改為負角度，讓鰭尖向後朝向尾鰭延伸（斜後約 35 度）
+    fin.rotation.y = -side * 0.62;
+
     monsterGroup.add(fin);
-    monsterFins.push({ mesh: fin, side: side });
+    monsterFins.push({ mesh: fin, side: side, baseRotY: -side * 0.62 });
   });
 
   // 4. 後段關節：尾部旋轉節點
