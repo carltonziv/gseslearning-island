@@ -5476,8 +5476,8 @@ function triggerSeaMonsterEncounter() {
   const endAng = startAng + Math.PI + (Math.random() - 0.5) * 0.8; // 穿過群島底層對角
 
   const radius = 38;
-  monsterState.startPos.set(Math.cos(startAng) * radius, -1.8, Math.sin(startAng) * radius);
-  monsterState.endPos.set(Math.cos(endAng) * radius, -2.2, Math.sin(endAng) * radius);
+  monsterState.startPos.set(Math.cos(startAng) * radius, -4.2, Math.sin(startAng) * radius);
+  monsterState.endPos.set(Math.cos(endAng) * radius, -4.8, Math.sin(endAng) * radius);
 
   monsterState.currentAngle = Math.atan2(
     monsterState.endPos.x - monsterState.startPos.x,
