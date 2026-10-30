@@ -743,9 +743,10 @@
     </div>
   </div>
 
-  <div class="hud-tag-toggle-btn" id="toggle-tags-btn" onclick="toggleIslandLabels()">
-    <span id="tag-btn-icon">🏷️</span>
-    <span id="tag-btn-text">島名標籤：開</span>
+<!-- 🌟 改為：預設為「關」，加上 off 樣式 class -->
+  <div class="hud-tag-toggle-btn off" id="toggle-tags-btn" onclick="toggleIslandLabels()">
+    <span id="tag-btn-icon">🚫</span>
+    <span id="tag-btn-text">島名標籤：關</span>
   </div>
 
   <div class="hud-reset-cam-btn" id="reset-cam-btn" onclick="resetToDefaultCamera()">
@@ -4557,7 +4558,7 @@ function applyWeatherEffect(wData) {
     let scene, camera, renderer, controls;
     let islandGroups = [];
     let islandTitleSprites = [];
-    let areLabelsVisible = true;
+    let areLabelsVisible = false; // 🌟 預設為關閉
     let villagers = [];
     let lastPhaseName = '';
     let dirLight, hemiLight;
@@ -5779,6 +5780,7 @@ const baseMat = new THREE.MeshStandardMaterial({
         if (cfg.id !== 'wasteland_n' && cfg.id !== 'wasteland_s') {
           const labelSprite = createIslandTitleSprite(cfg.title);
           labelSprite.position.set(0, 5.6, 0);
+          labelSprite.visible = areLabelsVisible; // 🌟 依預設狀態隱藏（false）
           group.add(labelSprite);
           islandTitleSprites.push(labelSprite);
         }
