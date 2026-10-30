@@ -5078,13 +5078,23 @@ cartGroup = new THREE.Group();
       patrolBoat.add(radar);
       patrolBoat.userData.radar = radar;
 
-      // F. 艏探照小燈
-      const bowLight = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({ color: 0xFEF08A }));
-      bowLight.position.set(0, 0.38, 1.25);
-      patrolBoat.add(bowLight);
+// 🌟 F. 埋入式艏探照燈（內嵌於船首垂直壁面內）
+      const darkRimMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.6 }); // 深色內嵌框
+      const lightGlassMat = new THREE.MeshBasicMaterial({ color: 0xFEF08A });                 // 高亮車燈鏡片
 
+      // 1. 內嵌燈槽外框（橫置小扁盒）
+      const lightHousing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.08), darkRimMat);
+      lightHousing.position.set(0, 0.16, 1.18); // 埋在船首白色外壁（Z=1.20）微凸處
+      patrolBoat.add(lightHousing);
+
+      // 2. 埋入的平扁發光燈芯（內縮齊平於槽面）
+      const embeddedLens = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.08, 0.04), lightGlassMat);
+      embeddedLens.position.set(0, 0.16, 1.205); // 正面切齊船首，不突起
+      patrolBoat.add(embeddedLens);
+
+      // 3. 探照光束（從槽口向前投射至水面）
       const searchLight = new THREE.SpotLight(0xFEF08A, 3.5, 12, Math.PI / 6, 0.4, 1.5);
-      searchLight.position.set(0, 0.38, 1.25);
+      searchLight.position.set(0, 0.16, 1.21);
       const targetObj = new THREE.Object3D();
       targetObj.position.set(0, -0.5, 6.0);
       patrolBoat.add(targetObj);
