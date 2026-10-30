@@ -5238,8 +5238,8 @@ cartGroup = new THREE.Group();
       // 為海洋頂點計算深度色彩與透明感
       const oceanPos = oceanGeo.attributes.position;
       const oceanColors = [];
-      const colorShallow = new THREE.Color(0x38bdf8); // 岸邊清澈淺湖水藍
-      const colorDeep = new THREE.Color(0x1e3a8a);    // 遠海深邃湛藍
+      const colorShallow = new THREE.Color(0x5eead4); // 岸邊清澈湖水碧綠 (Teal/Mint)
+      const colorDeep = new THREE.Color(0x0284c7);    // 湖心深邃但透亮的翠藍色 (非死黑深藍)
 
       for (let i = 0; i < oceanPos.count; i++) {
         const x = oceanPos.getX(i);
@@ -5266,14 +5266,14 @@ cartGroup = new THREE.Group();
 
       oceanGeo.setAttribute('color', new THREE.Float32BufferAttribute(oceanColors, 3));
 
-      const oceanMat = new THREE.MeshPhysicalMaterial({
-        vertexColors: true,     // 根據離岸距離漸層
-        roughness: 0.12,        // 光滑水面反射
-        metalness: 0.05,
-        transmission: 0.65,     // 🌟 透光性：讓淺灘能隱約透視到水下米白細沙
-        ior: 1.333,             // 水的真實物理折射率
+const oceanMat = new THREE.MeshPhysicalMaterial({
+        vertexColors: true,
+        roughness: 0.06,        // 🌟 降低粗糙度，讓陽光反射與倒影更清脆平滑
+        metalness: 0.02,
+        transmission: 0.85,     // 🌟 大幅提高透光率（0.65 -> 0.85），能看穿水下倒錐岩石與沙灘！
+        ior: 1.333,             // 水的折射率
         transparent: true,
-        opacity: 0.88,
+        opacity: 0.72,          // 🌟 調低不透明度（0.88 -> 0.72），呈現清澈湖水質感
         depthWrite: false
       });
 
