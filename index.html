@@ -5892,18 +5892,14 @@ const baseMat = new THREE.MeshStandardMaterial({
         }
         group.add(landmark);
 
-        // 若為中央戰鬥陀螺島，鋪設左納烏古代科技法陣
+// 🌟 僅在中央戰鬥陀螺島生成左納烏科技符文法陣，平時預設隱藏
         if (cfg.id === 'beyblade') {
           const zonaiCircle = createZonaiRuneCircle(4.5);
+          zonaiCircle.visible = false; // 👈 預設隱藏
           group.add(zonaiCircle);
         }
 
-        // 若為優良公民島，在神殿基座前也鋪設一圈
-        if (cfg.id === 'civics') {
-          const zonaiCircle = createZonaiRuneCircle(3.2);
-          zonaiCircle.position.set(0, 0.02, 0);
-          group.add(zonaiCircle);
-        }
+
 
         // 🌟 將島嶼中央地標註冊為全域實體阻擋區
         const landmarkRadius = (cfg.id === 'beyblade') ? 2.8 : (cfg.id === 'civics' ? 2.5 : 2.2);
@@ -6328,6 +6324,32 @@ villagers.push({
         });
 
 const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
+        zonaiRunesList.forEach((rune, rIdx) => {
+          // 1. 若非比賽期間，完全隱藏符文與擴散光環，不消耗多餘效能
+          if (!isTournamentActive) {
+            rune.mainMesh.visible = false;
+            rune.pulseRing.visible = false;
+            return;
+          }
+
+          // 2. 比賽進行中：開啟顯示並運算左納烏呼吸流光與擴散波
+          rune.mainMesh.visible = true;
+          rune.pulseRing.visible = true;
+
+          // 緩速自轉
+          rune.mainMesh.rotation.y += rune.rotateSpeed;
+
+          // 呼吸起伏：正弦波控制翡翠碧青發光強度
+          const breathWave = (Math.sin(time * 2.5 + rIdx * 1.5) + 1) * 0.5;
+          rune.mainMesh.material.emissiveIntensity = 0.6 + breathWave * 1.0;
+          rune.mainMesh.material.opacity = 0.7 + breathWave * 0.3;
+
+          // 能量光環向外脈衝擴散
+          rune.pulseProgress = (rune.pulseProgress + 0.009) % 1.0;
+          const currentScale = 0.2 + rune.pulseProgress * 0.95;
+          rune.pulseRing.scale.set(currentScale, 1.0, currentScale);
+          rune.pulseRing.material.opacity = Math.sin(rune.pulseProgress * Math.PI) * 0.5;
+        });
         if (mainBeybladeTop) {
           if (isTournamentActive) {
             // 🌟 1. 比賽進行中：主陀螺持續高速自轉
