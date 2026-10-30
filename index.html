@@ -1292,6 +1292,17 @@
   </div>
 
   <script>
+    // 🌟 XSS 防禦：將特殊字元跳脫為安全 HTML 實體編碼
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
     // ==========================================
     // 1. 群島配置（正六角形密合配置）
     // ==========================================
@@ -2109,12 +2120,17 @@ if (totalEnergyRef) {
       });
     }
 
-    if (liveFeedRef) {
+if (liveFeedRef) {
       let isFirst = true;
       liveFeedRef.limitToLast(1).on('child_added', snap => {
         if (isFirst) { isFirst = false; return; }
         const item = snap.val();
-        if (item) showLiveBanner(`🎉 ${item.student} ${item.msg}`);
+        if (item) {
+          // 🌟 跳脫動態輸入，防止透過跑馬燈執行惡意腳本
+          const safeStudent = escapeHTML(item.student);
+          const safeMsg = escapeHTML(item.msg);
+          showLiveBanner(`🎉 ${safeStudent} ${safeMsg}`);
+        }
       });
     }
 
@@ -2548,9 +2564,9 @@ function updateNightClosedState() {
           ? `⏳ 報名截止時間：${new Date(bbState.deadline).toLocaleString()}` 
           : '⏳ 報名火熱進行中！';
 
-        const pArr = bbState.players ? Object.values(bbState.players) : [];
+const pArr = bbState.players ? Object.values(bbState.players) : [];
         regList.innerHTML = `<strong>目前已報名選手 (${pArr.length} 位)：</strong><br>` + 
-          pArr.map(p => `• ${p.seatNumber}號 ${p.studentName}（${p.bladeName}）`).join('<br>');
+          pArr.map(p => `• ${escapeHTML(p.seatNumber)}號 ${escapeHTML(p.studentName)}（${escapeHTML(p.bladeName)}）`).join('<br>');
       } else {
         bracketView.style.display = 'block';
       }
@@ -2629,22 +2645,21 @@ function renderBracketSidebarContent() {
                 </span>
               </div>
 
-              <div class="bracket-slot ${m.winner && m.p1 && m.winner === m.p1.seatNumber ? 'winner' : ''}">
+<div class="bracket-slot ${m.winner && m.p1 && m.winner === m.p1.seatNumber ? 'winner' : ''}">
                 <div>
-                  <span class="slot-name">${m.p1 ? `${m.p1.seatNumber}號 ${m.p1.studentName}` : '（虛位待定）'}</span>
-                  ${m.p1 ? `<span class="slot-blade">【${m.p1.bladeName}】</span>` : ''}
+                  <span class="slot-name">${m.p1 ? `${escapeHTML(m.p1.seatNumber)}號 ${escapeHTML(m.p1.studentName)}` : '（虛位待定）'}</span>
+                  ${m.p1 ? `<span class="slot-blade">【${escapeHTML(m.p1.bladeName)}】</span>` : ''}
                 </div>
                 ${!m.winner && m.p1 && m.p2 ? `<button class="btn-win-sm" onclick="adminPickWinner(${m.index}, 1)">勝</button>` : ''}
               </div>
 
               <div class="bracket-slot ${m.winner && m.p2 && m.winner === m.p2.seatNumber ? 'winner' : ''}">
                 <div>
-                  <span class="slot-name">${m.p2 ? `${m.p2.seatNumber}號 ${m.p2.studentName}` : (m.p1 ? '（輪空・直接晉級）' : '（虛位待定）')}</span>
-                  ${m.p2 ? `<span class="slot-blade">【${m.p2.bladeName}】</span>` : ''}
+                  <span class="slot-name">${m.p2 ? `${escapeHTML(m.p2.seatNumber)}號 ${escapeHTML(m.p2.studentName)}` : (m.p1 ? '（輪空・直接晉級）' : '（虛位待定）')}</span>
+                  ${m.p2 ? `<span class="slot-blade">【${escapeHTML(m.p2.bladeName)}】</span>` : ''}
                 </div>
                 ${!m.winner && m.p1 && m.p2 ? `<button class="btn-win-sm" onclick="adminPickWinner(${m.index}, 2)">勝</button>` : ''}
               </div>
-            </div>
           `;
         });
 
@@ -2918,23 +2933,23 @@ function adminGenerateBracket() {
         return;
       }
 
-      let html = '';
-keys.forEach(k => {
+let html = '';
+      keys.forEach(k => {
         const item = data[k];
         html += `
           <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:0.85rem; color:#334155;">
             <div style="font-weight:bold; color:#0284c7; margin-bottom:4px;">
-              ${item.studentName} (${item.seatNumber}號) - 《${item.bookTitle}》
+              ${escapeHTML(item.studentName)} (${escapeHTML(item.seatNumber)}號) - 《${escapeHTML(item.bookTitle)}》
             </div>
             <div style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">
-              <strong>節錄：</strong>${item.quote}
+              <strong>節錄：</strong>${escapeHTML(item.quote)}
             </div>
             <div style="font-size:0.82rem; background:#f1f5f9; padding:6px; border-radius:6px; margin-bottom:6px;">
-              <strong>心得：</strong>${item.reflection}
+              <strong>心得：</strong>${escapeHTML(item.reflection)}
             </div>
             <div style="display:flex; justify-content:flex-end; gap:6px;">
-              <button style="background:#dc2626; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminRejectReading('${k}')">退件</button>
-              <button style="background:#16a34a; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminApproveReading('${k}')">通過 (+10分)</button>
+              <button style="background:#dc2626; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminRejectReading('${escapeHTML(k)}')">退件</button>
+              <button style="background:#16a34a; color:#fff; border:none; padding:3px 8px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="adminApproveReading('${escapeHTML(k)}')">通過 (+10分)</button>
             </div>
           </div>
         `;
