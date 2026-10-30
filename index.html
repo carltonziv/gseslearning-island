@@ -1796,18 +1796,27 @@ if (selVal === 'guest') {
 
 sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
+      // 1. 優先關閉視窗，確保 UI 即時回應不延遲
       document.getElementById('login-modal').classList.add('hidden');
 
-      // 🌟 登入後立即拉取雲端今日打卡紀錄，防重整重複解任務
-      syncDailyCheckinsFromCloud(currentStudent.seatNumber);
+      // 2. 防呆保險：重置鏡頭鎖定狀態，避免登入前遺留的運鏡狀態卡死畫面
+      isFocusing = false;
+      controls.enabled = true;
 
+      // 3. 生成本機玩家角色（3D 核心優先）
       spawnPlayerCharacter();
-      initMultiplayerSync(); // 🌟 啟動多人連線同步
 
+      // 4. 🌟 將較耗費頻寬與運算的雲端同步排入下一幀，徹底避免主執行緒阻塞
+      setTimeout(() => {
+        syncDailyCheckinsFromCloud(currentStudent.seatNumber);
+        initMultiplayerSync(); // 啟動多人連線同步
+      }, 60);
+
+      // 5. 若有賽事，等場景完全穩定後再滑出側欄
       if (bbState.isOpen || bbState.status === 'bracket_ready') {
         setTimeout(() => {
           toggleBracketSidebar(true);
-        }, 600);
+        }, 800);
       }
     });
 
@@ -6089,8 +6098,11 @@ villagers.push({
           controls.target.lerp(targetLookAt, 0.15);
           controls.update();
 
-          if (camera.position.distanceTo(targetCameraPos) < 0.15 && 
-              controls.target.distanceTo(targetLookAt) < 0.1) {
+          // 🌟 1. 放寬距離判定（0.15 改為 0.35，0.1 改為 0.25），避免浮點數微幅震盪無法收斂
+          const distCam = camera.position.distanceTo(targetCameraPos);
+          const distTarget = controls.target.distanceTo(targetLookAt);
+
+          if (distCam < 0.35 && distTarget < 0.25) {
             camera.position.copy(targetCameraPos);
             controls.target.copy(targetLookAt);
             controls.update();
