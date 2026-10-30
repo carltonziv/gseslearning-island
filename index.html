@@ -6541,7 +6541,11 @@ if (seaMonster) {
     // 🌟 3. 兩側胸鰭微幅拍打
     monsterFins.forEach(f => {
       if (!f.isTail) {
-        f.mesh.rotation.z = Math.sin(time * 1.8) * 0.15 * f.side;
+        f.mesh.rotation.z = Math.sin(time * 1.8) * 0.12 * f.side;
+        // 若有調整 rotation.y，請疊加原本的朝後基準角 f.baseRotY
+        if (f.baseRotY !== undefined) {
+          f.mesh.rotation.y = f.baseRotY + Math.sin(time * 1.5) * 0.05 * f.side;
+        }
       }
     });
 
