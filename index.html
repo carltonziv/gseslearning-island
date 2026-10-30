@@ -5035,31 +5035,20 @@ cartGroup = new THREE.Group();
       const metalMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, metalness: 0.85, roughness: 0.2 });
       const yellowMat = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
 
-// 🌟 A. 下部紅色船底（僅保留中後段，移除船首紅色錐體）
-      // A1. 中後段長方形紅色船底
-      const keelAft = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.22, 1.6), keelMat);
-      keelAft.position.set(0, -0.08, -0.3);
+
+// 🌟 A. 下部紅色船底（整艘一體化加長至 2.3m，取代原本的拼接錐體）
+      const keelAft = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.22, 2.3), keelMat);
+      keelAft.position.set(0, -0.08, 0.05);
       keelAft.castShadow = true;
       patrolBoat.add(keelAft);
 
-      // (A2. 前段收尖紅色船底已完全移除)
-
-      // 🌟 B. 上部白色主船身（船首整體皆為純白一體）
-      // B1. 中後段長方形白色船身
-      const hullAft = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.26, 1.6), hullMat);
-      hullAft.position.set(0, 0.14, -0.3);
+      // 🌟 B. 上部白色主船身（長度加長至 2.3m，直接作為整體平直船首）
+      const hullAft = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.26, 2.3), hullMat);
+      hullAft.position.set(0, 0.14, 0.05);
       hullAft.castShadow = true;
       patrolBoat.add(hullAft);
 
-// B2. 前段純白尖銳船首（精準頂面齊平）
-      const hullBowGeo = new THREE.ConeGeometry(0.68, 1.1, 4);
-      hullBowGeo.rotateY(Math.PI / 4);
-      hullBowGeo.rotateX(Math.PI / 2);
-      hullBowGeo.scale(1.0, 0.7, 1.0); // 🌟 調整厚度比例
-      const hullBow = new THREE.Mesh(hullBowGeo, hullMat);
-      hullBow.position.set(0, 0.032, 0.95); // 🌟 中心 Y 設為 0.032，使上方精確平齊於 Y = 0.27
-      hullBow.castShadow = true;
-      patrolBoat.add(hullBow);
+      // （原本的 B2. hullBow 錐體已徹底移除）
 
       // D. 駕駛室 / 船橋
       const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
