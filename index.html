@@ -5402,64 +5402,84 @@ let monsterState = {
   currentAngle: 0
 };
 
+    // 🌟 建立邊緣極致柔化的徑向漸層暗影貼圖 (Canvas 256x256)
+function createSoftShadowTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+
+  // 由中心向外徑向漸變：中心純黑高濃度，邊緣平滑過渡至 0 透明度
+  const grad = ctx.createRadialGradient(128, 128, 10, 128, 128, 128);
+  grad.addColorStop(0.0, 'rgba(1, 19, 30, 1.0)');  // 核心濃黑深藍
+  grad.addColorStop(0.4, 'rgba(1, 19, 30, 0.85)'); // 中段維持一定厚度
+  grad.addColorStop(0.7, 'rgba(1, 19, 30, 0.40)'); // 邊界開始羽化散開
+  grad.addColorStop(1.0, 'rgba(1, 19, 30, 0.0)');  // 外緣完全漸隱消失
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 256);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  return tex;
+}
+
 function createSeaMonster() {
   const monsterGroup = new THREE.Group();
   monsterFins = [];
 
-  // 1. 深海半透明陰影材質（renderOrder = 0，沉在海平面下）
+  const softTex = createSoftShadowTexture();
+
+  // 1. 深海柔邊羽化陰影材質
   const shadowMat = new THREE.MeshBasicMaterial({
-    color: 0x01131e,
+    map: softTex,
     transparent: true,
     opacity: 0.0,
     depthWrite: false
   });
 
-  // 2. 前段：巨型鯨魚身體橢圓（長度約 15m，寬度約 6.5m）
-  const bodyGeo = new THREE.CircleGeometry(1, 32);
+  // 2. 前段：巨型鯨魚身體橢圓（長約 18m，寬約 8m，已包含邊緣柔和羽化區）
+  const bodyGeo = new THREE.PlaneGeometry(8.0, 18.0);
   bodyGeo.rotateX(-Math.PI / 2); // 貼平水面
-  bodyGeo.scale(3.25, 1, 7.5);   // 半徑：寬 3.25m、長 7.5m
 
   monsterBodyMesh = new THREE.Mesh(bodyGeo, shadowMat);
-  monsterBodyMesh.position.set(0, 0, 3.5); // 讓身體往前延伸
+  monsterBodyMesh.position.set(0, 0, 3.5);
   monsterGroup.add(monsterBodyMesh);
 
-  // 3. 兩側胸鰭（掛在身體兩側）
+  // 3. 兩側胸鰭（微縮拉長的柔邊羽化橢圓）
   [-1, 1].forEach(side => {
-    const finGeo = new THREE.CircleGeometry(1, 16);
+    const finGeo = new THREE.PlaneGeometry(3.2, 7.5);
     finGeo.rotateX(-Math.PI / 2);
-    finGeo.scale(1.2, 1, 3.0);
     const fin = new THREE.Mesh(finGeo, shadowMat);
-    fin.position.set(side * 3.6, 0, 4.0);
+    fin.position.set(side * 4.2, 0, 3.5);
     fin.rotation.y = side * 0.45;
     monsterGroup.add(fin);
     monsterFins.push({ mesh: fin, side: side });
   });
 
-  // 4. 後段關節：尾部旋轉節點（掛載在身後接合處 Z = -1.5 處）
+  // 4. 後段關節：尾部旋轉節點
   monsterTailPivot = new THREE.Group();
-  monsterTailPivot.position.set(0, 0, -1.5);
+  monsterTailPivot.position.set(0, 0, -2.5);
 
-  // 5. 後段：尾部橢圓（長約 11m，寬約 3.8m，向後收束）
-  const tailGeo = new THREE.CircleGeometry(1, 32);
+  // 5. 後段：尾部橢圓（略窄流線，長約 14m，寬約 5.5m）
+  const tailGeo = new THREE.PlaneGeometry(5.5, 14.0);
   tailGeo.rotateX(-Math.PI / 2);
-  tailGeo.scale(1.9, 1, 5.5);
-  tailGeo.translate(0, 0, -4.5); // 將旋轉軸心移至接合根部
+  tailGeo.translate(0, 0, -5.5); // 軸心設置在接合根部
 
   const monsterTailMesh = new THREE.Mesh(tailGeo, shadowMat);
   monsterTailPivot.add(monsterTailMesh);
 
-  // 6. 尾端倒橫向水平尾鰭
-  const flukeGeo = new THREE.CircleGeometry(1, 16);
+  // 6. 尾端水平寬尾鰭（橫向扁平柔邊橢圓）
+  const flukeGeo = new THREE.PlaneGeometry(8.5, 3.8);
   flukeGeo.rotateX(-Math.PI / 2);
-  flukeGeo.scale(3.5, 1, 1.2);
-  flukeGeo.translate(0, 0, -9.8);
+  flukeGeo.translate(0, 0, -11.5);
   const flukeMesh = new THREE.Mesh(flukeGeo, shadowMat);
   monsterTailPivot.add(flukeMesh);
 
   monsterGroup.add(monsterTailPivot);
 
-  monsterGroup.position.set(0, -4.5, 0); // 海面下深處
-  monsterGroup.renderOrder = 0;          // 確保在海水下方渲染
+  // 🌟 維持在深海層
+  monsterGroup.position.set(0, -4.5, 0);
+  monsterGroup.renderOrder = 0;
   monsterGroup.visible = false;
 
   scene.add(monsterGroup);
