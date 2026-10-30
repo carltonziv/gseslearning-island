@@ -5386,9 +5386,11 @@ cartGroup = new THREE.Group();
     }
 
 // ==========================================
-// 🌊 深海巨型不明生物陰影系統
+// 🌊 深海巨型不明生物陰影系統（雙橢圓關節版）
 // ==========================================
 let seaMonster = null;
+let monsterBodyMesh = null;
+let monsterTailPivot = null;
 let monsterFins = [];
 let monsterState = {
   active: false,
@@ -5404,7 +5406,7 @@ function createSeaMonster() {
   const monsterGroup = new THREE.Group();
   monsterFins = [];
 
-  // 深邃半透明陰影材質（renderOrder = 0，沉在海水 1 的下方）
+  // 1. 深海半透明陰影材質（renderOrder = 0，沉在海平面下）
   const shadowMat = new THREE.MeshBasicMaterial({
     color: 0x01131e,
     transparent: true,
@@ -5412,34 +5414,52 @@ function createSeaMonster() {
     depthWrite: false
   });
 
-  // 1. 巨大梭形主身軀 (長約 22m、寬約 5.5m)
-  const bodyGeo = new THREE.PlaneGeometry(5.5, 22, 12, 12);
-  bodyGeo.rotateX(-Math.PI / 2); // 平鋪於水底
-  const bodyMesh = new THREE.Mesh(bodyGeo, shadowMat);
-  monsterGroup.add(bodyMesh);
+  // 2. 前段：巨型鯨魚身體橢圓（長度約 15m，寬度約 6.5m）
+  const bodyGeo = new THREE.CircleGeometry(1, 32);
+  bodyGeo.rotateX(-Math.PI / 2); // 貼平水面
+  bodyGeo.scale(3.25, 1, 7.5);   // 半徑：寬 3.25m、長 7.5m
 
-  // 2. 兩側巨型側鰭
-  const finGeo = new THREE.PlaneGeometry(4.0, 6.0);
-  finGeo.rotateX(-Math.PI / 2);
+  monsterBodyMesh = new THREE.Mesh(bodyGeo, shadowMat);
+  monsterBodyMesh.position.set(0, 0, 3.5); // 讓身體往前延伸
+  monsterGroup.add(monsterBodyMesh);
 
+  // 3. 兩側胸鰭（掛在身體兩側）
   [-1, 1].forEach(side => {
+    const finGeo = new THREE.CircleGeometry(1, 16);
+    finGeo.rotateX(-Math.PI / 2);
+    finGeo.scale(1.2, 1, 3.0);
     const fin = new THREE.Mesh(finGeo, shadowMat);
-    fin.position.set(side * 3.2, 0, -2.0);
-    fin.rotation.y = side * 0.35;
+    fin.position.set(side * 3.6, 0, 4.0);
+    fin.rotation.y = side * 0.45;
     monsterGroup.add(fin);
     monsterFins.push({ mesh: fin, side: side });
   });
 
-  // 3. 巨型分叉尾鰭
-  const tailGeo = new THREE.PlaneGeometry(5.0, 4.5);
-  tailGeo.rotateX(-Math.PI / 2);
-  const tail = new THREE.Mesh(tailGeo, shadowMat);
-  tail.position.set(0, 0, -11.5);
-  monsterGroup.add(tail);
-  monsterFins.push({ mesh: tail, isTail: true });
+  // 4. 後段關節：尾部旋轉節點（掛載在身後接合處 Z = -1.5 處）
+  monsterTailPivot = new THREE.Group();
+  monsterTailPivot.position.set(0, 0, -1.5);
 
-  monsterGroup.position.set(0, -2.0, 0); // 位於海面下深處
-  monsterGroup.renderOrder = 0; // 確保在海面下渲染，產生透光陰影質感
+  // 5. 後段：尾部橢圓（長約 11m，寬約 3.8m，向後收束）
+  const tailGeo = new THREE.CircleGeometry(1, 32);
+  tailGeo.rotateX(-Math.PI / 2);
+  tailGeo.scale(1.9, 1, 5.5);
+  tailGeo.translate(0, 0, -4.5); // 將旋轉軸心移至接合根部
+
+  const monsterTailMesh = new THREE.Mesh(tailGeo, shadowMat);
+  monsterTailPivot.add(monsterTailMesh);
+
+  // 6. 尾端倒橫向水平尾鰭
+  const flukeGeo = new THREE.CircleGeometry(1, 16);
+  flukeGeo.rotateX(-Math.PI / 2);
+  flukeGeo.scale(3.5, 1, 1.2);
+  flukeGeo.translate(0, 0, -9.8);
+  const flukeMesh = new THREE.Mesh(flukeGeo, shadowMat);
+  monsterTailPivot.add(flukeMesh);
+
+  monsterGroup.add(monsterTailPivot);
+
+  monsterGroup.position.set(0, -2.0, 0); // 海面下深處
+  monsterGroup.renderOrder = 0;          // 確保在海水下方渲染
   monsterGroup.visible = false;
 
   scene.add(monsterGroup);
@@ -6480,19 +6500,22 @@ if (seaMonster) {
     monsterState.progress += monsterState.speed;
     const p = monsterState.progress;
 
-    // 線性插值計算位置
+// 線性插值計算位置
     seaMonster.position.lerpVectors(monsterState.startPos, monsterState.endPos, p);
 
-    // 巨大的深海身軀波浪起伏擺動 (Undulation)
-    const sway = Math.sin(time * 1.6) * 0.12;
-    seaMonster.rotation.y = monsterState.currentAngle + sway;
+    // 🌟 1. 身體橢圓：輕微緩慢晃動（振幅小）
+    const bodySway = Math.sin(time * 1.5) * 0.08;
+    seaMonster.rotation.y = monsterState.currentAngle + bodySway;
 
-    // 巨型鰭與尾部撥水拍打
+    // 🌟 2. 尾部橢圓關節：落後身體半拍（延遲 1.2 弧度）大幅甩動，模擬水流推進
+    if (monsterTailPivot) {
+      monsterTailPivot.rotation.y = Math.sin(time * 1.5 - 1.2) * 0.35;
+    }
+
+    // 🌟 3. 兩側胸鰭微幅拍打
     monsterFins.forEach(f => {
-      if (f.isTail) {
-        f.mesh.rotation.y = Math.sin(time * 2.2) * 0.28;
-      } else {
-        f.mesh.rotation.z = Math.sin(time * 1.8) * 0.2 * f.side;
+      if (!f.isTail) {
+        f.mesh.rotation.z = Math.sin(time * 1.8) * 0.15 * f.side;
       }
     });
 
