@@ -4045,22 +4045,22 @@ function createSportLandmark() {
 function createWastelandLandmark(islandId) {
       const group = new THREE.Group();
 
-// 🎃 如果是南邊荒島，生成萬聖節主題景觀
-if (islandId === 'wasteland_s') {
+// 🎃 如果是南邊荒島，生成萬聖節主題景觀（呆萌大笑南瓜）
+  if (islandId === 'wasteland_s') {
     const pumpkinMat = new THREE.MeshStandardMaterial({ 
-      color: 0xF97316,       // 稍微調亮帶粉嫩感的南瓜橘
+      color: 0xF97316, 
       roughness: 0.55, 
       flatShading: true 
     });
-    const stemMat = new THREE.MeshStandardMaterial({ color: 0x84CC16, roughness: 0.7 }); // 嫩青綠果蒂
+    const stemMat = new THREE.MeshStandardMaterial({ color: 0x84CC16, roughness: 0.7 });
     const faceMat = new THREE.MeshBasicMaterial({ 
-      color: 0x312E81,       // 依圖示採用深靛紫底色（透出神秘呆萌感）
+      color: 0x1E1B4B, // 深夜黑紫表情
       side: THREE.DoubleSide
     });
 
     const pumpkin = new THREE.Group();
 
-    // 1. 南瓜本體：更圓潤敦厚（微壓扁，下盤稍穩）
+    // 1. 南瓜本體
     const pMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(1.15, 1), pumpkinMat);
     pMesh.scale.set(1.3, 0.95, 1.25);
     pMesh.position.y = 0.88;
@@ -4068,53 +4068,57 @@ if (islandId === 'wasteland_s') {
     pMesh.receiveShadow = true;
     pumpkin.add(pMesh);
 
-    // 2. 嫩綠色果蒂（正上方短小垂直）
+    // 2. 嫩綠色果蒂
     const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 0.35, 6), stemMat);
-    stem.position.set(0, 1.82, -0.05);
+    stem.position.set(0, 1.82, 0);
     stem.rotation.z = -0.08;
     stem.castShadow = true;
     pumpkin.add(stem);
 
-    // 🌟 3. 瞇瞇眼形狀（上凸下微凹的彎月笑眼）
+    // 🌟 立體擠出參數（厚度 0.15m，避免陷在南瓜肉裡）
+    const extrudeSettings = {
+      depth: 0.15,
+      bevelEnabled: false
+    };
+
+    // 🌟 3. 瞇瞇眼（上凸下凹的微笑眼）
     const eyeShape = new THREE.Shape();
     eyeShape.moveTo(-0.16, 0);
-    eyeShape.quadraticCurveTo(0, 0.14, 0.16, 0);       // 上弧度
-    eyeShape.quadraticCurveTo(0, 0.05, -0.16, 0);      // 下緣弧度
-    const eyeGeo = new THREE.ShapeGeometry(eyeShape);
+    eyeShape.quadraticCurveTo(0, 0.15, 0.16, 0);
+    eyeShape.quadraticCurveTo(0, 0.05, -0.16, 0);
+    const eyeGeo = new THREE.ExtrudeGeometry(eyeShape, extrudeSettings);
 
-    [-0.32, 0.32].forEach(ex => {
+    [-0.34, 0.34].forEach(ex => {
       const eyeMesh = new THREE.Mesh(eyeGeo, faceMat);
-      eyeMesh.position.set(ex, 1.08, 1.24); // 貼在南瓜正面
+      // 🌟 面向北側鏡頭（Z 設為負值 -1.35，朝向群島與相機）
+      eyeMesh.position.set(ex, 1.05, -1.32);
       pumpkin.add(eyeMesh);
     });
 
-    // 🌟 4. 波浪大笑大嘴巴（Shape 繪製上波浪、下圓弧）
+    // 🌟 4. 波浪大笑嘴巴（上唇波浪三連峰，下唇大半圓）
     const mouthShape = new THREE.Shape();
-    // 從左嘴角出發
-    mouthShape.moveTo(-0.46, 0.12);
-    // 上唇雙波浪谷（可愛的三峰波浪）
-    mouthShape.bezierCurveTo(-0.25, 0.16, -0.15, 0.02, 0, 0.05);
-    mouthShape.bezierCurveTo(0.15, 0.02, 0.25, 0.16, 0.46, 0.12);
-    // 右嘴角向下繞大半圓弧到底部
-    mouthShape.quadraticCurveTo(0.48, -0.22, 0.12, -0.28);
-    // 下唇微凹小齒痕或平滑收尾
-    mouthShape.quadraticCurveTo(0, -0.25, -0.12, -0.28);
-    mouthShape.quadraticCurveTo(-0.48, -0.22, -0.46, 0.12);
+    mouthShape.moveTo(-0.48, 0.10);
+    mouthShape.bezierCurveTo(-0.25, 0.16, -0.15, 0.01, 0, 0.04);
+    mouthShape.bezierCurveTo(0.15, 0.01, 0.25, 0.16, 0.48, 0.10);
+    mouthShape.quadraticCurveTo(0.50, -0.28, 0.15, -0.32);
+    mouthShape.quadraticCurveTo(0, -0.26, -0.15, -0.32);
+    mouthShape.quadraticCurveTo(-0.50, -0.28, -0.48, 0.10);
 
-    const mouthGeo = new THREE.ShapeGeometry(mouthShape);
+    const mouthGeo = new THREE.ExtrudeGeometry(mouthShape, extrudeSettings);
     const mouthMesh = new THREE.Mesh(mouthGeo, faceMat);
-    mouthMesh.position.set(0, 0.72, 1.25);
+    // 🌟 面向北側鏡頭（Z 設為負值 -1.35）
+    mouthMesh.position.set(0, 0.72, -1.33);
     pumpkin.add(mouthMesh);
 
-    // 5. 內部溫暖燭火光源（從大笑的大嘴透光）
+    // 5. 內部溫暖燭火光源
     const candleLight = new THREE.PointLight(0xF59E0B, 1.6, 6);
-    candleLight.position.set(0, 0.85, 0.95);
+    candleLight.position.set(0, 0.85, -0.9);
     pumpkin.add(candleLight);
     halloweenPumpkins.push(candleLight);
 
     group.add(pumpkin);
 
-    // 6. 散落周邊的可愛小南瓜（同樣採用微縮尺寸與呼應配色）
+    // 6. 散落周邊的小南瓜
     [[-1.5, 0.35, 0.9, 0.5], [1.4, 0.28, -0.8, 0.4]].forEach(([px, py, pz, s]) => {
       const smP = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 1), pumpkinMat);
       smP.scale.set(1.2, 0.9, 1.15);
