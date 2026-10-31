@@ -1084,14 +1084,17 @@
         <h3 style="margin-bottom: 6px; font-weight: 800; color: #c2410c;">萬聖南瓜怪奇荒原</h3>
         <p style="font-size: 0.86rem; line-height: 1.6; color: #7c2d12;">巨大的南瓜燈籠在黑夜中透出溫暖燭光！寫下一句萬聖節英語祝福語，為全班注入共創能量！</p>
       </div>
-      <div id="task-content-wasteland_s">
+<div id="task-content-wasteland_s">
         <div class="form-group">
           <label>👻 萬聖節常用英語</label>
           <input type="text" id="halloween-greeting" placeholder="例如: 不給糖就搗蛋！的英語怎麼寫？" maxlength="25">
         </div>
         <button class="btn-action btn-red" style="background: linear-gradient(135deg, #ea580c, #c2410c);" onclick="submitHalloween()">🎃 完成萬聖節任務 (+3 能量)</button>
       </div>
-    </div>
+    </div> <!-- panel-wasteland_s 結束 -->
+
+  </div> <!-- 🌟 關鍵補上：這行閉合 #side-drawer 抽屜容器，不讓後面的彈窗被包進去！ -->
+
   <!-- 教師控制台彈窗 -->
   <div id="modal-teacher" class="modal-overlay hidden">
     <div class="modal-card">
@@ -2593,11 +2596,24 @@ function checkDailyLimit(islandId) {
       }
     }
 
-    // 🌟 3. 點擊「🔑 教師控制台」時觸發 Google 登入
+// 🌟 點擊「🔑 教師控制台」時觸發
     document.getElementById('teacher-menu-btn').addEventListener('click', async () => {
       const currentUser = firebase.auth().currentUser;
+      
+      const openAdminModal = () => {
+        // 先收合可能開啟的側邊抽屜，防止遮蔽
+        if (typeof closeDrawer === 'function') closeDrawer();
+        if (typeof toggleBracketSidebar === 'function') toggleBracketSidebar(false);
+
+        const modal = document.getElementById('modal-teacher');
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.style.zIndex = "99999"; // 強制置於最上層
+        }
+      };
+
       if (currentUser && ALLOWED_ADMIN_EMAILS.includes(currentUser.email)) {
-        document.getElementById('modal-teacher').classList.remove('hidden');
+        openAdminModal();
         return;
       }
 
@@ -2605,8 +2621,8 @@ function checkDailyLimit(islandId) {
       const isAuth = await loginWithGoogleAdmin();
 
       if (isAuth) {
-        document.getElementById('modal-teacher').classList.remove('hidden');
         showLiveBanner("🔑 Google 管理員認證成功！已解鎖管理後台。");
+        openAdminModal();
       }
     });
 
