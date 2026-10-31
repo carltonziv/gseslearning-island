@@ -13,6 +13,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1891,24 +1892,7 @@ function checkDailyLimit(islandId) {
       } catch(e) {}
     }
 
-    async function verifyTeacherPasswordWithBackend(inputPwd) {
-      if (!inputPwd) return false;
-      try {
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            type: 'admin_verify_password',
-            password: inputPwd
-          })
-        });
-        const result = await res.json();
-        return result && result.authorized === true;
-      } catch (err) {
-        alert('雲端安全驗證連線失敗，請檢查網路！');
-        return false;
-      }
-    }
+
 
     let energyOrbs = [];
     function spawnEnergyOrb(fromPos, toPos) {
@@ -2577,17 +2561,52 @@ function checkDailyLimit(islandId) {
     // ==========================================
     // 8. 教師後台控制邏輯
     // ==========================================
-    document.getElementById('teacher-menu-btn').addEventListener('click', async () => {
-      const pwd = prompt('請輸入教師管理密碼：');
-      if (pwd === null) return;
+// 🌟 1. 設定允許開啟控制台的教師 Google 信箱白名單（請修改信箱）
+    const ALLOWED_ADMIN_EMAILS = [
+      "carltonziv@gmail.com" // 👈 換成您自己的 Google 信箱
+    ];
 
-      showLiveBanner("🔒 正在向雲端核心驗證管理員身分...");
-      const isAuth = await verifyTeacherPasswordWithBackend(pwd);
+    // 🌟 2. 透過 Google 帳號彈窗登入
+    async function loginWithGoogleAdmin() {
+      if (!firebase.auth) {
+        alert("Firebase Auth 模組尚未成功載入！");
+        return false;
+      }
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+        
+        if (user && ALLOWED_ADMIN_EMAILS.includes(user.email)) {
+          return true;
+        } else {
+          alert(`❌ 身分不符：帳號【${user.email}】非授權之教師管理員！`);
+          await firebase.auth().signOut();
+          return false;
+        }
+      } catch (err) {
+        console.warn("Google 登入中斷或失敗:", err);
+        if (err.code !== "auth/popup-closed-by-user") {
+          alert("登入驗證失敗：" + err.message);
+        }
+        return false;
+      }
+    }
+
+    // 🌟 3. 點擊「🔑 教師控制台」時觸發 Google 登入
+    document.getElementById('teacher-menu-btn').addEventListener('click', async () => {
+      const currentUser = firebase.auth().currentUser;
+      if (currentUser && ALLOWED_ADMIN_EMAILS.includes(currentUser.email)) {
+        document.getElementById('modal-teacher').classList.remove('hidden');
+        return;
+      }
+
+      showLiveBanner("🔒 請在彈跳視窗中使用 Google 帳號登入...");
+      const isAuth = await loginWithGoogleAdmin();
 
       if (isAuth) {
         document.getElementById('modal-teacher').classList.remove('hidden');
-      } else {
-        alert('❌ 密碼錯誤，身分認證失敗！');
+        showLiveBanner("🔑 Google 管理員認證成功！已解鎖管理後台。");
       }
     });
 
@@ -2624,52 +2643,46 @@ function checkDailyLimit(islandId) {
     }
 
 function adminClearAllOnlinePlayers() {
-  if (!confirm('⚠️ 確定要清除所有在線學生的 NPC 嗎？\n這將重置所有在線玩家模型，並清理雲端 online_players 節點！')) {
-    return;
-  }
-
-  if (!db) return;
-
-  // 1. 先讀取目前所有在線的 player_id
-  db.ref('online_players').once('value')
-    .then(snapshot => {
-      if (!snapshot.exists()) {
-        alert('目前雲端沒有任何在線玩家資料！');
+      if (!confirm('⚠️ 確定要清除所有在線學生的 NPC 嗎？\n這將重置所有在線玩家模型，並清理雲端 online_players 節點！')) {
         return;
       }
 
-      // 2. 收集所有子節點的刪除 Promise（針對個別 $player_id 執行 remove，符合規則中的權限）
-      const deletePromises = [];
-      snapshot.forEach(childSnap => {
-        deletePromises.push(childSnap.ref.remove());
-      });
+      if (!db) return;
 
-      return Promise.all(deletePromises);
-    })
-    .then(() => {
-      // 3. 本機畫面即時清除其他同學模型
-      if (typeof otherPlayers !== 'undefined' && otherPlayers) {
-        Object.keys(otherPlayers).forEach(key => {
-          if (otherPlayers[key] && otherPlayers[key].mesh) {
-            scene.remove(otherPlayers[key].mesh);
+      db.ref('online_players').once('value')
+        .then(snapshot => {
+          if (!snapshot.exists()) {
+            alert('目前雲端沒有任何在線玩家資料！');
+            return;
           }
+
+          const deletePromises = [];
+          snapshot.forEach(childSnap => {
+            deletePromises.push(childSnap.ref.remove());
+          });
+
+          return Promise.all(deletePromises);
+        })
+        .then(() => {
+          if (typeof otherPlayers !== 'undefined' && otherPlayers) {
+            Object.keys(otherPlayers).forEach(key => {
+              if (otherPlayers[key] && otherPlayers[key].mesh) {
+                scene.remove(otherPlayers[key].mesh);
+              }
+            });
+            otherPlayers = {};
+          }
+
+          if (typeof removePlayerCharacter === 'function') {
+            removePlayerCharacter();
+          }
+
+          alert('✅ 已成功清除所有線上使用者 NPC！所有在線畫面已同步重置。');
+        })
+        .catch(err => {
+          alert('清除失敗，請檢查網路或權限：' + err.message);
         });
-        otherPlayers = {};
-      }
-
-      // 4. 重置本機自己的角色模型
-      if (typeof removePlayerCharacter === 'function') {
-        removePlayerCharacter();
-      }
-
-      alert('✅ 已成功清除所有線上使用者 NPC！所有在線畫面已同步重置。');
-    })
-    .catch(err => {
-      alert('清除失敗，請檢查網路或權限：' + err.message);
-    });
-}
     }
-
 
     function adminRemoveChampionSignboard() {
       if (confirm('確定要提前移除戰鬥陀螺島前方的冠軍木頭告示牌嗎？')) {
