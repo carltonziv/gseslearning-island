@@ -1878,9 +1878,15 @@ sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStud
       // 1. 優先關閉視窗，確保 UI 即時回應不延遲
       document.getElementById('login-modal').classList.add('hidden');
       startBGM();
+
+      // 🌟 在這裡加入步驟 3：確保右側抽屜與側欄關閉，不讓透明遮罩卡住觸控操作
+      if (typeof closeDrawer === 'function') closeDrawer();
+      if (typeof toggleBracketSidebar === 'function') toggleBracketSidebar(false);
+
       // 2. 防呆保險：重置鏡頭鎖定狀態，避免登入前遺留的運鏡狀態卡死畫面
       isFocusing = false;
       controls.enabled = true;
+      controls.update();
 
       // 3. 生成本機玩家角色（3D 核心優先）
       spawnPlayerCharacter();
