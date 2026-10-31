@@ -2623,27 +2623,51 @@ function checkDailyLimit(islandId) {
       input.value = '';
     }
 
-    function adminClearAllOnlinePlayers() {
-      if (!confirm('⚠️ 確定要清除所有在線學生的 NPC 嗎？\n這將重置所有在線玩家模型，並清理雲端 online_players 節點！')) return;
+function adminClearAllOnlinePlayers() {
+  if (!confirm('⚠️ 確定要清除所有在線學生的 NPC 嗎？\n這將重置所有在線玩家模型，並清理雲端 online_players 節點！')) {
+    return;
+  }
 
-      if (db) {
-        db.ref('online_players').remove()
-          .then(() => {
-            if (typeof otherPlayers !== 'undefined' && otherPlayers) {
-              Object.keys(otherPlayers).forEach(key => {
-                if (otherPlayers[key] && otherPlayers[key].mesh) {
-                  scene.remove(otherPlayers[key].mesh);
-                }
-              });
-              otherPlayers = {};
-            }
-            removePlayerCharacter();
-            alert('✅ 已成功清除所有線上使用者 NPC！所有在線畫面已同步重置。');
-          })
-          .catch(err => {
-            alert('清除失敗，請檢查網路或權限：' + err.message);
-          });
+  if (!db) return;
+
+  // 1. 先讀取目前所有在線的 player_id
+  db.ref('online_players').once('value')
+    .then(snapshot => {
+      if (!snapshot.exists()) {
+        alert('目前雲端沒有任何在線玩家資料！');
+        return;
       }
+
+      // 2. 收集所有子節點的刪除 Promise（針對個別 $player_id 執行 remove，符合規則中的權限）
+      const deletePromises = [];
+      snapshot.forEach(childSnap => {
+        deletePromises.push(childSnap.ref.remove());
+      });
+
+      return Promise.all(deletePromises);
+    })
+    .then(() => {
+      // 3. 本機畫面即時清除其他同學模型
+      if (typeof otherPlayers !== 'undefined' && otherPlayers) {
+        Object.keys(otherPlayers).forEach(key => {
+          if (otherPlayers[key] && otherPlayers[key].mesh) {
+            scene.remove(otherPlayers[key].mesh);
+          }
+        });
+        otherPlayers = {};
+      }
+
+      // 4. 重置本機自己的角色模型
+      if (typeof removePlayerCharacter === 'function') {
+        removePlayerCharacter();
+      }
+
+      alert('✅ 已成功清除所有線上使用者 NPC！所有在線畫面已同步重置。');
+    })
+    .catch(err => {
+      alert('清除失敗，請檢查網路或權限：' + err.message);
+    });
+}
     }
 
     function adminRemoveChampionSignboard() {
