@@ -2630,7 +2630,7 @@ function adminClearAllOnlinePlayers() {
 
   if (!db) return;
 
-  // 1. 讀取目前在線玩家清單
+  // 1. 先讀取目前所有在線的 player_id
   db.ref('online_players').once('value')
     .then(snapshot => {
       if (!snapshot.exists()) {
@@ -2638,7 +2638,7 @@ function adminClearAllOnlinePlayers() {
         return;
       }
 
-      // 2. 針對個別 $player_id 執行 remove()，符合規則中的子節點寫入權限
+      // 2. 收集所有子節點的刪除 Promise（針對個別 $player_id 執行 remove，符合規則中的權限）
       const deletePromises = [];
       snapshot.forEach(childSnap => {
         deletePromises.push(childSnap.ref.remove());
@@ -2668,6 +2668,8 @@ function adminClearAllOnlinePlayers() {
       alert('清除失敗，請檢查網路或權限：' + err.message);
     });
 }
+    }
+
 
     function adminRemoveChampionSignboard() {
       if (confirm('確定要提前移除戰鬥陀螺島前方的冠軍木頭告示牌嗎？')) {
