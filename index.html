@@ -4043,7 +4043,7 @@ function createSportLandmark() {
     // ==========================================
     let halloweenPumpkins = [];
     let pumpkinEyesMat = null;    // 🌟 記錄眼睛/嘴巴的發光材質
-let mainPumpkinGroup = null;  // 🌟 記錄大南瓜的世界座標群組
+    let mainPumpkinGroup = null;  // 🌟 記錄大南瓜的世界座標群組
 function createWastelandLandmark(islandId) {
       const group = new THREE.Group();
 
@@ -4076,28 +4076,26 @@ function createWastelandLandmark(islandId) {
     stem.castShadow = true;
     pumpkin.add(stem);
 
-    // 🌟 3. 經典邪惡三角形眼睛（微向內傾斜，呈現兇狠奸笑怒目感）
+    // 🌟 3. 經典邪惡三角形眼睛
     [-1, 1].forEach(side => {
       const eyeGeo = new THREE.ConeGeometry(0.18, 0.22, 3);
-      eyeGeo.rotateX(Math.PI / 2); // 尖端朝前
-      const eyeMesh = new THREE.Mesh(eyeGeo, evilGlowMat);
-      // X 軸向左右分開，Z 軸向前凸出 1.25m
+      eyeGeo.rotateX(Math.PI / 2);
+      const eyeMesh = new THREE.Mesh(eyeGeo, pumpkinEyesMat); // 🌟 改為 pumpkinEyesMat
       eyeMesh.position.set(side * 0.32, 1.05, 1.22);
-      eyeMesh.rotation.z = -side * 0.35; // 雙眼向內傾斜
+      eyeMesh.rotation.z = -side * 0.35;
       pumpkin.add(eyeMesh);
     });
 
     // 🌟 4. 經典邪惡小三角鼻子
     const noseGeo = new THREE.ConeGeometry(0.10, 0.15, 3);
     noseGeo.rotateX(Math.PI / 2);
-    const noseMesh = new THREE.Mesh(noseGeo, evilGlowMat);
+    const noseMesh = new THREE.Mesh(noseGeo, pumpkinEyesMat); // 🌟 改為 pumpkinEyesMat
     noseMesh.position.set(0, 0.88, 1.28);
     pumpkin.add(noseMesh);
 
-    // 🌟 5. 邪惡鋸齒大嘴巴（厚實鋸齒塊，透出金黃燭光）
+    // 🌟 5. 邪惡鋸齒大嘴巴
     const mouthGroup = new THREE.Group();
-    // 下排彎月鋸齒底
-    const mouthBase = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.18, 0.18), evilGlowMat);
+    const mouthBase = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.18, 0.18), pumpkinEyesMat); // 🌟 改為 pumpkinEyesMat
     mouthBase.position.set(0, 0.65, 1.22);
     mouthGroup.add(mouthBase);
 
