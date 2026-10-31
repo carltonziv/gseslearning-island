@@ -5757,8 +5757,8 @@ function triggerSeaMonsterEncounter() {
       dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 0.75);
       dirLight.position.set(15, 48, 25);
       dirLight.castShadow = true;
-      dirLight.shadow.mapSize.width = 2048;  // 解析度提升
-      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.mapSize.width = 1024;  // 解析度提升
+      dirLight.shadow.mapSize.height = 1024;
       dirLight.shadow.bias = -0.0005;
 
       const d = 32; // 覆蓋左右正負 32 米，完整包覆全島與軌道
