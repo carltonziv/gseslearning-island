@@ -2050,12 +2050,11 @@ function checkDailyLimit(islandId) {
         }
       }
 
-      // 🌟 3. 兩座荒地雷達判定（常態維持開放探索狀態）
-      ['wasteland_n', 'wasteland_s'].forEach(id => {
-        const wnElem = document.getElementById('mini-wasteland_n');
-      if (wnElem) wnElem.setAttribute('class', 'minimap-island minimap-open');
-        }
-      });
+      // 🌟 3. 北荒地雷達判定（常態維持開放探索狀態）
+      const wnElem = document.getElementById('mini-wasteland_n');
+      if (wnElem) {
+        wnElem.setAttribute('class', 'minimap-island minimap-open');
+      }
 
       updateSportTabStatus();
     }
