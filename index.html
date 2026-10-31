@@ -2009,7 +2009,8 @@ function checkDailyLimit(islandId) {
         { id: 'nature', limit: 1 },
         { id: 'sport', limit: 1 },
         { id: 'reading', limit: 3 },
-        { id: 'civics', limit: 1 }
+        { id: 'civics', limit: 1 },
+        { id: 'wasteland_s', limit: 1 }
       ];
 
       islands.forEach(item => {
@@ -2051,9 +2052,8 @@ function checkDailyLimit(islandId) {
 
       // 🌟 3. 兩座荒地雷達判定（常態維持開放探索狀態）
       ['wasteland_n', 'wasteland_s'].forEach(id => {
-        const wElem = document.getElementById(`mini-${id}`);
-        if (wElem) {
-          wElem.setAttribute('class', 'minimap-island minimap-open');
+        const wnElem = document.getElementById('mini-wasteland_n');
+      if (wnElem) wnElem.setAttribute('class', 'minimap-island minimap-open');
         }
       });
 
@@ -4027,6 +4027,12 @@ function createSportLandmark() {
       temple.add(flatRoofPlate);
 
       temple.scale.setScalar(1.0);
+      temple.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
       group.add(temple);
 
       registerObstacle('civics', 0, 0, 2.5);
@@ -5717,9 +5723,17 @@ function triggerSeaMonsterEncounter() {
       dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 0.75);
       dirLight.position.set(15, 48, 25);
       dirLight.castShadow = true;
-      dirLight.shadow.mapSize.width = 1024;
-      dirLight.shadow.mapSize.height = 1024;
+      dirLight.shadow.mapSize.width = 2048;  // 解析度提升
+      dirLight.shadow.mapSize.height = 2048;
       dirLight.shadow.bias = -0.0005;
+
+      const d = 32; // 覆蓋左右正負 32 米，完整包覆全島與軌道
+      dirLight.shadow.camera.left = -d;
+      dirLight.shadow.camera.right = d;
+      dirLight.shadow.camera.top = d;
+      dirLight.shadow.camera.bottom = -d;
+      dirLight.shadow.camera.near = 5;
+      dirLight.shadow.camera.far = 120;
       scene.add(dirLight);
 
       const planetConfigs = [
