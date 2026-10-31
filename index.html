@@ -1075,12 +1075,15 @@
     </div>
 
     <div id="panel-wasteland_s" style="display:none;">
+      <div id="pause-notice-wasteland_s" class="paused-banner" style="display:none;">
+        🌙 夜間休息時間（22:00 - 07:00），本島任務已關閉，請明天 07:00 後再來挑戰！
+      </div>
       <div style="background: linear-gradient(135deg, #ffedd5, #fed7aa); border: 2px dashed #ea580c; border-radius: 16px; padding: 16px; text-align: center; color: #9a3412; margin-bottom: 16px;">
         <span style="font-size: 2.4rem; display: block; margin-bottom: 6px;">🎃</span>
         <h3 style="margin-bottom: 6px; font-weight: 800; color: #c2410c;">萬聖南瓜怪奇荒原</h3>
         <p style="font-size: 0.86rem; line-height: 1.6; color: #7c2d12;">巨大的南瓜燈籠在黑夜中透出溫暖燭光！寫下一句萬聖節英語祝福語，為全班注入共創能量！</p>
       </div>
-      <div id="task-content-halloween">
+      <div id="task-content-wasteland_s">
         <div class="form-group">
           <label>👻 萬聖節常用英語</label>
           <input type="text" id="halloween-greeting" placeholder="例如: 不給糖就搗蛋！的英語怎麼寫？" maxlength="25">
@@ -1088,8 +1091,6 @@
         <button class="btn-action btn-red" style="background: linear-gradient(135deg, #ea580c, #c2410c);" onclick="submitHalloween()">🎃 完成萬聖節任務 (+3 能量)</button>
       </div>
     </div>
-  </div>
-
   <!-- 教師控制台彈窗 -->
   <div id="modal-teacher" class="modal-overlay hidden">
     <div class="modal-card">
@@ -1755,7 +1756,7 @@
       });
     }
 
-    function checkDailyLimit(islandId) {
+function checkDailyLimit(islandId) {
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
       if (isTournamentActive && islandId !== 'beyblade') {
         alert('⚔️ 目前為戰鬥陀螺大賽期間，本島任務暫停，請前往戰鬥陀螺島！');
@@ -1765,7 +1766,7 @@
       const currentHour = new Date().getHours();
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
       if (isNightClosed && islandId !== 'beyblade') {
-        alert('🌙 夜間休息時間（22:00 - 07:00），周圍四島任務已關閉，請明天 07:00 後再來挑戰！');
+        alert('🌙 夜間休息時間（22:00 - 07:00），各島任務已關閉，請明天 07:00 後再來挑戰！');
         return false;
       }
 
@@ -2351,7 +2352,7 @@
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
-      ['nature', 'sport', 'civics', 'reading'].forEach(id => {
+      ['nature', 'sport', 'civics', 'reading', 'wasteland_s'].forEach(id => {
         const pauseNotice = document.getElementById(`pause-notice-${id}`);
         const taskContent = document.getElementById(`task-content-${id}`);
         if (pauseNotice && taskContent) {
