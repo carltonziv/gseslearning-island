@@ -5732,7 +5732,7 @@ function triggerSeaMonsterEncounter() {
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
@@ -6835,9 +6835,7 @@ if (seaMonster) {
           }
 
           posAttr.needsUpdate = true;
-          oceanMesh.geometry.computeVertexNormals();
-
-
+          
         }
 
 
