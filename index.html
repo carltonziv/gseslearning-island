@@ -4042,6 +4042,8 @@ function createSportLandmark() {
     // 🌟 貼在這裡：荒地專屬地貌工廠函式
     // ==========================================
     let halloweenPumpkins = [];
+    let pumpkinEyesMat = null;    // 🌟 記錄眼睛/嘴巴的發光材質
+let mainPumpkinGroup = null;  // 🌟 記錄大南瓜的世界座標群組
 function createWastelandLandmark(islandId) {
       const group = new THREE.Group();
 
@@ -4053,7 +4055,7 @@ function createWastelandLandmark(islandId) {
       flatShading: true 
     });
     const stemMat = new THREE.MeshStandardMaterial({ color: 0x15803D, roughness: 0.8 }); // 深綠扭曲果蒂
-    const evilGlowMat = new THREE.MeshBasicMaterial({ 
+    pumpkinEyesMat = new THREE.MeshBasicMaterial({
       color: 0xFEF08A // 內透發光的邪惡金黃亮眼與牙齒
     });
 
@@ -4124,6 +4126,7 @@ function createWastelandLandmark(islandId) {
     pumpkin.rotation.y = Math.PI;
 
     group.add(pumpkin);
+    mainPumpkinGroup = pumpkin;
 
     // 7. 散落周邊的小南瓜
     [[-1.5, 0.35, 0.9, 0.5], [1.4, 0.28, -0.8, 0.4]].forEach(([px, py, pz, s]) => {
@@ -6715,10 +6718,46 @@ villagers.push({
         windTurbineBlades.forEach(blade => {
           blade.rotation.z += 0.04;
         });
-        // 🎃 南瓜內部燭火微弱閃爍
-halloweenPumpkins.forEach(light => {
-  light.intensity = 1.3 + Math.sin(time * 8.0) * 0.25 + (Math.random() - 0.5) * 0.15;
-});
+        // 🎃 萬聖南瓜日常燭光與台車經過互動閃爍
+        if (mainPumpkinGroup && cartGroup) {
+          // 取得南瓜與台車的世界座標並計算水平距離
+          const pPos = new THREE.Vector3();
+          const cPos = new THREE.Vector3();
+          mainPumpkinGroup.getWorldPosition(pPos);
+          cartGroup.getWorldPosition(cPos);
+
+          const distToCart = Math.hypot(pPos.x - cPos.x, pPos.z - cPos.z);
+
+          // 台車軌道在南島外圍約 8~12 米處，當距離小於 14 米時判定為「列車經過接近中」
+          const isNearCart = distToCart < 14.0;
+
+          if (isNearCart) {
+            // 🌟 台車接近中：眼睛光芒急促高頻閃爍（靈異警覺感）
+            const flickerWave = Math.sin(time * 24.0) * 0.5 + 0.5; // 快速閃爍波
+            const spike = Math.random() > 0.4 ? 1.0 : 0.2;        // 隨機電流抽搐感
+
+            // 調整內部點光源強度（由原本的 1.3 暴增至 2.4 ~ 3.2）
+            halloweenPumpkins.forEach(light => {
+              light.intensity = 2.2 + flickerWave * 0.8 * spike;
+              light.color.setHex(spike > 0.5 ? 0xFFE066 : 0xEA580C); // 金黃 ⇋ 邪惡深橘交錯
+            });
+
+            // 調整眼部與嘴部材質亮度色澤（自發光加強）
+            if (pumpkinEyesMat) {
+              pumpkinEyesMat.color.setHex(flickerWave > 0.3 ? 0xFFFFAA : 0xF59E0B);
+            }
+          } else {
+            // 平常狀態：維持柔和微弱的燭火自然呼吸
+            const normalFlicker = 1.3 + Math.sin(time * 8.0) * 0.22 + (Math.random() - 0.5) * 0.12;
+            halloweenPumpkins.forEach(light => {
+              light.intensity = normalFlicker;
+              light.color.setHex(0xF59E0B);
+            });
+            if (pumpkinEyesMat) {
+              pumpkinEyesMat.color.setHex(0xFEF08A);
+            }
+          }
+        }
 
         // 🌟 深海巨獸定時出沒與擺尾游動更新
 if (seaMonster) {
