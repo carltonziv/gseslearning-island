@@ -1235,13 +1235,21 @@
     </div>
 
     <div id="panel-wasteland_s" style="display:none;">
-      <div style="background: linear-gradient(135deg, #fef3c7, #fed7aa); border: 2px dashed #d97706; border-radius: 16px; padding: 18px; text-align: center; color: #9a3412;">
-        <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🪨</span>
-        <h3 style="margin-bottom: 6px; font-weight: 800;">風蝕石原荒地</h3>
-        <p style="font-size: 0.88rem; line-height: 1.6; color: #7c2d12;">
-          狂風不斷吹拂著這片沉睡的土地，偶爾能看見枯黃的雜草搖曳。<br>
-          據說龜山台車經過這裡時總會放慢速度，誰也不知道未來這裡會誕生什麼樣的奇蹟！
+      <div style="background: linear-gradient(135deg, #ffedd5, #fed7aa); border: 2px dashed #ea580c; border-radius: 16px; padding: 16px; text-align: center; color: #9a3412; margin-bottom: 16px;">
+        <span style="font-size: 2.4rem; display: block; margin-bottom: 6px;">🎃</span>
+        <h3 style="margin-bottom: 6px; font-weight: 800; color: #c2410c;">萬聖南瓜怪奇荒原</h3>
+        <p style="font-size: 0.86rem; line-height: 1.6; color: #7c2d12;">
+          巨大的南瓜燈籠在黑夜中透出溫暖燭光！<br>
+          寫下一句萬聖節祝福或成語，點亮南瓜核心為全班注入共創能量！
         </p>
+      </div>
+
+      <div id="task-content-halloween">
+        <div class="form-group">
+          <label>👻 萬聖節創意祝福或悄悄話</label>
+          <input type="text" id="halloween-greeting" placeholder="例如: 不給糖就搗蛋！萬聖節快樂！" maxlength="25">
+        </div>
+        <button class="btn-action btn-red" style="background: linear-gradient(135deg, #ea580c, #c2410c); box-shadow: 0 4px 0 #9a3412;" onclick="submitHalloween()">🎃 完成萬聖探索打卡 (+5 能量)</button>
       </div>
     </div>
  
@@ -1317,7 +1325,7 @@
       { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', color: 0xE9D8F4, pos: [-7.8, 0, 4.5], radius: 4.8 },
       { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xE8B4B8, pos: [7.8, 0, 4.5], radius: 4.8 },
       { id: 'wasteland_n', title: '荒地', subtitle: '這片土地沉睡已久，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [0, 0, -9.0], radius: 4.8 },
-      { id: 'wasteland_s', title: '荒地', subtitle: '狂風吹過揚起陣陣塵土，據說地下深處隱藏著未知的古代祕密？', color: 0xC2B280, pos: [0, 0, 9.0], radius: 4.8 }
+      { id: 'wasteland_s', title: '🎃 萬聖南瓜祕境', subtitle: '沉睡的南瓜荒原甦醒了！探險家快來完成不給糖就搗蛋挑戰！', color: 0x5C4638, pos: [0, 0, 9.0], radius: 4.8 }
     ];
 
     // ==========================================
@@ -2351,6 +2359,40 @@ if (liveFeedRef) {
       document.getElementById('chk-bottom').checked = false;
       document.getElementById('chk-trash').checked = false;
       document.getElementById('civics-verifier').value = '';
+    }
+
+    // 🎃 萬聖節南島打卡專屬函式（貼在這裡）
+    function submitHalloween() {
+      if (!checkDailyLimit('wasteland_s')) return;
+
+      const input = document.getElementById('halloween-greeting');
+      const text = input ? input.value.trim() : '';
+
+      if (!text) {
+        alert('請先寫下一句萬聖節祝福或搗蛋悄悄話喔！');
+        return;
+      }
+
+      // 萬聖節專屬配色彩帶（南瓜橘、神秘紫、午夜黑、亮金）
+      confetti({
+        particleCount: 85,
+        spread: 80,
+        origin: { y: 0.65 },
+        colors: ['#ea580c', '#9333ea', '#1e293b', '#facc15']
+      });
+
+      rewardCheckin('wasteland_s', '萬聖南瓜祕境', `完成了萬聖探索打卡【${text}】`, {
+        type: 'task_complete',
+        seatNumber: currentStudent.seatNumber,
+        studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+        islandTitle: '萬聖南瓜祕境',
+        taskTitle: '萬聖節探索打卡',
+        points: 5,
+        detail1: text,
+        verifier: '南瓜南島認證'
+      }, 5);
+
+      if (input) input.value = '';
     }
 
     // 🌟 切換閱讀島分頁
@@ -3994,47 +4036,91 @@ function createSportLandmark() {
     // ==========================================
     // 🌟 貼在這裡：荒地專屬地貌工廠函式
     // ==========================================
+    let halloweenPumpkins = []
 function createWastelandLandmark(islandId) {
       const group = new THREE.Group();
-      
-      // 1. 中央風化大岩石（尺寸縮小一半：半徑 1.2 -> 0.6，高度貼地調整為 0.3）
-      const rockMat = new THREE.MeshStandardMaterial({ color: 0x8C7B6B, roughness: 0.9, flatShading: true });
-      const mainRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6, 0), rockMat);
-      mainRock.scale.set(1.4, 0.9, 1.1);
-      mainRock.position.set(0, 0.3, 0); // 🌟 配合半徑縮小，貼地高度降為 0.3m
-      mainRock.rotation.set(0.2, 0.5, 0.1);
-      mainRock.castShadow = true;
-      group.add(mainRock);
 
-      // 散落碎石
-      [[-1.1, 0.25, 0.8], [0.9, 0.2, -0.7], [-0.6, 0.18, -1.0]].forEach(pos => {
-        const smRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.35, 0), rockMat);
-        smRock.position.set(...pos);
-        smRock.rotation.set(Math.random(), Math.random(), 0);
-        smRock.castShadow = true;
-        group.add(smRock);
-      });
+// 🎃 如果是南邊荒島，生成萬聖節主題景觀
+  if (islandId === 'wasteland_s') {
+    const pumpkinMat = new THREE.MeshStandardMaterial({ 
+      color: 0xEA580C, 
+      roughness: 0.6, 
+      flatShading: true 
+    });
+    const stemMat = new THREE.MeshStandardMaterial({ color: 0x15803D, roughness: 0.8 });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xFEF08A }); // 內透光亮眼
 
-      // 2. 稀疏的枯草簇
-      const dryGrassMat = new THREE.MeshStandardMaterial({ color: 0x968B4B, roughness: 0.85, flatShading: true });
-      for (let g = 0; g < 6; g++) {
-        const grassTuft = new THREE.Group();
-        const a = (g / 6) * Math.PI * 2;
-        const dist = 1.6 + (g % 2) * 0.5;
-        grassTuft.position.set(Math.cos(a) * dist, 0, Math.sin(a) * dist);
+    // 1. 中央巨型南瓜本體
+    const pumpkin = new THREE.Group();
+    const pMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(1.1, 0), pumpkinMat);
+    pMesh.scale.set(1.2, 0.95, 1.2);
+    pMesh.position.y = 0.9;
+    pMesh.castShadow = true;
+    pMesh.receiveShadow = true;
+    pumpkin.add(pMesh);
 
-        for (let b = 0; b < 4; b++) {
-          const blade = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.45, 4), dryGrassMat);
-          blade.position.set((b - 1.5) * 0.05, 0.22, 0);
-          blade.rotation.z = (b - 1.5) * 0.2;
-          grassTuft.add(blade);
-        }
-        group.add(grassTuft);
-      }
+    // 南瓜蒂
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.45, 6), stemMat);
+    stem.position.set(0, 1.85, 0);
+    stem.rotation.z = 0.2;
+    stem.castShadow = true;
+    pumpkin.add(stem);
 
-registerObstacle(islandId, 0, 0, 0.9); // 🌟 隨岩石縮小，將防撞半徑調為 0.9m，活動更自然
-      return group;
-    }
+    // 發光眼睛與嘴巴（貼合南瓜正面）
+    [-0.32, 0.32].forEach(ex => {
+      const eye = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.08, 3), eyeMat);
+      eye.rotation.x = Math.PI / 2;
+      eye.position.set(ex, 1.1, 1.05);
+      pumpkin.add(eye);
+    });
+
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, 0.08), eyeMat);
+    mouth.position.set(0, 0.72, 1.06);
+    pumpkin.add(mouth);
+
+    // 內部微弱燭火光源
+    const candleLight = new THREE.PointLight(0xF59E0B, 1.5, 6);
+    candleLight.position.set(0, 1.0, 0.8);
+    pumpkin.add(candleLight);
+    halloweenPumpkins.push(candleLight);
+
+    group.add(pumpkin);
+
+    // 2. 散落周邊的小南瓜
+    [[-1.5, 0.35, 0.9, 0.5], [1.4, 0.28, -0.8, 0.4]].forEach(([px, py, pz, s]) => {
+      const smP = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), pumpkinMat);
+      smP.scale.set(1.15, 0.9, 1.15);
+      smP.position.set(px, py, pz);
+      smP.rotation.y = Math.random() * Math.PI;
+      smP.castShadow = true;
+      group.add(smP);
+    });
+
+    registerObstacle(islandId, 0, 0, 1.8);
+    return group;
+  }
+
+  // 荒地一（北荒地）維持原本的自然大岩石
+  const rockMat = new THREE.MeshStandardMaterial({ color: 0x8C7B6B, roughness: 0.9, flatShading: true });
+  const mainRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6, 0), rockMat);
+  mainRock.scale.set(1.4, 0.9, 1.1);
+  mainRock.position.set(0, 0.3, 0);
+  mainRock.rotation.set(0.2, 0.5, 0.1);
+  mainRock.castShadow = true;
+  group.add(mainRock);
+
+  // 散落碎石
+  [[-1.1, 0.25, 0.8], [0.9, 0.2, -0.7], [-0.6, 0.18, -1.0]].forEach(pos => {
+    const smRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.35, 0), rockMat);
+    smRock.position.set(...pos);
+    smRock.rotation.set(Math.random(), Math.random(), 0);
+    smRock.castShadow = true;
+    group.add(smRock);
+  });
+
+  registerObstacle(islandId, 0, 0, 0.9);
+  return group;
+}
 
     // 🌟 補回遺漏的五角星形狀生成函式
     function createStarShape(radius, innerRadius) {
@@ -6582,6 +6668,10 @@ villagers.push({
         windTurbineBlades.forEach(blade => {
           blade.rotation.z += 0.04;
         });
+        // 🎃 南瓜內部燭火微弱閃爍
+halloweenPumpkins.forEach(light => {
+  light.intensity = 1.3 + Math.sin(time * 8.0) * 0.25 + (Math.random() - 0.5) * 0.15;
+});
 
         // 🌟 深海巨獸定時出沒與擺尾游動更新
 if (seaMonster) {
