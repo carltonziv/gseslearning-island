@@ -1123,7 +1123,7 @@
       </div>
     </div>
 
-    <!-- 9. 荒地內容面板 -->
+<!-- 9. 荒地內容面板 -->
     <div id="panel-wasteland_n" style="display:none;">
       <div style="background: linear-gradient(135deg, #fef3c7, #fed7aa); border: 2px dashed #d97706; border-radius: 16px; padding: 18px; text-align: center; color: #9a3412;">
         <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🏜️</span>
@@ -1132,25 +1132,15 @@
       </div>
     </div>
 
+    <!-- 🌟 改回純荒地提示（移除萬聖節任務表單） -->
     <div id="panel-wasteland_s" style="display:none;">
-      <div id="pause-notice-wasteland_s" class="paused-banner" style="display:none;">
-        🌙 夜間休息時間（22:00 - 07:00），本島任務已關閉，請明天 07:00 後再來挑戰！
+      <div style="background: linear-gradient(135deg, #fef3c7, #fed7aa); border: 2px dashed #d97706; border-radius: 16px; padding: 18px; text-align: center; color: #9a3412;">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🏜️</span>
+        <h3 style="margin-bottom: 6px; font-weight: 800;">尚未開墾的荒蕪秘境</h3>
+        <p style="font-size: 0.88rem; line-height: 1.6; color: #7c2d12;">這裡目前雜草叢生、碎石遍佈，四周一片沉寂，等待未來被喚醒！</p>
       </div>
-      <div style="background: linear-gradient(135deg, #ffedd5, #fed7aa); border: 2px dashed #ea580c; border-radius: 16px; padding: 16px; text-align: center; color: #9a3412; margin-bottom: 16px;">
-        <span style="font-size: 2.4rem; display: block; margin-bottom: 6px;">🎃</span>
-        <h3 style="margin-bottom: 6px; font-weight: 800; color: #c2410c;">萬聖南瓜怪奇荒原</h3>
-        <p style="font-size: 0.86rem; line-height: 1.6; color: #7c2d12;">巨大的南瓜燈籠在黑夜中透出溫暖燭光！寫下一句萬聖節英語祝福語，為全班注入共創能量！</p>
-      </div>
-<div id="task-content-wasteland_s">
-        <div class="form-group">
-          <label>👻 萬聖節常用英語</label>
-          <input type="text" id="halloween-greeting" placeholder="例如: 不給糖就搗蛋！的英語怎麼寫？" maxlength="25">
-        </div>
-        <button class="btn-action btn-red" style="background: linear-gradient(135deg, #ea580c, #c2410c);" onclick="submitHalloween()">🎃 完成萬聖節任務 (+3 能量)</button>
-      </div>
-    </div> <!-- panel-wasteland_s 結束 -->
-
-  </div> <!-- 🌟 關鍵補上：這行閉合 #side-drawer 抽屜容器，不讓後面的彈窗被包進去！ -->
+    </div>
+  </div> <!-- 乾淨閉合 #side-drawer 即可 -->
 
   <!-- 教師控制台彈窗 -->
   <div id="modal-teacher" class="modal-overlay hidden">
@@ -1212,7 +1202,7 @@
       { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', color: 0xE9D8F4, pos: [-7.8, 0, 4.5], radius: 4.8 },
       { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xE8B4B8, pos: [7.8, 0, 4.5], radius: 4.8 },
       { id: 'wasteland_n', title: '荒地', subtitle: '這片土地沉睡已久，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [0, 0, -9.0], radius: 4.8 },
-      { id: 'wasteland_s', title: '🎃 萬聖南瓜祕境', subtitle: '沉睡的南瓜荒原甦醒了！探險家快來完成不給糖就搗蛋挑戰！', color: 0x5C4638, pos: [0, 0, 9.0], radius: 4.8 }
+      { id: 'wasteland_s', title: '荒地', subtitle: '這片土地沉睡已久，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [0, 0, 9.0], radius: 4.8 }
     ];
 
     // ==========================================
@@ -1238,9 +1228,6 @@
     let currentDailyQuestion = null;
 
     // 🌟 全域模型與特效安全參照
-    let halloweenPumpkins = [];
-    let pumpkinEyesMat = null;
-    let mainPumpkinGroup = null;
     let cartGroup = null;
 
     try {
@@ -3761,88 +3748,17 @@ function adminClearAllOnlinePlayers() {
       return group;
     }
 
+// 🌟 修改後：統一生成荒島天然岩石群（南島、北島共用）
     function createWastelandLandmark(islandId) {
       const group = new THREE.Group();
 
-      if (islandId === 'wasteland_s') {
-        const pumpkinMat = new THREE.MeshStandardMaterial({ 
-          color: 0xEA580C, 
-          roughness: 0.55, 
-          flatShading: true 
-        });
-        const stemMat = new THREE.MeshStandardMaterial({ color: 0x15803D, roughness: 0.8 });
-        pumpkinEyesMat = new THREE.MeshBasicMaterial({ color: 0xFEF08A });
+      const rockMat = new THREE.MeshStandardMaterial({ 
+        color: 0x8C7B6B, 
+        roughness: 0.9, 
+        flatShading: true 
+      });
 
-        const pumpkin = new THREE.Group();
-
-        const pMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(1.15, 0), pumpkinMat);
-        pMesh.scale.set(1.25, 0.95, 1.25);
-        pMesh.position.y = 0.88;
-        pMesh.castShadow = true;
-        pMesh.receiveShadow = true;
-        pumpkin.add(pMesh);
-
-        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.45, 6), stemMat);
-        stem.position.set(0, 1.82, 0);
-        stem.rotation.z = 0.22;
-        stem.castShadow = true;
-        pumpkin.add(stem);
-
-        [-1, 1].forEach(side => {
-          const eyeGeo = new THREE.ConeGeometry(0.18, 0.22, 3);
-          eyeGeo.rotateX(Math.PI / 2);
-          const eyeMesh = new THREE.Mesh(eyeGeo, pumpkinEyesMat);
-          eyeMesh.position.set(side * 0.32, 1.05, 1.22);
-          eyeMesh.rotation.z = -side * 0.35;
-          pumpkin.add(eyeMesh);
-        });
-
-        const noseGeo = new THREE.ConeGeometry(0.10, 0.15, 3);
-        noseGeo.rotateX(Math.PI / 2);
-        const noseMesh = new THREE.Mesh(noseGeo, pumpkinEyesMat);
-        noseMesh.position.set(0, 0.88, 1.28);
-        pumpkin.add(noseMesh);
-
-        const mouthGroup = new THREE.Group();
-        const mouthBase = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.18, 0.18), pumpkinEyesMat);
-        mouthBase.position.set(0, 0.65, 1.22);
-        mouthGroup.add(mouthBase);
-
-        [-0.22, 0.22].forEach(tx => {
-          const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 3), pumpkinMat);
-          tooth.rotation.z = Math.PI;
-          tooth.position.set(tx, 0.73, 1.26);
-          mouthGroup.add(tooth);
-        });
-
-        const bottomTooth = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 3), pumpkinMat);
-        bottomTooth.position.set(0, 0.57, 1.26);
-        mouthGroup.add(bottomTooth);
-        pumpkin.add(mouthGroup);
-
-        const candleLight = new THREE.PointLight(0xF59E0B, 1.6, 6);
-        candleLight.position.set(0, 0.85, 0.8);
-        pumpkin.add(candleLight);
-        halloweenPumpkins.push(candleLight);
-
-        pumpkin.rotation.y = Math.PI;
-        group.add(pumpkin);
-        mainPumpkinGroup = pumpkin;
-
-        [[-1.5, 0.35, 0.9, 0.5], [1.4, 0.28, -0.8, 0.4]].forEach(([px, py, pz, s]) => {
-          const smP = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), pumpkinMat);
-          smP.scale.set(1.2, 0.9, 1.15);
-          smP.position.set(px, py, pz);
-          smP.rotation.y = Math.random() * Math.PI;
-          smP.castShadow = true;
-          group.add(smP);
-        });
-
-        registerObstacle(islandId, 0, 0, 1.8);
-        return group;
-      }
-
-      const rockMat = new THREE.MeshStandardMaterial({ color: 0x8C7B6B, roughness: 0.9, flatShading: true });
+      // 中央主岩石
       const mainRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6, 0), rockMat);
       mainRock.scale.set(1.4, 0.9, 1.1);
       mainRock.position.set(0, 0.3, 0);
@@ -3850,6 +3766,7 @@ function adminClearAllOnlinePlayers() {
       mainRock.castShadow = true;
       group.add(mainRock);
 
+      // 周邊散落的碎石群
       [[-1.1, 0.25, 0.8], [0.9, 0.2, -0.7], [-0.6, 0.18, -1.0]].forEach(pos => {
         const smRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.35, 0), rockMat);
         smRock.position.set(...pos);
@@ -3858,6 +3775,7 @@ function adminClearAllOnlinePlayers() {
         group.add(smRock);
       });
 
+      // 註冊荒島碰撞體積（半徑 0.9 米）
       registerObstacle(islandId, 0, 0, 0.9);
       return group;
     }
@@ -4545,7 +4463,8 @@ function adminClearAllOnlinePlayers() {
     let targetCameraPos = new THREE.Vector3(0, 22, 46);
     let targetLookAt = new THREE.Vector3(0, 0, 0);
     let isCartPaused = false;
-// 🌟 視角狀態旗標與控制函式
+
+    // 🌟 視角狀態旗標與控制函式
     let isRidingCart = false;
     let isRidingBoat = false;
     let isViewMenuOpen = false;
@@ -4621,62 +4540,6 @@ function adminClearAllOnlinePlayers() {
         if (menuText) menuText.textContent = '巡邏艇破浪中';
 
         showLiveBanner("🚤 已登上守護巡邏艇！正在破浪巡航～");
-      }
-    }
-
-    // 🌟 新增：搭乘巡邏艇控制函式
-    function toggleRideBoat() {
-      // 若正在搭台車，先自動退出搭車狀態
-      if (isRidingCart) {
-        toggleRideCart();
-      }
-
-      isRidingBoat = !isRidingBoat;
-      const btn = document.getElementById('ride-boat-btn');
-      const text = document.getElementById('ride-boat-text');
-      const icon = document.getElementById('ride-boat-icon');
-
-      if (isRidingBoat) {
-        if (typeof closeDrawer === 'function') closeDrawer();
-        isFocusing = false;
-        controls.enabled = false;
-        isBoatPaused = false; // 確保船隻航行不停駛
-
-        if (btn) btn.classList.add('riding');
-        if (text) text.textContent = '離開巡邏艇';
-        if (icon) icon.textContent = '🚶';
-        showLiveBanner("🚤 已登上守護巡邏艇！正在環島巡弋守護水域～");
-      } else {
-        controls.enabled = true;
-        if (btn) btn.classList.remove('riding');
-        if (text) text.textContent = '搭上巡邏艇';
-        if (icon) icon.textContent = '🚤';
-        resetToDefaultCamera();
-      }
-    }
-
-    
-
-    function toggleRideCart() {
-      isRidingCart = !isRidingCart;
-      const btn = document.getElementById('ride-cart-btn');
-      const text = document.getElementById('ride-cart-text');
-      const icon = document.getElementById('ride-cart-icon');
-
-      if (isRidingCart) {
-        if (typeof closeDrawer === 'function') closeDrawer();
-        isFocusing = false;
-        controls.enabled = false;
-        if (btn) btn.classList.add('riding');
-        if (text) text.textContent = '離開台車';
-        if (icon) icon.textContent = '🚶';
-        showLiveBanner("🚋 已搭上龜山台車！正在環島欣賞沿途景色～");
-      } else {
-        controls.enabled = true;
-        if (btn) btn.classList.remove('riding');
-        if (text) text.textContent = '搭上台車';
-        if (icon) icon.textContent = '🚋';
-        resetToDefaultCamera();
       }
     }
 
@@ -5741,40 +5604,7 @@ function adminClearAllOnlinePlayers() {
 
         windTurbineBlades.forEach(blade => { blade.rotation.z += 0.04; });
 
-        // 🎃 萬聖南瓜與台車 14 米接近電光連動
-        if (mainPumpkinGroup && cartGroup) {
-          const pPos = new THREE.Vector3();
-          const cPos = new THREE.Vector3();
-          mainPumpkinGroup.getWorldPosition(pPos);
-          cartGroup.getWorldPosition(cPos);
-
-          const distToCart = Math.hypot(pPos.x - cPos.x, pPos.z - cPos.z);
-          const isNearCart = distToCart < 14.0;
-
-          if (isNearCart) {
-            const flickerWave = Math.sin(time * 24.0) * 0.5 + 0.5;
-            const spike = Math.random() > 0.4 ? 1.0 : 0.2;
-
-            halloweenPumpkins.forEach(light => {
-              light.intensity = 2.2 + flickerWave * 0.8 * spike;
-              light.color.setHex(spike > 0.5 ? 0xFFE066 : 0xEA580C);
-            });
-
-            if (pumpkinEyesMat) {
-              pumpkinEyesMat.color.setHex(flickerWave > 0.3 ? 0xFFFFAA : 0xF59E0B);
-            }
-          } else {
-            const normalFlicker = 1.3 + Math.sin(time * 8.0) * 0.22 + (Math.random() - 0.5) * 0.12;
-            halloweenPumpkins.forEach(light => {
-              light.intensity = normalFlicker;
-              light.color.setHex(0xF59E0B);
-            });
-            if (pumpkinEyesMat) {
-              pumpkinEyesMat.color.setHex(0xFEF08A);
-            }
-          }
-        }
-
+       
         // 深海巨獸游動
         if (seaMonster) {
           if (!monsterState.active) {
@@ -6596,38 +6426,32 @@ function adminClearAllOnlinePlayers() {
       }
     }
 
+// 🌟 修正後：支援視角折疊選單的重置相機函式
     function resetToDefaultCamera() {
-      if (isRidingCart) {
-        isRidingCart = false;
-        controls.enabled = true;
-        const btn = document.getElementById('ride-cart-btn');
-        const text = document.getElementById('ride-cart-text');
-        const icon = document.getElementById('ride-cart-icon');
-        if (btn) btn.classList.remove('riding');
-        if (text) text.textContent = '搭上台車';
-        if (icon) icon.textContent = '🚋';
-      }
-// 🌟 新增：重置巡邏艇搭乘按鈕
-      if (isRidingBoat) {
-        isRidingBoat = false;
-        controls.enabled = true;
-        const bBtn = document.getElementById('ride-boat-btn');
-        const bText = document.getElementById('ride-boat-text');
-        const bIcon = document.getElementById('ride-boat-icon');
-        if (bBtn) bBtn.classList.remove('riding');
-        if (bText) bText.textContent = '搭上巡邏艇';
-        if (bIcon) bIcon.textContent = '🚤';
-      }
+      isRidingCart = false;
+      isRidingBoat = false;
+      controls.enabled = true;
+
+      // 1. 重置摺疊選單按鈕的顯示文字與選中樣式
+      const menuText = document.getElementById('view-menu-current-text');
+      const cartBtn = document.getElementById('sub-btn-cart');
+      const boatBtn = document.getElementById('sub-btn-boat');
+      if (menuText) menuText.textContent = '切換視角';
+      if (cartBtn) cartBtn.classList.remove('active-mode');
+      if (boatBtn) boatBtn.classList.remove('active-mode');
+
+      // 2. 關閉右側抽屜並恢復載具移動
       if (typeof closeDrawer === 'function') {
         document.getElementById('side-drawer').classList.remove('open');
         isCartPaused = false;
         isBoatPaused = false;
       }
+
+      // 3. 觸發相機平滑平移回初始鳥瞰點
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 22, 46);
     }
-
     function startIslandApp() {
       init3D();
       initStudent();
