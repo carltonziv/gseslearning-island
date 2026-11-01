@@ -708,6 +708,12 @@
     <span id="ride-cart-text">搭上台車</span>
   </div>
 
+  <!-- 🌟 新增：左側搭上巡邏艇按鈕（top 設定為 274px 排列在下方） -->
+  <div class="hud-ride-cart-btn" id="ride-boat-btn" style="top: 274px;" onclick="toggleRideBoat()">
+    <span id="ride-boat-icon">🚤</span>
+    <span id="ride-boat-text">搭上巡邏艇</span>
+  </div>
+
   <div class="hud-hint">
     <span id="time-badge">🕒 檢測時段中...</span>
     <span>| 點擊畫面物件、單指旋轉、雙指縮放移動</span>
@@ -4489,6 +4495,68 @@ function adminClearAllOnlinePlayers() {
     let targetLookAt = new THREE.Vector3(0, 0, 0);
     let isCartPaused = false;
     let isRidingCart = false;
+    let isRidingBoat = false; // 🌟 是否處於巡邏艇搭乘視角
+
+    function toggleRideCart() {
+      // 🌟 若正在搭船，先自動退出搭船狀態
+      if (isRidingBoat) {
+        toggleRideBoat();
+      }
+
+      isRidingCart = !isRidingCart;
+      const btn = document.getElementById('ride-cart-btn');
+      const text = document.getElementById('ride-cart-text');
+      const icon = document.getElementById('ride-cart-icon');
+
+      if (isRidingCart) {
+        if (typeof closeDrawer === 'function') closeDrawer();
+        isFocusing = false;
+        controls.enabled = false;
+        if (btn) btn.classList.add('riding');
+        if (text) text.textContent = '離開台車';
+        if (icon) icon.textContent = '🚶';
+        showLiveBanner("🚋 已搭上龜山台車！正在環島欣賞沿途景色～");
+      } else {
+        controls.enabled = true;
+        if (btn) btn.classList.remove('riding');
+        if (text) text.textContent = '搭上台車';
+        if (icon) icon.textContent = '🚋';
+        resetToDefaultCamera();
+      }
+    }
+
+    // 🌟 新增：搭乘巡邏艇控制函式
+    function toggleRideBoat() {
+      // 若正在搭台車，先自動退出搭車狀態
+      if (isRidingCart) {
+        toggleRideCart();
+      }
+
+      isRidingBoat = !isRidingBoat;
+      const btn = document.getElementById('ride-boat-btn');
+      const text = document.getElementById('ride-boat-text');
+      const icon = document.getElementById('ride-boat-icon');
+
+      if (isRidingBoat) {
+        if (typeof closeDrawer === 'function') closeDrawer();
+        isFocusing = false;
+        controls.enabled = false;
+        isBoatPaused = false; // 確保船隻航行不停駛
+
+        if (btn) btn.classList.add('riding');
+        if (text) text.textContent = '離開巡邏艇';
+        if (icon) icon.textContent = '🚶';
+        showLiveBanner("🚤 已登上守護巡邏艇！正在環島巡弋守護水域～");
+      } else {
+        controls.enabled = true;
+        if (btn) btn.classList.remove('riding');
+        if (text) text.textContent = '搭上巡邏艇';
+        if (icon) icon.textContent = '🚤';
+        resetToDefaultCamera();
+      }
+    }
+
+    
 
     function toggleRideCart() {
       isRidingCart = !isRidingCart;
@@ -6310,6 +6378,17 @@ function adminClearAllOnlinePlayers() {
           camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.35, cartWorldPos.z);
           camera.lookAt(0, 1.2, 0);
         }
+// 🌟 新增：乘客搭船視角：相機置於巡邏艇駕駛室後上方，並朝向中央群島或前方海面
+        if (isRidingBoat && patrolBoat) {
+          const boatWorldPos = new THREE.Vector3();
+          patrolBoat.getWorldPosition(boatWorldPos);
+
+          // 相機置於船隻上方 1.5 米、略微後退的位置（感受海浪起伏微幅顛簸）
+          camera.position.set(boatWorldPos.x, boatWorldPos.y + 1.5, boatWorldPos.z);
+
+          // 視線望向中央群島戰鬥陀螺島 (0, 1.0, 0)，環景欣賞各島全貌
+          camera.lookAt(0, 1.0, 0);
+        }
 
         renderer.render(scene, camera);
       }
@@ -6397,6 +6476,17 @@ function adminClearAllOnlinePlayers() {
         if (btn) btn.classList.remove('riding');
         if (text) text.textContent = '搭上台車';
         if (icon) icon.textContent = '🚋';
+      }
+// 🌟 新增：重置巡邏艇搭乘按鈕
+      if (isRidingBoat) {
+        isRidingBoat = false;
+        controls.enabled = true;
+        const bBtn = document.getElementById('ride-boat-btn');
+        const bText = document.getElementById('ride-boat-text');
+        const bIcon = document.getElementById('ride-boat-icon');
+        if (bBtn) bBtn.classList.remove('riding');
+        if (bText) bText.textContent = '搭上巡邏艇';
+        if (bIcon) bIcon.textContent = '🚤';
       }
       if (typeof closeDrawer === 'function') {
         document.getElementById('side-drawer').classList.remove('open');
