@@ -6378,16 +6378,30 @@ function adminClearAllOnlinePlayers() {
           camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.35, cartWorldPos.z);
           camera.lookAt(0, 1.2, 0);
         }
-// 🌟 新增：乘客搭船視角：相機置於巡邏艇駕駛室後上方，並朝向中央群島或前方海面
-        if (isRidingBoat && patrolBoat) {
+// 🌟 乘客搭船視角：朝向船頭前方，微偏中央群島的破浪第一人稱視角
+        if (isRidingBoat && patrolBoat && boatCurve) {
           const boatWorldPos = new THREE.Vector3();
           patrolBoat.getWorldPosition(boatWorldPos);
 
-          // 相機置於船隻上方 1.5 米、略微後退的位置（感受海浪起伏微幅顛簸）
-          camera.position.set(boatWorldPos.x, boatWorldPos.y + 1.5, boatWorldPos.z);
+          // 1. 取得船隻前進切線方向向量（切線方向反向即為船頭朝向）
+          const bTan = boatCurve.getTangentAt(boatProgress).normalize();
+          const forwardDir = bTan.clone().negate(); // 船頭前進方向
 
-          // 視線望向中央群島戰鬥陀螺島 (0, 1.0, 0)，環景欣賞各島全貌
-          camera.lookAt(0, 1.0, 0);
+          // 2. 將攝影機架設在駕駛艙頂部略靠前處（高度 Y + 0.85m，並往前微推 0.2m）
+          camera.position.copy(boatWorldPos).add(new THREE.Vector3(0, 0.85, 0)).addScaledVector(forwardDir, 0.2);
+
+          // 3. 計算視線目標點：
+          // 先看向船頭正前方 12 米處
+          const targetLook = camera.position.clone().addScaledVector(forwardDir, 12.0);
+
+          // 4. 計算朝向中央島嶼原點 (0, 0.8, 0) 的牽引向量，微幅偏轉 28%（稍微看得到中央群島與沿岸景色）
+          const centerDir = new THREE.Vector3(0, 0.8, 0).sub(camera.position).normalize();
+          targetLook.addScaledVector(centerDir, 4.2);
+
+          // 5. 將視線高度微調至水面與地平線之間（感受迎面浪花與海平面）
+          targetLook.y = boatWorldPos.y + 0.45;
+
+          camera.lookAt(targetLook);
         }
 
         renderer.render(scene, camera);
