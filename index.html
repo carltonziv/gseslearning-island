@@ -6470,12 +6470,29 @@ function adminClearAllOnlinePlayers() {
           motesGeo.attributes.color.needsUpdate = true;
         } 
 
-        if (isRidingCart && trailerCarts && trailerCarts.length >= 2) {
+// 🌟 乘客搭車視角：順著軌道行進方向前進，微幅偏向內側群島
+        if (isRidingCart && trailerCarts && trailerCarts.length >= 2 && trackCurve) {
           const seatCart = trailerCarts[1];
           const cartWorldPos = new THREE.Vector3();
           seatCart.getWorldPosition(cartWorldPos);
-          camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.35, cartWorldPos.z);
-          camera.lookAt(0, 1.2, 0);
+
+          // 1. 取得台車目前在軌道上的行進切線方向
+          const cTan = trackCurve.getTangentAt(cartProgress).normalize();
+
+          // 2. 將相機架設在第二節座位上方（略微向前推，避免被前車頂遮蔽）
+          camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.25, cartWorldPos.z).addScaledVector(cTan, 0.35);
+
+          // 3. 視線基礎：看向前方 10 米處的軌道延伸方向
+          const cartTargetLook = camera.position.clone().addScaledVector(cTan, 10.0);
+
+          // 4. 偏向中央群島：加上適度權重（約 3.2），讓視線朝軌道偏內側約 25~30 度
+          const centerDir = new THREE.Vector3(0, 1.0, 0).sub(camera.position).normalize();
+          cartTargetLook.addScaledVector(centerDir, 3.2);
+
+          // 5. 將視線高度對準地平線與鐵軌略上方
+          cartTargetLook.y = cartWorldPos.y + 0.6;
+
+          camera.lookAt(cartTargetLook);
         }
 // 🌟 乘客搭船視角：朝向船頭前方，微偏中央群島的破浪第一人稱視角
         if (isRidingBoat && patrolBoat && boatCurve) {
