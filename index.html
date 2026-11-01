@@ -6394,12 +6394,12 @@ function adminClearAllOnlinePlayers() {
           // 先看向船頭正前方 12 米處
           const targetLook = camera.position.clone().addScaledVector(forwardDir, 12.0);
 
-          // 4. 計算朝向中央島嶼原點 (0, 0.8, 0) 的牽引向量，微幅偏轉 28%（稍微看得到中央群島與沿岸景色）
-          const centerDir = new THREE.Vector3(0, 0.8, 0).sub(camera.position).normalize();
-          targetLook.addScaledVector(centerDir, 4.2);
+          // 🌟 偏向權重由原本的 4.2 大幅提升至 8.5，使視線自然轉向中央群島約 40~45 度
+          const centerDir = new THREE.Vector3(0, 1.0, 0).sub(camera.position).normalize();
+          targetLook.addScaledVector(centerDir, 8.5);
 
           // 5. 將視線高度微調至水面與地平線之間（感受迎面浪花與海平面）
-          targetLook.y = boatWorldPos.y + 0.45;
+          targetLook.y = 1.2;
 
           camera.lookAt(targetLook);
         }
