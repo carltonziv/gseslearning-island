@@ -1366,6 +1366,43 @@
     }
 
     // ==========================================
+    // 🔔 自備實體 MP3 音效對應與播放器
+    // ==========================================
+    const ISLAND_AUDIO_MAP = {
+      nature: new Audio('./sounds/nature.mp3'),
+      sport: new Audio('./sounds/sport.mp3'),
+      reading: new Audio('./sounds/reading.mp3'),
+      civics: new Audio('./sounds/civics.mp3'),
+      beyblade: new Audio('./sounds/beyblade.mp3'),
+      wasteland_n: new Audio('./sounds/wasteland_n.mp3'),
+      temple_completed: new Audio('./sounds/temple.mp3'),
+      wasteland_s: new Audio('./sounds/wasteland_s.mp3'),
+      cart: new Audio('./sounds/cart.mp3'),
+      boat: new Audio('./sounds/boat.mp3')
+    };
+
+    // 預設將音效音量設定為 0.5（避免蓋過背景音樂或太大聲）
+    Object.values(ISLAND_AUDIO_MAP).forEach(audio => {
+      audio.volume = 0.5;
+    });
+
+    function playCustomAudio(islandId) {
+      let playKey = islandId;
+      if (islandId === 'wasteland_n' && typeof northIslandProgress !== 'undefined' && northIslandProgress >= 100) {
+        playKey = 'temple_completed'; // 若北島開墾已達 100%，自動切換成神廟鐘聲
+      }
+      const audio = ISLAND_AUDIO_MAP[islandId];
+      if (audio) {
+        // 重設播放進度至起點，確保連續快速點擊也能立即發聲
+        audio.currentTime = 0;
+        audio.play().catch(err => {
+          // 瀏覽器未與頁面互動時可能限制自動播放，加入安全防呆
+          console.warn(`[音效播放提示] ${islandId} 音效播放受阻:`, err);
+        });
+      }
+    }
+    
+    // ==========================================
     // 3. 學生身分與登入專屬人物管理
     // ==========================================
     let currentStudent = { 
@@ -7030,6 +7067,10 @@ function adminClearAllOnlinePlayers() {
     }
 
     function openDrawer(islandData) {
+      // 🌟 播放自備的實體 MP3 島嶼專屬音效
+      if (typeof playCustomAudio === 'function') {
+        playCustomAudio(islandData.id);
+      }
       document.getElementById('drawer-title').textContent = islandData.title;
       document.getElementById('drawer-subtitle').textContent = islandData.subtitle;
 
