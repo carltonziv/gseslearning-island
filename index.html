@@ -1386,18 +1386,16 @@
       audio.volume = 0.5;
     });
 
-    function playCustomAudio(islandId) {
+function playCustomAudio(islandId) {
       let playKey = islandId;
       if (islandId === 'wasteland_n' && typeof northIslandProgress !== 'undefined' && northIslandProgress >= 100) {
         playKey = 'temple_completed'; // 若北島開墾已達 100%，自動切換成神廟鐘聲
       }
-      const audio = ISLAND_AUDIO_MAP[islandId];
+      const audio = ISLAND_AUDIO_MAP[playKey]; // 🌟 修正為 playKey
       if (audio) {
-        // 重設播放進度至起點，確保連續快速點擊也能立即發聲
         audio.currentTime = 0;
         audio.play().catch(err => {
-          // 瀏覽器未與頁面互動時可能限制自動播放，加入安全防呆
-          console.warn(`[音效播放提示] ${islandId} 音效播放受阻:`, err);
+          console.warn(`[音效播放提示] ${playKey} 音效播放受阻:`, err);
         });
       }
     }
