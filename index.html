@@ -3403,10 +3403,11 @@ function adminClearAllOnlinePlayers() {
       handle.position.y = -0.15;
       hoeGroup.add(handle);
 
-      // 金屬鋤頭刀片
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.03, 0.18), metalMat);
-      blade.position.set(0, -0.5, 0.06);
-      blade.rotation.x = 0.35;
+      // 🌟 加長鋤地入土金屬刃面（寬 0.13, 厚 0.025, 鋤刃長度拉長至 0.36）
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.025, 0.36), metalMat);
+      // 將鋤刃中心往下並往後延伸，使其自然從木柄頂部向下彎折入土
+      blade.position.set(0, -0.38, 0.14);
+      blade.rotation.x = 1.25; // 呈現貼近真鋤頭的下向銳角傾角
       hoeGroup.add(blade);
 
       return hoeGroup;
