@@ -1365,7 +1365,7 @@
       }
     }
 
-    // ==========================================
+// ==========================================
     // 🔔 自備實體 MP3 音效對應與播放器
     // ==========================================
     const ISLAND_AUDIO_MAP = {
@@ -1381,22 +1381,35 @@
       boat: new Audio('./sounds/boat.mp3')
     };
 
-    // 預設將音效音量設定為 0.5（避免蓋過背景音樂或太大聲）
+    // 預設將音效音量設定為 0.5
     Object.values(ISLAND_AUDIO_MAP).forEach(audio => {
       audio.volume = 0.5;
     });
 
-function playCustomAudio(islandId) {
+    // 🌟 將台車與巡邏艇的音訊設為循環播放 (搭乘時持續有音效)
+    if (ISLAND_AUDIO_MAP.cart) ISLAND_AUDIO_MAP.cart.loop = true;
+    if (ISLAND_AUDIO_MAP.boat) ISLAND_AUDIO_MAP.boat.loop = true;
+
+    function playCustomAudio(islandId) {
       let playKey = islandId;
       if (islandId === 'wasteland_n' && typeof northIslandProgress !== 'undefined' && northIslandProgress >= 100) {
-        playKey = 'temple_completed'; // 若北島開墾已達 100%，自動切換成神廟鐘聲
+        playKey = 'temple_completed';
       }
-      const audio = ISLAND_AUDIO_MAP[playKey]; // 🌟 修正為 playKey
+      const audio = ISLAND_AUDIO_MAP[playKey];
       if (audio) {
         audio.currentTime = 0;
         audio.play().catch(err => {
           console.warn(`[音效播放提示] ${playKey} 音效播放受阻:`, err);
         });
+      }
+    }
+
+    // 🌟 新增：停止指定音效的函式
+    function stopCustomAudio(islandId) {
+      const audio = ISLAND_AUDIO_MAP[islandId];
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
       }
     }
     
@@ -4949,12 +4962,18 @@ function adminClearAllOnlinePlayers() {
       }
     }
 
-    function selectViewMode(mode) {
+function selectViewMode(mode) {
       toggleViewMenu(false);
 
       const menuText = document.getElementById('view-menu-current-text');
       const cartBtn = document.getElementById('sub-btn-cart');
       const boatBtn = document.getElementById('sub-btn-boat');
+
+      // 🌟 1. 切換模式前，先將既有的台車與船隻音效全部停止
+      if (typeof stopCustomAudio === 'function') {
+        stopCustomAudio('cart');
+        stopCustomAudio('boat');
+      }
 
       if (mode === 'panoramic') {
         isRidingCart = false;
@@ -4984,6 +5003,9 @@ function adminClearAllOnlinePlayers() {
         if (boatBtn) boatBtn.classList.remove('active-mode');
         if (menuText) menuText.textContent = '台車巡航中';
 
+        // 🌟 2. 搭上台車時開始播放台車行駛音效
+        if (typeof playCustomAudio === 'function') playCustomAudio('cart');
+
         showLiveBanner("🚋 已搭上龜山台車！正在環島欣賞沿途景色～");
       } 
       else if (mode === 'boat') {
@@ -5002,6 +5024,9 @@ function adminClearAllOnlinePlayers() {
         if (boatBtn) boatBtn.classList.add('active-mode');
         if (cartBtn) cartBtn.classList.remove('active-mode');
         if (menuText) menuText.textContent = '巡邏艇破浪中';
+
+        // 🌟 3. 搭上巡邏艇時開始播放水上引擎/破浪音效
+        if (typeof playCustomAudio === 'function') playCustomAudio('boat');
 
         showLiveBanner("🚤 已登上守護巡邏艇！正在破浪巡航～");
       }
@@ -7066,7 +7091,7 @@ function adminClearAllOnlinePlayers() {
 
     function openDrawer(islandData) {
       // 🌟 播放自備的實體 MP3 島嶼專屬音效
-      if (typeof playCustomAudio === 'function') {
+      if (typeof playCustomAudio === 'function' && islandData.id !== 'cart' && islandData.id !== 'boat') {
         playCustomAudio(islandData.id);
       }
       document.getElementById('drawer-title').textContent = islandData.title;
@@ -7136,6 +7161,12 @@ function adminClearAllOnlinePlayers() {
       isRidingCart = false;
       isRidingBoat = false;
       controls.enabled = true;
+
+      // 🌟 重置相機時確保停止載具音效
+      if (typeof stopCustomAudio === 'function') {
+        stopCustomAudio('cart');
+        stopCustomAudio('boat');
+      }
 
       // 1. 重置摺疊選單按鈕的顯示文字與選中樣式
       const menuText = document.getElementById('view-menu-current-text');
