@@ -1640,12 +1640,12 @@ if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCart
       playerVillager.targetZ = farmZ;
       playerVillager.waitTimer = 999999; // 暫停原本的日常漫步巡邏計時
 
-      // 在角色的右手掛載鋤頭模型
+// 3. 在角色的右手掛載鋤頭模型
       const rightArmPivot = playerVillager.obj.userData.limbs?.rightArm;
       if (rightArmPivot && !rightArmPivot.getObjectByName("player_hoe")) {
         const hoe = createHoeTool();
-        // 貼合右掌心：高度落在 -0.22，前後居中
-        hoe.position.set(0, -0.22, 0.0);
+        // 🌟 精確定位在手腕/手掌前端（手臂長度為 0.45，掌心約在 Y = -0.42，微向前 Z = 0.04）
+        hoe.position.set(0, -0.42, 0.04);
         rightArmPivot.add(hoe);
       }
     }
@@ -3389,7 +3389,7 @@ function adminClearAllOnlinePlayers() {
     }
 
 // ==========================================
-    // ⛏️ 輕量低多邊形開墾鋤頭（手握前端＋向下垂直長刃）
+    // ⛏️ 輕量低多邊形開墾鋤頭（手握中尾段・前端垂直入土）
     // ==========================================
     function createHoeTool() {
       const hoeGroup = new THREE.Group();
@@ -3398,28 +3398,29 @@ function adminClearAllOnlinePlayers() {
       const woodMat = new THREE.MeshStandardMaterial({ color: 0x854D0E, roughness: 0.8 });
       const metalMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.75, roughness: 0.35 });
 
-      // 1. 木柄（長度 0.82，Z 軸走向）
-      // 手握處定在 Z = 0（手掌位置），柄身往後方延伸到 -0.65，往前方伸出到 +0.17
-      const handleGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.82, 6);
-      handleGeo.rotateX(Math.PI / 2);
+      // 1. 木柄（總長 0.86）：手握點定為 Z = 0（中尾段）
+      // 木柄向後露出 0.22（尾端在 Z = -0.22），向前延伸 0.64（頂端在 Z = +0.64）
+      const handleGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.86, 6);
+      handleGeo.rotateX(Math.PI / 2); // 轉為前後走向
       const handle = new THREE.Mesh(handleGeo, woodMat);
-      handle.position.set(0, 0, -0.24); // 中心後移，讓手握在前端
+      handle.position.set(0, 0, 0.21); // 使手握處正好落在中後段
       hoeGroup.add(handle);
 
-      // 2. 鐵質環箍（套在木柄最前端 Z = 0.17 處）
-      const collarGeo = new THREE.CylinderGeometry(0.034, 0.034, 0.07, 8);
+      // 2. 鐵質環箍（套在木柄最前端 Z = 0.64 處）
+      const collarGeo = new THREE.CylinderGeometry(0.034, 0.034, 0.06, 8);
       collarGeo.rotateX(Math.PI / 2);
       const collar = new THREE.Mesh(collarGeo, metalMat);
-      collar.position.set(0, 0, 0.17);
+      collar.position.set(0, 0, 0.64);
       hoeGroup.add(collar);
 
-      // 3. 金屬長鋤刃（寬 0.13, 厚 0.022, 向下入土長度 0.38）
-      const bladeGeo = new THREE.BoxGeometry(0.13, 0.38, 0.022);
-      bladeGeo.translate(0, -0.19, 0); // 旋轉軸心固定在頂部接頭
+      // 3. 金屬長鋤刃（寬 0.14, 厚 0.022, 垂直向下延伸 0.38）
+      const bladeGeo = new THREE.BoxGeometry(0.14, 0.38, 0.022);
+      // 軸心定在刀刃頂端，向下長出
+      bladeGeo.translate(0, -0.19, 0);
 
       const blade = new THREE.Mesh(bladeGeo, metalMat);
-      blade.position.set(0, 0, 0.18); // 接在環箍正前方
-      blade.rotation.x = -0.15; // 與柄身呈約 80~85 度夾角，自然垂直向下刨土
+      blade.position.set(0, 0, 0.65); // 焊在環箍最前端
+      blade.rotation.x = -0.22; // 與木柄呈約 75~80 度銳角，向下垂直入土
       hoeGroup.add(blade);
 
       return hoeGroup;
