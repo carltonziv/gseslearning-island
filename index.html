@@ -5551,7 +5551,7 @@ function adminClearAllOnlinePlayers() {
       controls.enablePan = true;
       controls.dampingFactor = 0.04;
       controls.rotateSpeed = 0.45;
-      controls.minDistance = 12;
+      controls.minDistance = 6;
       controls.maxDistance = 110;
       controls.maxPolarAngle = Math.PI / 2.05;
       controls.target.set(0, 0, 0);
@@ -6750,79 +6750,78 @@ function adminClearAllOnlinePlayers() {
                 spawnFootstepDust(playerVillager.currentX, 0, playerVillager.currentZ + 0.35);
               }
             }
-            return; // 墾荒時不執行漫步位移
-          }
-
-          // 日常漫步待機計時
-          if (playerVillager.waitTimer > 0) {
-            playerVillager.waitTimer--;
-            if (limbs) {
-              limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
-              limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
-              limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
-              limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
-            }
-            if (playerVillager.waitTimer <= 0) pickNextPlayerWanderTarget();
           } else {
-            const dx = playerVillager.targetX - playerVillager.currentX;
-            const dz = playerVillager.targetZ - playerVillager.currentZ;
-            const dist = Math.hypot(dx, dz);
-
-            if (dist > 0.08) {
-              playerVillager.currentX += (dx / dist) * playerVillager.speed;
-              playerVillager.currentZ += (dz / dist) * playerVillager.speed;
-
-              const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
-              const wasBlocked = applyWorldRepulsion(currentPos, 0.35);
-              playerVillager.currentX = currentPos.x;
-              playerVillager.currentZ = currentPos.z;
-
-              Object.values(otherPlayers).forEach(other => {
-                if (!other || !other.mesh) return;
-                const ox = playerVillager.currentX - other.mesh.position.x;
-                const oz = playerVillager.currentZ - other.mesh.position.z;
-                const odist = Math.hypot(ox, oz);
-                if (odist < 0.55 && odist > 0.001) {
-                  const push = (0.55 - odist) * 0.5;
-                  playerVillager.currentX += (ox / odist) * push;
-                  playerVillager.currentZ += (oz / odist) * push;
-                }
-              });
-
-              playerVillager.obj.position.x = playerVillager.currentX;
-              playerVillager.obj.position.z = playerVillager.currentZ;
-
-              if (wasBlocked) {
-                playerVillager.targetX = playerVillager.currentX;
-                playerVillager.targetZ = playerVillager.currentZ;
-                playerVillager.waitTimer = 20;
-              } else {
-                playerVillager.obj.rotation.y = Math.atan2(dx, dz);
-              }
-
-              playerVillager.walkCycle += 0.18;
-              const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
-              const armSwing = Math.sin(playerVillager.walkCycle) * 0.5;
-
-              if (Math.abs(Math.sin(playerVillager.walkCycle)) > 0.88 && Math.random() < 0.35) {
-                const rotY = playerVillager.obj.rotation.y;
-                const heelX = playerVillager.currentX - Math.sin(rotY) * 0.18;
-                const heelZ = playerVillager.currentZ - Math.cos(rotY) * 0.18;
-                spawnFootstepDust(heelX, 0, heelZ);
-              }
-
+            // 🌟 非墾荒狀態才執行日常漫步（不使用 return，確保後面 renderer.render 順暢執行）
+            if (playerVillager.waitTimer > 0) {
+              playerVillager.waitTimer--;
               if (limbs) {
-                limbs.leftLeg.rotation.x = legSwing;
-                limbs.rightLeg.rotation.x = -legSwing;
-                limbs.leftArm.rotation.x = -armSwing;
-                limbs.rightArm.rotation.x = armSwing;
+                limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
+                limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
+                limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
+                limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
               }
-              playerVillager.obj.position.y = Math.abs(Math.sin(playerVillager.walkCycle)) * 0.04;
+              if (playerVillager.waitTimer <= 0) pickNextPlayerWanderTarget();
             } else {
-              if (playerVillager.targetIslandIdx !== undefined) {
-                playerVillager.currentIslandIdx = playerVillager.targetIslandIdx;
+              const dx = playerVillager.targetX - playerVillager.currentX;
+              const dz = playerVillager.targetZ - playerVillager.currentZ;
+              const dist = Math.hypot(dx, dz);
+
+              if (dist > 0.08) {
+                playerVillager.currentX += (dx / dist) * playerVillager.speed;
+                playerVillager.currentZ += (dz / dist) * playerVillager.speed;
+
+                const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
+                const wasBlocked = applyWorldRepulsion(currentPos, 0.35);
+                playerVillager.currentX = currentPos.x;
+                playerVillager.currentZ = currentPos.z;
+
+                Object.values(otherPlayers).forEach(other => {
+                  if (!other || !other.mesh) return;
+                  const ox = playerVillager.currentX - other.mesh.position.x;
+                  const oz = playerVillager.currentZ - other.mesh.position.z;
+                  const odist = Math.hypot(ox, oz);
+                  if (odist < 0.55 && odist > 0.001) {
+                    const push = (0.55 - odist) * 0.5;
+                    playerVillager.currentX += (ox / odist) * push;
+                    playerVillager.currentZ += (oz / odist) * push;
+                  }
+                });
+
+                playerVillager.obj.position.x = playerVillager.currentX;
+                playerVillager.obj.position.z = playerVillager.currentZ;
+
+                if (wasBlocked) {
+                  playerVillager.targetX = playerVillager.currentX;
+                  playerVillager.targetZ = playerVillager.currentZ;
+                  playerVillager.waitTimer = 20;
+                } else {
+                  playerVillager.obj.rotation.y = Math.atan2(dx, dz);
+                }
+
+                playerVillager.walkCycle += 0.18;
+                const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+                const armSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+
+                if (Math.abs(Math.sin(playerVillager.walkCycle)) > 0.88 && Math.random() < 0.35) {
+                  const rotY = playerVillager.obj.rotation.y;
+                  const heelX = playerVillager.currentX - Math.sin(rotY) * 0.18;
+                  const heelZ = playerVillager.currentZ - Math.cos(rotY) * 0.18;
+                  spawnFootstepDust(heelX, 0, heelZ);
+                }
+
+                if (limbs) {
+                  limbs.leftLeg.rotation.x = legSwing;
+                  limbs.rightLeg.rotation.x = -legSwing;
+                  limbs.leftArm.rotation.x = -armSwing;
+                  limbs.rightArm.rotation.x = armSwing;
+                }
+                playerVillager.obj.position.y = Math.abs(Math.sin(playerVillager.walkCycle)) * 0.04;
+              } else {
+                if (playerVillager.targetIslandIdx !== undefined) {
+                  playerVillager.currentIslandIdx = playerVillager.targetIslandIdx;
+                }
+                playerVillager.waitTimer = Math.floor(Math.random() * 120) + 60;
               }
-              playerVillager.waitTimer = Math.floor(Math.random() * 120) + 60;
             }
           }
         }
