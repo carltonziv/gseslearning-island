@@ -4878,22 +4878,22 @@ function adminClearAllOnlinePlayers() {
       return boatSystem;
     }
 // ==========================================
-    // 🎈 節能低多邊形空中熱氣球系統（王國之淚・左納烏古代科技風格）
+    // 🎈 節能低多邊形空中熱氣球系統（王國之淚・古文明藍色充能能量版）
     // ==========================================
     let hotAirBalloon = null;
+    let balloonEnergyBeam = null;
+    let balloonEnergyCore = null;
 
     function createHotAirBalloon() {
       const balloonGroup = new THREE.Group();
 
-      // 🌟 王國之淚專屬配色材質
-      // 1. 氣球主體：海利亞風粗麻卡其布 (象牙白米色)
+      // 🌟 王國之淚／古代文明配色材質
       const fabricClothMat = new THREE.MeshStandardMaterial({ 
         color: 0xE8DFCA, 
         roughness: 0.85, 
         flatShading: true 
       });
 
-      // 2. 左納烏青銅金屬收口與飾條 (暗古青綠金屬感)
       const zonaiBronzeMat = new THREE.MeshStandardMaterial({ 
         color: 0x2A5D50, 
         metalness: 0.65, 
@@ -4901,16 +4901,25 @@ function adminClearAllOnlinePlayers() {
         flatShading: true 
       });
 
-      // 3. 左納烏能源核心飾環（青綠翠光，呼應中央島的左納烏符文）
-      const zonaiEnergyMat = new THREE.MeshStandardMaterial({
-        color: 0x5EEAD4,
-        emissive: 0x14B8A6,
-        emissiveIntensity: 0.9,
-        roughness: 0.2,
-        metalness: 0.1
+      // 🌟 古文明希卡／左納烏高純度藍色能量材質（自發光古藍光）
+      const ancientBlueEnergyMat = new THREE.MeshStandardMaterial({
+        color: 0x38BDF8,
+        emissive: 0x0284C7,
+        emissiveIntensity: 1.2,
+        roughness: 0.1,
+        metalness: 0.2
       });
 
-      // 4. 左納烏古代石質／厚皮革吊籃 (深灰墨綠岩石色調)
+      // 🌟 往上注入氣囊的充能能量光柱材質（半透明純光感）
+      const beamGlowMat = new THREE.MeshBasicMaterial({
+        color: 0x38BDF8,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+
       const basketStoneMat = new THREE.MeshStandardMaterial({ 
         color: 0x36453F, 
         metalness: 0.25, 
@@ -4918,12 +4927,6 @@ function adminClearAllOnlinePlayers() {
         flatShading: true 
       });
 
-      // 5. 左納烏能源火焰／燃燒龍頭噴嘴
-      const zonaiFlameMat = new THREE.MeshBasicMaterial({ 
-        color: 0x2DD4BF 
-      });
-
-      // 6. 懸吊粗麻繩索
       const ropeMat = new THREE.MeshBasicMaterial({ 
         color: 0x6E5D4F 
       });
@@ -4931,7 +4934,6 @@ function adminClearAllOnlinePlayers() {
       // 1. 氣囊本體
       const balloonBody = new THREE.Group();
       
-      // 主氣囊球體 (米白亞麻布面)
       const mainSphere = new THREE.Mesh(
         new THREE.SphereGeometry(2.6, 16, 12),
         fabricClothMat
@@ -4941,7 +4943,6 @@ function adminClearAllOnlinePlayers() {
       mainSphere.castShadow = true;
       balloonBody.add(mainSphere);
 
-      // 下半部收口環（左納烏古青銅錐體）
       const coneBottom = new THREE.Mesh(
         new THREE.ConeGeometry(2.48, 1.6, 16, 1, true),
         zonaiBronzeMat
@@ -4951,32 +4952,41 @@ function adminClearAllOnlinePlayers() {
       coneBottom.scale.set(1.0, 1.0, 1.0);
       balloonBody.add(coneBottom);
 
-      // 裙邊能量發光環（帶發光青綠色）
+      // 下裙邊能量匯流環（古代藍色光圈）
       const rim = new THREE.Mesh(
         new THREE.CylinderGeometry(1.02, 1.02, 0.26, 16),
-        zonaiEnergyMat
+        ancientBlueEnergyMat
       );
       rim.position.y = 1.5;
       balloonBody.add(rim);
 
       balloonGroup.add(balloonBody);
 
-      // 2. 左納烏火龍頭造型燃燒座（青銅底座 + 幽綠火光）
-      const burnerBase = new THREE.Mesh(
-        new THREE.BoxGeometry(0.35, 0.18, 0.35), 
+      // 2. 吊籃中央：古文明能量裝置與往上充能的光柱
+      // (1) 古代青銅八角底座
+      const emitterBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.28, 0.2, 8), 
         zonaiBronzeMat
       );
-      burnerBase.position.y = 1.05;
-      balloonGroup.add(burnerBase);
+      emitterBase.position.y = 0.85;
+      balloonGroup.add(emitterBase);
 
-      const burnerFlame = new THREE.Mesh(
-        new THREE.ConeGeometry(0.14, 0.32, 6), 
-        zonaiFlameMat
+      // (2) 中央懸浮旋轉的古代藍色八面能量結晶核
+      balloonEnergyCore = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.18, 0),
+        ancientBlueEnergyMat
       );
-      burnerFlame.position.y = 1.25;
-      balloonGroup.add(burnerFlame);
+      balloonEnergyCore.position.y = 1.15;
+      balloonGroup.add(balloonEnergyCore);
 
-      // 3. 吊籃（仿左納烏石板方舟造型）
+      // (3) 核心向氣囊內部「往上衝射灌注」的古代能量光束
+      // 底部半徑 0.12，向上微幅擴散至 0.65，直插氣球底部氣嘴
+      const beamGeo = new THREE.CylinderGeometry(0.65, 0.12, 1.35, 12, 1, true);
+      balloonEnergyBeam = new THREE.Mesh(beamGeo, beamGlowMat);
+      balloonEnergyBeam.position.y = 1.82; // 剛好連接在能量核上方至氣球下環
+      balloonGroup.add(balloonEnergyBeam);
+
+      // 3. 吊籃
       const basket = new THREE.Mesh(
         new THREE.CylinderGeometry(0.72, 0.58, 0.75, 8),
         basketStoneMat
@@ -4985,7 +4995,6 @@ function adminClearAllOnlinePlayers() {
       basket.castShadow = true;
       balloonGroup.add(basket);
 
-      // 吊籃邊緣鑲嵌一圈金屬加固緣
       const basketRim = new THREE.Mesh(
         new THREE.CylinderGeometry(0.74, 0.74, 0.08, 8),
         zonaiBronzeMat
@@ -5009,7 +5018,6 @@ function adminClearAllOnlinePlayers() {
         balloonGroup.add(rope);
       });
 
-      // 初始位置設定於遠方大陸上空
       balloonGroup.position.set(-36, 21, -36);
       return balloonGroup;
     }
