@@ -4878,72 +4878,128 @@ function adminClearAllOnlinePlayers() {
       return boatSystem;
     }
 // ==========================================
-    // 🎈 節能低多邊形空中熱氣球系統
+    // 🎈 節能低多邊形空中熱氣球系統（王國之淚・左納烏古代科技風格）
     // ==========================================
     let hotAirBalloon = null;
 
     function createHotAirBalloon() {
       const balloonGroup = new THREE.Group();
 
-      // 共用輕量材質
-      const fabricOrangeMat = new THREE.MeshStandardMaterial({ color: 0xF97316, roughness: 0.6, flatShading: true });
-      const fabricWhiteMat  = new THREE.MeshStandardMaterial({ color: 0xFDFBF7, roughness: 0.6, flatShading: true });
-      const basketWoodMat   = new THREE.MeshStandardMaterial({ color: 0x78350F, roughness: 0.85 });
-      const ropeMat         = new THREE.MeshBasicMaterial({ color: 0x334155 });
-      const burnerMat       = new THREE.MeshBasicMaterial({ color: 0xFDE047 });
+      // 🌟 王國之淚專屬配色材質
+      // 1. 氣球主體：海利亞風粗麻卡其布 (象牙白米色)
+      const fabricClothMat = new THREE.MeshStandardMaterial({ 
+        color: 0xE8DFCA, 
+        roughness: 0.85, 
+        flatShading: true 
+      });
 
-      // 1. 氣囊本體 (球體拉伸，分段雙色條紋)
+      // 2. 左納烏青銅金屬收口與飾條 (暗古青綠金屬感)
+      const zonaiBronzeMat = new THREE.MeshStandardMaterial({ 
+        color: 0x2A5D50, 
+        metalness: 0.65, 
+        roughness: 0.35, 
+        flatShading: true 
+      });
+
+      // 3. 左納烏能源核心飾環（青綠翠光，呼應中央島的左納烏符文）
+      const zonaiEnergyMat = new THREE.MeshStandardMaterial({
+        color: 0x5EEAD4,
+        emissive: 0x14B8A6,
+        emissiveIntensity: 0.9,
+        roughness: 0.2,
+        metalness: 0.1
+      });
+
+      // 4. 左納烏古代石質／厚皮革吊籃 (深灰墨綠岩石色調)
+      const basketStoneMat = new THREE.MeshStandardMaterial({ 
+        color: 0x36453F, 
+        metalness: 0.25, 
+        roughness: 0.8, 
+        flatShading: true 
+      });
+
+      // 5. 左納烏能源火焰／燃燒龍頭噴嘴
+      const zonaiFlameMat = new THREE.MeshBasicMaterial({ 
+        color: 0x2DD4BF 
+      });
+
+      // 6. 懸吊粗麻繩索
+      const ropeMat = new THREE.MeshBasicMaterial({ 
+        color: 0x6E5D4F 
+      });
+
+      // 1. 氣囊本體
       const balloonBody = new THREE.Group();
+      
+      // 主氣囊球體 (米白亞麻布面)
       const mainSphere = new THREE.Mesh(
         new THREE.SphereGeometry(2.6, 16, 12),
-        fabricOrangeMat
+        fabricClothMat
       );
       mainSphere.scale.set(1.0, 1.25, 1.0);
       mainSphere.position.y = 4.2;
       mainSphere.castShadow = true;
       balloonBody.add(mainSphere);
 
-      // 下半部收口錐體
+      // 下半部收口環（左納烏古青銅錐體）
       const coneBottom = new THREE.Mesh(
         new THREE.ConeGeometry(2.48, 1.6, 16, 1, true),
-        fabricWhiteMat
+        zonaiBronzeMat
       );
       coneBottom.rotation.x = Math.PI;
       coneBottom.position.y = 2.4;
       coneBottom.scale.set(1.0, 1.0, 1.0);
       balloonBody.add(coneBottom);
 
-      // 裙邊下環
+      // 裙邊能量發光環（帶發光青綠色）
       const rim = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.0, 1.0, 0.25, 16),
-        fabricOrangeMat
+        new THREE.CylinderGeometry(1.02, 1.02, 0.26, 16),
+        zonaiEnergyMat
       );
       rim.position.y = 1.5;
       balloonBody.add(rim);
 
       balloonGroup.add(balloonBody);
 
-      // 2. 燃燒器 (微小暖黃方塊)
-      const burner = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.3), burnerMat);
-      burner.position.y = 1.1;
-      balloonGroup.add(burner);
+      // 2. 左納烏火龍頭造型燃燒座（青銅底座 + 幽綠火光）
+      const burnerBase = new THREE.Mesh(
+        new THREE.BoxGeometry(0.35, 0.18, 0.35), 
+        zonaiBronzeMat
+      );
+      burnerBase.position.y = 1.05;
+      balloonGroup.add(burnerBase);
 
-      // 3. 藤編吊籃
+      const burnerFlame = new THREE.Mesh(
+        new THREE.ConeGeometry(0.14, 0.32, 6), 
+        zonaiFlameMat
+      );
+      burnerFlame.position.y = 1.25;
+      balloonGroup.add(burnerFlame);
+
+      // 3. 吊籃（仿左納烏石板方舟造型）
       const basket = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.7, 0.6, 0.75, 8),
-        basketWoodMat
+        new THREE.CylinderGeometry(0.72, 0.58, 0.75, 8),
+        basketStoneMat
       );
       basket.position.y = 0.38;
       basket.castShadow = true;
       balloonGroup.add(basket);
 
-      // 4. 4 根固定細纜繩
+      // 吊籃邊緣鑲嵌一圈金屬加固緣
+      const basketRim = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.74, 0.74, 0.08, 8),
+        zonaiBronzeMat
+      );
+      basketRim.position.y = 0.75;
+      balloonGroup.add(basketRim);
+
+      // 4. 4 根固定纜繩
       const ropeAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
       ropeAngles.forEach(ang => {
         const topX = Math.cos(ang) * 0.95;
         const topZ = Math.sin(ang) * 0.95;
-        const botX = Math.cos(ang) * 0.55;
-        const botZ = Math.sin(ang) * 0.55;
+        const botX = Math.cos(ang) * 0.58;
+        const botZ = Math.sin(ang) * 0.58;
 
         const ropeGeo = new THREE.BufferGeometry().setFromPoints([
           new THREE.Vector3(botX, 0.75, botZ),
@@ -4953,8 +5009,8 @@ function adminClearAllOnlinePlayers() {
         balloonGroup.add(rope);
       });
 
-      // 初始位置設定在遠方大陸上空 (X: -36, Y: 22, Z: -36，約在西北方大陸前緣山丘上)
-      balloonGroup.position.set(-36, 22, -36);
+      // 初始位置設定於遠方大陸上空
+      balloonGroup.position.set(-36, 21, -36);
       return balloonGroup;
     }
     let seaMonster = null, monsterBodyMesh = null, monsterTailPivot = null, monsterFins = [];
