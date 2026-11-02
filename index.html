@@ -4953,8 +4953,8 @@ function adminClearAllOnlinePlayers() {
         balloonGroup.add(rope);
       });
 
-      // 初始高度置於島嶼群上空 (Y = 16 ~ 22)
-      balloonGroup.position.set(0, 18, 0);
+      // 初始位置設定在遠方大陸上空 (X: -36, Y: 22, Z: -36，約在西北方大陸前緣山丘上)
+      balloonGroup.position.set(-36, 22, -36);
       return balloonGroup;
     }
     let seaMonster = null, monsterBodyMesh = null, monsterTailPivot = null, monsterFins = [];
@@ -6443,20 +6443,27 @@ function adminClearAllOnlinePlayers() {
 
           camera.lookAt(targetLook);
         }
-// 🎈 熱氣球巡航邏輯（半徑 22 米橢圓空域悠閒慢速巡航 + 自然緩慢漂浮）
+// 🎈 熱氣球巡航邏輯（開場現身於西北方遠處大陸上空，並沿著大陸前緣緩慢巡弋）
         if (hotAirBalloon) {
-          const balloonSpeed = time * 0.03; // 悠閒巡航速度
-          const hoverRadiusX = 42.0;
-          const hoverRadiusZ = 38.0;
+          // 1. 調整速度至極悠閒的 0.025，並加入初始角度偏移 Math.PI * 1.25（約 225 度）
+          // 讓網頁剛載入（time = 0）時，熱氣球直接位在西北方的遠方大陸山巒上空
+          const balloonAngle = time * 0.025 + Math.PI * 1.25; 
           
-          // 平滑大橢圓飄移路徑
-          hotAirBalloon.position.x = Math.sin(balloonSpeed) * hoverRadiusX;
-          hotAirBalloon.position.z = Math.cos(balloonSpeed) * hoverRadiusZ;
-          // 自然的氣流上下浮動與微傾角
-          hotAirBalloon.position.y = 18.0 + Math.sin(time * 0.8) * 1.1;
-          hotAirBalloon.rotation.y = -balloonSpeed + Math.PI / 2;
-          hotAirBalloon.rotation.z = Math.sin(time * 0.6) * 0.04; // 隨風微幅搖曳
-          hotAirBalloon.rotation.x = Math.cos(time * 0.5) * 0.03;
+          // 2. 將巡航橢圓半徑加大到大陸前緣（X 半徑 44 米，Z 半徑 40 米）
+          const hoverRadiusX = 44.0;
+          const hoverRadiusZ = 40.0;
+          
+          // 3. 計算水平飄移位置
+          hotAirBalloon.position.x = Math.sin(balloonAngle) * hoverRadiusX;
+          hotAirBalloon.position.z = Math.cos(balloonAngle) * hoverRadiusZ;
+          
+          // 4. 高度設定在 21 米（高於遠景山峰），並帶輕微的自然氣流上下起伏
+          hotAirBalloon.position.y = 21.0 + Math.sin(time * 0.7) * 1.2;
+          
+          // 5. 隨切線轉向，並保留自然的微幅風動搖擺
+          hotAirBalloon.rotation.y = -balloonAngle + Math.PI / 2;
+          hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.04;
+          hotAirBalloon.rotation.x = Math.cos(time * 0.4) * 0.03;
         }
         renderer.render(scene, camera);
       }
