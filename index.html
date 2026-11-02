@@ -1123,24 +1123,56 @@
       </div>
     </div>
 
-<!-- 9. 荒地內容面板 -->
+<!-- 9. 北荒地開墾：龜山福德神廟島建設面板 -->
     <div id="panel-wasteland_n" style="display:none;">
-      <div style="background: linear-gradient(135deg, #fef3c7, #fed7aa); border: 2px dashed #d97706; border-radius: 16px; padding: 18px; text-align: center; color: #9a3412;">
-        <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🏜️</span>
-        <h3 style="margin-bottom: 6px; font-weight: 800;">尚未開墾的荒蕪秘境</h3>
-        <p style="font-size: 0.88rem; line-height: 1.6; color: #7c2d12;">這裡目前雜草叢生、碎石遍佈，四周一片沉寂，等待未來被喚醒！</p>
+      <div id="pause-notice-wasteland_n" class="paused-banner" style="display:none;">
+        ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
+      </div>
+
+      <!-- 開墾進度儀表 -->
+      <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #d97706; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="color: #92400e; font-size: 1.05rem;" id="dev-progress-title">⛏️ 龜山荒地開墾工程</strong>
+          <span id="dev-progress-text" style="font-size: 0.95rem; font-weight: 900; color: #b45309;">0%</span>
+        </div>
+        <div style="width: 100%; height: 16px; background: #e2e8f0; border-radius: 12px; overflow: hidden; border: 1.5px solid #b45309;">
+          <div id="dev-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #f59e0b, #10b981); transition: width 0.6s ease;"></div>
+        </div>
+        <p id="dev-stage-desc" style="font-size: 0.82rem; color: #78350f; margin-top: 8px; line-height: 1.45;">
+          🌱 目前雜草叢生，期待全班探險家透過解答數學難題，注入開墾生機！
+        </p>
+      </div>
+
+      <!-- AI 數學挑戰出題卡 -->
+      <div id="dev-quiz-card" style="background:#ffffff; border: 2px solid #cbd5e1; border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="background:#e0f2fe; color:#0284c7; padding:2px 8px; border-radius:8px; font-weight:800; font-size:0.78rem;">數學墾荒任務</span>
+          <span style="color:#16a34a; font-weight:800; font-size:0.8rem;">每次成功 +5% 開墾進度</span>
+        </div>
+        
+        <h4 id="math-quiz-topic" style="color:#1e293b; font-size:1.0rem; margin-bottom:6px; line-height:1.5;">載入題目中...</h4>
+        <p id="math-quiz-desc" style="color:#64748b; font-size:0.85rem; margin-bottom:12px;">翻開計算紙動動腦，算出正確答案吧！</p>
+        
+        <div class="form-group">
+          <label>你的計算結果：</label>
+          <input type="number" id="math-quiz-answer" placeholder="請輸入整數答案" style="font-size:1.1rem; font-weight:bold; letter-spacing:1px;">
+        </div>
+
+        <div id="math-feedback-box" style="display:none; border-radius:12px; padding:10px; margin-bottom:12px; font-size:0.85rem;"></div>
+
+        <button class="btn-action btn-blue" id="btn-submit-math" onclick="submitMathReclaim()">⛏️ 提交解答・注入開墾能量</button>
       </div>
     </div>
 
-    <!-- 🌟 改回純荒地提示（移除萬聖節任務表單） -->
+    <!-- 10. 南荒地內容面板 -->
     <div id="panel-wasteland_s" style="display:none;">
       <div style="background: linear-gradient(135deg, #fef3c7, #fed7aa); border: 2px dashed #d97706; border-radius: 16px; padding: 18px; text-align: center; color: #9a3412;">
         <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🏜️</span>
-        <h3 style="margin-bottom: 6px; font-weight: 800;">尚未開墾的荒蕪秘境</h3>
+        <h3 style="margin-bottom: 6px; font-weight: 800;">尚未開墾的南荒秘境</h3>
         <p style="font-size: 0.88rem; line-height: 1.6; color: #7c2d12;">這裡目前雜草叢生、碎石遍佈，四周一片沉寂，等待未來被喚醒！</p>
       </div>
     </div>
-  </div> <!-- 乾淨閉合 #side-drawer 即可 -->
+  </div> <!-- 🌟 閉合 #side-drawer 容器 -->
 
   <!-- 教師控制台彈窗 -->
   <div id="modal-teacher" class="modal-overlay hidden">
@@ -1229,6 +1261,19 @@
 
     // 🌟 全域模型與特效安全參照
     let cartGroup = null;
+    // ==========================================
+    // ⛏️ 北荒地（龜山福德神廟島）開墾全域變數
+    // ==========================================
+    let northIslandProgress = 0; // 0 ~ 100
+    let northIslandReclaimRef = null;
+    let northIslandGroup = null;
+    let currentMathQuestion = null;
+
+    // 開墾各階段 3D 子物件參照
+    let stageMeshGrass = null;      // 25% 平整草皮
+    let stageMeshHelipad = null;    // 50% 熱氣球降落坪
+    let stageMeshRuinTemple = null; // 75% 廢墟神廟
+    let stageMeshNewTemple = null;  // 100% 嶄新神廟
 
     try {
       firebase.initializeApp(firebaseConfig);
@@ -2017,6 +2062,13 @@ function checkDailyLimit(islandId) {
         document.getElementById('class-energy-text').textContent = `${val} / ${max}`;
       });
     }
+    if (db) {
+      northIslandReclaimRef = db.ref('island_stats/north_island_reclaim');
+      northIslandReclaimRef.on('value', snap => {
+        const val = snap.val() || 0;
+        updateNorthIslandReclaimVisuals(val);
+      });
+    }
 
     if (liveFeedRef) {
       let isFirst = true;
@@ -2193,6 +2245,166 @@ function checkDailyLimit(islandId) {
       }, 3);
 
       if (input) input.value = '';
+    }
+
+    // ==========================================
+    // 🧮 小三上學期數學題庫生成（10000以內加減、乘法）
+    // ==========================================
+    function generateGrade3MathQuestion() {
+      const qTypes = ['add', 'sub', 'mul'];
+      const picked = qTypes[Math.floor(Math.random() * qTypes.length)];
+      let text = '', ans = 0;
+
+      if (picked === 'add') {
+        // 10000 以內的加法
+        const n1 = Math.floor(Math.random() * 4500) + 1200;
+        const n2 = Math.floor(Math.random() * 4000) + 850;
+        text = `請問：${n1} ＋ ${n2} 等於多少？`;
+        ans = n1 + n2;
+      } else if (picked === 'sub') {
+        // 10000 以內的減法
+        const n1 = Math.floor(Math.random() * 5000) + 3000;
+        const n2 = Math.floor(Math.random() * (n1 - 500)) + 400;
+        text = `請問：${n1} － ${n2} 等於多少？`;
+        ans = n1 - n2;
+      } else {
+        // 二位數或三位數 × 一位數乘法
+        const isBig = Math.random() < 0.4;
+        const n1 = isBig ? (Math.floor(Math.random() * 200) + 105) : (Math.floor(Math.random() * 70) + 25);
+        const n2 = Math.floor(Math.random() * 7) + 3; // 3 ~ 9
+        text = `請問：${n1} × ${n2} 等於多少？`;
+        ans = n1 * n2;
+      }
+
+      currentMathQuestion = { question: text, correctAnswer: ans };
+      
+      const qTopic = document.getElementById('math-quiz-topic');
+      const qInput = document.getElementById('math-quiz-answer');
+      const fBox = document.getElementById('math-feedback-box');
+      if (qTopic) qTopic.textContent = text;
+      if (qInput) qInput.value = '';
+      if (fBox) fBox.style.display = 'none';
+    }
+
+    // ==========================================
+    // ⛏️ 提交解答・驗證批改並推進開墾進度
+    // ==========================================
+    function submitMathReclaim() {
+      if (northIslandProgress >= 100) {
+        alert('🎉 龜山福德神廟島已開墾完成囉！感謝探險家的付出！');
+        return;
+      }
+
+      // 檢查每日 1 次限制
+      if (!checkDailyLimit('wasteland_n')) return;
+
+      if (!currentMathQuestion) {
+        generateGrade3MathQuestion();
+        return;
+      }
+
+      const inputVal = parseInt(document.getElementById('math-quiz-answer').value, 10);
+      const fBox = document.getElementById('math-feedback-box');
+
+      if (isNaN(inputVal)) {
+        alert('請先在答案格中輸入計算數字喔！');
+        return;
+      }
+
+// 比對答案
+      if (inputVal === currentMathQuestion.correctAnswer) {
+        fBox.style.display = 'block';
+        fBox.style.background = '#dcfce7';
+        fBox.style.border = '2px solid #22c55e';
+        fBox.style.color = '#15803d';
+        fBox.innerHTML = `<strong>🎉 算得太準確了！</strong><br>答案正確，成功為北荒地注入 5% 開墾進度！`;
+
+        // 🌟 關鍵修正：在發送交易前，先檢查當前進度加上 5% 是否剛好達成或突破 100%
+        const willReachFull = (northIslandProgress < 100 && (northIslandProgress + 5) >= 100);
+
+        // 雲端進度推進 5%（上限鎖定在 100）
+        if (northIslandReclaimRef) {
+          northIslandReclaimRef.transaction(current => {
+            let next = (current || 0) + 5;
+            return (next >= 100) ? 100 : next;
+          });
+        }
+
+        // 🌟 只要判定這次提交使全班達成 100%，就確實發放全班 +100 能量並噴發大型彩帶
+        if (willReachFull && totalEnergyRef) {
+          totalEnergyRef.transaction(c => (c || 0) + 100);
+          showLiveBanner("⛩️ 狂賀！北荒地神廟全面完工！全班獲得 100 點共創能量！");
+          confetti({ particleCount: 150, spread: 100 });
+        }
+
+        // 打卡紀錄與回傳 GAS 表單
+        rewardCheckin('wasteland_n', '龜山荒地開墾', `解答數學完成，貢獻了 5% 開墾進度`, {
+          type: 'task_complete',
+          seatNumber: currentStudent.seatNumber,
+          studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+          islandTitle: '北荒地開墾',
+          taskTitle: '小三數學挑戰',
+          points: 5,
+          detail1: currentMathQuestion.question,
+          detail2: `學生答案: ${inputVal}`,
+          verifier: '島嶼之星 數學認證'
+        }, 5);
+
+      } else {
+        fBox.style.display = 'block';
+        fBox.style.background = '#fee2e2';
+        fBox.style.border = '2px solid #ef4444';
+        fBox.style.color = '#b91c1c';
+        fBox.innerHTML = `<strong>💡 答案不太對喔！</strong><br>再拿計算紙仔細驗算一遍，加油！`;
+      }
+    }
+
+    
+    function updateNorthIslandReclaimVisuals(progress) {
+      northIslandProgress = progress;
+
+      // 1. 更新 UI 進度條與說明
+      const pBar = document.getElementById('dev-progress-bar');
+      const pText = document.getElementById('dev-progress-text');
+      const pTitle = document.getElementById('dev-progress-title');
+      const pDesc = document.getElementById('dev-stage-desc');
+      if (pBar) pBar.style.width = `${progress}%`;
+      if (pText) pText.textContent = `${progress}%`;
+
+      // 2. 階段模型顯隱控制（階梯式解鎖）
+      const isOver25 = progress >= 25;
+      const isOver50 = progress >= 50 && progress < 75;
+      const isOver75 = progress >= 75 && progress < 100;
+      const isCompleted = progress >= 100;
+
+      if (stageMeshGrass) stageMeshGrass.visible = isOver25;
+      if (stageMeshHelipad) stageMeshHelipad.visible = isOver50;
+      if (stageMeshRuinTemple) stageMeshRuinTemple.visible = isOver75;
+      if (stageMeshNewTemple) stageMeshNewTemple.visible = isCompleted;
+
+      // 3. 初始雜草/岩石的隱藏 (開墾進度 >= 25% 時隱藏原始岩石)
+      if (northIslandGroup && northIslandGroup.children[2]) {
+        northIslandGroup.children[2].visible = (progress < 25);
+      }
+
+      // 4. 動態說明文字與島嶼名稱蛻變
+      if (isCompleted) {
+        if (pTitle) pTitle.textContent = "⛩️ 龜山福德神廟島 (開墾完成)";
+        if (pDesc) pDesc.innerHTML = "✨ <b>全班開墾完成！</b> 古代龜山福德神廟重獲新生，能量長駐，庇佑全島探險家！";
+        
+        const targetCfg = ISLAND_CONFIG.find(c => c.id === 'wasteland_n');
+        if (targetCfg) {
+          targetCfg.title = "龜山福德神廟島";
+          targetCfg.subtitle = "全班自主開墾建立・能量流轉";
+          targetCfg.color = 0x86EFAC;
+        }
+      } else if (progress >= 75) {
+        if (pDesc) pDesc.textContent = "🏛️ 荒地上升起了塵封已久的古代龜山福德神廟廢墟，就差最後一哩路喚醒神廟能量！";
+      } else if (progress >= 50) {
+        if (pDesc) pDesc.textContent = "🎈 空中熱氣球降落坪打造完成！熱氣球將會定期降落於此歇息～";
+      } else if (progress >= 25) {
+        if (pDesc) pDesc.textContent = "🌱 雜草碎石已化為平整草皮，初具綠洲雛形！繼續解題擴建吧！";
+      }
     }
 
     function switchReadingTab(tab) {
@@ -3791,6 +4003,100 @@ function adminClearAllOnlinePlayers() {
       // 註冊荒島碰撞體積（半徑 0.9 米）
       registerObstacle(islandId, 0, 0, 0.9);
       return group;
+    }
+
+    function createReclaimLandmarkStages(parentGroup) {
+      // 🌟 共用材質池，大幅減少記憶體佔用
+      const grassMat = new THREE.MeshStandardMaterial({ color: 0x65A30D, roughness: 0.8, flatShading: true });
+      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, roughness: 0.9, flatShading: true });
+      const ruinStoneMat = new THREE.MeshStandardMaterial({ color: 0x64748B, roughness: 0.95, flatShading: true });
+      const redTempleMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.5 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xFBBF24, metalness: 0.8, roughness: 0.2 });
+      const energyGlowMat = new THREE.MeshStandardMaterial({ 
+        color: 0x38BDF8, 
+        emissive: 0x0284C7, 
+        emissiveIntensity: 1.8,
+        transparent: true,
+        opacity: 0.85
+      });
+
+      // 階段 1：25% 綠意平整草皮
+      stageMeshGrass = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.12, 18), grassMat);
+      stageMeshGrass.position.y = 0.06;
+      stageMeshGrass.visible = false;
+      parentGroup.add(stageMeshGrass);
+
+      // 階段 2：50% 熱氣球降落坪
+      stageMeshHelipad = new THREE.Group();
+      const padBase = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.5, 0.18, 16), stoneMat);
+      padBase.position.y = 0.1;
+      stageMeshHelipad.add(padBase);
+
+      const padRing = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.85, 24), goldMat);
+      padRing.rotation.x = -Math.PI / 2;
+      padRing.position.y = 0.2;
+      stageMeshHelipad.add(padRing);
+
+      const padCross = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.02, 2.4), goldMat);
+      padCross.position.y = 0.2;
+      stageMeshHelipad.add(padCross);
+      const padCross2 = padCross.clone();
+      padCross2.rotation.y = Math.PI / 2;
+      stageMeshHelipad.add(padCross2);
+
+      stageMeshHelipad.visible = false;
+      parentGroup.add(stageMeshHelipad);
+
+      // 階段 3：75% 古代神廟廢墟
+      stageMeshRuinTemple = new THREE.Group();
+      const ruinBase = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.35, 2.8), ruinStoneMat);
+      ruinBase.position.y = 0.18;
+      stageMeshRuinTemple.add(ruinBase);
+
+      const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 1.4, 8), ruinStoneMat);
+      p1.position.set(-0.9, 0.9, -0.9);
+      stageMeshRuinTemple.add(p1);
+
+      const p2Broken = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.7, 8), ruinStoneMat);
+      p2Broken.position.set(0.9, 0.55, -0.9);
+      p2Broken.rotation.z = 0.3;
+      stageMeshRuinTemple.add(p2Broken);
+
+      const ruinRoof = new THREE.Mesh(new THREE.ConeGeometry(2.0, 0.7, 4), ruinStoneMat);
+      ruinRoof.rotation.y = Math.PI / 4;
+      ruinRoof.position.set(0, 1.9, 0);
+      stageMeshRuinTemple.add(ruinRoof);
+
+      stageMeshRuinTemple.visible = false;
+      parentGroup.add(stageMeshRuinTemple);
+
+      // 階段 4：100% 嶄新龜山福德神廟
+      stageMeshNewTemple = new THREE.Group();
+      const tBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.45, 3.2), stoneMat);
+      tBase.position.y = 0.22;
+      stageMeshNewTemple.add(tBase);
+
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(pos => {
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 1.8, 8), redTempleMat);
+        pillar.position.set(pos[0], 1.25, pos[1]);
+        stageMeshNewTemple.add(pillar);
+      });
+
+      const tRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 0.9, 4), redTempleMat);
+      tRoof.rotation.y = Math.PI / 4;
+      tRoof.position.set(0, 2.5, 0);
+      stageMeshNewTemple.add(tRoof);
+
+      const roofTop = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.15, 0.35), goldMat);
+      roofTop.position.set(0, 2.95, 0);
+      stageMeshNewTemple.add(roofTop);
+
+      const altarCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.4, 0), energyGlowMat);
+      altarCore.position.set(0, 1.35, 0);
+      stageMeshNewTemple.add(altarCore);
+
+      stageMeshNewTemple.visible = false;
+      parentGroup.add(stageMeshNewTemple);
     }
 
     function createStarShape(radius, innerRadius) {
@@ -5486,6 +5792,10 @@ function adminClearAllOnlinePlayers() {
           landmark = createWastelandLandmark(cfg.id);
         }
         group.add(landmark);
+        if (cfg.id === 'wasteland_n') {
+          northIslandGroup = group;
+          createReclaimLandmarkStages(group);
+        }
 
         if (cfg.id === 'beyblade') {
           const zonaiCircle = createZonaiRuneCircle(4.5);
@@ -6513,34 +6823,49 @@ function adminClearAllOnlinePlayers() {
 
           camera.lookAt(targetLook);
         }
-// 🎈 熱氣球巡航與古文明藍色能量充能動態
+// 🎈 熱氣球巡航與北荒地降落坪（50%~75%）定期降落動態
         if (hotAirBalloon) {
-          const balloonAngle = time * 0.025 + Math.PI * 1.25; 
-          const hoverRadiusX = 44.0;
-          const hoverRadiusZ = 40.0;
+          // 1. 判定降落坪是否開放 (開墾進度介於 50% ~ 75% 之間)
+          const isHelipadOpen = (northIslandProgress >= 50 && northIslandProgress < 75);
           
-          hotAirBalloon.position.x = Math.sin(balloonAngle) * hoverRadiusX;
-          hotAirBalloon.position.z = Math.cos(balloonAngle) * hoverRadiusZ;
-          hotAirBalloon.position.y = 21.0 + Math.sin(time * 0.7) * 1.2;
-          
-          hotAirBalloon.rotation.y = -balloonAngle + Math.PI / 2;
-          hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.04;
-          hotAirBalloon.rotation.x = Math.cos(time * 0.4) * 0.03;
+          // 2. 定期降落週期：每 60 秒為一輪，其中前 14 秒緩緩降落停泊於北島降落坪
+          const cycleTime = time % 60;
+          const isLandingTime = isHelipadOpen && (cycleTime < 14);
 
-          // 🌟 1. 中央能量結晶旋轉與上下懸浮浮動
-          if (balloonEnergyCore) {
-            balloonEnergyCore.rotation.y += 0.04;
-            balloonEnergyCore.rotation.x += 0.02;
-            balloonEnergyCore.position.y = 1.15 + Math.sin(time * 3.5) * 0.04;
+          if (isLandingTime) {
+            // 平滑緩降至北島降落坪表面（北島中心座標 X: 0, Z: -9.0，停降高度 Y: 1.0）
+            const targetX = 0;
+            const targetZ = -9.0;
+            const targetY = 1.0;
+
+            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, targetX, 0.035);
+            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, targetZ, 0.035);
+            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, targetY, 0.035);
+            hotAirBalloon.rotation.y += 0.005; // 停泊時微微緩轉
+          } else {
+            // 正常巡航狀態：沿著遠方大陸前緣大半徑優雅飄遊
+            const balloonAngle = time * 0.025 + Math.PI * 1.25; 
+            const hoverRadiusX = 44.0;
+            const hoverRadiusZ = 40.0;
+            
+            hotAirBalloon.position.x = Math.sin(balloonAngle) * hoverRadiusX;
+            hotAirBalloon.position.z = Math.cos(balloonAngle) * hoverRadiusZ;
+            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, 21.0 + Math.sin(time * 0.7) * 1.2, 0.03);
+            
+            hotAirBalloon.rotation.y = -balloonAngle + Math.PI / 2;
+            hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.04;
+            hotAirBalloon.rotation.x = Math.cos(time * 0.4) * 0.03;
           }
 
-          // 🌟 2. 向上充能光柱的能量呼吸脈衝（光柱粗細與透明度波動，呈現動力衝灌感）
+          // 3. 古文明能量結晶持續自轉
+          if (balloonEnergyCore) {
+            balloonEnergyCore.rotation.y += 0.04;
+          }
+
+          // 4. 向上衝能的藍色光柱能量脈衝
           if (balloonEnergyBeam) {
-            const pulse = (Math.sin(time * 5.0) + 1) * 0.5; // 快速脈衝
-            balloonEnergyBeam.material.opacity = 0.45 + pulse * 0.35;
-            balloonEnergyBeam.scale.x = 0.92 + pulse * 0.16;
-            balloonEnergyBeam.scale.z = 0.92 + pulse * 0.16;
-            balloonEnergyBeam.rotation.y -= 0.02;
+            const pulse = (Math.sin(time * 5.0) + 1) * 0.5;
+            balloonEnergyBeam.material.opacity = 0.5 + pulse * 0.3;
           }
         }
         renderer.render(scene, camera);
@@ -6584,6 +6909,7 @@ function adminClearAllOnlinePlayers() {
       updateNightClosedState();
       updateSportTabStatus();
       if (islandData.id === 'reading') renderDailyQuestionUI();
+      if (islandData.id === 'wasteland_n') generateGrade3MathQuestion();
 
       document.getElementById('side-drawer').classList.add('open');
     }
