@@ -4878,7 +4878,7 @@ function adminClearAllOnlinePlayers() {
       return boatSystem;
     }
 // ==========================================
-    // 🎈 節能低多邊形空中熱氣球系統（王國之淚・古文明藍色充能能量版）
+    // 🎈 節能低多邊形空中熱氣球系統（王國之淚・飽滿正圓氣囊 + 顯眼古文明衝能藍光）
     // ==========================================
     let hotAirBalloon = null;
     let balloonEnergyBeam = null;
@@ -4887,137 +4887,143 @@ function adminClearAllOnlinePlayers() {
     function createHotAirBalloon() {
       const balloonGroup = new THREE.Group();
 
-      // 🌟 王國之淚／古代文明配色材質
+      // 🌟 王國之淚配色材質
       const fabricClothMat = new THREE.MeshStandardMaterial({ 
-        color: 0xE8DFCA, 
-        roughness: 0.85, 
+        color: 0xECE5D8, 
+        roughness: 0.82, 
         flatShading: true 
       });
 
       const zonaiBronzeMat = new THREE.MeshStandardMaterial({ 
-        color: 0x2A5D50, 
+        color: 0x224D42, 
         metalness: 0.65, 
         roughness: 0.35, 
         flatShading: true 
       });
 
-      // 🌟 古文明希卡／左納烏高純度藍色能量材質（自發光古藍光）
+      // 🌟 古代文明藍色高自發光材質（大幅加強 emissiveIntensity 使其在遠處依然醒目）
       const ancientBlueEnergyMat = new THREE.MeshStandardMaterial({
         color: 0x38BDF8,
         emissive: 0x0284C7,
-        emissiveIntensity: 1.2,
+        emissiveIntensity: 2.2, // 提高發光強度
         roughness: 0.1,
         metalness: 0.2
       });
 
-      // 🌟 往上注入氣囊的充能能量光柱材質（半透明純光感）
+      // 🌟 粗大、向上直衝注入氣球的古代藍色光柱（增強透明度與發光質感）
       const beamGlowMat = new THREE.MeshBasicMaterial({
-        color: 0x38BDF8,
+        color: 0x67E8F9,
         transparent: true,
-        opacity: 0.55,
+        opacity: 0.75, // 加強不透明度，遠看依然通透顯眼
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         side: THREE.DoubleSide
       });
 
       const basketStoneMat = new THREE.MeshStandardMaterial({ 
-        color: 0x36453F, 
-        metalness: 0.25, 
+        color: 0x334139, 
+        metalness: 0.2, 
         roughness: 0.8, 
         flatShading: true 
       });
 
       const ropeMat = new THREE.MeshBasicMaterial({ 
-        color: 0x6E5D4F 
+        color: 0x5C4D3C 
       });
 
-      // 1. 氣囊本體
+      // ==========================================
+      // 1. 氣囊本體（飽滿正圓球體設計，不再拉伸成細長橢圓）
+      // ==========================================
       const balloonBody = new THREE.Group();
       
+      // 正圓球體主氣囊（半徑加大至 3.2，等比例 1:1:1，圓潤飽滿）
       const mainSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(2.6, 16, 12),
+        new THREE.SphereGeometry(3.2, 20, 16),
         fabricClothMat
       );
-      mainSphere.scale.set(1.0, 1.25, 1.0);
-      mainSphere.position.y = 4.2;
+      mainSphere.position.y = 4.4;
       mainSphere.castShadow = true;
       balloonBody.add(mainSphere);
 
+      // 下半部過渡環（微弧度收口，保留下開口以透出內部充能藍光）
       const coneBottom = new THREE.Mesh(
-        new THREE.ConeGeometry(2.48, 1.6, 16, 1, true),
+        new THREE.ConeGeometry(2.8, 1.2, 18, 1, true),
         zonaiBronzeMat
       );
       coneBottom.rotation.x = Math.PI;
       coneBottom.position.y = 2.4;
-      coneBottom.scale.set(1.0, 1.0, 1.0);
       balloonBody.add(coneBottom);
 
-      // 下裙邊能量匯流環（古代藍色光圈）
+      // 氣囊底部進氣口金屬環（古代希卡藍光導能環）
       const rim = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.02, 1.02, 0.26, 16),
+        new THREE.CylinderGeometry(1.35, 1.35, 0.28, 18),
         ancientBlueEnergyMat
       );
-      rim.position.y = 1.5;
+      rim.position.y = 1.8;
       balloonBody.add(rim);
 
       balloonGroup.add(balloonBody);
 
-      // 2. 吊籃中央：古文明能量裝置與往上充能的光柱
-      // (1) 古代青銅八角底座
+      // ==========================================
+      // 2. 吊籃中央：古代充能基座與往上衝射的粗壯藍色能量光柱
+      // ==========================================
+      // 古青銅底座
       const emitterBase = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.24, 0.28, 0.2, 8), 
+        new THREE.CylinderGeometry(0.35, 0.42, 0.25, 8), 
         zonaiBronzeMat
       );
-      emitterBase.position.y = 0.85;
+      emitterBase.position.y = 0.88;
       balloonGroup.add(emitterBase);
 
-      // (2) 中央懸浮旋轉的古代藍色八面能量結晶核
+      // 中央懸浮的古代能量結晶核心（放大尺寸，旋轉閃耀）
       balloonEnergyCore = new THREE.Mesh(
-        new THREE.OctahedronGeometry(0.18, 0),
+        new THREE.OctahedronGeometry(0.28, 0),
         ancientBlueEnergyMat
       );
-      balloonEnergyCore.position.y = 1.15;
+      balloonEnergyCore.position.y = 1.25;
       balloonGroup.add(balloonEnergyCore);
 
-      // (3) 核心向氣囊內部「往上衝射灌注」的古代能量光束
-      // 底部半徑 0.12，向上微幅擴散至 0.65，直插氣球底部氣嘴
-      const beamGeo = new THREE.CylinderGeometry(0.65, 0.12, 1.35, 12, 1, true);
+      // 🌟 粗壯的直衝充能光束（底部直徑 0.28m，往上灌入氣球擴散至 1.15m，視覺張力拉滿）
+      const beamGeo = new THREE.CylinderGeometry(1.15, 0.28, 1.5, 14, 1, true);
       balloonEnergyBeam = new THREE.Mesh(beamGeo, beamGlowMat);
-      balloonEnergyBeam.position.y = 1.82; // 剛好連接在能量核上方至氣球下環
+      balloonEnergyBeam.position.y = 1.95; 
       balloonGroup.add(balloonEnergyBeam);
 
-      // 3. 吊籃
+      // ==========================================
+      // 3. 吊籃與纜繩結構
+      // ==========================================
       const basket = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.72, 0.58, 0.75, 8),
+        new THREE.CylinderGeometry(0.85, 0.72, 0.8, 8),
         basketStoneMat
       );
-      basket.position.y = 0.38;
+      basket.position.y = 0.4;
       basket.castShadow = true;
       balloonGroup.add(basket);
 
       const basketRim = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.74, 0.74, 0.08, 8),
+        new THREE.CylinderGeometry(0.88, 0.88, 0.09, 8),
         zonaiBronzeMat
       );
-      basketRim.position.y = 0.75;
+      basketRim.position.y = 0.8;
       balloonGroup.add(basketRim);
 
-      // 4. 4 根固定纜繩
+      // 4 根固定纜繩（加粗距離以搭配正圓大氣囊）
       const ropeAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
       ropeAngles.forEach(ang => {
-        const topX = Math.cos(ang) * 0.95;
-        const topZ = Math.sin(ang) * 0.95;
-        const botX = Math.cos(ang) * 0.58;
-        const botZ = Math.sin(ang) * 0.58;
+        const topX = Math.cos(ang) * 1.25;
+        const topZ = Math.sin(ang) * 1.25;
+        const botX = Math.cos(ang) * 0.72;
+        const botZ = Math.sin(ang) * 0.72;
 
         const ropeGeo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(botX, 0.75, botZ),
-          new THREE.Vector3(topX, 1.45, topZ)
+          new THREE.Vector3(botX, 0.8, botZ),
+          new THREE.Vector3(topX, 1.75, topZ)
         ]);
         const rope = new THREE.Line(ropeGeo, ropeMat);
         balloonGroup.add(rope);
       });
 
+      // 初始位置設定在西北方遠處大陸上空
       balloonGroup.position.set(-36, 21, -36);
       return balloonGroup;
     }
