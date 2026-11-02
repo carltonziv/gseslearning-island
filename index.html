@@ -6507,27 +6507,35 @@ function adminClearAllOnlinePlayers() {
 
           camera.lookAt(targetLook);
         }
-// 🎈 熱氣球巡航邏輯（開場現身於西北方遠處大陸上空，並沿著大陸前緣緩慢巡弋）
+// 🎈 熱氣球巡航與古文明藍色能量充能動態
         if (hotAirBalloon) {
-          // 1. 調整速度至極悠閒的 0.025，並加入初始角度偏移 Math.PI * 1.25（約 225 度）
-          // 讓網頁剛載入（time = 0）時，熱氣球直接位在西北方的遠方大陸山巒上空
           const balloonAngle = time * 0.025 + Math.PI * 1.25; 
-          
-          // 2. 將巡航橢圓半徑加大到大陸前緣（X 半徑 44 米，Z 半徑 40 米）
           const hoverRadiusX = 44.0;
           const hoverRadiusZ = 40.0;
           
-          // 3. 計算水平飄移位置
           hotAirBalloon.position.x = Math.sin(balloonAngle) * hoverRadiusX;
           hotAirBalloon.position.z = Math.cos(balloonAngle) * hoverRadiusZ;
-          
-          // 4. 高度設定在 21 米（高於遠景山峰），並帶輕微的自然氣流上下起伏
           hotAirBalloon.position.y = 21.0 + Math.sin(time * 0.7) * 1.2;
           
-          // 5. 隨切線轉向，並保留自然的微幅風動搖擺
           hotAirBalloon.rotation.y = -balloonAngle + Math.PI / 2;
           hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.04;
           hotAirBalloon.rotation.x = Math.cos(time * 0.4) * 0.03;
+
+          // 🌟 1. 中央能量結晶旋轉與上下懸浮浮動
+          if (balloonEnergyCore) {
+            balloonEnergyCore.rotation.y += 0.04;
+            balloonEnergyCore.rotation.x += 0.02;
+            balloonEnergyCore.position.y = 1.15 + Math.sin(time * 3.5) * 0.04;
+          }
+
+          // 🌟 2. 向上充能光柱的能量呼吸脈衝（光柱粗細與透明度波動，呈現動力衝灌感）
+          if (balloonEnergyBeam) {
+            const pulse = (Math.sin(time * 5.0) + 1) * 0.5; // 快速脈衝
+            balloonEnergyBeam.material.opacity = 0.45 + pulse * 0.35;
+            balloonEnergyBeam.scale.x = 0.92 + pulse * 0.16;
+            balloonEnergyBeam.scale.z = 0.92 + pulse * 0.16;
+            balloonEnergyBeam.rotation.y -= 0.02;
+          }
         }
         renderer.render(scene, camera);
       }
