@@ -1618,7 +1618,10 @@ if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCart
     // ==========================================
     let isPlayerFarming = false; // 墾荒動作狀態旗標
 
-    function startPlayerFarming() {
+function startPlayerFarming() {
+      // 🌟 開發進度達 50% 以上時，降落坪已建成，不再觸發手持鋤頭墾荒動作
+      if (northIslandProgress >= 50) return;
+
       if (!playerVillager || !playerVillager.obj) return;
       isPlayerFarming = true;
 
@@ -1640,11 +1643,10 @@ if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCart
       playerVillager.targetZ = farmZ;
       playerVillager.waitTimer = 999999; // 暫停原本的日常漫步巡邏計時
 
-// 3. 在角色的右手掛載鋤頭模型
+      // 3. 在角色的右手掛載鋤頭模型
       const rightArmPivot = playerVillager.obj.userData.limbs?.rightArm;
       if (rightArmPivot && !rightArmPivot.getObjectByName("player_hoe")) {
         const hoe = createHoeTool();
-        // 🌟 精確定位在手腕/手掌前端（手臂長度為 0.45，掌心約在 Y = -0.42，微向前 Z = 0.04）
         hoe.position.set(0, -0.42, 0.04);
         rightArmPivot.add(hoe);
       }
@@ -7047,8 +7049,9 @@ function adminClearAllOnlinePlayers() {
       if (islandData.id === 'reading') renderDailyQuestionUI();
       if (islandData.id === 'wasteland_n') {
         generateGrade3MathQuestion();
-        if (typeof startPlayerFarming === 'function') {
-          startPlayerFarming(); // 🌟 打開北荒地抽屜時：瞬移到北島並手持鋤頭開始墾荒
+        // 🌟 僅在開墾進度未滿 50% 時才瞬移墾荒
+        if (northIslandProgress < 50 && typeof startPlayerFarming === 'function') {
+          startPlayerFarming();
         }
       }
 
