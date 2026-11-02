@@ -1483,19 +1483,32 @@
       const spawnOptions = [1, 2, 3, 4, 5, 6, 'cart'];
       const chosenSpawn = spawnOptions[Math.floor(Math.random() * spawnOptions.length)];
 
-      if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCarts && trailerCarts.length >= 2) {
-        const targetCart = trailerCarts[1];
+if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCarts && trailerCarts.length >= 3) {
+        // 隨機選取第 2 節 (索引 1) 或第 3 節 (索引 2) 車廂
+        const cartIndex = Math.random() < 0.5 ? 1 : 2;
+        const targetCart = trailerCarts[cartIndex];
+
+        // 隨機挑選該節車廂的 4 個座位之一（前後排 Z: ±0.45，左右座 X: ±0.22）
+        const seatZ = Math.random() < 0.5 ? -0.45 : 0.45;
+        const seatX = Math.random() < 0.5 ? -0.22 : 0.22;
+        
         targetCart.add(person);
-        person.position.set(-0.15, 0.48, -0.45);
-        person.rotation.set(0, 0, 0);
+        // 精確坐墊高度：底板(0.31) + 椅面(0.22) + 臀部下落補正 = 0.62
+        person.position.set(seatX, 0.62, seatZ);
+        // 若坐前排面朝前方(0度)，若坐後排面朝後方(180度)或依椅背方向面向車內
+        person.rotation.set(0, seatZ < 0 ? 0 : Math.PI, 0);
 
         const limbs = person.userData.limbs;
         if (limbs) {
-          limbs.leftLeg.rotation.x = -1.45;
-          limbs.rightLeg.rotation.x = -1.45;
-          limbs.leftArm.rotation.x = -0.3;
-          limbs.rightArm.rotation.x = -0.3;
-          if (limbs.skirt) limbs.skirt.rotation.x = -0.55;
+          // 大腿抬平呈現坐姿
+          limbs.leftLeg.rotation.x = -1.57;
+          limbs.rightLeg.rotation.x = -1.57;
+          // 手臂自然放在膝蓋/大腿上
+          limbs.leftArm.rotation.x = -0.45;
+          limbs.rightArm.rotation.x = -0.45;
+          limbs.leftArm.rotation.z = 0.1;
+          limbs.rightArm.rotation.z = -0.1;
+          if (limbs.skirt) limbs.skirt.rotation.x = -0.65;
         }
 
         playerVillager = {
@@ -4864,7 +4877,86 @@ function adminClearAllOnlinePlayers() {
       boatSystem.add(patrolBoat);
       return boatSystem;
     }
+// ==========================================
+    // 🎈 節能低多邊形空中熱氣球系統
+    // ==========================================
+    let hotAirBalloon = null;
 
+    function createHotAirBalloon() {
+      const balloonGroup = new THREE.Group();
+
+      // 共用輕量材質
+      const fabricOrangeMat = new THREE.MeshStandardMaterial({ color: 0xF97316, roughness: 0.6, flatShading: true });
+      const fabricWhiteMat  = new THREE.MeshStandardMaterial({ color: 0xFDFBF7, roughness: 0.6, flatShading: true });
+      const basketWoodMat   = new THREE.MeshStandardMaterial({ color: 0x78350F, roughness: 0.85 });
+      const ropeMat         = new THREE.MeshBasicMaterial({ color: 0x334155 });
+      const burnerMat       = new THREE.MeshBasicMaterial({ color: 0xFDE047 });
+
+      // 1. 氣囊本體 (球體拉伸，分段雙色條紋)
+      const balloonBody = new THREE.Group();
+      const mainSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(2.6, 16, 12),
+        fabricOrangeMat
+      );
+      mainSphere.scale.set(1.0, 1.25, 1.0);
+      mainSphere.position.y = 4.2;
+      mainSphere.castShadow = true;
+      balloonBody.add(mainSphere);
+
+      // 下半部收口錐體
+      const coneBottom = new THREE.Mesh(
+        new THREE.ConeGeometry(2.48, 1.6, 16, 1, true),
+        fabricWhiteMat
+      );
+      coneBottom.rotation.x = Math.PI;
+      coneBottom.position.y = 2.4;
+      coneBottom.scale.set(1.0, 1.0, 1.0);
+      balloonBody.add(coneBottom);
+
+      // 裙邊下環
+      const rim = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.0, 1.0, 0.25, 16),
+        fabricOrangeMat
+      );
+      rim.position.y = 1.5;
+      balloonBody.add(rim);
+
+      balloonGroup.add(balloonBody);
+
+      // 2. 燃燒器 (微小暖黃方塊)
+      const burner = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.3), burnerMat);
+      burner.position.y = 1.1;
+      balloonGroup.add(burner);
+
+      // 3. 藤編吊籃
+      const basket = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.7, 0.6, 0.75, 8),
+        basketWoodMat
+      );
+      basket.position.y = 0.38;
+      basket.castShadow = true;
+      balloonGroup.add(basket);
+
+      // 4. 4 根固定細纜繩
+      const ropeAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
+      ropeAngles.forEach(ang => {
+        const topX = Math.cos(ang) * 0.95;
+        const topZ = Math.sin(ang) * 0.95;
+        const botX = Math.cos(ang) * 0.55;
+        const botZ = Math.sin(ang) * 0.55;
+
+        const ropeGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(botX, 0.75, botZ),
+          new THREE.Vector3(topX, 1.45, topZ)
+        ]);
+        const rope = new THREE.Line(ropeGeo, ropeMat);
+        balloonGroup.add(rope);
+      });
+
+      // 初始高度置於島嶼群上空 (Y = 16 ~ 22)
+      balloonGroup.position.set(0, 18, 0);
+      return balloonGroup;
+    }
     let seaMonster = null, monsterBodyMesh = null, monsterTailPivot = null, monsterFins = [];
     let monsterState = {
       active: false,
@@ -5017,6 +5109,8 @@ function adminClearAllOnlinePlayers() {
 
       scene.add(createOuterLoopTrackAndCart());
       scene.add(createPatrolBoatSystem());
+      hotAirBalloon = createHotAirBalloon();
+      scene.add(hotAirBalloon);
 
       // 海洋網格建置
       const oceanGeo = new THREE.PlaneGeometry(160, 160, 80, 80);
@@ -6349,7 +6443,21 @@ function adminClearAllOnlinePlayers() {
 
           camera.lookAt(targetLook);
         }
-
+// 🎈 熱氣球巡航邏輯（半徑 22 米橢圓空域悠閒慢速巡航 + 自然緩慢漂浮）
+        if (hotAirBalloon) {
+          const balloonSpeed = time * 0.045; // 悠閒巡航速度
+          const hoverRadiusX = 22.0;
+          const hoverRadiusZ = 19.0;
+          
+          // 平滑大橢圓飄移路徑
+          hotAirBalloon.position.x = Math.sin(balloonSpeed) * hoverRadiusX;
+          hotAirBalloon.position.z = Math.cos(balloonSpeed) * hoverRadiusZ;
+          // 自然的氣流上下浮動與微傾角
+          hotAirBalloon.position.y = 18.0 + Math.sin(time * 0.8) * 1.1;
+          hotAirBalloon.rotation.y = -balloonSpeed + Math.PI / 2;
+          hotAirBalloon.rotation.z = Math.sin(time * 0.6) * 0.04; // 隨風微幅搖曳
+          hotAirBalloon.rotation.x = Math.cos(time * 0.5) * 0.03;
+        }
         renderer.render(scene, camera);
       }
       animate();
