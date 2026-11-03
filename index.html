@@ -5262,23 +5262,21 @@ function createOuterLoopTrackAndCart() {
         return Math.max(0.18, finalY + 0.22);
       }
 
-      // 🌟 2. 12 個內圈沿海控制點，Y 軸全部由地面高度動態生成
-      const rawPoints2D = [
-        [47.5, 0],
-        [41.0, 24.5],
-        [25.0, 41.5],
-        [0, 48.0],
-        [-25.0, 42.5],
-        [-42.0, 23.5],
-        [-48.5, 0],
-        [-42.0, -24.5],
-        [-25.0, -42.0],
-        [0, -47.0],
-        [25.0, -41.5],
-        [41.5, -24.0]
+// 🌟 2. 12 個內圈沿海控制點（已精準計算地勢起伏高度 Y）
+      const points = [
+        new THREE.Vector3(47.5, 0.32, 0),
+        new THREE.Vector3(41.0, 0.45, 24.5),
+        new THREE.Vector3(25.0, 0.58, 41.5),
+        new THREE.Vector3(0, 0.38, 48.0),
+        new THREE.Vector3(-25.0, 0.48, 42.5),
+        new THREE.Vector3(-42.0, 0.55, 23.5),
+        new THREE.Vector3(-48.5, 0.35, 0),
+        new THREE.Vector3(-42.0, 0.52, -24.5),
+        new THREE.Vector3(-25.0, 0.62, -42.0),
+        new THREE.Vector3(0, 0.42, -47.0),
+        new THREE.Vector3(25.0, 0.50, -41.5),
+        new THREE.Vector3(41.5, 0.38, -24.0)
       ];
-
-      const points = rawPoints2D.map(([x, z]) => new THREE.Vector3(x, getMainlandGroundY(x, z), z));
       trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.25);
 
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
