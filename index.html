@@ -5227,7 +5227,7 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 🌟 1. 精準對應真實地表高度的取樣函式
+      // 1. 真實地表高度取樣函式
       function getExactGroundHeight(x, z) {
         const dist = Math.hypot(x, z);
         const angle = Math.atan2(z, x);
@@ -5261,7 +5261,7 @@ function createOuterLoopTrackAndCart() {
         return Math.max(0.32, groundY + 0.28);
       }
 
-      // 🌟 2. 24 個順應地勢起伏的軌道控制點
+      // 2. 建立唯一的「中心軌道曲線」
       const numPathNodes = 24;
       const rawPoints = [];
       for (let i = 0; i < numPathNodes; i++) {
@@ -5275,10 +5275,10 @@ function createOuterLoopTrackAndCart() {
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-      // 🌟 3. 雙軌鋼軌鋪設
+      // 3. 雙軌鋼軌取樣
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
       const divisions = 320;
-      const innerPts = [], outerPts = [], ballastPts = [], soilPts = [];
+      const innerPts = [], outerPts = [];
       const railGauge = 0.35;
 
       for (let i = 0; i <= divisions; i++) {
@@ -5295,36 +5295,32 @@ function createOuterLoopTrackAndCart() {
 
         innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
         outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
-        ballastPts.push(new THREE.Vector3(pt.x, pt.y - 0.04, pt.z));
-        soilPts.push(new THREE.Vector3(pt.x, pt.y - 0.25, pt.z));
       }
 
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
-      const ballastCurve = new THREE.CatmullRomCurve3(ballastPts, true);
-      const soilCurve = new THREE.CatmullRomCurve3(soilPts, true);
 
-      // 鋪設左右兩條鋼軌
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 300, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 300, 0.05, 6, true), railMat));
 
-      // 🌟 4. 厚實碎石道渣基座（淺色石渣層）
+      // 🌟 4. 【關鍵修正】道渣與土壤直接以 trackCurve（中心曲線）生成並向下微調，確保絕對不分離！
       const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
-      const ballastGeo = new THREE.TubeGeometry(ballastCurve, 300, 0.72, 6, true);
-      ballastGeo.scale(1.5, 0.45, 1.5);
+      const ballastGeo = new THREE.TubeGeometry(trackCurve, 300, 0.75, 6, true);
+      ballastGeo.scale(1.4, 0.35, 1.4); // 扁平化包覆鐵軌下方
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
+      ballastMesh.position.y -= 0.05; // 稍微下沉貼齊枕木底部
       ballastMesh.receiveShadow = true;
-      system.add(ballastMesh); // 👈 務必加上這一行！
+      system.add(ballastMesh);
 
-      // 🌟 5. 土壤路基（深色扎實地基，完美連接地面，絕不懸空）
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
-      const soilGeo = new THREE.TubeGeometry(soilCurve, 300, 0.90, 6, true);
-      soilGeo.scale(1.6, 0.85, 1.6);
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 300, 0.95, 6, true);
+      soilGeo.scale(1.5, 0.75, 1.5); // 更寬厚的土壤路基紮根地面
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
+      soilMesh.position.y -= 0.18; // 紮實向下延伸至地表
       soilMesh.receiveShadow = true;
-      system.add(soilMesh); // 👈 務必加上這一行！
+      system.add(soilMesh);
 
-      // 🌟 6. 400 根木頭枕木貼合
+      // 5. 400 根木頭枕木
       const SLEEPER_COUNT = 380;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
