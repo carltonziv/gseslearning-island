@@ -1418,6 +1418,8 @@
       }
       const audio = ISLAND_AUDIO_MAP[playKey];
       if (audio) {
+        if (playKey === 'ambient' && !audio.paused) return;
+
         audio.currentTime = 0;
         audio.play().catch(err => {
           console.warn(`[音效播放提示] ${playKey} 音效播放受阻:`, err);
@@ -5015,6 +5017,9 @@ function selectViewMode(mode) {
         showLiveBanner("🧭 已切換為全景鳥瞰視角");
       } 
       else if (mode === 'cart') {
+        if (typeof stopCustomAudio === 'function') {
+          stopCustomAudio('ambient');
+        }
         if (isRidingCart) {
           selectViewMode('panoramic');
           return;
