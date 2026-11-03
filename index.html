@@ -1409,30 +1409,7 @@
       }
     }
 
-    function toggleBGM() {
-      if (bgmAudio.paused) {
-        bgmAudio.play();
-        isBgmPlaying = true;
-      } else {
-        bgmAudio.pause();
-        isBgmPlaying = false;
-      }
-      updateBgmButtonUI();
-    }
 
-    function updateBgmButtonUI() {
-      const icon = document.getElementById('bgm-icon');
-      const text = document.getElementById('bgm-text');
-      if (icon && text) {
-        if (isBgmPlaying) {
-          icon.textContent = '🎵';
-          text.textContent = '音樂：開';
-        } else {
-          icon.textContent = '🔇';
-          text.textContent = '音樂：關';
-        }
-      }
-    }
 
 // ==========================================
     // 🔔 自備實體 MP3 音效對應與播放器
@@ -5186,7 +5163,7 @@ function selectViewMode(mode) {
 
         resetToDefaultCamera();
 
-        / 🌟 只有在音樂處於開啟狀態時才播
+        // 🌟 只有在音樂處於開啟狀態時才播
       if (isBgmPlaying && typeof playCustomAudio === 'function') {
         playCustomAudio('ambient');
       }
