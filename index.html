@@ -1424,10 +1424,22 @@
       ambient: new Audio('./sounds/ambient.mp3')
     };
 
-    // 預設將音效音量設定為 0.5
+    // 預設將一般點擊音效音量設定為 0.5
     Object.values(ISLAND_AUDIO_MAP).forEach(audio => {
-      audio.volume = 0.5;
+      audio.volume = 0.3;
     });
+
+    // 🌟 1. 台車行駛音量調整（建議 0.2 ~ 0.4，避免鐵軌聲過於刺耳）
+    if (ISLAND_AUDIO_MAP.cart) {
+      ISLAND_AUDIO_MAP.cart.loop = true;
+      ISLAND_AUDIO_MAP.cart.volume = 0.3; // 👈 在這裡調整台車音量
+    }
+
+    // 🌟 2. 巡邏艇破浪引擎音量調整（建議 0.25 ~ 0.45）
+    if (ISLAND_AUDIO_MAP.boat) {
+      ISLAND_AUDIO_MAP.boat.loop = true;
+      ISLAND_AUDIO_MAP.boat.volume = 0.3; // 👈 在這裡調整巡邏艇音量
+    }
 
     // 🌟 將台車與巡邏艇的音訊設為循環播放 (搭乘時持續有音效)
     if (ISLAND_AUDIO_MAP.cart) ISLAND_AUDIO_MAP.cart.loop = true;
