@@ -5304,6 +5304,7 @@ function createOuterLoopTrackAndCart() {
       const ballastCurve = new THREE.CatmullRomCurve3(ballastPts, true);
       const soilCurve = new THREE.CatmullRomCurve3(soilPts, true);
 
+      // 鋪設左右兩條鋼軌
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 300, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 300, 0.05, 6, true), railMat));
 
@@ -5313,7 +5314,7 @@ function createOuterLoopTrackAndCart() {
       ballastGeo.scale(1.5, 0.45, 1.5);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
       ballastMesh.receiveShadow = true;
-      system.add(ballastMesh);
+      system.add(ballastMesh); // 👈 務必加上這一行！
 
       // 🌟 5. 土壤路基（深色扎實地基，完美連接地面，絕不懸空）
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
@@ -5321,7 +5322,7 @@ function createOuterLoopTrackAndCart() {
       soilGeo.scale(1.6, 0.85, 1.6);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
       soilMesh.receiveShadow = true;
-      system.add(soilMesh);
+      system.add(soilMesh); // 👈 務必加上這一行！
 
       // 🌟 6. 400 根木頭枕木貼合
       const SLEEPER_COUNT = 380;
