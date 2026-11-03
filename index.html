@@ -5457,18 +5457,38 @@ if (i < 4) {
             trailer.add(cap);
           });
 
-          // 🌟 2. 原本的長椅結構（保持不變）
+// 🌟 2. 封閉式實心長椅結構（下方加裝實木底座箱，消除懸空感）
           [-0.45, 0.45].forEach(seatZ => {
             const bench = new THREE.Group();
-            const seatPlank = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.04, 0.32), woodSeatMat);
+
+            // (1) 椅下實心木箱底座（寬 0.95, 高 0.22, 前後深 0.30）
+            // 高度剛好從底板 floorY 填滿至座墊下方 floorY + 0.22
+            const seatBase = new THREE.Mesh(
+              new THREE.BoxGeometry(0.95, 0.22, 0.30),
+              woodSeatMat
+            );
+            seatBase.position.set(0, floorY + 0.11, seatZ);
+            seatBase.castShadow = true;
+            bench.add(seatBase);
+
+            // (2) 上方坐墊板（稍微寬出底座一點點，凸顯座面層次）
+            const seatPlank = new THREE.Mesh(
+              new THREE.BoxGeometry(0.98, 0.04, 0.34),
+              woodSeatMat
+            );
             seatPlank.position.set(0, floorY + 0.22, seatZ);
             seatPlank.castShadow = true;
             bench.add(seatPlank);
 
-            const backRest = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.2, 0.03), woodSeatMat);
+            // (3) 椅背板
+            const backRest = new THREE.Mesh(
+              new THREE.BoxGeometry(0.95, 0.2, 0.03),
+              woodSeatMat
+            );
             backRest.position.set(0, floorY + 0.36, seatZ + (seatZ < 0 ? -0.14 : 0.14));
             backRest.castShadow = true;
             bench.add(backRest);
+
             trailer.add(bench);
           });
         } else {
