@@ -5322,8 +5322,8 @@ function createOuterLoopTrackAndCart() {
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 🌟 4. 【修正枕木 90 度橫向垂直跨軌】（InstancedMesh，寬 1.15 橫跨雙軌）
-      const SLEEPER_COUNT = 200;
+// 🌟 4. 【增加枕木密度】：由 200 根提升至 360 根（InstancedMesh 依然維持 1 Draw Call，硬體零負擔）
+      const SLEEPER_COUNT = 400;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
       const sleeperInstanced = new THREE.InstancedMesh(sleeperGeom, sleeperMat, SLEEPER_COUNT);
@@ -5337,7 +5337,7 @@ function createOuterLoopTrackAndCart() {
         // 枕木坐落在道渣頂部 (Y = 0.30)
         dummy.position.set(pt.x, pt.y - 0.02, pt.z);
         
-        // 核心修正：直接指向前進切線，BoxGeometry 的 X 軸 (1.15) 便會 90 度橫向垂直跨在兩軌之間
+        // 保持 90 度橫向垂直跨軌
         dummy.lookAt(pt.clone().add(tan));
         
         dummy.updateMatrix();
