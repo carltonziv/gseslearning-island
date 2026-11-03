@@ -2583,32 +2583,42 @@ function checkDailyLimit(islandId) {
         fBox.style.background = '#dcfce7';
         fBox.style.border = '2px solid #22c55e';
         fBox.style.color = '#15803d';
-        fBox.innerHTML = `<strong>🎉 算得太準確了！</strong><br>答案正確，成功為北荒地注入 5% 開墾進度！`;
+        // 🌟 1. 提示文字由 5% 改為 3%
+        fBox.innerHTML = `<strong>🎉 算得太準確了！</strong><br>答案正確，成功為北荒地注入 3% 開墾進度！`;
 
         if (typeof stopPlayerFarming === 'function' && isPlayerFarming) {
           stopPlayerFarming();
         }
 
-        // 🌟 關鍵修正：在發送交易前，先檢查當前進度加上 5% 是否剛好達成或突破 100%
-        const willReachFull = (northIslandProgress < 100 && (northIslandProgress + 5) >= 100);
+        // 🌟 2. 本機即時累加改為 +3（上限 100%）
+        const nextProgress = Math.min((northIslandProgress || 0) + 3, 100);
+        const willReachFull = (northIslandProgress < 100 && nextProgress >= 100);
 
-        // 雲端進度推進 5%（上限鎖定在 100）
+        // 本機即時強制刷新進度條與地標模型
+        updateNorthIslandReclaimVisuals(nextProgress);
+
+        // 🌟 3. 雲端同步寫入累加改為 +3
         if (northIslandReclaimRef) {
           northIslandReclaimRef.transaction(current => {
-            let next = (current || 0) + 5;
+            let next = (current || 0) + 3;
             return (next >= 100) ? 100 : next;
+          }, (error, committed, snapshot) => {
+            if (error || !committed) {
+              console.warn("[北荒地進度] Transaction 失敗，改用 set 直接寫入:", error);
+              northIslandReclaimRef.set(nextProgress);
+            }
           });
         }
 
-        // 🌟 只要判定這次提交使全班達成 100%，就確實發放全班 +100 能量並噴發大型彩帶
+        // 滿 100% 完工獎勵
         if (willReachFull && totalEnergyRef) {
           totalEnergyRef.transaction(c => (c || 0) + 100);
           showLiveBanner("⛩️ 狂賀！北荒地神廟全面完工！全班獲得 100 點共創能量！");
           confetti({ particleCount: 150, spread: 100 });
         }
 
-        // 打卡紀錄與回傳 GAS 表單
-        rewardCheckin('wasteland_n', '龜山荒地開墾', `解答數學完成，貢獻了 5% 開墾進度`, {
+        // 🌟 4. GAS 回傳紀錄文字同步更新為 3%
+        rewardCheckin('wasteland_n', '龜山荒地開墾', `解答數學完成，貢獻了 3% 開墾進度`, {
           type: 'task_complete',
           seatNumber: currentStudent.seatNumber,
           studentName: `${currentStudent.avatar} ${currentStudent.name}`,
