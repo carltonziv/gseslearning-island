@@ -5216,27 +5216,27 @@ function selectViewMode(mode) {
     WAKE_PLANE_GEO.rotateX(-Math.PI / 2);
     let trailerCarts = [], cartProgress = 0, trackCurve = null;
 
-    function createOuterLoopTrackAndCart() {
+function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
-      const TRACK_Y = 0.2;
+      const TRACK_Y = 0.28;
 
+      // 🌟 1. 定義環繞遠景大陸沿海的壯闊環狀曲線（避開中央各島與深水區）
       const points = [
-        new THREE.Vector3(0, TRACK_Y, -17.5),
-        new THREE.Vector3(12.5, TRACK_Y, -14.8),
-        new THREE.Vector3(19.8, TRACK_Y, -6.5),
-        new THREE.Vector3(19.8, TRACK_Y, 6.5),
-        new THREE.Vector3(12.5, TRACK_Y, 14.8),
-        new THREE.Vector3(0, TRACK_Y, 17.5),
-        new THREE.Vector3(-12.5, TRACK_Y, 14.8),
-        new THREE.Vector3(-19.8, TRACK_Y, 6.5),
-        new THREE.Vector3(-19.8, TRACK_Y, -6.5),
-        new THREE.Vector3(-12.5, TRACK_Y, -14.8)
+        new THREE.Vector3(88, TRACK_Y, 0),
+        new THREE.Vector3(68, TRACK_Y, 62),
+        new THREE.Vector3(0, TRACK_Y, 90),
+        new THREE.Vector3(-68, TRACK_Y, 68),
+        new THREE.Vector3(-92, TRACK_Y, 0),
+        new THREE.Vector3(-70, TRACK_Y, -62),
+        new THREE.Vector3(0, TRACK_Y, -86),
+        new THREE.Vector3(70, TRACK_Y, -62)
       ];
 
       trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.25);
 
+      // 🌟 2. 左右平行雙軌（TubeGeometry，單一繪圖呼叫）
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
-      const divisions = 260;
+      const divisions = 360;
       const innerPts = [], outerPts = [];
       const railGauge = 0.35;
 
@@ -5253,80 +5253,33 @@ function selectViewMode(mode) {
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 200, 0.05, 6, true);
-      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 200, 0.05, 6, true);
+      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true);
+      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true);
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
-      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
+      // 🌟 3. 木頭枕木（使用 InstancedMesh 一次繪製 280 根，硬體零負擔）
+      const SLEEPER_COUNT = 280;
+      const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
+      const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
+      const sleeperInstanced = new THREE.InstancedMesh(sleeperGeom, sleeperMat, SLEEPER_COUNT);
 
-      const ballastWidth = 0.65;
-      const soilWidth = 0.95;
-      const bTopY = TRACK_Y - 0.02;
-      const bBottomY = TRACK_Y - 0.22;
-      const sBottomY = TRACK_Y - 1.10;
-
-      const ballastGeo = new THREE.BufferGeometry();
-      const soilGeo = new THREE.BufferGeometry();
-      const bVerts = [], sVerts = [];
-
-      for (let i = 0; i < divisions; i++) {
-        const t1 = i / divisions, t2 = (i + 1) / divisions;
-        const p1 = trackCurve.getPointAt(t1), tan1 = trackCurve.getTangentAt(t1);
-        const n1 = new THREE.Vector3(-tan1.z, 0, tan1.x).normalize();
-
-        const p2 = trackCurve.getPointAt(t2), tan2 = trackCurve.getTangentAt(t2);
-        const n2 = new THREE.Vector3(-tan2.z, 0, tan2.x).normalize();
-
-        const bL1 = new THREE.Vector3(p1.x - n1.x * ballastWidth, bTopY, p1.z - n1.z * ballastWidth);
-        const bR1 = new THREE.Vector3(p1.x + n1.x * ballastWidth, bTopY, p1.z + n1.z * ballastWidth);
-        const bL2 = new THREE.Vector3(p2.x - n2.x * ballastWidth, bTopY, p2.z - n2.z * ballastWidth);
-        const bR2 = new THREE.Vector3(p2.x + n2.x * ballastWidth, bTopY, p2.z + n2.z * ballastWidth);
-
-        bVerts.push(bL1.x, bTopY, bL1.z,  bR1.x, bTopY, bR1.z,  bR2.x, bTopY, bR2.z);
-        bVerts.push(bL1.x, bTopY, bL1.z,  bR2.x, bTopY, bR2.z,  bL2.x, bTopY, bL2.z);
-        bVerts.push(bR1.x, bTopY, bR1.z,  bR1.x, bBottomY, bR1.z,  bR2.x, bBottomY, bR2.z);
-        bVerts.push(bR1.x, bTopY, bR1.z,  bR2.x, bBottomY, bR2.z,  bR2.x, bTopY, bR2.z);
-        bVerts.push(bL1.x, bBottomY, bL1.z,  bL1.x, bTopY, bL1.z,  bL2.x, bTopY, bL2.z);
-        bVerts.push(bL1.x, bBottomY, bL1.z,  bL2.x, bTopY, bL2.z,  bL2.x, bBottomY, bL2.z);
-
-        const sL1 = new THREE.Vector3(p1.x - n1.x * soilWidth, sBottomY, p1.z - n1.z * soilWidth);
-        const sR1 = new THREE.Vector3(p1.x + n1.x * soilWidth, sBottomY, p1.z + n1.z * soilWidth);
-        const sL2 = new THREE.Vector3(p2.x - n2.x * soilWidth, sBottomY, p2.z - n2.z * soilWidth);
-        const sR2 = new THREE.Vector3(p2.x + n2.x * soilWidth, sBottomY, p2.z + n2.z * soilWidth);
-
-        sVerts.push(bR1.x, bBottomY, bR1.z,  sR1.x, sBottomY, sR1.z,  sR2.x, sBottomY, sR2.z);
-        sVerts.push(bR1.x, bBottomY, bR1.z,  sR2.x, sBottomY, sR2.z,  bR2.x, bBottomY, bR2.z);
-        sVerts.push(sL1.x, sBottomY, sL1.z,  bL1.x, bBottomY, bL1.z,  bL2.x, bBottomY, bL2.z);
-        sVerts.push(sL1.x, sBottomY, sL1.z,  bL2.x, bBottomY, bL2.z,  sL2.x, sBottomY, sL2.z);
-      }
-
-      ballastGeo.setAttribute('position', new THREE.Float32BufferAttribute(bVerts, 3));
-      ballastGeo.computeVertexNormals();
-      const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
-      ballastMesh.receiveShadow = true;
-      system.add(ballastMesh);
-
-      soilGeo.setAttribute('position', new THREE.Float32BufferAttribute(sVerts, 3));
-      soilGeo.computeVertexNormals();
-      const soilMesh = new THREE.Mesh(soilGeo, soilMat);
-      soilMesh.receiveShadow = true;
-      system.add(soilMesh);
-
-      const tieMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
-      for (let i = 0; i < 200; i++) {
-        const t = i / 200;
+      const dummy = new THREE.Object3D();
+      for (let i = 0; i < SLEEPER_COUNT; i++) {
+        const t = i / SLEEPER_COUNT;
         const pt = trackCurve.getPointAt(t);
         const tan = trackCurve.getTangentAt(t).normalize();
+        const angle = Math.atan2(tan.x, tan.z);
 
-        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.06, 0.16), tieMat);
-        tie.position.copy(pt);
-        tie.position.y -= 0.04;
-        tie.lookAt(pt.clone().add(tan));
-        system.add(tie);
+        dummy.position.set(pt.x, pt.y - 0.03, pt.z);
+        dummy.rotation.set(0, angle + Math.PI / 2, 0);
+        dummy.updateMatrix();
+        sleeperInstanced.setMatrixAt(i, dummy.matrix);
       }
+      sleeperInstanced.receiveShadow = true;
+      system.add(sleeperInstanced);
 
+      // 4. 車頭（維持原設計）
       cartGroup = new THREE.Group();
       cartGroup.userData = { isCart: true };
 
@@ -5359,7 +5312,7 @@ function selectViewMode(mode) {
       headLight.position.set(0, 0.75, 1.0);
       cartGroup.add(headLight);
 
-      const spotLight = new THREE.SpotLight(0xfef08a, 4.5, 9, Math.PI / 5, 0.45, 1.2);
+      const spotLight = new THREE.SpotLight(0xfef08a, 4.5, 12, Math.PI / 5, 0.45, 1.2);
       spotLight.position.set(0, 0.75, 1.08);
       const lightTarget = new THREE.Object3D();
       lightTarget.position.set(0, -0.5, 4.5);
@@ -5378,12 +5331,12 @@ function selectViewMode(mode) {
       cartGroup.traverse(child => { child.userData.isCart = true; });
       system.add(cartGroup);
 
+      // 5. 後續 8 節車廂（維持原設計與座位）
       trailerCarts = [];
       const thinPlankThickness = 0.11;
       const woodSeatMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.7 });
       const logBarkMat = new THREE.MeshStandardMaterial({ color: 0x5C4033, roughness: 0.85 });
       const logCoreMat = new THREE.MeshStandardMaterial({ color: 0xD2B48C, roughness: 0.6 });
-      const logRopeMat = new THREE.MeshBasicMaterial({ color: 0x27272A });
 
       for (let i = 0; i < 8; i++) {
         const trailer = new THREE.Group();
@@ -6649,8 +6602,9 @@ function selectViewMode(mode) {
           playerVillager.companionSprite.position.y = 1.6 + Math.sin(time * 4.0) * 0.06;
         }
 
-        if (cartGroup && trackCurve && !isCartPaused) {
-          cartProgress = (cartProgress + 0.00025) % 1.0;
+if (cartGroup && trackCurve && !isCartPaused) {
+          // 🌟 微調前進速度與車廂間距以適應沿海大環線
+          cartProgress = (cartProgress + 0.00008) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
 
@@ -6659,7 +6613,7 @@ function selectViewMode(mode) {
           cartGroup.lookAt(pos.clone().add(tangent));
 
           if (trailerCarts && trailerCarts.length > 0) {
-            const spacing = 0.0175;
+            const spacing = 0.0065; // 適度縮小進度比例以維持實體間距
             trailerCarts.forEach((trailer, idx) => {
               let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
               if (tProg < 0) tProg += 1.0;
@@ -7183,27 +7137,22 @@ function selectViewMode(mode) {
           motesGeo.attributes.color.needsUpdate = true;
         } 
 
-// 🌟 乘客搭車視角：順著軌道行進方向前進，更明顯偏向中央群島（約 40~45 度視角）
+// 🌟 乘客搭車視角：沿著大陸海岸巡航，同時將中央群島盡收眼底
         if (isRidingCart && trailerCarts && trailerCarts.length >= 2 && trackCurve) {
           const seatCart = trailerCarts[1];
           const cartWorldPos = new THREE.Vector3();
           seatCart.getWorldPosition(cartWorldPos);
 
-          // 1. 取得台車目前在軌道上的行進切線方向
           const cTan = trackCurve.getTangentAt(cartProgress).normalize();
 
-          // 2. 相機架設於第二節車廂上方並略微向前（避免車頂遮蔽）
-          camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.25, cartWorldPos.z).addScaledVector(cTan, 0.35);
+          // 相機架設於第二節車廂上方
+          camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.45, cartWorldPos.z).addScaledVector(cTan, 0.4);
 
-          // 3. 視線基礎：軌道前方約 9 米
-          const cartTargetLook = camera.position.clone().addScaledVector(cTan, 9.0);
-
-          // 4. 偏向中央群島：權重由 3.2 提升至 6.8，明顯將鏡頭轉向島嶼中心
-          const centerDir = new THREE.Vector3(0, 1.0, 0).sub(camera.position).normalize();
-          cartTargetLook.addScaledVector(centerDir, 6.8);
-
-          // 5. 視線高度平視島嶼地表地標（約 0.9 米高）
-          cartTargetLook.y = cartWorldPos.y + 0.9;
+          // 視線目標點：向前延伸並向中央群島偏轉
+          const cartTargetLook = camera.position.clone().addScaledVector(cTan, 12.0);
+          const centerDir = new THREE.Vector3(0, 1.5, 0).sub(camera.position).normalize();
+          cartTargetLook.addScaledVector(centerDir, 9.5);
+          cartTargetLook.y = 2.0;
 
           camera.lookAt(cartTargetLook);
         }
