@@ -5227,23 +5227,23 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 🌟 1. 與遠方大陸完全同步的海岸線與地表高度取樣函式（絕不入水、緊貼陸地沿海）
-      function getCoastlineAndGround(theta) {
-        const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
+      // 1. 確保軌道完美落在陸地內側沿海的高精準取樣函式（絕不入水）
+      function getTrackCenterPoint(theta) {
+        // 遠方大陸海岸線邊緣的數學公式
+        const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(angle = theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
         
-        // 讓軌道半徑剛好落在大陸陸地內側邊緣（半徑比海水邊界內縮 1.2 米，保證 100% 在陸地上）
-        const r = innerBoundary - 1.2;
+        // 將半徑固定在陸地內側（內縮 3.5 米，確保 100% 鋪設在草皮陸地上，絕不落入海水中）
+        const r = innerBoundary - 3.5;
         
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
 
         // 計算該點的地表真實起伏高度
         const dist = Math.hypot(px, pz);
-        const angle = theta;
         const normalizedR = Math.max(0, Math.min(1, (dist - 39) / (98 - 39)));
-        const mountainWave = Math.sin(angle * 2) * 3.6 + Math.cos(angle * 4 + 0.8) * 2.8;
-        const hillWave = Math.sin(angle * 6) * 1.4 + Math.cos(angle * 10) * 0.8;
+        const mountainWave = Math.sin(theta * 2) * 3.6 + Math.cos(theta * 4 + 0.8) * 2.8;
+        const hillWave = Math.sin(theta * 6) * 1.4 + Math.cos(theta * 10) * 0.8;
         const combinedHeight = Math.max(0, mountainWave + hillWave + 2.5);
 
         const stepSize = 2.0;
@@ -5252,7 +5252,7 @@ function createOuterLoopTrackAndCart() {
         const steppedHeight = Math.floor(combinedHeight / stepSize) * stepSize + smoothFrac * stepSize;
 
         const BEACH_CENTER_ANGLE = 1.25;
-        const angleDiff = Math.abs(Math.atan2(Math.sin(angle - BEACH_CENTER_ANGLE), Math.cos(angle - BEACH_CENTER_ANGLE)));
+        const angleDiff = Math.abs(Math.atan2(Math.sin(theta - BEACH_CENTER_ANGLE), Math.cos(theta - BEACH_CENTER_ANGLE)));
         const isUniqueBeachZone = Math.max(0, 1.0 - angleDiff / 0.75);
 
         let groundY = -0.55;
@@ -5264,24 +5264,23 @@ function createOuterLoopTrackAndCart() {
           groundY = -0.32 + steppedHeight * cliffRise * 0.82;
         }
 
-        const finalY = Math.max(0.35, groundY + 0.28);
+        const finalY = Math.max(0.35, groundY + 0.26);
         return new THREE.Vector3(px, finalY, pz);
       }
 
-      // 🌟 2. 建立唯一的沿海中心軌道曲線（28個節點確保滑順）
-      const numPathNodes = 28;
+      // 2. 建立全場唯一的「中心軌道樣條曲線」（32個節點確保極度平順）
+      const numPathNodes = 32;
       const rawPoints = [];
       for (let i = 0; i < numPathNodes; i++) {
         const theta = (i / numPathNodes) * Math.PI * 2;
-        rawPoints.push(getCoastlineAndGround(theta));
+        rawPoints.push(getTrackCenterPoint(theta));
       }
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-      // 🌟 3. 統一以 trackCurve 為基準生成鋼軌、道渣與路基（保證全部疊合在一起）
-      const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
+      // 3. 同步生成道渣、土壤路基與左右鋼軌（全部基於同一條 trackCurve 擴展）
       const divisions = 340;
-      const innerPts = [], outerPts = [], ballastPts = [], soilPts = [];
+      const innerPts = [], outerPts = [];
       const railGauge = 0.35;
 
       for (let i = 0; i <= divisions; i++) {
@@ -5290,41 +5289,38 @@ function createOuterLoopTrackAndCart() {
         const tan = trackCurve.getTangentAt(t);
         const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
 
-        // 左右鋼軌水平偏移
+        // 左右鋼軌透過法向量精準外推
         innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
         outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
-        
-        // 道渣與路基嚴格緊貼中心點下方
-        ballastPts.push(new THREE.Vector3(pt.x, pt.y - 0.03, pt.z));
-        soilPts.push(new THREE.Vector3(pt.x, pt.y - 0.18, pt.z));
       }
 
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
-      const ballastCurve = new THREE.CatmullRomCurve3(ballastPts, true);
-      const soilCurve = new THREE.CatmullRomCurve3(soilPts, true);
 
-      // 加入雙軌
+      // 鋪設雙軌鋼軌
+      const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
-      // 加入道渣（淺色碎石層）
+      // 🌟 4. 完美疊合的道渣層（直接使用 trackCurve 中心包覆）
       const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
-      const ballastGeo = new THREE.TubeGeometry(ballastCurve, 320, 0.55, 6, true);
-      ballastGeo.scale(1.35, 0.35, 1.35);
+      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.72, 6, true);
+      ballastGeo.scale(1.4, 0.32, 1.4); // 扁平化包覆在鐵軌與枕木下方
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
+      ballastMesh.position.y -= 0.03; // 微調高度與枕木緊密貼合
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 加入土壤路基（深色扎實地基，與地面完美結合）
+      // 🌟 5. 完美疊合的土壤路基（扎實與地面結合，絕不分離）
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
-      const soilGeo = new THREE.TubeGeometry(soilCurve, 320, 0.75, 6, true);
-      soilGeo.scale(1.45, 0.65, 1.45);
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.90, 6, true);
+      soilGeo.scale(1.5, 0.70, 1.5); // 更寬厚的路基向下扎根
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
+      soilMesh.position.y -= 0.15; // 向下延伸至地表
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 🌟 4. 400 根木頭枕木貼合
+      // 6. 400 根木頭枕木完美對齊中心軌道
       const SLEEPER_COUNT = 400;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
@@ -5515,7 +5511,7 @@ function createOuterLoopTrackAndCart() {
             const seatPlank = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.04, 0.34), woodSeatMat);
             seatPlank.position.set(0, floorY + 0.22, seatZ);
             seatPlank.castShadow = true;
-            bench.add(bench);
+            bench.add(seatPlank);
 
             const backRest = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.2, 0.03), woodSeatMat);
             backRest.position.set(0, floorY + 0.36, seatZ + (seatZ < 0 ? -0.14 : 0.14));
