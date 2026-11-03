@@ -5227,14 +5227,20 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 1. 真實地表高度取樣函式
-      function getExactGroundHeight(x, z) {
-        const dist = Math.hypot(x, z);
-        const angle = Math.atan2(z, x);
-
-        const coastCurve = Math.sin(angle * 3) * 4.0 + Math.cos(angle * 5) * 2.2;
+      // 🌟 1. 與遠方大陸完全同步的海岸線與地表高度取樣函式（絕不入水、緊貼陸地沿海）
+      function getCoastlineAndGround(theta) {
+        const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
+        
+        // 讓軌道半徑剛好落在大陸陸地內側邊緣（半徑比海水邊界內縮 1.2 米，保證 100% 在陸地上）
+        const r = innerBoundary - 1.2;
+        
+        const px = Math.cos(theta) * r;
+        const pz = Math.sin(theta) * r;
 
+        // 計算該點的地表真實起伏高度
+        const dist = Math.hypot(px, pz);
+        const angle = theta;
         const normalizedR = Math.max(0, Math.min(1, (dist - 39) / (98 - 39)));
         const mountainWave = Math.sin(angle * 2) * 3.6 + Math.cos(angle * 4 + 0.8) * 2.8;
         const hillWave = Math.sin(angle * 6) * 1.4 + Math.cos(angle * 10) * 0.8;
@@ -5258,70 +5264,68 @@ function createOuterLoopTrackAndCart() {
           groundY = -0.32 + steppedHeight * cliffRise * 0.82;
         }
 
-        return Math.max(0.32, groundY + 0.28);
+        const finalY = Math.max(0.35, groundY + 0.28);
+        return new THREE.Vector3(px, finalY, pz);
       }
 
-      // 2. 建立唯一的「中心軌道曲線」
-      const numPathNodes = 24;
+      // 🌟 2. 建立唯一的沿海中心軌道曲線（28個節點確保滑順）
+      const numPathNodes = 28;
       const rawPoints = [];
       for (let i = 0; i < numPathNodes; i++) {
         const theta = (i / numPathNodes) * Math.PI * 2;
-        const r = 46.5 + Math.sin(theta * 3) * 2.0;
-        const px = Math.cos(theta) * r;
-        const pz = Math.sin(theta) * r;
-        const py = getExactGroundHeight(px, pz);
-        rawPoints.push(new THREE.Vector3(px, py, pz));
+        rawPoints.push(getCoastlineAndGround(theta));
       }
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-      // 3. 雙軌鋼軌取樣
+      // 🌟 3. 統一以 trackCurve 為基準生成鋼軌、道渣與路基（保證全部疊合在一起）
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
-      const divisions = 320;
-      const innerPts = [], outerPts = [];
+      const divisions = 340;
+      const innerPts = [], outerPts = [], ballastPts = [], soilPts = [];
       const railGauge = 0.35;
 
       for (let i = 0; i <= divisions; i++) {
         const t = i / divisions;
         const pt = trackCurve.getPointAt(t);
-        
-        const realGroundY = getExactGroundHeight(pt.x, pt.z);
-        if (pt.y < realGroundY) {
-          pt.y = realGroundY;
-        }
-
         const tan = trackCurve.getTangentAt(t);
         const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
 
+        // 左右鋼軌水平偏移
         innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
         outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
+        
+        // 道渣與路基嚴格緊貼中心點下方
+        ballastPts.push(new THREE.Vector3(pt.x, pt.y - 0.03, pt.z));
+        soilPts.push(new THREE.Vector3(pt.x, pt.y - 0.18, pt.z));
       }
 
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
+      const ballastCurve = new THREE.CatmullRomCurve3(ballastPts, true);
+      const soilCurve = new THREE.CatmullRomCurve3(soilPts, true);
 
-      system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 300, 0.05, 6, true), railMat));
-      system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 300, 0.05, 6, true), railMat));
+      // 加入雙軌
+      system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
+      system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
-      // 🌟 4. 【關鍵修正】道渣與土壤直接以 trackCurve（中心曲線）生成並向下微調，確保絕對不分離！
+      // 加入道渣（淺色碎石層）
       const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
-      const ballastGeo = new THREE.TubeGeometry(trackCurve, 300, 0.75, 6, true);
-      ballastGeo.scale(1.4, 0.35, 1.4); // 扁平化包覆鐵軌下方
+      const ballastGeo = new THREE.TubeGeometry(ballastCurve, 320, 0.55, 6, true);
+      ballastGeo.scale(1.35, 0.35, 1.35);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
-      ballastMesh.position.y -= 0.05; // 稍微下沉貼齊枕木底部
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
+      // 加入土壤路基（深色扎實地基，與地面完美結合）
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 300, 0.95, 6, true);
-      soilGeo.scale(1.5, 0.75, 1.5); // 更寬厚的土壤路基紮根地面
+      const soilGeo = new THREE.TubeGeometry(soilCurve, 320, 0.75, 6, true);
+      soilGeo.scale(1.45, 0.65, 1.45);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
-      soilMesh.position.y -= 0.18; // 紮實向下延伸至地表
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 5. 400 根木頭枕木
-      const SLEEPER_COUNT = 380;
+      // 🌟 4. 400 根木頭枕木貼合
+      const SLEEPER_COUNT = 400;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
       const sleeperInstanced = new THREE.InstancedMesh(sleeperGeom, sleeperMat, SLEEPER_COUNT);
@@ -5330,12 +5334,9 @@ function createOuterLoopTrackAndCart() {
       for (let i = 0; i < SLEEPER_COUNT; i++) {
         const t = i / SLEEPER_COUNT;
         const pt = trackCurve.getPointAt(t);
-        
-        const realGroundY = getExactGroundHeight(pt.x, pt.z);
-        const actualY = Math.max(pt.y, realGroundY);
-
         const tan = trackCurve.getTangentAt(t).normalize();
-        dummy.position.set(pt.x, actualY - 0.02, pt.z);
+
+        dummy.position.set(pt.x, pt.y - 0.02, pt.z);
         dummy.lookAt(dummy.position.clone().add(tan));
         dummy.updateMatrix();
         sleeperInstanced.setMatrixAt(i, dummy.matrix);
