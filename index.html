@@ -5218,25 +5218,29 @@ function selectViewMode(mode) {
 
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
-      const TRACK_Y = 0.28;
+      const TRACK_Y = 0.32; // 略高於海面，剛好嵌在內圈海岸沙灘邊
 
-      // 🌟 1. 定義環繞遠景大陸沿海的壯闊環狀曲線（避開中央各島與深水區）
+      // 🌟 精準貼合遠景大陸內圈海岸邊緣的 12 個環狀路徑控制點（半徑約 45 ~ 50）
       const points = [
-        new THREE.Vector3(88, TRACK_Y, 0),
-        new THREE.Vector3(68, TRACK_Y, 62),
-        new THREE.Vector3(0, TRACK_Y, 90),
-        new THREE.Vector3(-68, TRACK_Y, 68),
-        new THREE.Vector3(-92, TRACK_Y, 0),
-        new THREE.Vector3(-70, TRACK_Y, -62),
-        new THREE.Vector3(0, TRACK_Y, -86),
-        new THREE.Vector3(70, TRACK_Y, -62)
+        new THREE.Vector3(47.5, TRACK_Y, 0),
+        new THREE.Vector3(41.0, TRACK_Y, 24.5),
+        new THREE.Vector3(25.0, TRACK_Y, 41.5),
+        new THREE.Vector3(0, TRACK_Y, 48.0),
+        new THREE.Vector3(-25.0, TRACK_Y, 42.5),
+        new THREE.Vector3(-42.0, TRACK_Y, 23.5),
+        new THREE.Vector3(-48.5, TRACK_Y, 0),
+        new THREE.Vector3(-42.0, TRACK_Y, -24.5),
+        new THREE.Vector3(-25.0, TRACK_Y, -42.0),
+        new THREE.Vector3(0, TRACK_Y, -47.0),
+        new THREE.Vector3(25.0, TRACK_Y, -41.5),
+        new THREE.Vector3(41.5, TRACK_Y, -24.0)
       ];
 
       trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.25);
 
-      // 🌟 2. 左右平行雙軌（TubeGeometry，單一繪圖呼叫）
+      // 🌟 雙軌鋼軌（極速 TubeGeometry，1 Draw Call）
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
-      const divisions = 360;
+      const divisions = 280;
       const innerPts = [], outerPts = [];
       const railGauge = 0.35;
 
@@ -5253,13 +5257,13 @@ function createOuterLoopTrackAndCart() {
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true);
-      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true);
+      const railTubeGeo1 = new THREE.TubeGeometry(innerCurve, 260, 0.05, 6, true);
+      const railTubeGeo2 = new THREE.TubeGeometry(outerCurve, 260, 0.05, 6, true);
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      // 🌟 3. 木頭枕木（使用 InstancedMesh 一次繪製 280 根，硬體零負擔）
-      const SLEEPER_COUNT = 280;
+      // 🌟 沿海木質枕木（使用 InstancedMesh 一次繪製 200 根枕木）
+      const SLEEPER_COUNT = 200;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
       const sleeperInstanced = new THREE.InstancedMesh(sleeperGeom, sleeperMat, SLEEPER_COUNT);
@@ -5278,6 +5282,8 @@ function createOuterLoopTrackAndCart() {
       }
       sleeperInstanced.receiveShadow = true;
       system.add(sleeperInstanced);
+
+      // 車頭與車廂部分維持原本不變...
 
       // 4. 車頭（維持原設計）
       cartGroup = new THREE.Group();
@@ -6603,8 +6609,8 @@ function createOuterLoopTrackAndCart() {
         }
 
 if (cartGroup && trackCurve && !isCartPaused) {
-          // 🌟 微調前進速度與車廂間距以適應沿海大環線
-          cartProgress = (cartProgress + 0.00008) % 1.0;
+          // 🌟 內圈海岸周長約 300 米，以 0.00014 速度行駛最為自然平穩
+          cartProgress = (cartProgress + 0.00014) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
 
@@ -6613,7 +6619,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
           cartGroup.lookAt(pos.clone().add(tangent));
 
           if (trailerCarts && trailerCarts.length > 0) {
-            const spacing = 0.0065; // 適度縮小進度比例以維持實體間距
+            const spacing = 0.0105; // 車廂緊湊連接
             trailerCarts.forEach((trailer, idx) => {
               let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
               if (tProg < 0) tProg += 1.0;
@@ -7137,7 +7143,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
           motesGeo.attributes.color.needsUpdate = true;
         } 
 
-// 🌟 乘客搭車視角：沿著大陸海岸巡航，同時將中央群島盡收眼底
+// 🌟 乘客搭車視角：在內圈海岸邊緣行駛，近距離眺望中央 7 座島群
         if (isRidingCart && trailerCarts && trailerCarts.length >= 2 && trackCurve) {
           const seatCart = trailerCarts[1];
           const cartWorldPos = new THREE.Vector3();
@@ -7145,14 +7151,14 @@ if (cartGroup && trackCurve && !isCartPaused) {
 
           const cTan = trackCurve.getTangentAt(cartProgress).normalize();
 
-          // 相機架設於第二節車廂上方
-          camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.45, cartWorldPos.z).addScaledVector(cTan, 0.4);
+          // 相機架設於第二節車廂上方略往前
+          camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.35, cartWorldPos.z).addScaledVector(cTan, 0.35);
 
-          // 視線目標點：向前延伸並向中央群島偏轉
-          const cartTargetLook = camera.position.clone().addScaledVector(cTan, 12.0);
-          const centerDir = new THREE.Vector3(0, 1.5, 0).sub(camera.position).normalize();
-          cartTargetLook.addScaledVector(centerDir, 9.5);
-          cartTargetLook.y = 2.0;
+          // 視線朝前方延伸，並往世界中心（0, 0.8, 0）轉向
+          const cartTargetLook = camera.position.clone().addScaledVector(cTan, 9.5);
+          const centerDir = new THREE.Vector3(0, 0.8, 0).sub(camera.position).normalize();
+          cartTargetLook.addScaledVector(centerDir, 7.5);
+          cartTargetLook.y = 1.2;
 
           camera.lookAt(cartTargetLook);
         }
