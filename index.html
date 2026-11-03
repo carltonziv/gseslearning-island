@@ -5164,9 +5164,9 @@ function selectViewMode(mode) {
         resetToDefaultCamera();
 
         // 🌟 只有在音樂處於開啟狀態時才播
-      if (isBgmPlaying && typeof playCustomAudio === 'function') {
-        playCustomAudio('ambient');
-      }
+        if (isBgmPlaying && typeof playCustomAudio === 'function') {
+          playCustomAudio('ambient');
+        }
 
         showLiveBanner("🧭 已切換為全景鳥瞰視角");
       }
