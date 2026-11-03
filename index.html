@@ -1408,7 +1408,7 @@
     if (ISLAND_AUDIO_MAP.boat) ISLAND_AUDIO_MAP.boat.loop = true;
     if (ISLAND_AUDIO_MAP.ambient) {
       ISLAND_AUDIO_MAP.ambient.loop = true;    // ✅ 設定循環重複播放
-      ISLAND_AUDIO_MAP.ambient.volume = 0.3;  // 🔊 音量調整（0.0 ~ 1.0，建議設為 0.3 ~ 0.4，避免蓋過背景音樂）
+      ISLAND_AUDIO_MAP.ambient.volume = 0.2;  // 🔊 音量調整（0.0 ~ 1.0，建議設為 0.3 ~ 0.4，避免蓋過背景音樂）
     }
 
     function playCustomAudio(islandId) {
@@ -1604,26 +1604,31 @@ if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCart
         const cartIndex = Math.random() < 0.5 ? 1 : 2;
         const targetCart = trailerCarts[cartIndex];
 
-        // 隨機挑選該節車廂的 4 個座位之一（前後排 Z: ±0.45，左右座 X: ±0.22）
-        const seatZ = Math.random() < 0.5 ? -0.45 : 0.45;
-        const seatX = Math.random() < 0.5 ? -0.22 : 0.22;
+        // 隨機挑選該節車廂的 4 個座位之一（左右座 X: ±0.24，前排或後排）
+        const isFrontRow = Math.random() < 0.5;
+        const seatX = Math.random() < 0.5 ? -0.24 : 0.24;
+        
+        // 🌟 修正 Z 軸前後位置：精準落在坐墊板正上方，而非椅背
+        const seatZ = isFrontRow ? -0.40 : 0.40;
         
         targetCart.add(person);
-        // 精確坐墊高度：底板(0.31) + 椅面(0.22) + 臀部下落補正 = 0.62
-        person.position.set(seatX, 0.62, seatZ);
-        // 若坐前排面朝前方(0度)，若坐後排面朝後方(180度)或依椅背方向面向車內
-        person.rotation.set(0, seatZ < 0 ? 0 : Math.PI, 0);
+        
+        // 🌟 修正 Y 軸高度：由 0.62 調降至 0.42，使臀部緊貼椅面不再懸空
+        person.position.set(seatX, 0.42, seatZ);
+        
+        // 前排面向車頭(0度)，後排面向車尾(Math.PI)
+        person.rotation.set(0, isFrontRow ? 0 : Math.PI, 0);
 
         const limbs = person.userData.limbs;
         if (limbs) {
-          // 大腿抬平呈現坐姿
+          // 雙腿前伸水平坐姿
           limbs.leftLeg.rotation.x = -1.57;
           limbs.rightLeg.rotation.x = -1.57;
-          // 手臂自然放在膝蓋/大腿上
-          limbs.leftArm.rotation.x = -0.45;
-          limbs.rightArm.rotation.x = -0.45;
-          limbs.leftArm.rotation.z = 0.1;
-          limbs.rightArm.rotation.z = -0.1;
+          // 手臂自然平放膝上
+          limbs.leftArm.rotation.x = -0.42;
+          limbs.rightArm.rotation.x = -0.42;
+          limbs.leftArm.rotation.z = 0.08;
+          limbs.rightArm.rotation.z = -0.08;
           if (limbs.skirt) limbs.skirt.rotation.x = -0.65;
         }
 
@@ -1643,7 +1648,7 @@ if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCart
           isSkirt: isGirl,
           companionSprite: companionSprite
         };
-      } else {
+      }else {
         const islandIdx = (typeof chosenSpawn === 'number') ? chosenSpawn : 1;
         const startIsland = ISLAND_CONFIG[islandIdx];
 
