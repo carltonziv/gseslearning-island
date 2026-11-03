@@ -718,9 +718,9 @@
     </div>
 
     <div class="header-actions">
-      <div class="hud-btn-card" id="btn-toggle-bgm" onclick="toggleBGM()">
-        <span id="bgm-icon">🎵</span>
-        <span id="bgm-text">音樂：開</span>
+<div class="hud-btn-card" id="btn-toggle-bgm" onclick="toggleBGM()">
+        <span id="bgm-icon">🔇</span>
+        <span id="bgm-text">音樂：關</span>
       </div>
       <div class="hud-btn-card hud-btn-bracket" id="toggle-bracket-btn" onclick="toggleBracketSidebar()">
         <span>🏆 即時賽程表</span>
@@ -1362,23 +1362,50 @@
       alert('戰鬥陀螺大賽已圓滿落幕！周圍四島任務已重新開放，能量開始重新累積！');
     }
 
-    // ==========================================
-    // 🎵 背景音樂控制
+// ==========================================
+    // 🎵 背景音樂與環境音效同步控制（預設關閉）
     // ==========================================
     const BGM_URL = "./yume.mp3";
     const bgmAudio = new Audio(BGM_URL);
     bgmAudio.loop = true;
     bgmAudio.volume = 0.35;
-    let isBgmPlaying = false;
+    let isBgmPlaying = false; // 預設關閉
 
-    function startBGM() {
+    function toggleBGM() {
+      const ambientAudio = ISLAND_AUDIO_MAP.ambient;
+
       if (!isBgmPlaying) {
+        // 🌟 同步開啟背景音樂與環境鳥叫
         bgmAudio.play().then(() => {
           isBgmPlaying = true;
           updateBgmButtonUI();
-        }).catch(err => {
-          console.warn("自動播放限制", err);
-        });
+        }).catch(err => console.warn("背景音樂播放提示:", err));
+
+        if (ambientAudio) {
+          ambientAudio.play().catch(err => console.warn("環境音效播放提示:", err));
+        }
+      } else {
+        // 🌟 同步關閉背景音樂與環境鳥叫
+        bgmAudio.pause();
+        if (ambientAudio) {
+          ambientAudio.pause();
+        }
+        isBgmPlaying = false;
+        updateBgmButtonUI();
+      }
+    }
+
+    function updateBgmButtonUI() {
+      const icon = document.getElementById('bgm-icon');
+      const text = document.getElementById('bgm-text');
+      if (icon && text) {
+        if (isBgmPlaying) {
+          icon.textContent = '🎵';
+          text.textContent = '音樂：開';
+        } else {
+          icon.textContent = '🔇';
+          text.textContent = '音樂：關';
+        }
       }
     }
 
@@ -1979,7 +2006,7 @@ function startPlayerFarming() {
         controls.update();
       }
 
-      startBGM();
+      //startBGM();
       if (typeof playCustomAudio === 'function') {
         playCustomAudio('ambient');
       }
@@ -5158,11 +5185,14 @@ function selectViewMode(mode) {
         if (menuText) menuText.textContent = '全景視角';
 
         resetToDefaultCamera();
-        if (typeof playCustomAudio === 'function') {
-          playCustomAudio('ambient');
-        }
+
+        / 🌟 只有在音樂處於開啟狀態時才播
+      if (isBgmPlaying && typeof playCustomAudio === 'function') {
+        playCustomAudio('ambient');
+      }
+
         showLiveBanner("🧭 已切換為全景鳥瞰視角");
-      } 
+      }
       else if (mode === 'cart') {
         if (typeof stopCustomAudio === 'function') {
           stopCustomAudio('ambient');
