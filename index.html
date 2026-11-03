@@ -1406,6 +1406,10 @@
     // 🌟 將台車與巡邏艇的音訊設為循環播放 (搭乘時持續有音效)
     if (ISLAND_AUDIO_MAP.cart) ISLAND_AUDIO_MAP.cart.loop = true;
     if (ISLAND_AUDIO_MAP.boat) ISLAND_AUDIO_MAP.boat.loop = true;
+    if (ISLAND_AUDIO_MAP.ambient) {
+      ISLAND_AUDIO_MAP.ambient.loop = true;    // ✅ 設定循環重複播放
+      ISLAND_AUDIO_MAP.ambient.volume = 0.3;  // 🔊 音量調整（0.0 ~ 1.0，建議設為 0.3 ~ 0.4，避免蓋過背景音樂）
+    }
 
     function playCustomAudio(islandId) {
       let playKey = islandId;
@@ -5351,8 +5355,8 @@ function selectViewMode(mode) {
       patrolBoat.add(radar);
       patrolBoat.userData.radar = radar;
 
-      // ==========================================
-      // 🌟 船頭長方形實體頭燈（低多邊形節能造型）
+// ==========================================
+      // 🌟 船頭中央內嵌式長方形頭燈
       // ==========================================
       const lampHousingMat = new THREE.MeshStandardMaterial({ 
         color: 0x1e293b, 
@@ -5360,32 +5364,34 @@ function selectViewMode(mode) {
         roughness: 0.3 
       });
       const lampGlassMat = new THREE.MeshBasicMaterial({ 
-        color: 0xfef08a // 亮黃色發光質感
+        color: 0xfef08a // 亮黃色發光晶片
       });
 
-      // 1. 長方形外殼基座（寬 0.38, 高 0.16, 深 0.14）
+      // 1. 內嵌燈槽外框（稍微凹入白色船頭立面）
+      // 寬 0.42, 高 0.14, 深 0.12
       const lampHousing = new THREE.Mesh(
-        new THREE.BoxGeometry(0.38, 0.16, 0.14),
+        new THREE.BoxGeometry(0.42, 0.14, 0.12),
         lampHousingMat
       );
-      // 安裝在船頭甲板前端正中央 (Z = 1.14, Y = 0.34)
-      lampHousing.position.set(0, 0.34, 1.14);
+      // Y=0.16 剛好位於白色船身垂直中心，Z=1.22 嵌入船體前端立面
+      lampHousing.position.set(0, 0.16, 1.22);
       lampHousing.castShadow = true;
       patrolBoat.add(lampHousing);
 
-      // 2. 正面長方形發光燈面（微凸出外殼前緣）
+      // 2. 齊平於船頭表面的長方形發光燈罩
       const lampFace = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.34, 0.12),
+        new THREE.PlaneGeometry(0.38, 0.11),
         lampGlassMat
       );
-      lampFace.position.set(0, 0.34, 1.212);
+      // 微凸出燈槽前緣 (Z = 1.281)，與白色船頭前端切齊
+      lampFace.position.set(0, 0.16, 1.281);
       patrolBoat.add(lampFace);
 
-      // 3. 往前射出的聚光燈光束
-      const searchLight = new THREE.SpotLight(0xfef08a, 4.0, 14, Math.PI / 5, 0.45, 1.3);
-      searchLight.position.set(0, 0.34, 1.22);
+      // 3. 內嵌燈向前方海面照射的聚光燈
+      const searchLight = new THREE.SpotLight(0xfef08a, 4.2, 14, Math.PI / 5, 0.45, 1.3);
+      searchLight.position.set(0, 0.16, 1.30);
       const targetObj = new THREE.Object3D();
-      targetObj.position.set(0, -0.6, 6.5); // 朝向前方水面照射
+      targetObj.position.set(0, -0.6, 6.5); // 向前方水面微傾斜照射
       patrolBoat.add(targetObj);
       searchLight.target = targetObj;
       patrolBoat.add(searchLight);
