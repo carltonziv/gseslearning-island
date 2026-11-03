@@ -5498,7 +5498,7 @@ function createOuterLoopTrackAndCart() {
       });
 
       cartGroup.traverse(child => { child.userData.isCart = true; });
-      system.add(
+      system.add(cartGroup);
 
       // 7. 8 節車廂建立
       trailerCarts = [];
@@ -7533,7 +7533,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
         stopCustomAudio('cart');
         stopCustomAudio('boat');
       }
-if (typeof playCustomAudio === 'function') {
+      if (typeof playCustomAudio === 'function') {
         playCustomAudio('ambient');
       }
       // 1. 重置摺疊選單按鈕的顯示文字與選中樣式
