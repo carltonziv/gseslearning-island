@@ -5498,9 +5498,14 @@ function createOuterLoopTrackAndCart() {
       cartGroup.traverse(child => { child.userData.isCart = true; });
       system.add(cartGroup);
 
-      // 7. 8 節車廂建立
+      // ==========================================
+      // 7. 8 節拖車車廂建立
+      // ==========================================
       trailerCarts = [];
       const thinPlankThickness = 0.11;
+      
+      // 🌟 補回車廂與長椅所需的專屬木質材質宣告：
+      const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 }); // 👈 補回此行！
       const woodSeatMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.7 });
       const logBarkMat = new THREE.MeshStandardMaterial({ color: 0x5C4033, roughness: 0.85 });
       const logCoreMat = new THREE.MeshStandardMaterial({ color: 0xD2B48C, roughness: 0.6 });
