@@ -5387,49 +5387,110 @@ function createOuterLoopTrackAndCart() {
       sleeperInstanced.receiveShadow = true;
       system.add(sleeperInstanced);
 
-      // 6. 車頭建立
+// ==========================================
+      // 🚂 台糖五分車柴油機車頭（德馬/溪州經典造型）
+      // ==========================================
       cartGroup = new THREE.Group();
       cartGroup.userData = { isCart: true };
 
-      const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
-      const ironFrameMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.85, roughness: 0.25 });
-      const brassMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 });
+      // 材質調色盤：糖鐵經典深海軍藍、鵝黃警示色、金屬與車窗
+      const locoBlueMat = new THREE.MeshStandardMaterial({ color: 0x1E3A8A, roughness: 0.45, metalness: 0.15 }); // 糖鐵經典深藍
+      const locoYellowMat = new THREE.MeshStandardMaterial({ color: 0xFACC15, roughness: 0.4 }); // 車頭警示黃
+      const ironChassisMat = new THREE.MeshStandardMaterial({ color: 0x1F2937, metalness: 0.85, roughness: 0.3 }); // 黑色鑄鐵底盤
+      const roofWhiteMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.5 }); // 駕駛艙象牙白車頂
+      const windowGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x93C5FD, transmission: 0.75, opacity: 0.85, transparent: true, roughness: 0.1 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.9, roughness: 0.2 });
 
-      const cartBody = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.55, 1.9), woodCartMat);
-      cartBody.position.y = 0.45;
-      cartBody.castShadow = true;
-      cartGroup.add(cartBody);
+      // 1. 重型鑄鐵底盤（帶防撞延伸端）
+      const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.12, 2.3), ironChassisMat);
+      chassis.position.y = 0.22;
+      chassis.castShadow = true;
+      cartGroup.add(chassis);
 
-      const frameBottom = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.08, 1.94), ironFrameMat);
-      frameBottom.position.y = 0.2;
-      cartGroup.add(frameBottom);
+      // 前後黃黑警示防撞保險桿
+      const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.16, 0.12), locoYellowMat);
+      frontBumper.position.set(0, 0.24, 1.16);
+      cartGroup.add(frontBumper);
 
-      const roof = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.08, 2.05), woodCartMat);
-      roof.position.y = 1.3;
-      roof.castShadow = true;
-      cartGroup.add(roof);
+      const rearBumper = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.16, 0.12), locoYellowMat);
+      rearBumper.position.set(0, 0.24, -1.16);
+      cartGroup.add(rearBumper);
 
-      [[-0.55, 0.88, -0.75], [0.55, 0.88, -0.75], [-0.55, 0.88, 0.75], [0.55, 0.88, 0.75]].forEach(pos => {
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.85, 8), ironFrameMat);
-        pillar.position.set(...pos);
-        cartGroup.add(pillar);
+      // 2. 前置引擎室（柴油機艙罩）
+      const engineHood = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.52, 1.25), locoBlueMat);
+      engineHood.position.set(0, 0.54, 0.45);
+      engineHood.castShadow = true;
+      cartGroup.add(engineHood);
+
+      // 引擎兩側黃色醒目飾條
+      [-0.545, 0.545].forEach(sx => {
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.08, 1.25), locoYellowMat);
+        stripe.position.set(sx, 0.52, 0.45);
+        cartGroup.add(stripe);
       });
 
-      const headLight = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.16, 12), brassMat);
-      headLight.rotation.x = Math.PI / 2;
-      headLight.position.set(0, 0.75, 1.0);
-      cartGroup.add(headLight);
+      // 前端垂直散熱格柵（Radiator Grille）
+      const radiator = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.42, 0.04), ironChassisMat);
+      radiator.position.set(0, 0.54, 1.08);
+      cartGroup.add(radiator);
 
-      const spotLight = new THREE.SpotLight(0xfef08a, 4.5, 9, Math.PI / 5, 0.45, 1.2);
-      spotLight.position.set(0, 0.75, 1.08);
+      // 引擎頂部直立黑色排氣管（煙囪）
+      const exhaustPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.42, 10), ironChassisMat);
+      exhaustPipe.position.set(0.32, 0.95, 0.85);
+      exhaustPipe.castShadow = true;
+      cartGroup.add(exhaustPipe);
+
+      // 3. 後置階梯式駕駛室（Cab）
+      const cabBody = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.88, 0.88), locoBlueMat);
+      cabBody.position.set(0, 0.72, -0.55);
+      cabBody.castShadow = true;
+      cartGroup.add(cabBody);
+
+      // 駕駛室象牙白微弧車頂
+      const cabRoof = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.08, 0.96), roofWhiteMat);
+      cabRoof.position.set(0, 1.18, -0.55);
+      cabRoof.castShadow = true;
+      cartGroup.add(cabRoof);
+
+      // 駕駛室窗戶：正面擋風玻璃與兩側觀察窗
+      const frontWindow = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.32), windowGlassMat);
+      frontWindow.position.set(0, 0.92, -0.105);
+      cartGroup.add(frontWindow);
+
+      const rearWindow = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.32), windowGlassMat);
+      rearWindow.position.set(0, 0.92, -0.995);
+      rearWindow.rotation.y = Math.PI;
+      cartGroup.add(rearWindow);
+
+      [-0.615, 0.615].forEach(wx => {
+        const sideWindow = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.32), windowGlassMat);
+        sideWindow.position.set(wx, 0.92, -0.55);
+        sideWindow.rotation.y = wx > 0 ? -Math.PI / 2 : Math.PI / 2;
+        cartGroup.add(sideWindow);
+      });
+
+      // 4. 車頭前方大圓燈與照地聚光燈
+      const headlightHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.18, 16), chromeMat);
+      headlightHousing.rotation.x = Math.PI / 2;
+      headlightHousing.position.set(0, 0.82, 1.05);
+      headlightHousing.castShadow = true;
+      cartGroup.add(headlightHousing);
+
+      const headlightLens = new THREE.Mesh(new THREE.CircleGeometry(0.13, 16), new THREE.MeshBasicMaterial({ color: 0xFEF08A }));
+      headlightLens.position.set(0, 0.82, 1.145);
+      cartGroup.add(headlightLens);
+
+      const spotLight = new THREE.SpotLight(0xFEF08A, 4.5, 14, Math.PI / 5, 0.45, 1.2);
+      spotLight.position.set(0, 0.82, 1.16);
       const lightTarget = new THREE.Object3D();
-      lightTarget.position.set(0, -0.5, 4.5);
+      lightTarget.position.set(0, -0.4, 5.5);
       cartGroup.add(lightTarget);
       spotLight.target = lightTarget;
       cartGroup.add(spotLight);
 
-      [[-0.35, 0.15, -0.55], [0.35, 0.15, -0.55], [-0.35, 0.15, 0.55], [0.35, 0.15, 0.55]].forEach(pos => {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.10, 16), ironFrameMat);
+      // 5. 鋼輪組（四輪機車轉向架）
+      [[-0.42, 0.15, -0.65], [0.42, 0.15, -0.65], [-0.42, 0.15, 0.65], [0.42, 0.15, 0.65]].forEach(pos => {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.12, 16), ironChassisMat);
         wheel.rotation.z = Math.PI / 2;
         wheel.position.set(...pos);
         wheel.castShadow = true;
@@ -5437,7 +5498,7 @@ function createOuterLoopTrackAndCart() {
       });
 
       cartGroup.traverse(child => { child.userData.isCart = true; });
-      system.add(cartGroup);
+      system.add(
 
       // 7. 8 節車廂建立
       trailerCarts = [];
