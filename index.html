@@ -5227,7 +5227,7 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 🌟 1. 精準對應 createDistantMainland 的地表高度算法
+      // 🌟 1. 精準對應真實地表高度的取樣函式
       function getExactGroundHeight(x, z) {
         const dist = Math.hypot(x, z);
         const angle = Math.atan2(z, x);
@@ -5258,16 +5258,14 @@ function createOuterLoopTrackAndCart() {
           groundY = -0.32 + steppedHeight * cliffRise * 0.82;
         }
 
-        // 確保高於海平面，並預留軌道墊高厚度 (0.28m) 避免任何貼圖 z-fighting 或穿透
         return Math.max(0.32, groundY + 0.28);
       }
 
-      // 🌟 2. 增加到 24 個關鍵路徑點，每個點動態算出地表高度
+      // 🌟 2. 24 個順應地勢起伏的軌道控制點
       const numPathNodes = 24;
       const rawPoints = [];
       for (let i = 0; i < numPathNodes; i++) {
         const theta = (i / numPathNodes) * Math.PI * 2;
-        // 沿著內圈海岸輪廓微調半徑
         const r = 46.5 + Math.sin(theta * 3) * 2.0;
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
@@ -5277,17 +5275,16 @@ function createOuterLoopTrackAndCart() {
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-      // 🌟 3. 取樣並鋪設雙軌鋼軌與道渣
+      // 🌟 3. 雙軌鋼軌鋪設
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
       const divisions = 320;
-      const innerPts = [], outerPts = [], ballastPts = [];
+      const innerPts = [], outerPts = [], ballastPts = [], soilPts = [];
       const railGauge = 0.35;
 
       for (let i = 0; i <= divisions; i++) {
         const t = i / divisions;
         const pt = trackCurve.getPointAt(t);
         
-        // 即時校正：確保該處軌道點絕對不低於該坐標的地表高度
         const realGroundY = getExactGroundHeight(pt.x, pt.z);
         if (pt.y < realGroundY) {
           pt.y = realGroundY;
@@ -5298,26 +5295,35 @@ function createOuterLoopTrackAndCart() {
 
         innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
         outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
-        ballastPts.push(new THREE.Vector3(pt.x, pt.y - 0.08, pt.z));
+        ballastPts.push(new THREE.Vector3(pt.x, pt.y - 0.04, pt.z));
+        soilPts.push(new THREE.Vector3(pt.x, pt.y - 0.25, pt.z));
       }
 
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
       const ballastCurve = new THREE.CatmullRomCurve3(ballastPts, true);
+      const soilCurve = new THREE.CatmullRomCurve3(soilPts, true);
 
-      // 鋪設左右兩條鋼軌
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 300, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 300, 0.05, 6, true), railMat));
 
-      // 🌟 4. 厚實道渣基座（加深下扎厚度，防止下方地勢下陷時懸空）
+      // 🌟 4. 厚實碎石道渣基座（淺色石渣層）
       const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
-      const ballastGeo = new THREE.TubeGeometry(ballastCurve, 300, 0.62, 6, true);
-      ballastGeo.scale(1.4, 0.55, 1.4);
+      const ballastGeo = new THREE.TubeGeometry(ballastCurve, 300, 0.72, 6, true);
+      ballastGeo.scale(1.5, 0.45, 1.5);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 5. 枕木隨坡度高度自動貼合
+      // 🌟 5. 土壤路基（深色扎實地基，完美連接地面，絕不懸空）
+      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
+      const soilGeo = new THREE.TubeGeometry(soilCurve, 300, 0.90, 6, true);
+      soilGeo.scale(1.6, 0.85, 1.6);
+      const soilMesh = new THREE.Mesh(soilGeo, soilMat);
+      soilMesh.receiveShadow = true;
+      system.add(soilMesh);
+
+      // 🌟 6. 400 根木頭枕木貼合
       const SLEEPER_COUNT = 380;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
@@ -5328,7 +5334,6 @@ function createOuterLoopTrackAndCart() {
         const t = i / SLEEPER_COUNT;
         const pt = trackCurve.getPointAt(t);
         
-        // 確保枕木頂部與修正後軌道對齊
         const realGroundY = getExactGroundHeight(pt.x, pt.z);
         const actualY = Math.max(pt.y, realGroundY);
 
@@ -5341,28 +5346,26 @@ function createOuterLoopTrackAndCart() {
       sleeperInstanced.receiveShadow = true;
       system.add(sleeperInstanced);
 
-// ==========================================
-      // 🚂 台糖五分車柴油機車頭（復古橘底經典造型）
+      // ==========================================
+      // 🚂 復古橘色五分車機車頭與 8 節車廂建立
       // ==========================================
       cartGroup = new THREE.Group();
       cartGroup.userData = { isCart: true };
 
-      // 🌟 材質調色盤：復古活力橘底色、象牙白飾條、警示黃與鑄鐵底盤
-      const locoOrangeMat = new THREE.MeshStandardMaterial({ color: 0xEA580C, roughness: 0.42, metalness: 0.15 }); // 👈 亮眼橘色底漆
-      const locoStripeMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.4 }); // 👈 搭配白色腰線飾條
-      const locoYellowMat = new THREE.MeshStandardMaterial({ color: 0xFACC15, roughness: 0.4 }); // 車頭警示黃
-      const ironChassisMat = new THREE.MeshStandardMaterial({ color: 0x1F2937, metalness: 0.85, roughness: 0.3 }); // 黑色鑄鐵底盤
-      const roofWhiteMat = new THREE.MeshStandardMaterial({ color: 0xEDE9FE, roughness: 0.5 }); // 駕駛艙頂棚
+      const locoOrangeMat = new THREE.MeshStandardMaterial({ color: 0xEA580C, roughness: 0.42, metalness: 0.15 });
+      const locoStripeMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.4 });
+      const locoYellowMat = new THREE.MeshStandardMaterial({ color: 0xFACC15, roughness: 0.4 });
+      const ironChassisMat = new THREE.MeshStandardMaterial({ color: 0x1F2937, metalness: 0.85, roughness: 0.3 });
+      const roofWhiteMat = new THREE.MeshStandardMaterial({ color: 0xEDE9FE, roughness: 0.5 });
       const windowGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x93C5FD, transmission: 0.75, opacity: 0.85, transparent: true, roughness: 0.1 });
       const chromeMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.9, roughness: 0.2 });
 
-      // 1. 重型鑄鐵底盤（帶防撞延伸端）
+      // 底盤與保險桿
       const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.12, 2.3), ironChassisMat);
       chassis.position.y = 0.22;
       chassis.castShadow = true;
       cartGroup.add(chassis);
 
-      // 前後黃黑警示防撞保險桿
       const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.16, 0.12), locoYellowMat);
       frontBumper.position.set(0, 0.24, 1.16);
       cartGroup.add(frontBumper);
@@ -5371,43 +5374,38 @@ function createOuterLoopTrackAndCart() {
       rearBumper.position.set(0, 0.24, -1.16);
       cartGroup.add(rearBumper);
 
-      // 2. 前置引擎室（改為橘色機艙罩）
+      // 前置引擎室
       const engineHood = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.52, 1.25), locoOrangeMat);
       engineHood.position.set(0, 0.54, 0.45);
       engineHood.castShadow = true;
       cartGroup.add(engineHood);
 
-      // 引擎兩側醒目白色飾條
       [-0.545, 0.545].forEach(sx => {
         const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.08, 1.25), locoStripeMat);
         stripe.position.set(sx, 0.52, 0.45);
         cartGroup.add(stripe);
       });
 
-      // 前端垂直散熱格柵（Radiator Grille）
       const radiator = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.42, 0.04), ironChassisMat);
       radiator.position.set(0, 0.54, 1.08);
       cartGroup.add(radiator);
 
-      // 引擎頂部直立黑色排氣管（煙囪）
       const exhaustPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.42, 10), ironChassisMat);
       exhaustPipe.position.set(0.32, 0.95, 0.85);
       exhaustPipe.castShadow = true;
       cartGroup.add(exhaustPipe);
 
-      // 3. 後置階梯式駕駛室（改為橘色座艙）
+      // 後置駕駛室
       const cabBody = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.88, 0.88), locoOrangeMat);
       cabBody.position.set(0, 0.72, -0.55);
       cabBody.castShadow = true;
       cartGroup.add(cabBody);
 
-      // 駕駛室微弧車頂
       const cabRoof = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.08, 0.96), roofWhiteMat);
       cabRoof.position.set(0, 1.18, -0.55);
       cabRoof.castShadow = true;
       cartGroup.add(cabRoof);
 
-      // 駕駛室窗戶
       const frontWindow = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.32), windowGlassMat);
       frontWindow.position.set(0, 0.92, -0.105);
       cartGroup.add(frontWindow);
@@ -5424,7 +5422,7 @@ function createOuterLoopTrackAndCart() {
         cartGroup.add(sideWindow);
       });
 
-      // 4. 車頭前方大圓燈與照地聚光燈
+      // 頭燈與車輪
       const headlightHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.18, 16), chromeMat);
       headlightHousing.rotation.x = Math.PI / 2;
       headlightHousing.position.set(0, 0.82, 1.05);
@@ -5443,7 +5441,6 @@ function createOuterLoopTrackAndCart() {
       spotLight.target = lightTarget;
       cartGroup.add(spotLight);
 
-      // 5. 鋼輪組
       [[-0.42, 0.15, -0.65], [0.42, 0.15, -0.65], [-0.42, 0.15, 0.65], [0.42, 0.15, 0.65]].forEach(pos => {
         const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.12, 16), ironChassisMat);
         wheel.rotation.z = Math.PI / 2;
@@ -5455,18 +5452,14 @@ function createOuterLoopTrackAndCart() {
       cartGroup.traverse(child => { child.userData.isCart = true; });
       system.add(cartGroup);
 
-// ==========================================
-      // 7. 8 節拖車車廂建立
-      // ==========================================
+      // 8 節拖車車廂建立
       trailerCarts = [];
       const thinPlankThickness = 0.11;
-      
-      // 🌟 補齊車廂底板、鐵框、長椅與木材所需的共用材質：
       const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
-      const ironFrameMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.85, roughness: 0.3 }); // 👈 補上此行定義！
       const woodSeatMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.7 });
       const logBarkMat = new THREE.MeshStandardMaterial({ color: 0x5C4033, roughness: 0.85 });
       const logCoreMat = new THREE.MeshStandardMaterial({ color: 0xD2B48C, roughness: 0.6 });
+      const ironFrameMat = ironChassisMat;
 
       for (let i = 0; i < 8; i++) {
         const trailer = new THREE.Group();
@@ -5491,36 +5484,28 @@ function createOuterLoopTrackAndCart() {
 
         const floorY = 0.2 + thinPlankThickness;
 
-if (i < 4) {
-          // 🌟 1. 四角立柱：排除車頭後方的第一節車廂 (i === 0)，只在第 2~4 節車廂生成立柱
+        if (i < 4) {
           if (i > 0) {
             const postMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
             const cornerPositions = [
-              [-0.56, floorY + 0.46, -0.84], // 左前
-              [ 0.56, floorY + 0.46, -0.84], // 右前
-              [-0.56, floorY + 0.46,  0.84], // 左後
-              [ 0.56, floorY + 0.46,  0.84]  // 右後
+              [-0.56, floorY + 0.46, -0.84],
+              [ 0.56, floorY + 0.46, -0.84],
+              [-0.56, floorY + 0.46,  0.84],
+              [ 0.56, floorY + 0.46,  0.84]
             ];
 
             cornerPositions.forEach(pos => {
-              const post = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.035, 0.04, 0.92, 8),
-                postMat
-              );
+              const post = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.92, 8), postMat);
               post.position.set(...pos);
               post.castShadow = true;
               trailer.add(post);
 
-              const cap = new THREE.Mesh(
-                new THREE.SphereGeometry(0.045, 8, 8),
-                postMat
-              );
+              const cap = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), postMat);
               cap.position.set(pos[0], pos[1] + 0.46, pos[2]);
               trailer.add(cap);
             });
           }
 
-          // 🌟 2. 長椅結構（所有客車車廂維持保留）
           [-0.45, 0.45].forEach(seatZ => {
             const bench = new THREE.Group();
 
@@ -5532,7 +5517,7 @@ if (i < 4) {
             const seatPlank = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.04, 0.34), woodSeatMat);
             seatPlank.position.set(0, floorY + 0.22, seatZ);
             seatPlank.castShadow = true;
-            bench.add(seatPlank);
+            bench.add(bench);
 
             const backRest = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.2, 0.03), woodSeatMat);
             backRest.position.set(0, floorY + 0.36, seatZ + (seatZ < 0 ? -0.14 : 0.14));
@@ -5542,7 +5527,6 @@ if (i < 4) {
             trailer.add(bench);
           });
         } else {
-          // 載木材車廂
           const logGroup = new THREE.Group();
           function createTimberLog(x, y, z) {
             const singleLog = new THREE.Group();
@@ -5578,6 +5562,7 @@ if (i < 4) {
         system.add(trailer);
         trailerCarts.push(trailer);
       }
+
       return system;
     }
 
