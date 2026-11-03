@@ -5218,9 +5218,9 @@ function selectViewMode(mode) {
 
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
-      const TRACK_Y = 0.32; // 略高於海面，剛好嵌在內圈海岸沙灘邊
+      const TRACK_Y = 0.32; // 位於海岸沙灘地表高度
 
-      // 🌟 精準貼合遠景大陸內圈海岸邊緣的 12 個環狀路徑控制點（半徑約 45 ~ 50）
+      // 🌟 1. 精準貼合遠景大陸內圈海岸邊緣的環狀軌道路徑（半徑約 45 ~ 50）
       const points = [
         new THREE.Vector3(47.5, TRACK_Y, 0),
         new THREE.Vector3(41.0, TRACK_Y, 24.5),
@@ -5238,12 +5238,12 @@ function createOuterLoopTrackAndCart() {
 
       trackCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal', 0.25);
 
-      // 🌟 雙軌鋼軌（極速 TubeGeometry，1 Draw Call）
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
       const divisions = 280;
       const innerPts = [], outerPts = [];
       const railGauge = 0.35;
 
+      // 🌟 2. 鋪設雙軌鋼軌路徑點
       for (let i = 0; i <= divisions; i++) {
         const t = i / divisions;
         const pt = trackCurve.getPointAt(t);
@@ -5262,7 +5262,67 @@ function createOuterLoopTrackAndCart() {
       system.add(new THREE.Mesh(railTubeGeo1, railMat));
       system.add(new THREE.Mesh(railTubeGeo2, railMat));
 
-      // 🌟 沿海木質枕木（使用 InstancedMesh 一次繪製 200 根枕木）
+      // 🌟 3. 【補回碎石道渣基座與路基】（極致效能 BufferGeometry，1 Draw Call）
+      const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
+      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
+
+      const ballastWidth = 0.72; // 道渣覆蓋寬度，完美包覆兩側鋼軌
+      const soilWidth = 1.05;    // 路基土壤外擴寬度
+      const bTopY = TRACK_Y - 0.02;
+      const bBottomY = TRACK_Y - 0.18;
+      const sBottomY = TRACK_Y - 0.85;
+
+      const ballastGeo = new THREE.BufferGeometry();
+      const soilGeo = new THREE.BufferGeometry();
+      const bVerts = [], sVerts = [];
+
+      for (let i = 0; i < divisions; i++) {
+        const t1 = i / divisions, t2 = (i + 1) / divisions;
+        const p1 = trackCurve.getPointAt(t1), tan1 = trackCurve.getTangentAt(t1);
+        const n1 = new THREE.Vector3(-tan1.z, 0, tan1.x).normalize();
+
+        const p2 = trackCurve.getPointAt(t2), tan2 = trackCurve.getTangentAt(t2);
+        const n2 = new THREE.Vector3(-tan2.z, 0, tan2.x).normalize();
+
+        const bL1 = new THREE.Vector3(p1.x - n1.x * ballastWidth, bTopY, p1.z - n1.z * ballastWidth);
+        const bR1 = new THREE.Vector3(p1.x + n1.x * ballastWidth, bTopY, p1.z + n1.z * ballastWidth);
+        const bL2 = new THREE.Vector3(p2.x - n2.x * ballastWidth, bTopY, p2.z - n2.z * ballastWidth);
+        const bR2 = new THREE.Vector3(p2.x + n2.x * ballastWidth, bTopY, p2.z + n2.z * ballastWidth);
+
+        // 道渣頂面
+        bVerts.push(bL1.x, bTopY, bL1.z,  bR1.x, bTopY, bR1.z,  bR2.x, bTopY, bR2.z);
+        bVerts.push(bL1.x, bTopY, bL1.z,  bR2.x, bTopY, bR2.z,  bL2.x, bTopY, bL2.z);
+        // 道渣兩側斜坡
+        bVerts.push(bR1.x, bTopY, bR1.z,  bR1.x, bBottomY, bR1.z,  bR2.x, bBottomY, bR2.z);
+        bVerts.push(bR1.x, bTopY, bR1.z,  bR2.x, bBottomY, bR2.z,  bR2.x, bTopY, bR2.z);
+        bVerts.push(bL1.x, bBottomY, bL1.z,  bL1.x, bTopY, bL1.z,  bL2.x, bTopY, bL2.z);
+        bVerts.push(bL1.x, bBottomY, bL1.z,  bL2.x, bTopY, bL2.z,  bL2.x, bBottomY, bL2.z);
+
+        // 下方紮實土壤基底
+        const sL1 = new THREE.Vector3(p1.x - n1.x * soilWidth, sBottomY, p1.z - n1.z * soilWidth);
+        const sR1 = new THREE.Vector3(p1.x + n1.x * soilWidth, sBottomY, p1.z + n1.z * soilWidth);
+        const sL2 = new THREE.Vector3(p2.x - n2.x * soilWidth, sBottomY, p2.z - n2.z * soilWidth);
+        const sR2 = new THREE.Vector3(p2.x + n2.x * soilWidth, sBottomY, p2.z + n2.z * soilWidth);
+
+        sVerts.push(bR1.x, bBottomY, bR1.z,  sR1.x, sBottomY, sR1.z,  sR2.x, sBottomY, sR2.z);
+        sVerts.push(bR1.x, bBottomY, bR1.z,  sR2.x, sBottomY, sR2.z,  bR2.x, bBottomY, bR2.z);
+        sVerts.push(sL1.x, sBottomY, sL1.z,  bL1.x, bBottomY, bL1.z,  bL2.x, bBottomY, bL2.z);
+        sVerts.push(sL1.x, sBottomY, sL1.z,  bL2.x, bBottomY, bL2.z,  sL2.x, sBottomY, sL2.z);
+      }
+
+      ballastGeo.setAttribute('position', new THREE.Float32BufferAttribute(bVerts, 3));
+      ballastGeo.computeVertexNormals();
+      const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
+      ballastMesh.receiveShadow = true;
+      system.add(ballastMesh);
+
+      soilGeo.setAttribute('position', new THREE.Float32BufferAttribute(sVerts, 3));
+      soilGeo.computeVertexNormals();
+      const soilMesh = new THREE.Mesh(soilGeo, soilMat);
+      soilMesh.receiveShadow = true;
+      system.add(soilMesh);
+
+      // 🌟 4. 【修正枕木 90 度橫向垂直跨軌】（InstancedMesh，寬 1.15 橫跨雙軌）
       const SLEEPER_COUNT = 200;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
@@ -5273,19 +5333,20 @@ function createOuterLoopTrackAndCart() {
         const t = i / SLEEPER_COUNT;
         const pt = trackCurve.getPointAt(t);
         const tan = trackCurve.getTangentAt(t).normalize();
-        const angle = Math.atan2(tan.x, tan.z);
 
-        dummy.position.set(pt.x, pt.y - 0.03, pt.z);
-        dummy.rotation.set(0, angle + Math.PI / 2, 0);
+        // 枕木坐落在道渣頂部 (Y = 0.30)
+        dummy.position.set(pt.x, pt.y - 0.02, pt.z);
+        
+        // 核心修正：直接指向前進切線，BoxGeometry 的 X 軸 (1.15) 便會 90 度橫向垂直跨在兩軌之間
+        dummy.lookAt(pt.clone().add(tan));
+        
         dummy.updateMatrix();
         sleeperInstanced.setMatrixAt(i, dummy.matrix);
       }
       sleeperInstanced.receiveShadow = true;
       system.add(sleeperInstanced);
 
-      // 車頭與車廂部分維持原本不變...
-
-      // 4. 車頭（維持原設計）
+      // 5. 車頭模型建立
       cartGroup = new THREE.Group();
       cartGroup.userData = { isCart: true };
 
@@ -5318,7 +5379,7 @@ function createOuterLoopTrackAndCart() {
       headLight.position.set(0, 0.75, 1.0);
       cartGroup.add(headLight);
 
-      const spotLight = new THREE.SpotLight(0xfef08a, 4.5, 12, Math.PI / 5, 0.45, 1.2);
+      const spotLight = new THREE.SpotLight(0xfef08a, 4.5, 9, Math.PI / 5, 0.45, 1.2);
       spotLight.position.set(0, 0.75, 1.08);
       const lightTarget = new THREE.Object3D();
       lightTarget.position.set(0, -0.5, 4.5);
@@ -5337,7 +5398,7 @@ function createOuterLoopTrackAndCart() {
       cartGroup.traverse(child => { child.userData.isCart = true; });
       system.add(cartGroup);
 
-      // 5. 後續 8 節車廂（維持原設計與座位）
+      // 6. 後續 8 節拖車車廂建立
       trailerCarts = [];
       const thinPlankThickness = 0.11;
       const woodSeatMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.7 });
