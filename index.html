@@ -2440,7 +2440,7 @@ function checkDailyLimit(islandId) {
 // ==========================================
     // 🧮 專屬範圍題庫：
     // 1) 10000以內數的加減
-    // 2) 2位數乘以3位數
+    // 2) 3位數乘以1位數
     // 🎲 50% 純計算題 ＋ 50% 新北學力檢測生活應用題
     // ==========================================
     function generateGrade3MathQuestion() {
@@ -2467,57 +2467,57 @@ function checkDailyLimit(islandId) {
           text = `請問：${n1} － ${n2} 等於多少？`;
           ans = n1 - n2;
         } else {
-          // 2 位數 × 3 位數（或 3 位數 × 2 位數）
-          const twoDigits = Math.floor(Math.random() * 88) + 12;   // 12 ~ 99
+          // 🌟 限制為：3位數 × 1位數
           const threeDigits = Math.floor(Math.random() * 880) + 115; // 115 ~ 994
+          const oneDigit = Math.floor(Math.random() * 8) + 2;         // 2 ~ 9
 
           if (Math.random() < 0.5) {
-            text = `請問：${twoDigits} × ${threeDigits} 等於多少？`;
-            ans = twoDigits * threeDigits;
+            text = `請問：${threeDigits} × ${oneDigit} 等於多少？`;
+            ans = threeDigits * oneDigit;
           } else {
-            text = `請問：${threeDigits} × ${twoDigits} 等於多少？`;
-            ans = threeDigits * twoDigits;
+            text = `請問：${oneDigit} × ${threeDigits} 等於多少？`;
+            ans = oneDigit * threeDigits;
           }
         }
       } else {
         // ----------------------------------------------------
-        // 類別 B：新北中年級學測生活應用題（兩大主題）
+        // 類別 B：新北中年級學測生活應用題
         // ----------------------------------------------------
         const wordTemplates = [
-          // 1. 【2位數×3位數】團購、批發或全校用品採購情境
+          // 1. 【3位數×1位數】全校用品或器材採購情境
           () => {
             const price = Math.floor(Math.random() * 650) + 145; // 145 ~ 794 元 (3 位數單價)
-            const qty = Math.floor(Math.random() * 45) + 15;     // 15 ~ 59 件 (2 位數數量)
+            const qty = Math.floor(Math.random() * 8) + 2;       // 2 ~ 9 套 (1 位數數量)
             const total = price * qty;
             return {
-              text: `學校為各班級添購自然實驗器材，每套器材的售價是 ${price} 元，一共訂購了 ${qty} 套，請問總共需要支付多少元？`,
+              text: `學校為自然教室添購實驗器材，每套器材售價 ${price} 元，一共購買了 ${qty} 套，請問總共需要支付多少元？`,
               ans: total
             };
           },
 
-          // 2. 【2位數×3位數】大批裝箱與產品總數情境
+          // 2. 【3位數×1位數】裝箱與水果總數情境
           () => {
-            const boxes = Math.floor(Math.random() * 70) + 22;     // 22 ~ 91 箱 (2 位數)
-            const each = Math.floor(Math.random() * 700) + 120;    // 120 ~ 819 顆 (3 位數)
-            const total = boxes * each;
+            const each = Math.floor(Math.random() * 600) + 120; // 120 ~ 719 顆 (3 位數)
+            const boxes = Math.floor(Math.random() * 7) + 3;    // 3 ~ 9 箱 (1 位數)
+            const total = each * boxes;
             return {
-              text: `果園採收了一批優質文旦，每箱裝有 ${each} 顆，工廠共打包了 ${boxes} 箱，請問這批文旦共有多少顆？`,
+              text: `果園採收了一批甜柿，每箱裝有 ${each} 顆，工廠一共打包了 ${boxes} 箱，請問這批甜柿共有多少顆？`,
               ans: total
             };
           },
 
-          // 3. 【2位數×3位數】大眾運輸或活動門票總收入情境
+          // 3. 【3位數×1位數】門票與票價總計情境
           () => {
-            const ticketPrice = Math.floor(Math.random() * 350) + 150; // 150 ~ 499 元 (3 位數)
-            const people = Math.floor(Math.random() * 60) + 25;        // 25 ~ 84 人 (2 位數)
+            const ticketPrice = Math.floor(Math.random() * 320) + 130; // 130 ~ 449 元 (3 位數)
+            const people = Math.floor(Math.random() * 6) + 3;          // 3 ~ 8 人 (1 位數)
             const total = ticketPrice * people;
             return {
-              text: `社區搭乘觀光台車前往風景區參觀，每張車票 ${ticketPrice} 元，共有 ${people} 位居民參加，請問車票費用總共是多少元？`,
+              text: `志工隊參觀烏來台車博物館，全票每張 ${ticketPrice} 元，共有 ${people} 位隊員購票入場，請問車票費用總共是多少元？`,
               ans: total
             };
           },
 
-          // 4. 【10000以內連減/兩步驟】庫存物資發放剩餘情境
+          // 4. 【10000以內連減/兩步驟】庫存物資剩餘情境
           () => {
             const total = Math.floor(Math.random() * 3000) + 6500;  // 6500 ~ 9499
             const used1 = Math.floor(Math.random() * 1800) + 1200;  // 1200 ~ 2999
@@ -2529,7 +2529,7 @@ function checkDailyLimit(islandId) {
             };
           },
 
-          // 5. 【10000以內加減比較】學校全體人數兩步驟情境
+          // 5. 【10000以內加減比較】全體人數兩步驟情境
           () => {
             const boys = Math.floor(Math.random() * 1200) + 2300; // 2300 ~ 3499
             const diff = Math.floor(Math.random() * 260) + 80;    // 80 ~ 339
@@ -5469,28 +5469,36 @@ function createOuterLoopTrackAndCart() {
 
         const floorY = 0.2 + thinPlankThickness;
 
-        if (i < 4) {
-          // 四角木柱
-          const postMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
-          const cornerPositions = [
-            [-0.56, floorY + 0.46, -0.84],
-            [ 0.56, floorY + 0.46, -0.84],
-            [-0.56, floorY + 0.46,  0.84],
-            [ 0.56, floorY + 0.46,  0.84]
-          ];
+if (i < 4) {
+          // 🌟 1. 四角立柱：排除車頭後方的第一節車廂 (i === 0)，只在第 2~4 節車廂生成立柱
+          if (i > 0) {
+            const postMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
+            const cornerPositions = [
+              [-0.56, floorY + 0.46, -0.84], // 左前
+              [ 0.56, floorY + 0.46, -0.84], // 右前
+              [-0.56, floorY + 0.46,  0.84], // 左後
+              [ 0.56, floorY + 0.46,  0.84]  // 右後
+            ];
 
-          cornerPositions.forEach(pos => {
-            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.92, 8), postMat);
-            post.position.set(...pos);
-            post.castShadow = true;
-            trailer.add(post);
+            cornerPositions.forEach(pos => {
+              const post = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.035, 0.04, 0.92, 8),
+                postMat
+              );
+              post.position.set(...pos);
+              post.castShadow = true;
+              trailer.add(post);
 
-            const cap = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), postMat);
-            cap.position.set(pos[0], pos[1] + 0.46, pos[2]);
-            trailer.add(cap);
-          });
+              const cap = new THREE.Mesh(
+                new THREE.SphereGeometry(0.045, 8, 8),
+                postMat
+              );
+              cap.position.set(pos[0], pos[1] + 0.46, pos[2]);
+              trailer.add(cap);
+            });
+          }
 
-          // 實木箱長椅
+          // 🌟 2. 長椅結構（所有客車車廂維持保留）
           [-0.45, 0.45].forEach(seatZ => {
             const bench = new THREE.Group();
 
