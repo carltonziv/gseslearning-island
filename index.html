@@ -2395,7 +2395,9 @@ function checkDailyLimit(islandId) {
     }
 
 // ==========================================
-    // 🧮 專屬範圍題庫：10000以內加減法 ＆ 一位數×二/三位數乘法
+    // 🧮 專屬範圍題庫：
+    // 1) 10000以內數的加減
+    // 2) 2位數乘以3位數
     // 🎲 50% 純計算題 ＋ 50% 新北學力檢測生活應用題
     // ==========================================
     function generateGrade3MathQuestion() {
@@ -2404,115 +2406,111 @@ function checkDailyLimit(islandId) {
 
       if (!isWordProblem) {
         // ----------------------------------------------------
-        // 類別 A：基礎純計算題（嚴格限定在指定範圍）
+        // 類別 A：基礎純計算題
         // ----------------------------------------------------
         const calcTypes = ['add', 'sub', 'mul'];
         const picked = calcTypes[Math.floor(Math.random() * calcTypes.length)];
 
         if (picked === 'add') {
-          // 10000 以內加法（和 < 10000）
+          // 10000 以內加法
           const n1 = Math.floor(Math.random() * 4500) + 1200;
-          const n2 = Math.floor(Math.random() * (9800 - n1 - 500)) + 450;
+          const n2 = Math.floor(Math.random() * (9800 - n1 - 400)) + 350;
           text = `請問：${n1} ＋ ${n2} 等於多少？`;
           ans = n1 + n2;
         } else if (picked === 'sub') {
-          // 10000 以內減法（被減數 < 10000，且大於減數）
+          // 10000 以內減法
           const n1 = Math.floor(Math.random() * 6500) + 3200;
           const n2 = Math.floor(Math.random() * (n1 - 800)) + 350;
           text = `請問：${n1} － ${n2} 等於多少？`;
           ans = n1 - n2;
         } else {
-          // 一位數 × 二位數 或 一位數 × 三位數乘法
-          const isThreeDigits = Math.random() < 0.5;
-          const oneDigit = Math.floor(Math.random() * 7) + 3; // 3 ~ 9
-          const multiDigit = isThreeDigits 
-            ? (Math.floor(Math.random() * 850) + 125) // 125 ~ 974 (三位數)
-            : (Math.floor(Math.random() * 80) + 18);   // 18 ~ 97 (二位數)
-          
-          text = Math.random() < 0.5 
-            ? `請問：${multiDigit} × ${oneDigit} 等於多少？`
-            : `請問：${oneDigit} × ${multiDigit} 等於多少？`;
-          ans = multiDigit * oneDigit;
+          // 2 位數 × 3 位數（或 3 位數 × 2 位數）
+          const twoDigits = Math.floor(Math.random() * 88) + 12;   // 12 ~ 99
+          const threeDigits = Math.floor(Math.random() * 880) + 115; // 115 ~ 994
+
+          if (Math.random() < 0.5) {
+            text = `請問：${twoDigits} × ${threeDigits} 等於多少？`;
+            ans = twoDigits * threeDigits;
+          } else {
+            text = `請問：${threeDigits} × ${twoDigits} 等於多少？`;
+            ans = threeDigits * twoDigits;
+          }
         }
       } else {
         // ----------------------------------------------------
-        // 類別 B：新北中年級學測考古題型（10000內加減 ＆ 一位數×二/三位數）
+        // 類別 B：新北中年級學測生活應用題（兩大主題）
         // ----------------------------------------------------
         const wordTemplates = [
-          // 1. 【乘減兩步驟】購物找錢情境（大鈔找零）
+          // 1. 【2位數×3位數】團購、批發或全校用品採購情境
           () => {
-            const bill = Math.random() < 0.5 ? 1000 : 2000;
-            const price = Math.floor(Math.random() * 140) + 65; // 65 ~ 204 元 (二或三位數單價)
-            const qty = Math.floor(Math.random() * 5) + 3;      // 3 ~ 7 份 (一位數)
-            const cost = price * qty;
-            const change = bill - cost;
+            const price = Math.floor(Math.random() * 650) + 145; // 145 ~ 794 元 (3 位數單價)
+            const qty = Math.floor(Math.random() * 45) + 15;     // 15 ~ 59 件 (2 位數數量)
+            const total = price * qty;
             return {
-              text: `小宣帶了 ${bill} 元去書店，買了 ${qty} 本每本 ${price} 元的科普繪本，請問結帳後店員要找給他多少元？`,
-              ans: change
-            };
-          },
-
-          // 2. 【一位數×三位數乘法】門票或物品總數情境
-          () => {
-            const ticketPrice = Math.floor(Math.random() * 320) + 160; // 160 ~ 479 元 (三位數)
-            const people = Math.floor(Math.random() * 6) + 4;          // 4 ~ 9 人 (一位數)
-            const total = ticketPrice * people;
-            return {
-              text: `學校生態社團有 ${people} 位師生一起買票參觀恐龍科學展，一張全票是 ${ticketPrice} 元，請問買門票一共要付多少元？`,
+              text: `學校為各班級添購自然實驗器材，每套器材的售價是 ${price} 元，一共訂購了 ${qty} 套，請問總共需要支付多少元？`,
               ans: total
             };
           },
 
-          // 3. 【10000以內連減/兩步驟】庫存與剩餘量情境
+          // 2. 【2位數×3位數】大批裝箱與產品總數情境
+          () => {
+            const boxes = Math.floor(Math.random() * 70) + 22;     // 22 ~ 91 箱 (2 位數)
+            const each = Math.floor(Math.random() * 700) + 120;    // 120 ~ 819 顆 (3 位數)
+            const total = boxes * each;
+            return {
+              text: `果園採收了一批優質文旦，每箱裝有 ${each} 顆，工廠共打包了 ${boxes} 箱，請問這批文旦共有多少顆？`,
+              ans: total
+            };
+          },
+
+          // 3. 【2位數×3位數】大眾運輸或活動門票總收入情境
+          () => {
+            const ticketPrice = Math.floor(Math.random() * 350) + 150; // 150 ~ 499 元 (3 位數)
+            const people = Math.floor(Math.random() * 60) + 25;        // 25 ~ 84 人 (2 位數)
+            const total = ticketPrice * people;
+            return {
+              text: `社區搭乘觀光台車前往風景區參觀，每張車票 ${ticketPrice} 元，共有 ${people} 位居民參加，請問車票費用總共是多少元？`,
+              ans: total
+            };
+          },
+
+          // 4. 【10000以內連減/兩步驟】庫存物資發放剩餘情境
           () => {
             const total = Math.floor(Math.random() * 3000) + 6500;  // 6500 ~ 9499
             const used1 = Math.floor(Math.random() * 1800) + 1200;  // 1200 ~ 2999
             const used2 = Math.floor(Math.random() * 1800) + 1100;  // 1100 ~ 2899
             const remain = total - used1 - used2;
             return {
-              text: `開墾隊倉庫原本有 ${total} 塊紅磚，第一期工程用去了 ${used1} 塊，第二期工程又用去了 ${used2} 塊，請問倉庫現在還剩下多少塊紅磚？`,
+              text: `開墾隊物資倉庫原有 ${total} 包水泥，建造神廟地基用去了 ${used1} 包，鋪設降落坪又用去了 ${used2} 包，請問倉庫還剩下多少包水泥？`,
               ans: remain
             };
           },
 
-          // 4. 【10000以內加減比較】學校男女生人數加總兩步驟情境
+          // 5. 【10000以內加減比較】學校全體人數兩步驟情境
           () => {
-            const boys = Math.floor(Math.random() * 1200) + 2200; // 2200 ~ 3399
-            const diff = Math.floor(Math.random() * 250) + 85;    // 85 ~ 334
+            const boys = Math.floor(Math.random() * 1200) + 2300; // 2300 ~ 3499
+            const diff = Math.floor(Math.random() * 260) + 80;    // 80 ~ 339
             const girls = boys - diff;
             const allStudents = boys + girls;
             return {
-              text: `國小舉辦全校大隊接力，全校男生有 ${boys} 人，女生比男生少了 ${diff} 人，請問全校學生一共有多少人？`,
+              text: `新北市某國小全校男生有 ${boys} 人，女生比男生少了 ${diff} 人，請問全校學生一共有多少人？`,
               ans: allStudents
             };
           },
 
-          // 5. 【一位數×二位數 ＋ 加法】綜合總金額情境
+          // 6. 【10000以內加法累計】展覽參觀總人次情境
           () => {
-            const priceA = Math.floor(Math.random() * 60) + 35; // 35 ~ 94 元 (二位數)
-            const qtyA = Math.floor(Math.random() * 5) + 3;     // 3 ~ 7 (一位數)
-            const itemB = Math.floor(Math.random() * 400) + 250;// 250 ~ 649 元
-            const total = priceA * qtyA + itemB;
-            return {
-              text: `媽媽到農產市集買了 ${qtyA} 盒每盒 ${priceA} 元的新鮮草莓，另外又買了一袋 ${itemB} 元的有機米，請問媽媽一共花了多少元？`,
-              ans: total
-            };
-          },
-
-          // 6. 【10000以內加法比較】連續兩天參觀人次統計情境
-          () => {
-            const day1 = Math.floor(Math.random() * 1800) + 2500; // 2500 ~ 4299
-            const more = Math.floor(Math.random() * 800) + 450;   // 450 ~ 1249
+            const day1 = Math.floor(Math.random() * 1800) + 2600; // 2600 ~ 4399
+            const more = Math.floor(Math.random() * 850) + 420;   // 420 ~ 1269
             const day2 = day1 + more;
             const total = day1 + day2;
             return {
-              text: `歷史博物館星期六有 ${day1} 人入館參觀，星期天入館的人數比星期六多了 ${more} 人，請問這兩天共有多少人入館參觀？`,
+              text: `陶藝展覽會星期六有 ${day1} 人參觀，星期天參觀的人數比星期六多了 ${more} 人，請問這兩天共有多少人參觀展覽？`,
               ans: total
             };
           }
         ];
 
-        // 隨機選出一題應用題
         const pickedQuiz = wordTemplates[Math.floor(Math.random() * wordTemplates.length)]();
         text = pickedQuiz.text;
         ans = pickedQuiz.ans;
