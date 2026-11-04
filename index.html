@@ -5227,13 +5227,13 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 1. 高精度沿海陸地中心點取樣函式（緊臨湖邊，完美沿著陸地邊緣鋪設）
+      // 1. 高精度沿海陸地中心點取樣函式（精準建置在陸地上、緊臨湖邊）
       function getTrackCenterPoint(theta) {
         const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
         
-        // 🌟 緊臨湖邊的黃金半徑：與湖水邊界保持 3.0 米的陸地草皮內側
-        const r = innerBoundary - 3.0; 
+        // 🌟 黃金半徑：與湖水邊界保持 4.2 米的草皮內側，保證 100% 在陸地上且緊臨湖畔
+        const r = innerBoundary - 4.2; 
         
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
@@ -5263,7 +5263,7 @@ function createOuterLoopTrackAndCart() {
           groundY = -0.32 + steppedHeight * cliffRise * 0.82;
         }
 
-        const finalY = Math.max(0.35, groundY + 0.26);
+        const finalY = Math.max(0.35, groundY + 0.28);
         return new THREE.Vector3(px, finalY, pz);
       }
 
@@ -5277,7 +5277,7 @@ function createOuterLoopTrackAndCart() {
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-      // 3. 絕對完美重疊：鋼軌、道渣與路基全部以 trackCurve 為中心同步生成！
+      // 3. 絕對完美重疊與貼合：鋼軌、道渣與路基全部以 trackCurve 為中心同步生成！
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
       const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
@@ -5310,16 +5310,16 @@ function createOuterLoopTrackAndCart() {
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
-      // 🌟 道渣層：直接以 trackCurve 生成，與鋼軌 100% 同心圓、完美疊合！
-      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.55, 6, true);
+      // 🌟 道渣層：直接以 trackCurve 包覆，與鋼軌 100% 同心圓、完美疊合！
+      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.58, 6, true);
       ballastGeo.scale(1.0, 0.30, 1.0);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
       ballastMesh.position.y -= 0.03;
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 土壤路基：同樣直接以 trackCurve 生成，完美包覆在道渣正下方
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.70, 6, true);
+      // 🌟 土壤路基：同樣直接以 trackCurve 包覆於道渣下方，紮實向下延伸至地形
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.72, 6, true);
       soilGeo.scale(1.08, 0.60, 1.08);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
       soilMesh.position.y -= 0.12;
@@ -5435,10 +5435,10 @@ function createOuterLoopTrackAndCart() {
 
       const spotLight = new THREE.SpotLight(0xFEF08A, 4.5, 14, Math.PI / 5, 0.45, 1.2);
       spotLight.position.set(0, 0.82, 1.16);
-      const targetObj = new THREE.Object3D();
-      targetObj.position.set(0, -0.4, 5.5);
-      cartGroup.add(targetObj);
-      spotLight.target = targetObj;
+      const lightTarget = new THREE.Object3D();
+      lightTarget.position.set(0, -0.4, 5.5);
+      cartGroup.add(lightTarget);
+      spotLight.target = lightTarget;
       cartGroup.add(spotLight);
 
       [[-0.42, 0.15, -0.65], [0.42, 0.15, -0.65], [-0.42, 0.15, 0.65], [0.42, 0.15, 0.65]].forEach(pos => {
