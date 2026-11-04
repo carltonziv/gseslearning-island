@@ -5291,8 +5291,8 @@ function createOuterLoopTrackAndCart() {
         const tan = trackCurve.getTangentAt(t);
         const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
 
-        // 左右鋼軌精準對齊軌道中心線，高度疊在枕木上方
-        const railY = pt.y + 0.06;
+        // 🌟 鋼軌中心高度設為 pt.y + 0.20m（底端 0.16m，頂端 0.24m）
+        const railY = pt.y + 0.20;
         const innerPt = pt.clone().add(normal.clone().multiplyScalar(-railGauge));
         innerPt.y = railY;
         const outerPt = pt.clone().add(normal.clone().multiplyScalar(railGauge));
@@ -5305,27 +5305,42 @@ function createOuterLoopTrackAndCart() {
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      // 鋪設雙軌鋼軌（頂層：軌距 0.7m）
-      system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 360, 0.045, 6, true), railMat));
-      system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 360, 0.045, 6, true), railMat));
+      // 鋪設雙軌鋼軌（頂層：半徑 0.04m，平整架在枕木頂部）
+      system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 360, 0.04, 6, true), railMat));
+      system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 360, 0.04, 6, true), railMat));
 
-      // 🌟 道渣層（中層：半徑 0.85，截面寬度約 1.70m，保持 X/Z 為 1.0 絕不位移）
+      // 🌟 定義局部頂點塑型函式：以軌道各點 pt.y 為中心進行扁平化，徹底根除世界原點縮放造成的沉降與錯位
+      function formatTrackTube(geo, curve, segments, radSegs, scaleY, offsetY) {
+        const pos = geo.attributes.position;
+        let idx = 0;
+        for (let i = 0; i <= segments; i++) {
+          const t = i / segments;
+          const pt = curve.getPointAt(t);
+          for (let j = 0; j <= radSegs; j++) {
+            const y = pos.getY(idx);
+            pos.setY(idx, pt.y + (y - pt.y) * scaleY + offsetY);
+            idx++;
+          }
+        }
+        pos.needsUpdate = true;
+        geo.computeVertexNormals();
+      }
+
+      // 🌟 道渣層（中層：寬度 1.70m，頂部高度 pt.y + 0.14m，凸出在地基上方 12cm）
       const ballastGeo = new THREE.TubeGeometry(trackCurve, 360, 0.85, 8, true);
-      ballastGeo.scale(1.0, 0.28, 1.0);
+      formatTrackTube(ballastGeo, trackCurve, 360, 8, 0.20, -0.03);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
-      ballastMesh.position.y -= 0.04;
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 土壤地基（底層：半徑 1.20，截面寬度約 2.40m 承托道渣，X/Z 保持 1.0 完美疊合）
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 360, 1.20, 8, true);
-      soilGeo.scale(1.0, 0.38, 1.0); // 👈 移除原先的 1.05 放大，徹底消除分離問題
+      // 🌟 土壤地基（底層：寬度 2.50m，頂部高度 pt.y + 0.02m，穩穩墊在道渣正下方承托）
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 360, 1.25, 8, true);
+      formatTrackTube(soilGeo, trackCurve, 360, 8, 0.16, -0.18);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
-      soilMesh.position.y -= 0.16;
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 4. 400 根木頭枕木（寬度 1.45m，剛好嵌入 1.70m 的道渣層中）
+      // 4. 400 根木頭枕木（中心高度 pt.y + 0.14m，頂部達 pt.y + 0.17m，半嵌於道渣中並托住鋼軌）
       const SLEEPER_COUNT = 400;
       const sleeperGeom = new THREE.BoxGeometry(1.45, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
@@ -5337,7 +5352,7 @@ function createOuterLoopTrackAndCart() {
         const pt = trackCurve.getPointAt(t);
         const tan = trackCurve.getTangentAt(t).normalize();
 
-        dummy.position.set(pt.x, pt.y + 0.01, pt.z);
+        dummy.position.set(pt.x, pt.y + 0.14, pt.z);
         dummy.lookAt(dummy.position.clone().add(tan));
         dummy.updateMatrix();
         sleeperInstanced.setMatrixAt(i, dummy.matrix);
@@ -6101,12 +6116,14 @@ function createOuterLoopTrackAndCart() {
           let vertexColor = new THREE.Color();
 
           if (isUniqueBeachZone > 0.1) {
+            // 沙灘區域：自然呈現金黃沙灘 (colorSand)，不強制加上咖啡色岩壁
             const beachSlope = Math.pow(normalizedR, 1.3);
             finalY = -0.45 + steppedHeight * beachSlope * 0.72;
             if (normalizedR < 0.28 * isUniqueBeachZone) vertexColor.copy(colorSand);
             else if (finalY > 6.0) vertexColor.copy(colorHighForest);
             else vertexColor.copy(colorGrass);
           } else {
+            // 非沙灘之其餘陸地區域：沿岸邊緣僅保留小比例自然崖壁 (colorRockCliff)，上方全為綠草皮
             const cliffRise = Math.pow(normalizedR, 0.75);
             finalY = -0.22 + steppedHeight * cliffRise * 0.82;
             if (normalizedR < 0.10) vertexColor.copy(colorRockCliff);
@@ -6755,17 +6772,16 @@ function createOuterLoopTrackAndCart() {
         }
 
 if (cartGroup && trackCurve && !isCartPaused) {
-          // 🌟 內圈海岸周長約 300 米，以 0.00014 速度行駛最為自然平穩
           cartProgress = (cartProgress + 0.00014) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress);
 
           cartGroup.position.copy(pos);
-          cartGroup.position.y += 0.02;
+          cartGroup.position.y += 0.28; // 👈 由 0.02 改為 0.28，車輪完美貼在鋼軌上
           cartGroup.lookAt(pos.clone().add(tangent));
 
           if (trailerCarts && trailerCarts.length > 0) {
-            const spacing = 0.009; // 加大車廂間距
+            const spacing = 0.009;
             trailerCarts.forEach((trailer, idx) => {
               let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
               if (tProg < 0) tProg += 1.0;
@@ -6774,7 +6790,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
               const tTan = trackCurve.getTangentAt(tProg);
 
               trailer.position.copy(tPos);
-              trailer.position.y += 0.02;
+              trailer.position.y += 0.28; // 👈 由 0.02 改為 0.28
               trailer.lookAt(tPos.clone().add(tTan));
             });
           }
