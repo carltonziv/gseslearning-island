@@ -5012,8 +5012,10 @@ function adminClearAllOnlinePlayers() {
 
     let islandVinesList = [];
 
-    function createIslandUnderbellyMesh(radius, islandColorHex) {
+function createIslandUnderbellyMesh(radius, islandColorHex) {
       const rockGroup = new THREE.Group();
+      
+      // 玄武岩/花崗岩深色岩石材質（保留低多邊形切面）
       const rockMat = new THREE.MeshStandardMaterial({
         color: 0x5C5446,
         roughness: 0.9,
@@ -5021,6 +5023,7 @@ function adminClearAllOnlinePlayers() {
         flatShading: true
       });
 
+      // 帶有自然生機的陰面青苔岩材質
       const mossRockMat = new THREE.MeshStandardMaterial({
         color: 0x485838,
         roughness: 0.92,
@@ -5030,31 +5033,83 @@ function adminClearAllOnlinePlayers() {
         emissiveIntensity: 0.22
       });
 
-      const coneDepth = 5.6; 
-      const coneGeo = new THREE.ConeGeometry(radius * 0.94, coneDepth, 6);
-      coneGeo.rotateX(Math.PI);
-      const mainCone = new THREE.Mesh(coneGeo, rockMat);
-      mainCone.position.y = -0.45 - (coneDepth / 2); 
-      mainCone.rotation.y = Math.PI / 6;
-      mainCone.receiveShadow = true;
-      rockGroup.add(mainCone);
+      // ==========================================
+      // 1. 主岩體：由尖錐改為倒卵形圓弧巨岩（下半球網格變形）
+      // ==========================================
+      const rockDepth = 4.6;       // 浮島底座總深度
+      const topRadius = radius * 0.94; // 吻合島嶼頂部外圍
+      
+      // 使用下半球體（thetaStart = PI/2, thetaLength = PI/2），天然具備圓滑底部
+      const mainRockGeo = new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5);
+      const pos = mainRockGeo.attributes.position;
 
+      for (let i = 0; i < pos.count; i++) {
+        let x = pos.getX(i);
+        let y = pos.getY(i); // 範圍從 0 (島底接縫) 到 -1 (最底端圓頂)
+        let z = pos.getZ(i);
+
+        const t = -y; // 下降深度比例: 0 (頂部) -> 1 (底端)
+
+        // 輪廓修飾：讓中段保持厚實微收，底部以圓滑弧度收斂（非銳角尖刺）
+        const taper = (1 - 0.28 * t) * (1 - 0.15 * Math.pow(t, 2));
+
+        // 大自然岩石的不規則起伏（頂部保持完全貼合防破面，中下部產生自然岩理切面）
+        const noise = (t > 0.08) 
+          ? (1 + (Math.sin(x * 6 + z * 4) * 0.07 + (Math.random() - 0.5) * 0.09) * Math.sin(t * Math.PI)) 
+          : 1.0;
+
+        pos.setX(i, x * topRadius * taper * noise);
+        pos.setZ(i, z * topRadius * taper * noise);
+        pos.setY(i, y * rockDepth); // 縱向拉伸至指定深度
+      }
+
+      mainRockGeo.computeVertexNormals();
+
+      const mainRock = new THREE.Mesh(mainRockGeo, rockMat);
+      mainRock.position.y = -0.45; // 緊貼上方島嶼底面
+      mainRock.receiveShadow = true;
+      rockGroup.add(mainRock);
+
+      // ==========================================
+      // 2. 風化附生岩與底座巨石群（增加大自然岩層層次）
+      // ==========================================
       const subRockGeo = new THREE.DodecahedronGeometry(0.7, 0);
+
+      // 上中段：懸崖側邊的突出岩塊（6塊）
       for (let i = 0; i < 6; i++) {
         const ang = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-        const dist = radius * (0.65 + Math.random() * 0.23);
-        const pickedMat = Math.random() > 0.3 ? mossRockMat : rockMat;
+        const dist = radius * (0.60 + Math.random() * 0.25);
+        const pickedMat = (Math.random() > 0.35) ? mossRockMat : rockMat;
         const subRock = new THREE.Mesh(subRockGeo, pickedMat);
-        
+
         subRock.position.set(
           Math.cos(ang) * dist,
-          -0.75 - Math.random() * 0.85,
+          -0.8 - Math.random() * 1.4,
           Math.sin(ang) * dist
         );
-        subRock.rotation.set(Math.random(), Math.random(), Math.random());
+        subRock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
         subRock.scale.set(0.85 + Math.random() * 0.45, 0.9 + Math.random() * 0.5, 0.85 + Math.random() * 0.45);
+        subRock.receiveShadow = true;
         rockGroup.add(subRock);
       }
+
+      // 下段底端：附著於圓弧底部的風化圓石基座（2~3塊微凸巨石，徹底弱化幾何感）
+      for (let j = 0; j < 3; j++) {
+        const bAng = (j / 3) * Math.PI * 2 + Math.random() * 0.5;
+        const bDist = radius * (0.15 + Math.random() * 0.2);
+        const bottomRock = new THREE.Mesh(subRockGeo, rockMat);
+
+        bottomRock.position.set(
+          Math.cos(bAng) * bDist,
+          -0.45 - rockDepth * (0.75 + Math.random() * 0.18),
+          Math.sin(bAng) * bDist
+        );
+        bottomRock.rotation.set(Math.random(), Math.random(), Math.random());
+        bottomRock.scale.set(0.9 + Math.random() * 0.4, 0.7 + Math.random() * 0.3, 0.9 + Math.random() * 0.4);
+        bottomRock.receiveShadow = true;
+        rockGroup.add(bottomRock);
+      }
+
       return rockGroup;
     }
 
