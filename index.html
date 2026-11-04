@@ -5266,12 +5266,13 @@ function createOuterLoopTrackAndCart() {
           groundY = 0.05 + baseInlandRise + steppedHeight * cliffRise * 0.85;
         }
 
-        const finalY = groundY + 0.18;
+        // 🌟 核心抬高：由原本的 +0.18 調升至 +0.38，全面脫離山坡干涉
+        const finalY = groundY + 0.38;
         return new THREE.Vector3(px, finalY, pz);
       }
-  
-      // 2. 建立全場唯一的「中心軌道樣條曲線」（32個節點極度平順）
-      const numPathNodes = 32;
+
+      // 🌟 2. 取樣節點由 32 個倍增至 64 個，完美貼合每一處地形起伏峰頂，絕不穿透土石
+      const numPathNodes = 64;
       const rawPoints = [];
       for (let i = 0; i < numPathNodes; i++) {
         const theta = (i / numPathNodes) * Math.PI * 2;
@@ -5319,8 +5320,8 @@ function createOuterLoopTrackAndCart() {
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 360, 0.04, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 360, 0.04, 6, true), railMat));
 
-      // 🌟 定義局部頂點塑型函式：以軌道各點 pt.y 為中心進行扁平化，徹底根除世界原點縮放造成的沉降與錯位
-      function formatTrackTube(geo, curve, segments, radSegs, scaleY, offsetY) {
+      // 🌟 定義局部頂點塑型函式：加入 bottomExtend 參數，讓下半部自動加深扎入土中
+      function formatTrackTube(geo, curve, segments, radSegs, scaleY, offsetY, bottomExtend = 1.0) {
         const pos = geo.attributes.position;
         let idx = 0;
         for (let i = 0; i <= segments; i++) {
@@ -5328,7 +5329,10 @@ function createOuterLoopTrackAndCart() {
           const pt = curve.getPointAt(t);
           for (let j = 0; j <= radSegs; j++) {
             const y = pos.getY(idx);
-            pos.setY(idx, pt.y + (y - pt.y) * scaleY + offsetY);
+            const dy = y - pt.y;
+            // 下半部頂點加深向下伸展，牢牢埋入山坡內部
+            const actualScale = (dy < 0) ? scaleY * bottomExtend : scaleY;
+            pos.setY(idx, pt.y + dy * actualScale + offsetY);
             idx++;
           }
         }
@@ -5336,16 +5340,16 @@ function createOuterLoopTrackAndCart() {
         geo.computeVertexNormals();
       }
 
-      // 🌟 道渣層（中層：寬度 1.70m，頂部高度 pt.y + 0.14m，凸出在地基上方 12cm）
+      // 🌟 道渣層（保持不變，居中凸起於路基上方）
       const ballastGeo = new THREE.TubeGeometry(trackCurve, 360, 0.85, 8, true);
       formatTrackTube(ballastGeo, trackCurve, 360, 8, 0.20, -0.03);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 土壤地基（底層：寬度 2.50m，頂部高度 pt.y + 0.02m，穩穩墊在道渣正下方承托）
+      // 🌟 土壤地基（底部向下加深 2.5 倍深入陸地內部，上方托住道渣）
       const soilGeo = new THREE.TubeGeometry(trackCurve, 360, 1.25, 8, true);
-      formatTrackTube(soilGeo, trackCurve, 360, 8, 0.16, -0.18);
+      formatTrackTube(soilGeo, trackCurve, 360, 8, 0.16, -0.18, 2.5);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
