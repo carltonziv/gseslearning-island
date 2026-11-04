@@ -5276,9 +5276,15 @@ function createOuterLoopTrackAndCart() {
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-// 3. 絕對完美重疊與貼合：鋼軌、枕木、道渣與地基全部以 trackCurve 為同心軸生成！
+      // 3. 絕對完美重疊與貼合：鋼軌、枕木、道渣與地基全部以 trackCurve 為同心軸生成！
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
-      const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
+      // 經典玄武岩／花崗岩碎石灰道渣：
+      const ballastMat = new THREE.MeshStandardMaterial({ 
+      color: 0x555B66,       // 👈 帶微藍灰色調的天然碎石灰
+      roughness: 0.95,       // 👈 提高粗糙度，消除塑膠反光
+      metalness: 0.05,       // 👈 保留極微弱礦物感
+      flatShading: true      // 👈 保留稜角切面，使光影自然呈現碎石塊狀感
+      });
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
 
       const divisions = 360;
