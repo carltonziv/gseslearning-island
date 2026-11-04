@@ -5227,11 +5227,11 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 1. 高精度沿海陸地取樣函式（內縮 3.5 米，保證 100% 在草皮陸地上，絕不入水）
+      // 1. 高精度沿海陸地中心點取樣函式（半徑內縮，保證 100% 在陸地上，絕不入水）
       function getTrackCenterPoint(theta) {
         const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
-        const r = innerBoundary - 3.5; // 確保在陸地邊緣內側
+        const r = innerBoundary - 3.8; // 緊貼陸地草皮內側邊緣
         
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
@@ -5281,7 +5281,7 @@ function createOuterLoopTrackAndCart() {
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
 
       const divisions = 320;
-      const innerPts = [], outerPts = [], ballastPts = [], soilPts = [];
+      const innerPts = [], outerPts = [];
       const railGauge = 0.35;
 
       for (let i = 0; i <= divisions; i++) {
@@ -5299,41 +5299,32 @@ function createOuterLoopTrackAndCart() {
         // 左右鋼軌
         innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
         outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
-        
-        // 道渣與路基直接以中心點 pt 為基準同步生成，保證絕不分離
-        ballastPts.push(new THREE.Vector3(pt.x, pt.y - 0.03, pt.z));
-        soilPts.push(new THREE.Vector3(pt.x, pt.y - 0.16, pt.z));
       }
 
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
-      const ballastCurve = new THREE.CatmullRomCurve3(ballastPts, true);
-      const soilCurve = new THREE.CatmullRomCurve3(soilPts, true);
 
-// 🌟 3. 鋪設雙軌鋼軌
-      const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
+      // 鋪設雙軌鋼軌
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
-      // 🌟 4. 道渣層：直接以 trackCurve（中心軌道曲線）為基礎生成，保證與軌道完全同一個圓圈！
-      const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
-      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.55, 6, true);
-      ballastGeo.scale(1.02, 0.32, 1.02); // 緊密貼合軌道寬度
+      // 🌟 4. 道渣層：直接以 trackCurve 生成，與軌道 100% 同一個圓圈、完全重疊
+      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.52, 6, true);
+      ballastGeo.scale(1.02, 0.30, 1.02);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
-      ballastMesh.position.y -= 0.03; // 微調貼齊枕木下方
+      ballastMesh.position.y -= 0.03;
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 5. 土壤路基：同樣直接以 trackCurve 為基礎，與道渣完美疊合
-      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.70, 6, true);
-      soilGeo.scale(1.08, 0.65, 1.08); // 扎實包覆在道渣外側與下方
+      // 🌟 5. 土壤路基：同樣直接以 trackCurve 生成，與道渣完美包覆疊合
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.68, 6, true);
+      soilGeo.scale(1.08, 0.60, 1.08);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
-      soilMesh.position.y -= 0.15; // 向下扎根至地面
+      soilMesh.position.y -= 0.12;
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 4. 400 根木頭枕木完美對齊中心軌道
+      // 6. 400 根木頭枕木完美對齊軌道
       const SLEEPER_COUNT = 400;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
@@ -5528,7 +5519,7 @@ function createOuterLoopTrackAndCart() {
 
             const backRest = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.2, 0.03), woodSeatMat);
             backRest.position.set(0, floorY + 0.36, seatZ + (seatZ < 0 ? -0.14 : 0.14));
-            backRest.castShadow = title = true;
+            backRest.castShadow = true;
             bench.add(backRest);
 
             trailer.add(bench);
