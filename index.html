@@ -6808,7 +6808,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
   cartGroup.lookAt(pos.x + tangent.x * 2.0, pos.y + 0.28 + tangent.y * 2.0, pos.z + tangent.z * 2.0);
 
   if (trailerCarts && trailerCarts.length > 0) {
-    const spacing = 0.009;
+    const spacing = 0.007;
     trailerCarts.forEach((trailer, idx) => {
       let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
       if (tProg < 0) tProg += 1.0;
