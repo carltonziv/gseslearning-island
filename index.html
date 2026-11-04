@@ -5227,13 +5227,13 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 1. 緊臨湖邊的高精度陸地中心點取樣函式（半徑外擴至 innerBoundary - 1.2，緊貼湖畔陸地）
+      // 1. 高精度沿海陸地中心點取樣函式（緊臨湖邊，完美沿著陸地邊緣鋪設）
       function getTrackCenterPoint(theta) {
         const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
         
-        // 🌟 往外擴大半徑，緊臨湖邊（與湖水邊界保持 1.2 米的草皮陸地）
-        const r = innerBoundary - 1.2; 
+        // 🌟 緊臨湖邊的黃金半徑：與湖水邊界保持 3.0 米的陸地草皮內側
+        const r = innerBoundary - 3.0; 
         
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
@@ -5310,19 +5310,19 @@ function createOuterLoopTrackAndCart() {
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
-      // 🌟 道渣層：直接以 trackCurve 包覆，與鋼軌完美同心、絕不分離！
-      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.62, 6, true);
-      ballastGeo.scale(1.15, 0.32, 1.15);
+      // 🌟 道渣層：直接以 trackCurve 生成，與鋼軌 100% 同心圓、完美疊合！
+      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.55, 6, true);
+      ballastGeo.scale(1.0, 0.30, 1.0);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
       ballastMesh.position.y -= 0.03;
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 土壤路基：同樣直接以 trackCurve 包覆於道渣下方，完美重疊
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.78, 6, true);
-      soilGeo.scale(1.25, 0.65, 1.25);
+      // 🌟 土壤路基：同樣直接以 trackCurve 生成，完美包覆在道渣正下方
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.70, 6, true);
+      soilGeo.scale(1.08, 0.60, 1.08);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
-      soilMesh.position.y -= 0.14;
+      soilMesh.position.y -= 0.12;
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
@@ -5435,10 +5435,10 @@ function createOuterLoopTrackAndCart() {
 
       const spotLight = new THREE.SpotLight(0xFEF08A, 4.5, 14, Math.PI / 5, 0.45, 1.2);
       spotLight.position.set(0, 0.82, 1.16);
-      const lightTarget = new THREE.Object3D();
-      lightTarget.position.set(0, -0.4, 5.5);
-      cartGroup.add(lightTarget);
-      spotLight.target = lightTarget;
+      const targetObj = new THREE.Object3D();
+      targetObj.position.set(0, -0.4, 5.5);
+      cartGroup.add(targetObj);
+      spotLight.target = targetObj;
       cartGroup.add(spotLight);
 
       [[-0.42, 0.15, -0.65], [0.42, 0.15, -0.65], [-0.42, 0.15, 0.65], [0.42, 0.15, 0.65]].forEach(pos => {
