@@ -5254,13 +5254,13 @@ function createOuterLoopTrackAndCart() {
         const angleDiff = Math.abs(Math.atan2(Math.sin(theta - BEACH_CENTER_ANGLE), Math.cos(theta - BEACH_CENTER_ANGLE)));
         const isUniqueBeachZone = Math.max(0, 1.0 - angleDiff / 0.75);
 
-        let groundY = -0.55;
+        let groundY = -0.45;
         if (isUniqueBeachZone > 0.1) {
           const beachSlope = Math.pow(normalizedR, 1.3);
-          groundY = -0.55 + steppedHeight * beachSlope * 0.72;
+          groundY = -0.45 + steppedHeight * beachSlope * 0.72;
         } else {
           const cliffRise = Math.pow(normalizedR, 0.75);
-          groundY = -0.32 + steppedHeight * cliffRise * 0.82;
+          groundY = -0.22 + steppedHeight * cliffRise * 0.82;
         }
 
         const finalY = Math.max(0.35, groundY + 0.28);
@@ -5310,25 +5310,25 @@ function createOuterLoopTrackAndCart() {
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
-      // 🌟 道渣層：直接以 trackCurve 包覆，與鋼軌 100% 同心圓、完美疊合！
-      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.58, 6, true);
-      ballastGeo.scale(1.0, 0.30, 1.0);
+      // 🌟 道渣層：擴大半徑以與地基邊緣疊合
+      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.78, 6, true);
+      ballastGeo.scale(1.0, 0.28, 1.0);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
       ballastMesh.position.y -= 0.03;
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 土壤路基：同樣直接以 trackCurve 包覆於道渣下方，紮實向下延伸至地形
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.72, 6, true);
-      soilGeo.scale(1.08, 0.60, 1.08);
+      // 🌟 土壤路基：微調比例承托道渣
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.85, 6, true);
+      soilGeo.scale(1.05, 0.50, 1.05);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
       soilMesh.position.y -= 0.12;
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 4. 400 根木頭枕木完美對齊軌道中心
+      // 4. 400 根木頭枕木完美對齊軌道中心 (加寬枕木)
       const SLEEPER_COUNT = 400;
-      const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
+      const sleeperGeom = new THREE.BoxGeometry(1.5, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
       const sleeperInstanced = new THREE.InstancedMesh(sleeperGeom, sleeperMat, SLEEPER_COUNT);
 
@@ -5484,28 +5484,27 @@ function createOuterLoopTrackAndCart() {
 
         const floorY = 0.2 + thinPlankThickness;
 
+        // 🌟 關鍵修改 1：不論前 4 節載客或後 4 節運木，8 節車廂全部建立四角立柱
+        const postMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
+        const cornerPositions = [
+          [-0.56, floorY + 0.46, -0.84],
+          [ 0.56, floorY + 0.46, -0.84],
+          [-0.56, floorY + 0.46,  0.84],
+          [ 0.56, floorY + 0.46,  0.84]
+        ];
+
+        cornerPositions.forEach(pos => {
+          // 🌟 關鍵修改 2：使用 BoxGeometry 建立長寬 0.08、高 0.92 的「方柱」
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.92, 0.08), postMat);
+          post.position.set(...pos);
+          post.castShadow = true;
+          trailer.add(post);
+
+          // 🌟 關鍵修改 3：完全移除 SphereGeometry 圓頭（cap），保持方柱平頂
+        });
+
         if (i < 4) {
-          if (i > 0) {
-            const postMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
-            const cornerPositions = [
-              [-0.56, floorY + 0.46, -0.84],
-              [ 0.56, floorY + 0.46, -0.84],
-              [-0.56, floorY + 0.46,  0.84],
-              [ 0.56, floorY + 0.46,  0.84]
-            ];
-
-            cornerPositions.forEach(pos => {
-              const post = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.92, 8), postMat);
-              post.position.set(...pos);
-              post.castShadow = true;
-              trailer.add(post);
-
-              const cap = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), postMat);
-              cap.position.set(pos[0], pos[1] + 0.46, pos[2]);
-              trailer.add(cap);
-            });
-          }
-
+          // 前 4 節：載客座位配置
           [-0.45, 0.45].forEach(seatZ => {
             const bench = new THREE.Group();
 
@@ -5527,6 +5526,7 @@ function createOuterLoopTrackAndCart() {
             trailer.add(bench);
           });
         } else {
+          // 後 4 節：運木載重配置
           const logGroup = new THREE.Group();
           function createTimberLog(x, y, z) {
             const singleLog = new THREE.Group();
@@ -5561,6 +5561,7 @@ function createOuterLoopTrackAndCart() {
         trailer.traverse(child => { child.userData.isCart = true; });
         system.add(trailer);
         trailerCarts.push(trailer);
+      
       }
 
       return system;
@@ -6097,18 +6098,18 @@ function createOuterLoopTrackAndCart() {
           const angleDiff = Math.abs(Math.atan2(Math.sin(angle - BEACH_CENTER_ANGLE), Math.cos(angle - BEACH_CENTER_ANGLE)));
           const isUniqueBeachZone = Math.max(0, 1.0 - angleDiff / 0.75);
 
-          let finalY = -0.55;
+          let finalY = -0.45;
           let vertexColor = new THREE.Color();
 
           if (isUniqueBeachZone > 0.1) {
             const beachSlope = Math.pow(normalizedR, 1.3);
-            finalY = -0.55 + steppedHeight * beachSlope * 0.72;
+            finalY = -0.45 + steppedHeight * beachSlope * 0.72;
             if (normalizedR < 0.28 * isUniqueBeachZone) vertexColor.copy(colorSand);
             else if (finalY > 6.0) vertexColor.copy(colorHighForest);
             else vertexColor.copy(colorGrass);
           } else {
             const cliffRise = Math.pow(normalizedR, 0.75);
-            finalY = -0.32 + steppedHeight * cliffRise * 0.82;
+            finalY = -0.22 + steppedHeight * cliffRise * 0.82;
             if (normalizedR < 0.10) vertexColor.copy(colorRockCliff);
             else if (finalY > 6.5) vertexColor.copy(colorHighForest);
             else vertexColor.copy(colorGrass);
@@ -6765,7 +6766,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
           cartGroup.lookAt(pos.clone().add(tangent));
 
           if (trailerCarts && trailerCarts.length > 0) {
-            const spacing = 0.0068; // 車廂緊湊連接
+            const spacing = 0.009; // 加大車廂間距
             trailerCarts.forEach((trailer, idx) => {
               let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
               if (tProg < 0) tProg += 1.0;
