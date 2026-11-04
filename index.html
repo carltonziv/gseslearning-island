@@ -5227,11 +5227,14 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 1. 高精度沿海陸地中心點取樣函式（半徑內縮，保證 100% 在陸地上，絕不入水）
+      // 1. 完美貼合陸地內側沿海的高精度取樣函式（動態貼齊陸地，絕不入水）
       function getTrackCenterPoint(theta) {
+        // 取得該角度下的海岸線邊界
         const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
-        const r = innerBoundary - 3.8; // 緊貼陸地草皮內側邊緣
+        
+        // 🌟 關鍵調整：將半徑設為內側安全帶（根據海岸線凹凸自動縮放，確保 100% 落在草皮陸地上）
+        const r = innerBoundary - 5.2; 
         
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
@@ -5261,7 +5264,8 @@ function createOuterLoopTrackAndCart() {
           groundY = -0.32 + steppedHeight * cliffRise * 0.82;
         }
 
-        const finalY = Math.max(0.35, groundY + 0.26);
+        // 確保高度略高於地面，讓道渣與路基扎實貼在草皮上
+        const finalY = Math.max(0.38, groundY + 0.30);
         return new THREE.Vector3(px, finalY, pz);
       }
 
