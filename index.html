@@ -1675,16 +1675,20 @@ if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCart
           if (limbs.skirt) limbs.skirt.rotation.x = -0.65;
         }
 
+        // 🌟 即時計算該座位的世界座標，確保不落在湖水中央
+        const worldPos = new THREE.Vector3();
+        person.getWorldPosition(worldPos);
+
         playerVillager = {
           obj: person,
           isOnCart: true,
           parentCart: targetCart,
           homeIslandIdx: 1,
           currentIslandIdx: 1,
-          currentX: 0,
-          currentZ: 0,
-          targetX: 0,
-          targetZ: 0,
+          currentX: worldPos.x,
+          currentZ: worldPos.z,
+          targetX: worldPos.x,
+          targetZ: worldPos.z,
           walkCycle: 0,
           waitTimer: 99999,
           speed: 0,
@@ -5584,6 +5588,23 @@ function createOuterLoopTrackAndCart() {
       
       }
 
+      // 🌟 立即將機車頭與 8 節車廂定位到軌道真實陸地位置，防止初始停在湖中央 (0,0,0)
+      if (trackCurve) {
+        const initPos = trackCurve.getPointAt(0);
+        const initTan = trackCurve.getTangentAt(0).normalize();
+        cartGroup.position.set(initPos.x, initPos.y + 0.28, initPos.z);
+        cartGroup.lookAt(initPos.x + initTan.x * 2.0, initPos.y + 0.28 + initTan.y * 2.0, initPos.z + initTan.z * 2.0);
+
+        const spacing = 0.009;
+        trailerCarts.forEach((trailer, idx) => {
+          let tProg = (1.0 - (idx + 1) * spacing) % 1.0;
+          const tPos = trackCurve.getPointAt(tProg);
+          const tTan = trackCurve.getTangentAt(tProg).normalize();
+          trailer.position.set(tPos.x, tPos.y + 0.28, tPos.z);
+          trailer.lookAt(tPos.x + tTan.x * 2.0, tPos.y + 0.28 + tTan.y * 2.0, tPos.z + tTan.z * 2.0);
+        });
+      }
+
       return system;
     }
     
@@ -6778,29 +6799,29 @@ function createOuterLoopTrackAndCart() {
         }
 
 if (cartGroup && trackCurve && !isCartPaused) {
-          cartProgress = (cartProgress + 0.00014) % 1.0;
-          const pos = trackCurve.getPointAt(cartProgress);
-          const tangent = trackCurve.getTangentAt(cartProgress);
+  cartProgress = (cartProgress + 0.00014) % 1.0;
+  const pos = trackCurve.getPointAt(cartProgress);
+  const tangent = trackCurve.getTangentAt(cartProgress).normalize();
 
-          cartGroup.position.copy(pos);
-          cartGroup.position.y += 0.28; // 👈 由 0.02 改為 0.28，車輪完美貼在鋼軌上
-          cartGroup.lookAt(pos.clone().add(tangent));
+  // 🌟 將目標點與車身位置同步抬高 0.28，保持仰俯角與軌道坡度完全一致
+  cartGroup.position.set(pos.x, pos.y + 0.28, pos.z);
+  cartGroup.lookAt(pos.x + tangent.x * 2.0, pos.y + 0.28 + tangent.y * 2.0, pos.z + tangent.z * 2.0);
 
-          if (trailerCarts && trailerCarts.length > 0) {
-            const spacing = 0.009;
-            trailerCarts.forEach((trailer, idx) => {
-              let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
-              if (tProg < 0) tProg += 1.0;
+  if (trailerCarts && trailerCarts.length > 0) {
+    const spacing = 0.009;
+    trailerCarts.forEach((trailer, idx) => {
+      let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
+      if (tProg < 0) tProg += 1.0;
 
-              const tPos = trackCurve.getPointAt(tProg);
-              const tTan = trackCurve.getTangentAt(tProg);
+      const tPos = trackCurve.getPointAt(tProg);
+      const tTan = trackCurve.getTangentAt(tProg).normalize();
 
-              trailer.position.copy(tPos);
-              trailer.position.y += 0.28; // 👈 由 0.02 改為 0.28
-              trailer.lookAt(tPos.clone().add(tTan));
-            });
-          }
-        }
+      // 🌟 同樣將拖車車廂同步抬高 0.28，徹底消除車輪懸空與翹起問題
+      trailer.position.set(tPos.x, tPos.y + 0.28, tPos.z);
+      trailer.lookAt(tPos.x + tTan.x * 2.0, tPos.y + 0.28 + tTan.y * 2.0, tPos.z + tTan.z * 2.0);
+    });
+  }
+}
 
         if (patrolBoat && boatCurve && !isBoatPaused) {
           boatProgress -= 0.00015;
