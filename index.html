@@ -5227,24 +5227,21 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 1. 完美貼合陸地內側沿海的高精度取樣函式（動態貼齊陸地，絕不入水）
+      // 1. 高精度陸地與鐵道中心點取樣函式（此處將軌道半徑設為 38，讓湖面範圍明顯縮小、陸地向內擴張）
       function getTrackCenterPoint(theta) {
-        // 取得該角度下的海岸線邊界
-        const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
-        const innerBoundary = 46 + coastCurve;
-        
-        // 🌟 關鍵調整：將半徑設為內側安全帶（根據海岸線凹凸自動縮放，確保 100% 落在草皮陸地上）
-        const r = innerBoundary - 5.2; 
+        const coastCurve = Math.sin(theta * 3) * 3.5 + Math.cos(theta * 5) * 1.8;
+        // 將湖面基準半徑由原本的 46 縮小至 38，使湖面範圍縮小
+        const r = 38 + coastCurve; 
         
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
 
-        // 計算該點的地表真實起伏高度
+        // 計算地表起伏高度
         const dist = Math.hypot(px, pz);
-        const normalizedR = Math.max(0, Math.min(1, (dist - 39) / (98 - 39)));
-        const mountainWave = Math.sin(theta * 2) * 3.6 + Math.cos(theta * 4 + 0.8) * 2.8;
-        const hillWave = Math.sin(theta * 6) * 1.4 + Math.cos(theta * 10) * 0.8;
-        const combinedHeight = Math.max(0, mountainWave + hillWave + 2.5);
+        const normalizedR = Math.max(0, Math.min(1, (dist - 30) / (85 - 30)));
+        const mountainWave = Math.sin(theta * 2) * 3.0 + Math.cos(theta * 4 + 0.8) * 2.2;
+        const hillWave = Math.sin(theta * 6) * 1.2 + Math.cos(theta * 10) * 0.6;
+        const combinedHeight = Math.max(0, mountainWave + hillWave + 2.0);
 
         const stepSize = 2.0;
         const stepFrac = (combinedHeight % stepSize) / stepSize;
@@ -5264,12 +5261,11 @@ function createOuterLoopTrackAndCart() {
           groundY = -0.32 + steppedHeight * cliffRise * 0.82;
         }
 
-        // 確保高度略高於地面，讓道渣與路基扎實貼在草皮上
-        const finalY = Math.max(0.38, groundY + 0.30);
+        const finalY = Math.max(0.35, groundY + 0.26);
         return new THREE.Vector3(px, finalY, pz);
       }
 
-      // 2. 建立全場唯一的「中心軌道樣條曲線」（32個節點極度平順）
+      // 2. 建立全場唯一的「中心軌道樣條曲線」
       const numPathNodes = 32;
       const rawPoints = [];
       for (let i = 0; i < numPathNodes; i++) {
@@ -5279,7 +5275,7 @@ function createOuterLoopTrackAndCart() {
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-      // 3. 統一取樣：鋼軌、道渣與土壤路基嚴格共用同一組中心點與法向量
+      // 3. 絕對完美疊合：鋼軌、道渣與路基全部以 trackCurve 為中心同步生成！
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
       const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
@@ -5300,7 +5296,7 @@ function createOuterLoopTrackAndCart() {
         const tan = trackCurve.getTangentAt(t);
         const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
 
-        // 左右鋼軌
+        // 左右鋼軌精準對齊鐵路中心
         innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
         outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
       }
@@ -5312,23 +5308,23 @@ function createOuterLoopTrackAndCart() {
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
-      // 🌟 4. 道渣層：直接以 trackCurve 生成，與軌道 100% 同一個圓圈、完全重疊
-      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.52, 6, true);
-      ballastGeo.scale(1.02, 0.30, 1.02);
+      // 🌟 道渣層：直接以 trackCurve 包覆，與鋼軌中心點完全一致，絕不分離！
+      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.48, 6, true);
+      ballastGeo.scale(1.0, 0.28, 1.0);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
       ballastMesh.position.y -= 0.03;
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 5. 土壤路基：同樣直接以 trackCurve 生成，與道渣完美包覆疊合
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.68, 6, true);
-      soilGeo.scale(1.08, 0.60, 1.08);
+      // 🌟 土壤路基：同樣直接以 trackCurve 包覆於道渣下方，完美重疊
+      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.58, 6, true);
+      soilGeo.scale(1.05, 0.55, 1.05);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
       soilMesh.position.y -= 0.12;
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 6. 400 根木頭枕木完美對齊軌道
+      // 4. 400 根木頭枕木完美對齊軌道中心
       const SLEEPER_COUNT = 400;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
@@ -5567,7 +5563,6 @@ function createOuterLoopTrackAndCart() {
 
       return system;
     }
-
     function createPatrolBoatSystem() {
       const boatSystem = new THREE.Group();
       const BOAT_Y = -0.45;
@@ -6059,7 +6054,7 @@ function createOuterLoopTrackAndCart() {
           metalness: 0.1
         });
 
-        const ringGeo = new THREE.RingGeometry(39, 98, 160, 32);
+        const ringGeo = new THREE.RingGeometry(35, 88, 160, 32);
         ringGeo.rotateX(-Math.PI / 2);
 
         const pos = ringGeo.attributes.position;
