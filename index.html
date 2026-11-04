@@ -5296,27 +5296,56 @@ function createOuterLoopTrackAndCart() {
 
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
-
-      // 鋪設雙軌鋼軌
+// 🌟 3. 統一取樣：鋼軌、道渣與土壤路基全部嚴格共用同一組中心點與法向量
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
+      const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
+      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
+
+      const divisions = 320;
+      const innerPts = [], outerPts = [], ballastPts = [], soilPts = [];
+      const railGauge = 0.35;
+
+      for (let i = 0; i <= divisions; i++) {
+        const t = i / divisions;
+        const pt = trackCurve.getPointAt(t);
+        
+        const realGroundY = getTrackCenterPoint(t * Math.PI * 2).y; // 確保不低於地表
+        if (pt.y < realGroundY) {
+          pt.y = realGroundY;
+        }
+
+        const tan = trackCurve.getTangentAt(t);
+        const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
+
+        // 左右鋼軌
+        innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
+        outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
+        
+        // 🌟 道渣與土壤路基：直接以中心點 pt 為基準，完全不使用獨立曲線，保證絕不分離！
+        ballastPts.push(new THREE.Vector3(pt.x, pt.y - 0.03, pt.z));
+        soilPts.push(new THREE.Vector3(pt.x, pt.y - 0.16, pt.z));
+      }
+
+      const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
+      const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
+      const ballastCurve = new THREE.CatmullRomCurve3(ballastPts, true);
+      const soilCurve = new THREE.CatmullRomCurve3(soilPts, true);
+
+      // 鋪設雙軌
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
-      // 🌟 4. 完美疊合的道渣層（直接使用 trackCurve 中心包覆）
-      const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
-      const ballastGeo = new THREE.TubeGeometry(trackCurve, 320, 0.72, 6, true);
-      ballastGeo.scale(1.4, 0.32, 1.4); // 扁平化包覆在鐵軌與枕木下方
+      // 鋪設道渣層（緊貼於鐵軌正下方）
+      const ballastGeo = new THREE.TubeGeometry(ballastCurve, 320, 0.70, 6, true);
+      ballastGeo.scale(1.35, 0.32, 1.35);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
-      ballastMesh.position.y -= 0.03; // 微調高度與枕木緊密貼合
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 5. 完美疊合的土壤路基（扎實與地面結合，絕不分離）
-      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
-      const soilGeo = new THREE.TubeGeometry(trackCurve, 320, 0.90, 6, true);
-      soilGeo.scale(1.5, 0.70, 1.5); // 更寬厚的路基向下扎根
+      // 鋪設土壤路基（紮實向下延伸至地面）
+      const soilGeo = new THREE.TubeGeometry(soilCurve, 320, 0.85, 6, true);
+      soilGeo.scale(1.45, 0.65, 1.45);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
-      soilMesh.position.y -= 0.15; // 向下延伸至地表
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
