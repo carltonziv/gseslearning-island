@@ -1612,6 +1612,114 @@
       }
     }
 
+    // ==========================================
+    // 🐶 麥塊風格方塊狗模型生成工廠
+    // ==========================================
+    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) {
+      const dog = new THREE.Group();
+
+      const furMat = new THREE.MeshStandardMaterial({ color: furColor, roughness: 0.85, flatShading: true });
+      const collarMat = new THREE.MeshStandardMaterial({ color: collarColor, roughness: 0.6, flatShading: true });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.9, flatShading: true });
+      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.7, flatShading: true });
+
+      // 1. 身體 (Body)
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.52), furMat);
+      body.position.set(0, 0.32, -0.05);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      dog.add(body);
+
+      // 2. 經典馴服項圈 (Collar)
+      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.10), collarMat);
+      collar.position.set(0, 0.38, 0.20);
+      collar.castShadow = true;
+      dog.add(collar);
+
+      // 3. 頭部與耳朵 (Head & Ears)
+      const headPivot = new THREE.Group();
+      headPivot.position.set(0, 0.44, 0.30);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.24), furMat);
+      head.position.set(0, 0.08, 0.06);
+      head.castShadow = true;
+      headPivot.add(head);
+
+      // 雙耳
+      [-0.09, 0.09].forEach(ex => {
+        const ear = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.06), furMat);
+        ear.position.set(ex, 0.22, 0.05);
+        ear.castShadow = true;
+        headPivot.add(ear);
+      });
+
+      // 口鼻 (Snout)
+      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.16), furMat);
+      snout.position.set(0, 0.02, 0.22);
+      snout.castShadow = true;
+      headPivot.add(snout);
+
+      // 鼻子黑點
+      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.02), darkMat);
+      nose.position.set(0, 0.05, 0.305);
+      headPivot.add(nose);
+
+      // 雙眼 (麥塊黑瞳孔 + 白眼白)
+      [-0.08, 0.08].forEach(eyeX => {
+        const eyeDark = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), darkMat);
+        eyeDark.position.set(eyeX, 0.11, 0.185);
+        headPivot.add(eyeDark);
+
+        const eyeWhite = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 0.025), whiteMat);
+        eyeWhite.position.set(eyeX + (eyeX > 0 ? 0.02 : -0.02), 0.11, 0.185);
+        headPivot.add(eyeWhite);
+      });
+
+      dog.add(headPivot);
+
+      // 4. 四隻腳 (Legs - 以關節頂部為旋轉中心)
+      const legGeo = new THREE.BoxGeometry(0.09, 0.26, 0.09);
+
+      function makeLegPivot(x, z) {
+        const pivot = new THREE.Group();
+        pivot.position.set(x, 0.26, z);
+        const legMesh = new THREE.Mesh(legGeo, furMat);
+        legMesh.position.y = -0.13;
+        legMesh.castShadow = true;
+        pivot.add(legMesh);
+        dog.add(pivot);
+        return pivot;
+      }
+
+      const frontLeft = makeLegPivot(-0.09, 0.13);
+      const frontRight = makeLegPivot(0.09, 0.13);
+      const backLeft = makeLegPivot(-0.09, -0.22);
+      const backRight = makeLegPivot(0.09, -0.22);
+
+      // 5. 尾巴 (Tail)
+      const tailPivot = new THREE.Group();
+      tailPivot.position.set(0, 0.38, -0.30);
+      tailPivot.rotation.x = -Math.PI / 4; // 麥塊狗元氣翹尾
+
+      const tailMesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.22), furMat);
+      tailMesh.position.z = -0.11;
+      tailMesh.castShadow = true;
+      tailPivot.add(tailMesh);
+      dog.add(tailPivot);
+
+      // 🌟 映射肢體：前腳對應 arms，後腳對應 legs，達成四足對角交替踏步
+      dog.userData.limbs = {
+        leftArm: frontLeft,   // 前左
+        rightArm: frontRight, // 前右
+        leftLeg: backLeft,    // 後左
+        rightLeg: backRight,  // 後右
+        tail: tailPivot,
+        head: headPivot
+      };
+
+      return dog;
+    }
+
     function spawnPlayerCharacter() {
       removePlayerCharacter();
       if (typeof createCharacterMesh !== 'function' || typeof scene === 'undefined' || !scene) return;
@@ -6527,6 +6635,56 @@ function createOuterLoopTrackAndCart() {
         });
       }
 
+      const dogConfigs = [
+      { fur: 0xE5E3DC, collar: 0xDC2626, homeIsland: 1 },
+      { fur: 0xC27A23, collar: 0x2563EB, homeIsland: 2 }
+    ];
+
+    dogConfigs.forEach((cfg, dIdx) => {
+      const dogMesh = createMinecraftDogMesh(cfg.fur, cfg.collar);
+      const zzzSprite = createSleepZzzSprite();
+      zzzSprite.position.set(0, 0.9, 0);
+      dogMesh.add(zzzSprite);
+
+      const curIsland = ISLAND_CONFIG[cfg.homeIsland];
+      const ang = Math.random() * Math.PI * 2;
+      const rad = 2.0 + Math.random() * (curIsland.radius - 3.2);
+      const initX = curIsland.pos[0] + Math.cos(ang) * rad;
+      const initZ = curIsland.pos[2] + Math.sin(ang) * rad;
+
+      dogMesh.position.set(initX, 0, initZ);
+      scene.add(dogMesh);
+
+      const cheerAngle = (dIdx === 0 ? 0.35 : 3.45);
+      const cheerRadius = 2.6;
+      const sleepAngle = (dIdx === 0 ? 1.2 : 4.2);
+      const sleepRadius = 2.4;
+
+      villagers.push({
+        obj: dogMesh,
+        zzzSprite: zzzSprite,
+        homeIslandIdx: cfg.homeIsland,
+        currentIslandIdx: cfg.homeIsland,
+        targetIslandIdx: cfg.homeIsland,
+        state: 'wander',
+        currentX: initX,
+        currentZ: initZ,
+        targetX: initX,
+        targetZ: initZ,
+        walkCycle: Math.random() * 10,
+        waitTimer: Math.random() * 60,
+        speed: 0.024,
+        isJogging: true,
+        isSkirt: false,
+        isDog: true,
+        cheerType: 'jump_both',
+        stadiumPos: { x: Math.cos(cheerAngle) * cheerRadius, z: Math.sin(cheerAngle) * cheerRadius },
+        sleepPos: { x: Math.cos(sleepAngle) * sleepRadius, z: Math.sin(sleepAngle) * sleepRadius },
+        cheerPhase: Math.random() * Math.PI * 2,
+        sleepBreathPhase: Math.random() * Math.PI * 2
+      });
+    });
+
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
       let startX = 0, startY = 0;
@@ -6671,6 +6829,7 @@ function createOuterLoopTrackAndCart() {
         }
 
         windTurbineBlades.forEach(blade => { blade.rotation.z += 0.04; });
+
 
        
         // 深海巨獸游動
@@ -7218,8 +7377,17 @@ if (cartGroup && trackCurve && !isCartPaused) {
                 v.waitTimer = Math.floor(Math.random() * 80) + 40;
               }
             }
-          }
+            
+          } 
+          if (v.isDog && limbs && limbs.tail) {
+              // 待機時慢搖、奔跑/應援時快搖
+              const wagSpeed = (v.waitTimer > 0) ? 4.0 : 12.0;
+              const wagAmp = (v.waitTimer > 0) ? 0.15 : 0.35;
+              limbs.tail.rotation.y = Math.sin(time * wagSpeed) * wagAmp;
+            }
         });
+
+        
         
 // 本機玩家動作與漫步邏輯
         if (playerVillager && playerVillager.obj && !playerVillager.isOnCart) {
