@@ -5236,14 +5236,12 @@ function createOuterLoopTrackAndCart() {
         const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
         
-        // 🌟 將軌道中心線移至湖岸外側 2.5 米處（正處於 0~5.5 米的咖啡色岩岸陸地帶）
         const r = innerBoundary + 2.5; 
-        
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
 
-        // 計算該點在咖啡色大陸地表上的真實起伏高度
-        const normalizedR = Math.max(0, Math.min(1, 2.5 / (98 - innerBoundary)));
+        // 🌟 配合陸地外擴至 135 米計算比例
+        const normalizedR = Math.max(0, Math.min(1, 2.5 / (135 - innerBoundary)));
         const mountainWave = Math.sin(theta * 2) * 3.6 + Math.cos(theta * 4 + 0.8) * 2.8;
         const hillWave = Math.sin(theta * 6) * 1.4 + Math.cos(theta * 10) * 0.8;
         const combinedHeight = Math.max(0, mountainWave + hillWave + 2.5);
@@ -5257,19 +5255,21 @@ function createOuterLoopTrackAndCart() {
         const angleDiff = Math.abs(Math.atan2(Math.sin(theta - BEACH_CENTER_ANGLE), Math.cos(theta - BEACH_CENTER_ANGLE)));
         const isUniqueBeachZone = Math.max(0, 1.0 - angleDiff / 0.75);
 
-        let groundY = -0.15;
+        // 🌟 地基高度同步抬高
+        const baseInlandRise = normalizedR * 3.8;
+        let groundY = 0.05 + baseInlandRise;
         if (isUniqueBeachZone > 0.1) {
           const beachSlope = Math.pow(normalizedR, 1.3);
-          groundY = -0.40 + steppedHeight * beachSlope * 0.72;
+          groundY = -0.20 + baseInlandRise + steppedHeight * beachSlope * 0.75;
         } else {
           const cliffRise = Math.pow(normalizedR, 0.75);
-          groundY = -0.15 + steppedHeight * cliffRise * 0.82;
+          groundY = 0.05 + baseInlandRise + steppedHeight * cliffRise * 0.85;
         }
 
         const finalY = groundY + 0.18;
         return new THREE.Vector3(px, finalY, pz);
       }
-
+  
       // 2. 建立全場唯一的「中心軌道樣條曲線」（32個節點極度平順）
       const numPathNodes = 32;
       const rawPoints = [];
@@ -6016,8 +6016,8 @@ function createOuterLoopTrackAndCart() {
       hotAirBalloon = createHotAirBalloon();
       scene.add(hotAirBalloon);
 
-      // 海洋網格建置
-      const oceanGeo = new THREE.PlaneGeometry(160, 160, 80, 80);
+      // 海洋網格建置（改為同心圓環網格，半徑 56 米，完全吻合內圈湖盆）
+      const oceanGeo = new THREE.RingGeometry(0.1, 56, 72, 28);
       oceanGeo.rotateX(-Math.PI / 2);
       const oceanPos = oceanGeo.attributes.position;
       const oceanColors = [];
@@ -6119,8 +6119,9 @@ function createOuterLoopTrackAndCart() {
           const coastCurve = Math.sin(angle * 3) * 4.0 + Math.cos(angle * 5) * 2.2;
           const innerBoundary = 46 + coastCurve;
 
-          const normalizedR = Math.max(0, Math.min(1, (dist - 39) / (98 - 39)));
-          const adjustedDist = innerBoundary + normalizedR * (98 - innerBoundary);
+          // 🌟 陸地朝外擴展至 135 米半徑，將視野內所有死角完全鋪滿
+          const normalizedR = Math.max(0, Math.min(1, (dist - 35) / (135 - 35)));
+          const adjustedDist = innerBoundary + normalizedR * (135 - innerBoundary);
 
           x = Math.cos(angle) * adjustedDist;
           z = Math.sin(angle) * adjustedDist;
@@ -6139,21 +6140,21 @@ function createOuterLoopTrackAndCart() {
           const angleDiff = Math.abs(Math.atan2(Math.sin(angle - BEACH_CENTER_ANGLE), Math.cos(angle - BEACH_CENTER_ANGLE)));
           const isUniqueBeachZone = Math.max(0, 1.0 - angleDiff / 0.75);
 
-          let finalY = -0.45;
+          // 🌟 核心抬高：岸邊基準抬高至 -0.20m（高於湖水 -0.38m），且隨離岸距離穩定向上隆起 (+baseInlandRise)
+          const baseInlandRise = normalizedR * 3.8;
+          let finalY = 0.05 + baseInlandRise;
           let vertexColor = new THREE.Color();
 
           if (isUniqueBeachZone > 0.1) {
-            // 沙灘區域：自然呈現金黃沙灘 (colorSand)，不強制加上咖啡色岩壁
             const beachSlope = Math.pow(normalizedR, 1.3);
-            finalY = -0.45 + steppedHeight * beachSlope * 0.72;
-            if (normalizedR < 0.28 * isUniqueBeachZone) vertexColor.copy(colorSand);
+            finalY = -0.20 + baseInlandRise + steppedHeight * beachSlope * 0.75;
+            if (normalizedR < 0.25 * isUniqueBeachZone) vertexColor.copy(colorSand);
             else if (finalY > 6.0) vertexColor.copy(colorHighForest);
             else vertexColor.copy(colorGrass);
           } else {
-            // 非沙灘之其餘陸地區域：沿岸邊緣僅保留小比例自然崖壁 (colorRockCliff)，上方全為綠草皮
             const cliffRise = Math.pow(normalizedR, 0.75);
-            finalY = -0.22 + steppedHeight * cliffRise * 0.82;
-            if (normalizedR < 0.10) vertexColor.copy(colorRockCliff);
+            finalY = 0.05 + baseInlandRise + steppedHeight * cliffRise * 0.85;
+            if (normalizedR < 0.08) vertexColor.copy(colorRockCliff);
             else if (finalY > 6.5) vertexColor.copy(colorHighForest);
             else vertexColor.copy(colorGrass);
           }
