@@ -4360,8 +4360,12 @@ function adminClearAllOnlinePlayers() {
       });
 
       // 階段 1：25% 綠意平整草皮
-      stageMeshGrass = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.12, 18), grassMat);
+      stageMeshGrass = new THREE.Mesh(
+        new THREE.CylinderGeometry(4.2, 4.2, 0.12, 6), // 將原本的 18 改為 6
+        grassMat
+      );
       stageMeshGrass.position.y = 0.06;
+      stageMeshGrass.rotation.y = Math.PI / 6; // 加上與主島相同的旋轉角度，確保六角邊緣切齊
       stageMeshGrass.visible = false;
       parentGroup.add(stageMeshGrass);
 
