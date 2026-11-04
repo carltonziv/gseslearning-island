@@ -5227,14 +5227,11 @@ function selectViewMode(mode) {
 function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-      // 1. 確保軌道完美落在陸地內側沿海的高精準取樣函式（絕不入水）
+      // 1. 高精度沿海陸地取樣函式（內縮 3.5 米，保證 100% 在草皮陸地上，絕不入水）
       function getTrackCenterPoint(theta) {
-        // 遠方大陸海岸線邊緣的數學公式
-        const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(angle = theta * 5) * 2.2;
+        const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
-        
-        // 將半徑固定在陸地內側（內縮 3.5 米，確保 100% 鋪設在草皮陸地上，絕不落入海水中）
-        const r = innerBoundary - 3.5;
+        const r = innerBoundary - 3.5; // 確保在陸地邊緣內側
         
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
@@ -5268,7 +5265,7 @@ function createOuterLoopTrackAndCart() {
         return new THREE.Vector3(px, finalY, pz);
       }
 
-      // 2. 建立全場唯一的「中心軌道樣條曲線」（32個節點確保極度平順）
+      // 2. 建立全場唯一的「中心軌道樣條曲線」（32個節點極度平順）
       const numPathNodes = 32;
       const rawPoints = [];
       for (let i = 0; i < numPathNodes; i++) {
@@ -5278,25 +5275,7 @@ function createOuterLoopTrackAndCart() {
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-      // 3. 同步生成道渣、土壤路基與左右鋼軌（全部基於同一條 trackCurve 擴展）
-      const divisions = 340;
-      const innerPts = [], outerPts = [];
-      const railGauge = 0.35;
-
-      for (let i = 0; i <= divisions; i++) {
-        const t = i / divisions;
-        const pt = trackCurve.getPointAt(t);
-        const tan = trackCurve.getTangentAt(t);
-        const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
-
-        // 左右鋼軌透過法向量精準外推
-        innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
-        outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
-      }
-
-      const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
-      const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
-// 🌟 3. 統一取樣：鋼軌、道渣與土壤路基全部嚴格共用同一組中心點與法向量
+      // 3. 統一取樣：鋼軌、道渣與土壤路基嚴格共用同一組中心點與法向量
       const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
       const ballastMat = new THREE.MeshStandardMaterial({ color: 0xEDEAE0, roughness: 0.9, flatShading: true });
       const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
@@ -5309,7 +5288,7 @@ function createOuterLoopTrackAndCart() {
         const t = i / divisions;
         const pt = trackCurve.getPointAt(t);
         
-        const realGroundY = getTrackCenterPoint(t * Math.PI * 2).y; // 確保不低於地表
+        const realGroundY = getTrackCenterPoint(t * Math.PI * 2).y;
         if (pt.y < realGroundY) {
           pt.y = realGroundY;
         }
@@ -5321,7 +5300,7 @@ function createOuterLoopTrackAndCart() {
         innerPts.push(pt.clone().add(normal.clone().multiplyScalar(-railGauge)));
         outerPts.push(pt.clone().add(normal.clone().multiplyScalar(railGauge)));
         
-        // 🌟 道渣與土壤路基：直接以中心點 pt 為基準，完全不使用獨立曲線，保證絕不分離！
+        // 道渣與路基直接以中心點 pt 為基準同步生成，保證絕不分離
         ballastPts.push(new THREE.Vector3(pt.x, pt.y - 0.03, pt.z));
         soilPts.push(new THREE.Vector3(pt.x, pt.y - 0.16, pt.z));
       }
@@ -5331,7 +5310,7 @@ function createOuterLoopTrackAndCart() {
       const ballastCurve = new THREE.CatmullRomCurve3(ballastPts, true);
       const soilCurve = new THREE.CatmullRomCurve3(soilPts, true);
 
-      // 鋪設雙軌
+      // 鋪設雙軌鋼軌
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 320, 0.05, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 320, 0.05, 6, true), railMat));
 
@@ -5349,7 +5328,7 @@ function createOuterLoopTrackAndCart() {
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 6. 400 根木頭枕木完美對齊中心軌道
+      // 4. 400 根木頭枕木完美對齊中心軌道
       const SLEEPER_COUNT = 400;
       const sleeperGeom = new THREE.BoxGeometry(1.15, 0.06, 0.18);
       const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
@@ -5544,7 +5523,7 @@ function createOuterLoopTrackAndCart() {
 
             const backRest = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.2, 0.03), woodSeatMat);
             backRest.position.set(0, floorY + 0.36, seatZ + (seatZ < 0 ? -0.14 : 0.14));
-            backRest.castShadow = true;
+            backRest.castShadow = title = true;
             bench.add(backRest);
 
             trailer.add(bench);
