@@ -1291,6 +1291,7 @@
     let northIslandProgress = 0;
     let northIslandReclaimRef = null;
     let northIslandGroup = null;
+    let northIslandRocks = null;
     let currentMathQuestion = null;
 
     let stageMeshGrass = null;
@@ -2437,8 +2438,8 @@
       if (stageMeshRuinTemple) stageMeshRuinTemple.visible = isOver75;
       if (stageMeshNewTemple) stageMeshNewTemple.visible = isCompleted;
 
-      if (northIslandGroup && northIslandGroup.children[2]) {
-        northIslandGroup.children[2].visible = (progress < 25);
+      if (northIslandRocks) {
+        northIslandRocks.visible = (progress < 50);
       }
 
       if (isCompleted) {
@@ -6082,6 +6083,9 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         else if (cfg.id === 'civics') landmark = createCivicsLandmark();
         else if (cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s') {
           landmark = createWastelandLandmark(cfg.id);
+          if (cfg.id === 'wasteland_n') {
+            northIslandRocks = landmark;
+          }
         }
         group.add(landmark);
         if (cfg.id === 'wasteland_n') {
@@ -7163,38 +7167,88 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           camera.lookAt(targetLook);
         }
 
+// 🎈 熱氣球巡航、緩慢降落、停泊歇息與平穩垂直起飛系統
         if (hotAirBalloon) {
           const isHelipadOpen = (northIslandProgress >= 50 && northIslandProgress < 75);
-          const cycleTime = time % 60;
-          const isLandingTime = isHelipadOpen && (cycleTime < 14);
 
-          if (isLandingTime) {
-            const targetX = 0;
-            const targetZ = -9.0;
-            const targetY = 1.0;
+          const cruiseAngle = time * 0.025 + Math.PI * 1.25;
+          const hoverRadiusX = 44.0;
+          const hoverRadiusZ = 40.0;
+          const cruiseX = Math.sin(cruiseAngle) * hoverRadiusX;
+          const cruiseZ = Math.cos(cruiseAngle) * hoverRadiusZ;
+          const cruiseY = 21.0 + Math.sin(time * 0.7) * 1.2;
 
-            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, targetX, 0.035);
-            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, targetZ, 0.035);
-            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, targetY, 0.035);
-            hotAirBalloon.rotation.y += 0.005;
+          if (isHelipadOpen) {
+            // 完整週期設為 80 秒
+            const cycle = time % 80;
+            let targetX, targetY, targetZ;
+            let lerpFactor = 0.014; // 🌟 減速係數：由原本 0.035 降至 0.014，速度變得極為緩慢優雅
+
+            if (cycle < 30) {
+              // 階段 1：高空巡航 (0 ~ 30 秒)
+              targetX = cruiseX;
+              targetY = cruiseY;
+              targetZ = cruiseZ;
+              lerpFactor = 0.025;
+            } else if (cycle < 46) {
+              // 階段 2：平緩降落 (30 ~ 46 秒，歷時 16 秒緩慢著陸)
+              targetX = 0;
+              targetY = 1.0;
+              targetZ = -9.0;
+              lerpFactor = 0.014; // 🌟 緩降速度
+            } else if (cycle < 56) {
+              // 階段 3：停泊降落坪歇息整備 (46 ~ 56 秒，停留 10 秒)
+              targetX = 0;
+              targetY = 1.0;
+              targetZ = -9.0;
+              lerpFactor = 0.03;
+            } else if (cycle < 72) {
+              // 階段 4：平緩垂直起飛 (56 ~ 72 秒，歷時 16 秒垂直爬升至高空)
+              targetX = 0;
+              targetY = 21.0; // 🌟 垂直爬升至 21 米空中，不再瞬間移走
+              targetZ = -9.0;
+              lerpFactor = 0.014; // 🌟 起飛速度與降落完全一致
+            } else {
+              // 階段 5：重返航線 (72 ~ 80 秒，平滑切換回外圍大圓軌道)
+              targetX = cruiseX;
+              targetY = cruiseY;
+              targetZ = cruiseZ;
+              lerpFactor = 0.02;
+            }
+
+            // 平滑插值更新位置
+            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, targetX, lerpFactor);
+            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, targetY, lerpFactor);
+            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, targetZ, lerpFactor);
+
+            if (cycle >= 46 && cycle < 56) {
+              // 地面停泊時：保持水平穩定並緩慢微轉
+              hotAirBalloon.rotation.y += 0.005;
+              hotAirBalloon.rotation.x = THREE.MathUtils.lerp(hotAirBalloon.rotation.x, 0, 0.05);
+              hotAirBalloon.rotation.z = THREE.MathUtils.lerp(hotAirBalloon.rotation.z, 0, 0.05);
+            } else {
+              // 飛行、降落、起飛時隨風向微傾
+              hotAirBalloon.rotation.y = -cruiseAngle + Math.PI / 2;
+              hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.03;
+              hotAirBalloon.rotation.x = Math.cos(time * 0.4) * 0.02;
+            }
           } else {
-            const balloonAngle = time * 0.025 + Math.PI * 1.25; 
-            const hoverRadiusX = 44.0;
-            const hoverRadiusZ = 40.0;
-            
-            hotAirBalloon.position.x = Math.sin(balloonAngle) * hoverRadiusX;
-            hotAirBalloon.position.z = Math.cos(balloonAngle) * hoverRadiusZ;
-            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, 21.0 + Math.sin(time * 0.7) * 1.2, 0.03);
-            
-            hotAirBalloon.rotation.y = -balloonAngle + Math.PI / 2;
+            // 降落坪未開放時：常態高空巡航
+            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, cruiseX, 0.03);
+            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, cruiseY, 0.03);
+            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, cruiseZ, 0.03);
+
+            hotAirBalloon.rotation.y = -cruiseAngle + Math.PI / 2;
             hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.04;
             hotAirBalloon.rotation.x = Math.cos(time * 0.4) * 0.03;
           }
 
+          // 核心結晶自轉
           if (balloonEnergyCore) {
             balloonEnergyCore.rotation.y += 0.04;
           }
 
+          // 藍色能量光柱脈衝
           if (balloonEnergyBeam) {
             const pulse = (Math.sin(time * 5.0) + 1) * 0.5;
             balloonEnergyBeam.material.opacity = 0.5 + pulse * 0.3;
