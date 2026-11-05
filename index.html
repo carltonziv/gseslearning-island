@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>龜山301學習島</title>
 
-  <!-- 3D 庫與工具 -->
+  <!-- 3D 核心庫與工具 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -218,7 +218,6 @@
       border-color: #64748b;
     }
 
-/* 🌟 左側視角摺疊選單容器 */
     .hud-view-menu-container {
       position: absolute;
       top: 178px;
@@ -230,7 +229,6 @@
       user-select: none;
     }
 
-    /* 主開關按鈕樣式 */
     .hud-view-toggle-btn {
       background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(8px);
@@ -247,16 +245,13 @@
       border: 2.5px solid #063d4e;
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .hud-view-toggle-btn:active {
-      transform: scale(0.95);
-    }
+    .hud-view-toggle-btn:active { transform: scale(0.95); }
     .hud-view-toggle-btn.active {
       background: #0284c7;
       color: #ffffff;
       border-color: #0369a1;
     }
 
-    /* 箭頭旋轉動畫 */
     .view-arrow {
       font-size: 0.75rem;
       transition: transform 0.25s ease;
@@ -265,7 +260,6 @@
       transform: rotate(180deg);
     }
 
-    /* 下拉子選項列表 */
     .hud-view-sub-list {
       display: flex;
       flex-direction: column;
@@ -284,7 +278,6 @@
       pointer-events: auto;
     }
 
-    /* 子按鈕樣式 */
     .hud-view-sub-btn {
       background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(8px);
@@ -305,17 +298,13 @@
       background: #f1f5f9;
       transform: translateX(4px);
     }
-    .hud-view-sub-btn:active {
-      transform: scale(0.95);
-    }
+    .hud-view-sub-btn:active { transform: scale(0.95); }
     .hud-view-sub-btn.active-mode {
       background: #f59e0b;
       color: #ffffff;
       border-color: #b45309;
       font-weight: 800;
     }
-
-
 
     .bracket-sidebar-container {
       position: fixed;
@@ -718,7 +707,7 @@
     </div>
 
     <div class="header-actions">
-<div class="hud-btn-card" id="btn-toggle-bgm" onclick="toggleBGM()">
+      <div class="hud-btn-card" id="btn-toggle-bgm" onclick="toggleBGM()">
         <span id="bgm-icon">🔇</span>
         <span id="bgm-text">音樂：關</span>
       </div>
@@ -739,7 +728,8 @@
     <span id="tag-btn-icon">🚫</span>
     <span id="tag-btn-text">島名標籤：關</span>
   </div>
-<!-- 🌟 新的視角折疊選單（精確替換於 toggle-tags-btn 與 hud-hint 之間） -->
+
+  <!-- 視角選單容器 -->
   <div class="hud-view-menu-container">
     <div class="hud-view-toggle-btn" id="view-menu-toggle" onclick="toggleViewMenu()">
       <span>🎥</span>
@@ -1089,8 +1079,6 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; line-height: 1.7; color: #334155;">
-        
-        <!-- 第一階段 -->
         <div style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 14px; padding: 14px; border-left: 5px solid #d97706;">
           <div style="font-weight: 800; color: #b45309; font-size: 0.98rem; margin-bottom: 6px;">
             🏗️ 第一階段（1903～1905年）：蓋電廠的「大力士工程車」
@@ -1100,7 +1088,6 @@
           </p>
         </div>
 
-        <!-- 第二階段 -->
         <div style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 14px; padding: 14px; border-left: 5px solid #10b981;">
           <div style="font-weight: 800; color: #047857; font-size: 0.98rem; margin-bottom: 6px;">
             🍵 第二階段（1920年代～1940年代）：運茶葉與大木頭的「山中黑馬」
@@ -1110,7 +1097,6 @@
           </p>
         </div>
 
-        <!-- 第三階段 -->
         <div style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 14px; padding: 14px; border-left: 5px solid #3b82f6;">
           <div style="font-weight: 800; color: #1d4ed8; font-size: 0.98rem; margin-bottom: 6px;">
             🎒 第三階段（1950年代～1960年代）：載大家出門的「山區小公車」
@@ -1120,7 +1106,6 @@
           </p>
         </div>
 
-        <!-- 第四階段 -->
         <div style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 14px; padding: 14px; border-left: 5px solid #8b5cf6;">
           <div style="font-weight: 800; color: #6d28d9; font-size: 0.98rem; margin-bottom: 6px;">
             🛣️ 第四階段（1970年代～現在）：交棒給大馬路的「退休老朋友」
@@ -1129,7 +1114,6 @@
             隨著新烏公路拓寬鋪上柏油，跑得更快的大公車開進來，龜山的台車鐵軌便功成身退被拆除，只留下烏來瀑布那一段轉身變成現在大家愛搭的觀光小火車。
           </p>
         </div>
-
       </div>
     </div>
 
@@ -1144,7 +1128,6 @@
       </div>
       <div style="background:#ffffff; border:2px solid #cbd5e1; border-radius:16px; padding:18px; line-height:1.8; color:#334155; font-size:0.92rem;">
         <p style="font-weight:900; color:#dc2626; font-size:1.05rem; margin-bottom:12px; text-align:center; border-bottom:2px dashed #fca5a5; padding-bottom:8px;">🛡️ 防災避難原則</p>
-        <!-- 防災避難口訣全文排版 -->
         <div style="margin-bottom: 14px; line-height: 1.8; color: #334155; font-size: 0.9rem;">
           <p style="font-weight: 800; color: #b91c1c; margin-bottom: 8px;">
             地牛翻身別亂跑！趴下、掩護、抓緊桌腳！<br>
@@ -1165,13 +1148,12 @@
       </div>
     </div>
 
-<!-- 9. 北荒地開墾：龜山福德神廟島建設面板 -->
+    <!-- 9. 北荒地開墾：龜山福德神廟島建設面板 -->
     <div id="panel-wasteland_n" style="display:none;">
       <div id="pause-notice-wasteland_n" class="paused-banner" style="display:none;">
         ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
       </div>
 
-      <!-- 開墾進度儀表 -->
       <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #d97706; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <strong style="color: #92400e; font-size: 1.05rem;" id="dev-progress-title">⛏️ 龜山荒地開墾工程</strong>
@@ -1185,7 +1167,6 @@
         </p>
       </div>
 
-      <!-- AI 數學挑戰出題卡 -->
       <div id="dev-quiz-card" style="background:#ffffff; border: 2px solid #cbd5e1; border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <span style="background:#e0f2fe; color:#0284c7; padding:2px 8px; border-radius:8px; font-weight:800; font-size:0.78rem;">數學墾荒任務</span>
@@ -1214,7 +1195,7 @@
         <p style="font-size: 0.88rem; line-height: 1.6; color: #7c2d12;">這裡目前雜草叢生、碎石遍佈，四周一片沉寂，等待未來被喚醒！</p>
       </div>
     </div>
-  </div> <!-- 🌟 閉合 #side-drawer 容器 -->
+  </div>
 
   <!-- 教師控制台彈窗 -->
   <div id="modal-teacher" class="modal-overlay hidden">
@@ -1258,16 +1239,18 @@
   </div>
 
   <script>
-    // XSS 防禦跳脫
+    // ==========================================
+    // 🛡️ XSS 防禦與核心字串輔助
+    // ==========================================
     function escapeHTML(str) {
       if (str === null || str === undefined) return '';
       return String(str).replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        '&': '&', '<': '<', '>': '>', "'": ''', '"': '"'
       }[tag] || tag));
     }
 
     // ==========================================
-    // 1. 群島配置（正六角形密合配置）
+    // 1. 群島設定常數
     // ==========================================
     const ISLAND_CONFIG = [
       { id: 'beyblade', title: '戰鬥陀螺島', subtitle: '進行一對一戰鬥・不定期舉辦淘汰錦標賽', color: 0xFA8072, pos: [0, 0, 0], radius: 5.2 },
@@ -1280,7 +1263,7 @@
     ];
 
     // ==========================================
-    // 2. 金鑰與雲端設定區
+    // 2. 雲端金鑰與 API 設定
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyAiQtbWb4ewd3322xfMo5eKQ3S-rG4Xfmg",
@@ -1301,21 +1284,68 @@
     let currentClassEnergy = 0;
     let currentDailyQuestion = null;
 
-    // 🌟 全域模型與特效安全參照
     let cartGroup = null;
-    // ==========================================
-    // ⛏️ 北荒地（龜山福德神廟島）開墾全域變數
-    // ==========================================
-    let northIslandProgress = 0; // 0 ~ 100
+    let northIslandProgress = 0;
     let northIslandReclaimRef = null;
     let northIslandGroup = null;
     let currentMathQuestion = null;
 
-    // 開墾各階段 3D 子物件參照
-    let stageMeshGrass = null;      // 25% 平整草皮
-    let stageMeshHelipad = null;    // 50% 熱氣球降落坪
-    let stageMeshRuinTemple = null; // 75% 廢墟神廟
-    let stageMeshNewTemple = null;  // 100% 嶄新神廟
+    let stageMeshGrass = null;
+    let stageMeshHelipad = null;
+    let stageMeshRuinTemple = null;
+    let stageMeshNewTemple = null;
+
+    // ==========================================
+    // ⚡ Phase 1 優化：幾何體與材質池化及記憶體清理器
+    // ==========================================
+    const SharedPool = {
+      materials: new Map(),
+      geometries: {
+        humanTorso: new THREE.BoxGeometry(0.42, 0.52, 0.24),
+        humanHead: new THREE.BoxGeometry(0.36, 0.36, 0.36),
+        humanArm: new THREE.BoxGeometry(0.11, 0.45, 0.11),
+        humanLeg: new THREE.BoxGeometry(0.13, 0.48, 0.13),
+        humanEye: new THREE.BoxGeometry(0.07, 0.09, 0.02),
+        dogBody: new THREE.BoxGeometry(0.28, 0.28, 0.52),
+        dogCollar: new THREE.BoxGeometry(0.26, 0.26, 0.10),
+        dogHead: new THREE.BoxGeometry(0.26, 0.26, 0.24),
+        dogSnout: new THREE.BoxGeometry(0.14, 0.12, 0.16),
+        dogEar: new THREE.BoxGeometry(0.06, 0.12, 0.06),
+        dogLeg: new THREE.BoxGeometry(0.09, 0.26, 0.09),
+        dogTail: new THREE.BoxGeometry(0.06, 0.06, 0.22)
+      },
+      getMaterial(type, params) {
+        const key = `${type}_${JSON.stringify(params)}`;
+        if (!this.materials.has(key)) {
+          this.materials.set(key, new THREE[type](params));
+        }
+        return this.materials.get(key);
+      }
+    };
+
+    function deepDispose(object3D) {
+      if (!object3D) return;
+      object3D.traverse(child => {
+        if (child.isMesh) {
+          const isSharedGeo = Object.values(SharedPool.geometries).includes(child.geometry);
+          if (child.geometry && !isSharedGeo) {
+            child.geometry.dispose();
+          }
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(m => m.dispose());
+            } else if (!child.material.isShared) {
+              child.material.dispose();
+            }
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // 🌐 Phase 1 優化：多人連線位移節流狀態
+    // ==========================================
+    let lastSyncedCoord = { x: null, z: null };
 
     try {
       firebase.initializeApp(firebaseConfig);
@@ -1362,20 +1392,18 @@
       alert('戰鬥陀螺大賽已圓滿落幕！周圍四島任務已重新開放，能量開始重新累積！');
     }
 
-// ==========================================
-    // 🎵 背景音樂與環境音效同步控制（預設關閉）
+    // ==========================================
+    // 🎵 背景音效與音樂控制
     // ==========================================
     const BGM_URL = "./yume.mp3";
     const bgmAudio = new Audio(BGM_URL);
     bgmAudio.loop = true;
     bgmAudio.volume = 0.35;
-    let isBgmPlaying = false; // 預設關閉
+    let isBgmPlaying = false;
 
     function toggleBGM() {
       const ambientAudio = ISLAND_AUDIO_MAP.ambient;
-
       if (!isBgmPlaying) {
-        // 🌟 同步開啟背景音樂與環境鳥叫
         bgmAudio.play().then(() => {
           isBgmPlaying = true;
           updateBgmButtonUI();
@@ -1385,7 +1413,6 @@
           ambientAudio.play().catch(err => console.warn("環境音效播放提示:", err));
         }
       } else {
-        // 🌟 同步關閉背景音樂與環境鳥叫
         bgmAudio.pause();
         if (ambientAudio) {
           ambientAudio.pause();
@@ -1399,21 +1426,11 @@
       const icon = document.getElementById('bgm-icon');
       const text = document.getElementById('bgm-text');
       if (icon && text) {
-        if (isBgmPlaying) {
-          icon.textContent = '🎵';
-          text.textContent = '音樂：開';
-        } else {
-          icon.textContent = '🔇';
-          text.textContent = '音樂：關';
-        }
+        icon.textContent = isBgmPlaying ? '🎵' : '🔇';
+        text.textContent = isBgmPlaying ? '音樂：開' : '音樂：關';
       }
     }
 
-
-
-// ==========================================
-    // 🔔 自備實體 MP3 音效對應與播放器
-    // ==========================================
     const ISLAND_AUDIO_MAP = {
       nature: new Audio('./sounds/nature.mp3'),
       sport: new Audio('./sounds/sport.mp3'),
@@ -1428,30 +1445,10 @@
       ambient: new Audio('./sounds/ambient.mp3')
     };
 
-    // 預設將一般點擊音效音量設定為 0.5
-    Object.values(ISLAND_AUDIO_MAP).forEach(audio => {
-      audio.volume = 0.3;
-    });
-
-    // 🌟 1. 台車行駛音量調整（建議 0.2 ~ 0.4，避免鐵軌聲過於刺耳）
-    if (ISLAND_AUDIO_MAP.cart) {
-      ISLAND_AUDIO_MAP.cart.loop = true;
-      ISLAND_AUDIO_MAP.cart.volume = 0.3; // 👈 在這裡調整台車音量
-    }
-
-    // 🌟 2. 巡邏艇破浪引擎音量調整（建議 0.25 ~ 0.45）
-    if (ISLAND_AUDIO_MAP.boat) {
-      ISLAND_AUDIO_MAP.boat.loop = true;
-      ISLAND_AUDIO_MAP.boat.volume = 0.3; // 👈 在這裡調整巡邏艇音量
-    }
-
-    // 🌟 將台車與巡邏艇的音訊設為循環播放 (搭乘時持續有音效)
-    if (ISLAND_AUDIO_MAP.cart) ISLAND_AUDIO_MAP.cart.loop = true;
-    if (ISLAND_AUDIO_MAP.boat) ISLAND_AUDIO_MAP.boat.loop = true;
-    if (ISLAND_AUDIO_MAP.ambient) {
-      ISLAND_AUDIO_MAP.ambient.loop = true;    // ✅ 設定循環重複播放
-      ISLAND_AUDIO_MAP.ambient.volume = 0.1;  // 🔊 音量調整（0.0 ~ 1.0，建議設為 0.3 ~ 0.4，避免蓋過背景音樂）
-    }
+    Object.values(ISLAND_AUDIO_MAP).forEach(audio => { audio.volume = 0.3; });
+    if (ISLAND_AUDIO_MAP.cart) { ISLAND_AUDIO_MAP.cart.loop = true; ISLAND_AUDIO_MAP.cart.volume = 0.3; }
+    if (ISLAND_AUDIO_MAP.boat) { ISLAND_AUDIO_MAP.boat.loop = true; ISLAND_AUDIO_MAP.boat.volume = 0.3; }
+    if (ISLAND_AUDIO_MAP.ambient) { ISLAND_AUDIO_MAP.ambient.loop = true; ISLAND_AUDIO_MAP.ambient.volume = 0.1; }
 
     function playCustomAudio(islandId) {
       let playKey = islandId;
@@ -1461,15 +1458,11 @@
       const audio = ISLAND_AUDIO_MAP[playKey];
       if (audio) {
         if (playKey === 'ambient' && !audio.paused) return;
-
         audio.currentTime = 0;
-        audio.play().catch(err => {
-          console.warn(`[音效播放提示] ${playKey} 音效播放受阻:`, err);
-        });
+        audio.play().catch(err => console.warn(`[音效播放提示] ${playKey} 播放受阻:`, err));
       }
     }
 
-    // 🌟 新增：停止指定音效的函式
     function stopCustomAudio(islandId) {
       const audio = ISLAND_AUDIO_MAP[islandId];
       if (audio) {
@@ -1477,9 +1470,9 @@
         audio.currentTime = 0;
       }
     }
-    
+
     // ==========================================
-    // 3. 學生身分與登入專屬人物管理
+    // 3. 學生登入與個人資料管理
     // ==========================================
     let currentStudent = { 
       seatNumber: '', 
@@ -1603,6 +1596,7 @@
       if (playerVillager) {
         if (typeof scene !== 'undefined' && scene) {
           scene.remove(playerVillager.obj);
+          deepDispose(playerVillager.obj); // 🌟 釋放 GPU 資源
         }
         if (typeof villagers !== 'undefined' && villagers) {
           const idx = villagers.indexOf(playerVillager);
@@ -1613,378 +1607,47 @@
     }
 
     // ==========================================
-    // 🐶 麥塊風格方塊狗模型生成工廠
+    // 🌐 Phase 1 優化：GAS 名冊快取讀取
     // ==========================================
-    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) {
-      const dog = new THREE.Group();
-
-      const furMat = new THREE.MeshStandardMaterial({ color: furColor, roughness: 0.85, flatShading: true });
-      const collarMat = new THREE.MeshStandardMaterial({ color: collarColor, roughness: 0.6, flatShading: true });
-      const darkMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.9, flatShading: true });
-      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.7, flatShading: true });
-
-      // 1. 身體 (Body)
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.52), furMat);
-      body.position.set(0, 0.32, -0.05);
-      body.castShadow = true;
-      body.receiveShadow = true;
-      dog.add(body);
-
-      // 2. 經典馴服項圈 (Collar)
-      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.10), collarMat);
-      collar.position.set(0, 0.38, 0.20);
-      collar.castShadow = true;
-      dog.add(collar);
-
-      // 3. 頭部與耳朵 (Head & Ears)
-      const headPivot = new THREE.Group();
-      headPivot.position.set(0, 0.44, 0.30);
-
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.24), furMat);
-      head.position.set(0, 0.08, 0.06);
-      head.castShadow = true;
-      headPivot.add(head);
-
-      // 雙耳
-      [-0.09, 0.09].forEach(ex => {
-        const ear = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.06), furMat);
-        ear.position.set(ex, 0.22, 0.05);
-        ear.castShadow = true;
-        headPivot.add(ear);
-      });
-
-      // 口鼻 (Snout)
-      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.16), furMat);
-      snout.position.set(0, 0.02, 0.22);
-      snout.castShadow = true;
-      headPivot.add(snout);
-
-      // 鼻子黑點
-      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.02), darkMat);
-      nose.position.set(0, 0.05, 0.305);
-      headPivot.add(nose);
-
-      // 雙眼 (麥塊黑瞳孔 + 白眼白)
-      [-0.08, 0.08].forEach(eyeX => {
-        const eyeDark = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), darkMat);
-        eyeDark.position.set(eyeX, 0.11, 0.185);
-        headPivot.add(eyeDark);
-
-        const eyeWhite = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 0.025), whiteMat);
-        eyeWhite.position.set(eyeX + (eyeX > 0 ? 0.02 : -0.02), 0.11, 0.185);
-        headPivot.add(eyeWhite);
-      });
-
-      dog.add(headPivot);
-
-      // 4. 四隻腳 (Legs - 以關節頂部為旋轉中心)
-      const legGeo = new THREE.BoxGeometry(0.09, 0.26, 0.09);
-
-      function makeLegPivot(x, z) {
-        const pivot = new THREE.Group();
-        pivot.position.set(x, 0.26, z);
-        const legMesh = new THREE.Mesh(legGeo, furMat);
-        legMesh.position.y = -0.13;
-        legMesh.castShadow = true;
-        pivot.add(legMesh);
-        dog.add(pivot);
-        return pivot;
-      }
-
-      const frontLeft = makeLegPivot(-0.09, 0.13);
-      const frontRight = makeLegPivot(0.09, 0.13);
-      const backLeft = makeLegPivot(-0.09, -0.22);
-      const backRight = makeLegPivot(0.09, -0.22);
-
-      // 5. 尾巴 (Tail)
-      const tailPivot = new THREE.Group();
-      tailPivot.position.set(0, 0.38, -0.30);
-      tailPivot.rotation.x = -Math.PI / 4; // 麥塊狗元氣翹尾
-
-      const tailMesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.22), furMat);
-      tailMesh.position.z = -0.11;
-      tailMesh.castShadow = true;
-      tailPivot.add(tailMesh);
-      dog.add(tailPivot);
-
-      // 🌟 映射肢體：前腳對應 arms，後腳對應 legs，達成四足對角交替踏步
-      dog.userData.limbs = {
-        leftArm: frontLeft,   // 前左
-        rightArm: frontRight, // 前右
-        leftLeg: backLeft,    // 後左
-        rightLeg: backRight,  // 後右
-        tail: tailPivot,
-        head: headPivot
-      };
-
-      return dog;
-    }
-
-    function spawnPlayerCharacter() {
-      removePlayerCharacter();
-      if (typeof createCharacterMesh !== 'function' || typeof scene === 'undefined' || !scene) return;
-
-      const isGirl = (currentStudent.gender === 'girl');
-      let customSkin, customClothes, customHair;
-
-      if (isGirl) {
-        const pinkPalette = [0xF472B6, 0xFB7185, 0xF87171, 0xFDA4AF, 0xDB2777, 0xEC4899];
-        customClothes = pinkPalette[Math.floor(Math.random() * pinkPalette.length)];
-        customSkin = 0xF5D0A9;
-        customHair = 0x72376A;
-      }
-
-      const person = createCharacterMesh(isGirl, customSkin, customClothes, customHair);
-      person.userData.isPlayer = true;
-
-      const displayName = currentStudent.seatNumber === '訪客' 
-        ? `${currentStudent.avatar} ${currentStudent.name}` 
-        : `${currentStudent.seatNumber}號 ${currentStudent.name}`;
-      const nameplate = createPlayerNameplateSprite(displayName);
-      person.add(nameplate);
-
-      const companionSprite = createCompanionSprite(currentStudent.avatar);
-      person.add(companionSprite);
-
-      const spawnOptions = [1, 2, 3, 4, 5, 6, 'cart'];
-      const chosenSpawn = spawnOptions[Math.floor(Math.random() * spawnOptions.length)];
-
-if (chosenSpawn === 'cart' && typeof trailerCarts !== 'undefined' && trailerCarts && trailerCarts.length >= 3) {
-        // 隨機選取第 2 節 (索引 1) 或第 3 節 (索引 2) 車廂
-        const cartIndex = Math.random() < 0.5 ? 1 : 2;
-        const targetCart = trailerCarts[cartIndex];
-
-        // 隨機挑選該節車廂的 4 個座位之一（左右座 X: ±0.24，前排或後排）
-        const isFrontRow = Math.random() < 0.5;
-        const seatX = Math.random() < 0.5 ? -0.24 : 0.24;
-        
-        // 🌟 修正前後精確位置：
-        // 前排座椅在 Z = -0.45，屁股落在 -0.44；後排座椅在 Z = +0.45，屁股落在 +0.44
-        const seatZ = isFrontRow ? -0.44 : 0.44;
-        
-        targetCart.add(person);
-        
-        // 🌟 修正 Y 軸高度：由 0.42 調降至 0.38，使臀部貼合在木頭椅墊上
-        person.position.set(seatX, 0.38, seatZ);
-        
-        // 🌟 修正面朝方向：前排背靠 -0.59 面向前方(0)，後排背靠 +0.59 面向後方(Math.PI)
-        person.rotation.set(0, isFrontRow ? 0 : Math.PI, 0);
-
-        const limbs = person.userData.limbs;
-        if (limbs) {
-          // 雙腿向前水平伸直平放
-          limbs.leftLeg.rotation.x = -1.57;
-          limbs.rightLeg.rotation.x = -1.57;
-          // 雙手自然垂放膝蓋
-          limbs.leftArm.rotation.x = -0.45;
-          limbs.rightArm.rotation.x = -0.45;
-          limbs.leftArm.rotation.z = 0.08;
-          limbs.rightArm.rotation.z = -0.08;
-          if (limbs.skirt) limbs.skirt.rotation.x = -0.65;
-        }
-
-        // 🌟 即時計算該座位的世界座標，確保不落在湖水中央
-        const worldPos = new THREE.Vector3();
-        person.getWorldPosition(worldPos);
-
-        playerVillager = {
-          obj: person,
-          isOnCart: true,
-          parentCart: targetCart,
-          homeIslandIdx: 1,
-          currentIslandIdx: 1,
-          currentX: worldPos.x,
-          currentZ: worldPos.z,
-          targetX: worldPos.x,
-          targetZ: worldPos.z,
-          walkCycle: 0,
-          waitTimer: 99999,
-          speed: 0,
-          isSkirt: isGirl,
-          companionSprite: companionSprite
-        };
-      }else {
-        const islandIdx = (typeof chosenSpawn === 'number') ? chosenSpawn : 1;
-        const startIsland = ISLAND_CONFIG[islandIdx];
-
-        let spawnX = startIsland.pos[0];
-        let spawnZ = startIsland.pos[2];
-        for (let attempt = 0; attempt < 15; attempt++) {
-          const a = Math.random() * Math.PI * 2;
-          const r = 2.0 + Math.random() * (startIsland.radius - 2.8);
-          const lx = Math.cos(a) * r;
-          const lz = Math.sin(a) * r;
-          if (typeof isPositionBlocked === 'function' && !isPositionBlocked(startIsland.id, lx, lz)) {
-            spawnX = startIsland.pos[0] + lx;
-            spawnZ = startIsland.pos[2] + lz;
-            break;
-          }
-        }
-
-        person.position.set(spawnX, 0, spawnZ);
-        scene.add(person);
-
-        playerVillager = {
-          obj: person,
-          isOnCart: false,
-          homeIslandIdx: islandIdx,
-          currentIslandIdx: islandIdx,
-          currentX: spawnX,
-          currentZ: spawnZ,
-          targetX: spawnX,
-          targetZ: spawnZ,
-          walkCycle: 0,
-          waitTimer: 0,
-          speed: 0.022,
-          isSkirt: isGirl,
-          companionSprite: companionSprite
-        };
-
-        pickNextPlayerWanderTarget();
-      }
-    } 
-
-    // ==========================================
-    // ⛏️ 玩家北荒地墾荒動作與裝備狀態切換
-    // ==========================================
-    let isPlayerFarming = false; // 墾荒動作狀態旗標
-
-function startPlayerFarming() {
-      // 🌟 開發進度達 50% 以上時，降落坪已建成，不再觸發手持鋤頭墾荒動作
-      if (northIslandProgress >= 50) return;
-
-      if (!playerVillager || !playerVillager.obj) return;
-      isPlayerFarming = true;
-
-      // 1. 若玩家原本坐在台車上，先從台車拆離並移回主場景
-      if (playerVillager.isOnCart && playerVillager.parentCart) {
-        playerVillager.parentCart.remove(playerVillager.obj);
-        scene.add(playerVillager.obj);
-        playerVillager.isOnCart = false;
-      }
-
-      // 2. 將玩家瞬間傳送到北荒地墾荒工作點 (北島中心座標 X:0, Z:-9.0，稍微偏前 X:0.8, Z:-8.2)
-      const farmX = 0.8;
-      const farmZ = -8.2;
-      playerVillager.obj.position.set(farmX, 0, farmZ);
-      playerVillager.obj.rotation.set(0, -Math.PI * 0.75, 0); // 面向北島開墾中心
-      playerVillager.currentX = farmX;
-      playerVillager.currentZ = farmZ;
-      playerVillager.targetX = farmX;
-      playerVillager.targetZ = farmZ;
-      playerVillager.waitTimer = 999999; // 暫停原本的日常漫步巡邏計時
-
-      // 3. 在角色的右手掛載鋤頭模型
-      const rightArmPivot = playerVillager.obj.userData.limbs?.rightArm;
-      if (rightArmPivot && !rightArmPivot.getObjectByName("player_hoe")) {
-        const hoe = createHoeTool();
-        hoe.position.set(0, -0.42, 0.04);
-        rightArmPivot.add(hoe);
-      }
-    }
-
-    function stopPlayerFarming() {
-      if (!playerVillager || !playerVillager.obj) return;
-      isPlayerFarming = false;
-
-      // 1. 卸下右手上的鋤頭
-      const rightArmPivot = playerVillager.obj.userData.limbs?.rightArm;
-      if (rightArmPivot) {
-        const hoe = rightArmPivot.getObjectByName("player_hoe");
-        if (hoe) rightArmPivot.remove(hoe);
-      }
-
-      // 2. 復原身軀與手臂角度為自然站立
-      playerVillager.obj.rotation.x = 0;
-      const limbs = playerVillager.obj.userData.limbs;
-      if (limbs) {
-        limbs.leftArm.rotation.set(0, 0, 0);
-        limbs.rightArm.rotation.set(0, 0, 0);
-        limbs.leftLeg.rotation.set(0, 0, 0);
-        limbs.rightLeg.rotation.set(0, 0, 0);
-      }
-
-      // 3. 恢復日常自由漫步
-      playerVillager.currentIslandIdx = 5; // 北荒地索引
-      playerVillager.waitTimer = 20;
-      if (typeof pickNextPlayerWanderTarget === 'function') {
-        pickNextPlayerWanderTarget();
-      }
-    }
-
-    const ISLAND_NEIGHBORS = {
-      0: [1, 2, 3, 4, 5, 6],
-      1: [0, 3, 5],
-      2: [0, 4, 5],
-      3: [0, 1, 6],
-      4: [0, 2, 6],
-      5: [0, 1, 2],
-      6: [0, 3, 4]
-    };
-
-    // 🌟 增加防呆次數上限，找不到點時立即安全待機，避免阻塞主執行緒
-    function pickNextPlayerWanderTarget() {
-      if (!playerVillager || playerVillager.isOnCart) return;
-
-      const currentIdx = playerVillager.currentIslandIdx;
-      let targetIdx = currentIdx;
-
-      const willTravel = Math.random() < 0.25;
-      if (willTravel && ISLAND_NEIGHBORS[currentIdx]) {
-        const neighbors = ISLAND_NEIGHBORS[currentIdx];
-        targetIdx = neighbors[Math.floor(Math.random() * neighbors.length)];
-      }
-
-      const targetIsland = ISLAND_CONFIG[targetIdx];
-      const center = targetIsland.pos;
-      let foundValid = false;
-      let tx = 0, tz = 0;
-
-      // 防呆迴圈降低為 16 次
-      for (let attempt = 0; attempt < 16; attempt++) {
-        const a = Math.random() * Math.PI * 2;
-        const r = 2.0 + Math.random() * (targetIsland.radius - 2.8);
-        const wx = center[0] + Math.cos(a) * r;
-        const wz = center[2] + Math.sin(a) * r;
-
-        if (typeof isWorldPosBlocked === 'function' && !isWorldPosBlocked(wx, wz, 0.5)) {
-          tx = wx;
-          tz = wz;
-          foundValid = true;
-          break;
-        }
-      }
-
-      if (foundValid) {
-        playerVillager.targetX = tx;
-        playerVillager.targetZ = tz;
-        playerVillager.targetIslandIdx = targetIdx;
-      } else {
-        // 安全退出並待機
-        playerVillager.waitTimer = 40;
-      }
-    }
-
     async function loadStudentRoster() {
       const select = document.getElementById('select-identity');
+      const today = getTodayKey();
+      const cacheKey = `island_roster_cache_${today}`;
+      const cached = sessionStorage.getItem(cacheKey);
+
+      if (cached) {
+        try {
+          const data = JSON.parse(cached);
+          applyRosterData(data);
+          return;
+        } catch(e) {
+          sessionStorage.removeItem(cacheKey);
+        }
+      }
+
       try {
         const res = await fetch(GAS_API_URL);
         const data = await res.json();
         if (data.status === 'success' && data.students) {
-          rosterList = data.students;
-          if (data.dailyQuestion) {
-            currentDailyQuestion = data.dailyQuestion;
-            if (typeof renderDailyQuestionUI === 'function') renderDailyQuestionUI();
-          }
-          renderSelectOptions();
-          if (data.weather && typeof applyWeatherEffect === 'function') {
-            applyWeatherEffect(data.weather);
-          }
+          sessionStorage.setItem(cacheKey, JSON.stringify(data));
+          applyRosterData(data);
         } else {
           fallbackRoster();
         }
       } catch (err) {
         fallbackRoster();
+      }
+    }
+
+    function applyRosterData(data) {
+      rosterList = data.students || [];
+      if (data.dailyQuestion) {
+        currentDailyQuestion = data.dailyQuestion;
+        if (typeof renderDailyQuestionUI === 'function') renderDailyQuestionUI();
+      }
+      renderSelectOptions();
+      if (data.weather && typeof applyWeatherEffect === 'function') {
+        applyWeatherEffect(data.weather);
       }
     }
 
@@ -2054,7 +1717,6 @@ function startPlayerFarming() {
       });
     });
 
-    // 🌟 登入後防凍結/防卡死最佳化處理
     document.getElementById('btn-save-profile').addEventListener('click', () => {
       const selVal = document.getElementById('select-identity').value;
       if (!selVal) { alert('請先選擇你的座號身分喔！'); return; }
@@ -2083,19 +1745,16 @@ function startPlayerFarming() {
       sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
       updateHudProfile();
 
-      // 1. 強制隱藏遮罩與側欄，釋放點擊
       document.getElementById('login-modal').classList.add('hidden');
       if (typeof closeDrawer === 'function') closeDrawer();
       if (typeof toggleBracketSidebar === 'function') toggleBracketSidebar(false);
 
-      // 2. 解除鏡頭鎖定並刷新控制器
       if (typeof isFocusing !== 'undefined') isFocusing = false;
       if (typeof controls !== 'undefined' && controls) {
         controls.enabled = true;
         controls.update();
       }
 
-      //startBGM();
       if (typeof playCustomAudio === 'function') {
         playCustomAudio('ambient');
       }
@@ -2112,8 +1771,9 @@ function startPlayerFarming() {
         }, 800);
       }
     });
+
     // ==========================================
-    // 4. 每日打卡限制（綁定座號 + 雲端同步防刷）
+    // 4. 每日打卡限制與狀態
     // ==========================================
     function getTodayKey() {
       const d = new Date();
@@ -2164,7 +1824,7 @@ function startPlayerFarming() {
       });
     }
 
-function checkDailyLimit(islandId) {
+    function checkDailyLimit(islandId) {
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
       if (isTournamentActive && islandId !== 'beyblade') {
         alert('⚔️ 目前為戰鬥陀螺大賽期間，本島任務暫停，請前往戰鬥陀螺島！');
@@ -2236,11 +1896,7 @@ function checkDailyLimit(islandId) {
         }
 
         const isClosed = isNightClosed || isTournamentActive || isCompleted;
-        if (isClosed) {
-          elem.setAttribute('class', 'minimap-island minimap-closed');
-        } else {
-          elem.setAttribute('class', 'minimap-island minimap-open');
-        }
+        elem.setAttribute('class', isClosed ? 'minimap-island minimap-closed' : 'minimap-island minimap-open');
       });
 
       const bbElem = document.getElementById('mini-beyblade');
@@ -2285,7 +1941,7 @@ function checkDailyLimit(islandId) {
     }
 
     // ==========================================
-    // 5. 能量光球發射、滿額歸零與打卡
+    // 5. 能量光球與成果提交
     // ==========================================
     async function sendToGAS(payload) {
       if (!GAS_API_URL || GAS_API_URL.includes("請替換")) return;
@@ -2298,8 +1954,6 @@ function checkDailyLimit(islandId) {
         });
       } catch(e) {}
     }
-
-
 
     let energyOrbs = [];
     function spawnEnergyOrb(fromPos, toPos) {
@@ -2397,7 +2051,7 @@ function checkDailyLimit(islandId) {
     }
 
     // ==========================================
-    // 6. 各島送出函式
+    // 6. 各島任務送出邏輯
     // ==========================================
     function submitNature() {
       if (!checkDailyLimit('nature')) return;
@@ -2549,39 +2203,30 @@ function checkDailyLimit(islandId) {
       if (input) input.value = '';
     }
 
-// ==========================================
-    // 🧮 專屬範圍題庫：
-    // 1) 10000以內數的加減
-    // 2) 3位數乘以1位數
-    // 🎲 50% 純計算題 ＋ 50% 新北學力檢測生活應用題
+    // ==========================================
+    // 🧮 專屬範圍題庫 (三年級數學)
     // ==========================================
     function generateGrade3MathQuestion() {
-      const isWordProblem = Math.random() < 0.5; // 50% 機率出生活應用題
+      const isWordProblem = Math.random() < 0.5;
       let text = '', ans = 0;
 
       if (!isWordProblem) {
-        // ----------------------------------------------------
-        // 類別 A：基礎純計算題
-        // ----------------------------------------------------
         const calcTypes = ['add', 'sub', 'mul'];
         const picked = calcTypes[Math.floor(Math.random() * calcTypes.length)];
 
         if (picked === 'add') {
-          // 10000 以內加法
           const n1 = Math.floor(Math.random() * 4500) + 1200;
           const n2 = Math.floor(Math.random() * (9800 - n1 - 400)) + 350;
           text = `請問：${n1} ＋ ${n2} 等於多少？`;
           ans = n1 + n2;
         } else if (picked === 'sub') {
-          // 10000 以內減法
           const n1 = Math.floor(Math.random() * 6500) + 3200;
           const n2 = Math.floor(Math.random() * (n1 - 800)) + 350;
           text = `請問：${n1} － ${n2} 等於多少？`;
           ans = n1 - n2;
         } else {
-          // 🌟 限制為：3位數 × 1位數
-          const threeDigits = Math.floor(Math.random() * 880) + 115; // 115 ~ 994
-          const oneDigit = Math.floor(Math.random() * 8) + 2;         // 2 ~ 9
+          const threeDigits = Math.floor(Math.random() * 880) + 115;
+          const oneDigit = Math.floor(Math.random() * 8) + 2;
 
           if (Math.random() < 0.5) {
             text = `請問：${threeDigits} × ${oneDigit} 等於多少？`;
@@ -2592,76 +2237,55 @@ function checkDailyLimit(islandId) {
           }
         }
       } else {
-        // ----------------------------------------------------
-        // 類別 B：新北中年級學測生活應用題
-        // ----------------------------------------------------
         const wordTemplates = [
-          // 1. 【3位數×1位數】全校用品或器材採購情境
           () => {
-            const price = Math.floor(Math.random() * 650) + 145; // 145 ~ 794 元 (3 位數單價)
-            const qty = Math.floor(Math.random() * 8) + 2;       // 2 ~ 9 套 (1 位數數量)
-            const total = price * qty;
+            const price = Math.floor(Math.random() * 650) + 145;
+            const qty = Math.floor(Math.random() * 8) + 2;
             return {
               text: `學校為自然教室添購實驗器材，每套器材售價 ${price} 元，一共購買了 ${qty} 套，請問總共需要支付多少元？`,
-              ans: total
+              ans: price * qty
             };
           },
-
-          // 2. 【3位數×1位數】裝箱與水果總數情境
           () => {
-            const each = Math.floor(Math.random() * 600) + 120; // 120 ~ 719 顆 (3 位數)
-            const boxes = Math.floor(Math.random() * 7) + 3;    // 3 ~ 9 箱 (1 位數)
-            const total = each * boxes;
+            const each = Math.floor(Math.random() * 600) + 120;
+            const boxes = Math.floor(Math.random() * 7) + 3;
             return {
               text: `果園採收了一批甜柿，每箱裝有 ${each} 顆，工廠一共打包了 ${boxes} 箱，請問這批甜柿共有多少顆？`,
-              ans: total
+              ans: each * boxes
             };
           },
-
-          // 3. 【3位數×1位數】門票與票價總計情境
           () => {
-            const ticketPrice = Math.floor(Math.random() * 320) + 130; // 130 ~ 449 元 (3 位數)
-            const people = Math.floor(Math.random() * 6) + 3;          // 3 ~ 8 人 (1 位數)
-            const total = ticketPrice * people;
+            const ticketPrice = Math.floor(Math.random() * 320) + 130;
+            const people = Math.floor(Math.random() * 6) + 3;
             return {
               text: `志工隊參觀烏來台車博物館，全票每張 ${ticketPrice} 元，共有 ${people} 位隊員購票入場，請問車票費用總共是多少元？`,
-              ans: total
+              ans: ticketPrice * people
             };
           },
-
-          // 4. 【10000以內連減/兩步驟】庫存物資剩餘情境
           () => {
-            const total = Math.floor(Math.random() * 3000) + 6500;  // 6500 ~ 9499
-            const used1 = Math.floor(Math.random() * 1800) + 1200;  // 1200 ~ 2999
-            const used2 = Math.floor(Math.random() * 1800) + 1100;  // 1100 ~ 2899
-            const remain = total - used1 - used2;
+            const total = Math.floor(Math.random() * 3000) + 6500;
+            const used1 = Math.floor(Math.random() * 1800) + 1200;
+            const used2 = Math.floor(Math.random() * 1800) + 1100;
             return {
               text: `開墾隊物資倉庫原有 ${total} 包水泥，建造神廟地基用去了 ${used1} 包，鋪設降落坪又用去了 ${used2} 包，請問倉庫還剩下多少包水泥？`,
-              ans: remain
+              ans: total - used1 - used2
             };
           },
-
-          // 5. 【10000以內加減比較】全體人數兩步驟情境
           () => {
-            const boys = Math.floor(Math.random() * 1200) + 2300; // 2300 ~ 3499
-            const diff = Math.floor(Math.random() * 260) + 80;    // 80 ~ 339
+            const boys = Math.floor(Math.random() * 1200) + 2300;
+            const diff = Math.floor(Math.random() * 260) + 80;
             const girls = boys - diff;
-            const allStudents = boys + girls;
             return {
               text: `新北市某國小全校男生有 ${boys} 人，女生比男生少了 ${diff} 人，請問全校學生一共有多少人？`,
-              ans: allStudents
+              ans: boys + girls
             };
           },
-
-          // 6. 【10000以內加法累計】展覽參觀總人次情境
           () => {
-            const day1 = Math.floor(Math.random() * 1800) + 2600; // 2600 ~ 4399
-            const more = Math.floor(Math.random() * 850) + 420;   // 420 ~ 1269
-            const day2 = day1 + more;
-            const total = day1 + day2;
+            const day1 = Math.floor(Math.random() * 1800) + 2600;
+            const more = Math.floor(Math.random() * 850) + 420;
             return {
               text: `陶藝展覽會星期六有 ${day1} 人參觀，星期天參觀的人數比星期六多了 ${more} 人，請問這兩天共有多少人參觀展覽？`,
-              ans: total
+              ans: day1 + (day1 + more)
             };
           }
         ];
@@ -2681,16 +2305,12 @@ function checkDailyLimit(islandId) {
       if (fBox) fBox.style.display = 'none';
     }
 
-    // ==========================================
-    // ⛏️ 提交解答・驗證批改並推進開墾進度
-    // ==========================================
     function submitMathReclaim() {
       if (northIslandProgress >= 100) {
         alert('🎉 龜山福德神廟島已開墾完成囉！感謝探險家的付出！');
         return;
       }
 
-      // 檢查每日 1 次限制
       if (!checkDailyLimit('wasteland_n')) return;
 
       if (!currentMathQuestion) {
@@ -2706,47 +2326,39 @@ function checkDailyLimit(islandId) {
         return;
       }
 
-// 比對答案
       if (inputVal === currentMathQuestion.correctAnswer) {
         fBox.style.display = 'block';
         fBox.style.background = '#dcfce7';
         fBox.style.border = '2px solid #22c55e';
         fBox.style.color = '#15803d';
-        // 🌟 1. 提示文字由 5% 改為 3%
         fBox.innerHTML = `<strong>🎉 算得太準確了！</strong><br>答案正確，成功為北荒地注入 3% 開墾進度！`;
 
         if (typeof stopPlayerFarming === 'function' && isPlayerFarming) {
           stopPlayerFarming();
         }
 
-        // 🌟 2. 本機即時累加改為 +3（上限 100%）
         const nextProgress = Math.min((northIslandProgress || 0) + 3, 100);
         const willReachFull = (northIslandProgress < 100 && nextProgress >= 100);
 
-        // 本機即時強制刷新進度條與地標模型
         updateNorthIslandReclaimVisuals(nextProgress);
 
-        // 🌟 3. 雲端同步寫入累加改為 +3
         if (northIslandReclaimRef) {
           northIslandReclaimRef.transaction(current => {
             let next = (current || 0) + 3;
             return (next >= 100) ? 100 : next;
-          }, (error, committed, snapshot) => {
+          }, (error, committed) => {
             if (error || !committed) {
-              console.warn("[北荒地進度] Transaction 失敗，改用 set 直接寫入:", error);
               northIslandReclaimRef.set(nextProgress);
             }
           });
         }
 
-        // 滿 100% 完工獎勵
         if (willReachFull && totalEnergyRef) {
           totalEnergyRef.transaction(c => (c || 0) + 100);
           showLiveBanner("⛩️ 狂賀！北荒地神廟全面完工！全班獲得 100 點共創能量！");
           confetti({ particleCount: 150, spread: 100 });
         }
 
-        // 🌟 4. GAS 回傳紀錄文字同步更新為 3%
         rewardCheckin('wasteland_n', '龜山荒地開墾', `解答數學完成，貢獻了 3% 開墾進度`, {
           type: 'task_complete',
           seatNumber: currentStudent.seatNumber,
@@ -2768,11 +2380,9 @@ function checkDailyLimit(islandId) {
       }
     }
 
-    
     function updateNorthIslandReclaimVisuals(progress) {
       northIslandProgress = progress;
 
-      // 1. 更新 UI 進度條與說明
       const pBar = document.getElementById('dev-progress-bar');
       const pText = document.getElementById('dev-progress-text');
       const pTitle = document.getElementById('dev-progress-title');
@@ -2780,7 +2390,6 @@ function checkDailyLimit(islandId) {
       if (pBar) pBar.style.width = `${progress}%`;
       if (pText) pText.textContent = `${progress}%`;
 
-      // 2. 階段模型顯隱控制（階梯式解鎖）
       const isOver25 = progress >= 25;
       const isOver50 = progress >= 50 && progress < 75;
       const isOver75 = progress >= 75 && progress < 100;
@@ -2791,12 +2400,10 @@ function checkDailyLimit(islandId) {
       if (stageMeshRuinTemple) stageMeshRuinTemple.visible = isOver75;
       if (stageMeshNewTemple) stageMeshNewTemple.visible = isCompleted;
 
-      // 3. 初始雜草/岩石的隱藏 (開墾進度 >= 25% 時隱藏原始岩石)
       if (northIslandGroup && northIslandGroup.children[2]) {
         northIslandGroup.children[2].visible = (progress < 25);
       }
 
-      // 4. 動態說明文字與島嶼名稱蛻變
       if (isCompleted) {
         if (pTitle) pTitle.textContent = "⛩️ 龜山福德神廟島 (開墾完成)";
         if (pDesc) pDesc.innerHTML = "✨ <b>全班開墾完成！</b> 古代龜山福德神廟重獲新生，能量長駐，庇佑全島探險家！";
@@ -2975,7 +2582,7 @@ function checkDailyLimit(islandId) {
     }
 
     // ==========================================
-    // 7. 戰鬥陀螺大賽系統與晉級側邊欄
+    // 7. 陀螺大賽賽程與管理
     // ==========================================
     let beybladeBaseMesh = null;
     let beybladeLandmarkGroup = null;
@@ -3005,11 +2612,7 @@ function checkDailyLimit(islandId) {
     function toggleBracketSidebar(forceOpen) {
       const sb = document.getElementById('bracket-sidebar');
       if (!sb) return;
-      if (typeof forceOpen === 'boolean') {
-        sb.classList.toggle('open', forceOpen);
-      } else {
-        sb.classList.toggle('open');
-      }
+      sb.classList.toggle('open', (typeof forceOpen === 'boolean') ? forceOpen : undefined);
     }
 
     function updateNightClosedState() {
@@ -3240,14 +2843,12 @@ function checkDailyLimit(islandId) {
     }
 
     // ==========================================
-    // 8. 教師後台控制邏輯
+    // 8. 教師後台控制與 Google 驗證
     // ==========================================
-// 🌟 1. 設定允許開啟控制台的教師 Google 信箱白名單（請修改信箱）
     const ALLOWED_ADMIN_EMAILS = [
-      "carltonziv@gmail.com" // 👈 換成您自己的 Google 信箱
+      "carltonziv@gmail.com"
     ];
 
-    // 🌟 2. 透過 Google 帳號彈窗登入
     async function loginWithGoogleAdmin() {
       if (!firebase.auth) {
         alert("Firebase Auth 模組尚未成功載入！");
@@ -3274,19 +2875,17 @@ function checkDailyLimit(islandId) {
       }
     }
 
-// 🌟 點擊「🔑 教師控制台」時觸發
     document.getElementById('teacher-menu-btn').addEventListener('click', async () => {
       const currentUser = firebase.auth().currentUser;
       
       const openAdminModal = () => {
-        // 先收合可能開啟的側邊抽屜，防止遮蔽
         if (typeof closeDrawer === 'function') closeDrawer();
         if (typeof toggleBracketSidebar === 'function') toggleBracketSidebar(false);
 
         const modal = document.getElementById('modal-teacher');
         if (modal) {
           modal.classList.remove('hidden');
-          modal.style.zIndex = "99999"; // 強制置於最上層
+          modal.style.zIndex = "99999";
         }
       };
 
@@ -3336,7 +2935,7 @@ function checkDailyLimit(islandId) {
       input.value = '';
     }
 
-function adminClearAllOnlinePlayers() {
+    function adminClearAllOnlinePlayers() {
       if (!confirm('⚠️ 確定要清除所有在線學生的 NPC 嗎？\n這將重置所有在線玩家模型，並清理雲端 online_players 節點！')) {
         return;
       }
@@ -3362,6 +2961,7 @@ function adminClearAllOnlinePlayers() {
             Object.keys(otherPlayers).forEach(key => {
               if (otherPlayers[key] && otherPlayers[key].mesh) {
                 scene.remove(otherPlayers[key].mesh);
+                deepDispose(otherPlayers[key].mesh); // 🌟 釋放顯存
               }
             });
             otherPlayers = {};
@@ -3384,6 +2984,7 @@ function adminClearAllOnlinePlayers() {
         const beybladeGroup = islandGroups.find(g => g.userData && g.userData.id === 'beyblade');
         if (beybladeGroup && championSignboard) {
           beybladeGroup.remove(championSignboard);
+          deepDispose(championSignboard); // 🌟 釋放顯存
           championSignboard = null;
         }
         alert('冠軍木頭告示牌已成功移除！');
@@ -3603,7 +3204,7 @@ function adminClearAllOnlinePlayers() {
     }
 
     // ==========================================
-    // 10. 人物模型生成
+    // 10. 人物與麥塊模型生成工廠
     // ==========================================
     const HAIR_COLORS = [0x3A3B3C, 0x483C32, 0x72376A, 0xEBA937, 0x1f2937];
     const SKIN_COLORS = [0xF5D0A9, 0x8D5524, 0xFFE0BD];
@@ -3620,41 +3221,35 @@ function adminClearAllOnlinePlayers() {
       const skinColor = customSkin !== undefined ? customSkin : getRandomItem(SKIN_COLORS);
       const cColor = customClothes !== undefined ? customClothes : getRandomItem(CLOTHES_PALETTE);
       const bColor = getRandomItem(BOTTOM_PALETTE);
-      const hColor = customHair !== undefined ? customHair : getRandomItem(HAIR_COLORS);
 
-      const skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.65 });
-      const clothMat = new THREE.MeshStandardMaterial({ color: cColor, roughness: 0.7 });
-      const bottomMat = new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.75 });
+      const skinMat = SharedPool.getMaterial('MeshStandardMaterial', { color: skinColor, roughness: 0.65 });
+      const clothMat = SharedPool.getMaterial('MeshStandardMaterial', { color: cColor, roughness: 0.7 });
+      const bottomMat = SharedPool.getMaterial('MeshStandardMaterial', { color: bColor, roughness: 0.75 });
+      const eyeMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0x111827 });
 
-      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.52, 0.24), clothMat);
+      const torso = new THREE.Mesh(SharedPool.geometries.humanTorso, clothMat);
       torso.position.y = 0.62;
       torso.castShadow = true;
       torso.receiveShadow = true;
       person.add(torso);
 
-      const headGeo = new THREE.BoxGeometry(0.36, 0.36, 0.36);
-      const head = new THREE.Mesh(headGeo, skinMat);
+      const head = new THREE.Mesh(SharedPool.geometries.humanHead, skinMat);
       head.position.y = 1.02;
       head.castShadow = true;
       head.receiveShadow = true;
       person.add(head);
 
-      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
-      const eyeGeo = new THREE.BoxGeometry(0.07, 0.09, 0.02);
-
-      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      const leftEye = new THREE.Mesh(SharedPool.geometries.humanEye, eyeMat);
       leftEye.position.set(-0.08, 1.03, 0.185);
       person.add(leftEye);
 
-      const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+      const rightEye = new THREE.Mesh(SharedPool.geometries.humanEye, eyeMat);
       rightEye.position.set(0.08, 1.03, 0.185);
       person.add(rightEye);
 
-      const armGeo = new THREE.BoxGeometry(0.11, 0.45, 0.11);
-
       const leftArmPivot = new THREE.Group();
       leftArmPivot.position.set(-0.28, 0.82, 0);
-      const leftArmMesh = new THREE.Mesh(armGeo, clothMat);
+      const leftArmMesh = new THREE.Mesh(SharedPool.geometries.humanArm, clothMat);
       leftArmMesh.position.y = -0.22;
       leftArmMesh.castShadow = true;
       leftArmPivot.add(leftArmMesh);
@@ -3662,7 +3257,7 @@ function adminClearAllOnlinePlayers() {
 
       const rightArmPivot = new THREE.Group();
       rightArmPivot.position.set(0.28, 0.82, 0);
-      const rightArmMesh = new THREE.Mesh(armGeo, clothMat);
+      const rightArmMesh = new THREE.Mesh(SharedPool.geometries.humanArm, clothMat);
       rightArmMesh.position.y = -0.22;
       rightArmMesh.castShadow = true;
       rightArmPivot.add(rightArmMesh);
@@ -3673,10 +3268,7 @@ function adminClearAllOnlinePlayers() {
       if (isSkirt) {
         skirtPivot = new THREE.Group();
         skirtPivot.position.set(0, 0.46, 0);
-        const skirtMesh = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.24, 0.42, 0.38, 14),
-          bottomMat
-        );
+        const skirtMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, 0.38, 14), bottomMat);
         skirtMesh.position.y = -0.17;
         skirtMesh.castShadow = true;
         skirtPivot.add(skirtMesh);
@@ -3697,11 +3289,9 @@ function adminClearAllOnlinePlayers() {
         rightLegPivot.add(rightLegMesh);
         person.add(rightLegPivot);
       } else {
-        const legGeo = new THREE.BoxGeometry(0.13, 0.48, 0.13);
-
         leftLegPivot = new THREE.Group();
         leftLegPivot.position.set(-0.12, 0.42, 0);
-        const leftLegMesh = new THREE.Mesh(legGeo, bottomMat);
+        const leftLegMesh = new THREE.Mesh(SharedPool.geometries.humanLeg, bottomMat);
         leftLegMesh.position.y = -0.24;
         leftLegMesh.castShadow = true;
         leftLegPivot.add(leftLegMesh);
@@ -3709,7 +3299,7 @@ function adminClearAllOnlinePlayers() {
 
         rightLegPivot = new THREE.Group();
         rightLegPivot.position.set(0.12, 0.42, 0);
-        const rightLegMesh = new THREE.Mesh(legGeo, bottomMat);
+        const rightLegMesh = new THREE.Mesh(SharedPool.geometries.humanLeg, bottomMat);
         rightLegMesh.position.y = -0.24;
         rightLegMesh.castShadow = true;
         rightLegPivot.add(rightLegMesh);
@@ -3727,46 +3317,131 @@ function adminClearAllOnlinePlayers() {
       return person;
     }
 
-// ==========================================
-    // ⛏️ 輕量低多邊形開墾鋤頭（手握中尾段・前端垂直入土）
-    // ==========================================
+    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) {
+      const dog = new THREE.Group();
+
+      const furMat = SharedPool.getMaterial('MeshStandardMaterial', { color: furColor, roughness: 0.85, flatShading: true });
+      const collarMat = SharedPool.getMaterial('MeshStandardMaterial', { color: collarColor, roughness: 0.6, flatShading: true });
+      const darkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1E293B, roughness: 0.9, flatShading: true });
+      const whiteMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF8FAFC, roughness: 0.7, flatShading: true });
+
+      const body = new THREE.Mesh(SharedPool.geometries.dogBody, furMat);
+      body.position.set(0, 0.32, -0.05);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      dog.add(body);
+
+      const collar = new THREE.Mesh(SharedPool.geometries.dogCollar, collarMat);
+      collar.position.set(0, 0.38, 0.20);
+      collar.castShadow = true;
+      dog.add(collar);
+
+      const headPivot = new THREE.Group();
+      headPivot.position.set(0, 0.44, 0.30);
+
+      const head = new THREE.Mesh(SharedPool.geometries.dogHead, furMat);
+      head.position.set(0, 0.08, 0.06);
+      head.castShadow = true;
+      headPivot.add(head);
+
+      [-0.09, 0.09].forEach(ex => {
+        const ear = new THREE.Mesh(SharedPool.geometries.dogEar, furMat);
+        ear.position.set(ex, 0.22, 0.05);
+        ear.castShadow = true;
+        headPivot.add(ear);
+      });
+
+      const snout = new THREE.Mesh(SharedPool.geometries.dogSnout, furMat);
+      snout.position.set(0, 0.02, 0.22);
+      snout.castShadow = true;
+      headPivot.add(snout);
+
+      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.02), darkMat);
+      nose.position.set(0, 0.05, 0.305);
+      headPivot.add(nose);
+
+      [-0.08, 0.08].forEach(eyeX => {
+        const eyeDark = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), darkMat);
+        eyeDark.position.set(eyeX, 0.11, 0.185);
+        headPivot.add(eyeDark);
+
+        const eyeWhite = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 0.025), whiteMat);
+        eyeWhite.position.set(eyeX + (eyeX > 0 ? 0.02 : -0.02), 0.11, 0.185);
+        headPivot.add(eyeWhite);
+      });
+
+      dog.add(headPivot);
+
+      function makeLegPivot(x, z) {
+        const pivot = new THREE.Group();
+        pivot.position.set(x, 0.26, z);
+        const legMesh = new THREE.Mesh(SharedPool.geometries.dogLeg, furMat);
+        legMesh.position.y = -0.13;
+        legMesh.castShadow = true;
+        pivot.add(legMesh);
+        dog.add(pivot);
+        return pivot;
+      }
+
+      const frontLeft = makeLegPivot(-0.09, 0.13);
+      const frontRight = makeLegPivot(0.09, 0.13);
+      const backLeft = makeLegPivot(-0.09, -0.22);
+      const backRight = makeLegPivot(0.09, -0.22);
+
+      const tailPivot = new THREE.Group();
+      tailPivot.position.set(0, 0.38, -0.30);
+      tailPivot.rotation.x = -Math.PI / 4;
+
+      const tailMesh = new THREE.Mesh(SharedPool.geometries.dogTail, furMat);
+      tailMesh.position.z = -0.11;
+      tailMesh.castShadow = true;
+      tailPivot.add(tailMesh);
+      dog.add(tailPivot);
+
+      dog.userData.limbs = {
+        leftArm: frontLeft,
+        rightArm: frontRight,
+        leftLeg: backLeft,
+        rightLeg: backRight,
+        tail: tailPivot,
+        head: headPivot
+      };
+
+      return dog;
+    }
+
     function createHoeTool() {
       const hoeGroup = new THREE.Group();
       hoeGroup.name = "player_hoe";
 
-      const woodMat = new THREE.MeshStandardMaterial({ color: 0x854D0E, roughness: 0.8 });
-      const metalMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.75, roughness: 0.35 });
+      const woodMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x854D0E, roughness: 0.8 });
+      const metalMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x475569, metalness: 0.75, roughness: 0.35 });
 
-      // 1. 木柄（總長 0.86）：手握點定為 Z = 0（中尾段）
-      // 木柄向後露出 0.22（尾端在 Z = -0.22），向前延伸 0.64（頂端在 Z = +0.64）
       const handleGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.86, 6);
-      handleGeo.rotateX(Math.PI / 2); // 轉為前後走向
+      handleGeo.rotateX(Math.PI / 2);
       const handle = new THREE.Mesh(handleGeo, woodMat);
-      handle.position.set(0, 0, 0.21); // 使手握處正好落在中後段
+      handle.position.set(0, 0, 0.21);
       hoeGroup.add(handle);
 
-      // 2. 鐵質環箍（套在木柄最前端 Z = 0.64 處）
       const collarGeo = new THREE.CylinderGeometry(0.034, 0.034, 0.06, 8);
       collarGeo.rotateX(Math.PI / 2);
       const collar = new THREE.Mesh(collarGeo, metalMat);
       collar.position.set(0, 0, 0.64);
       hoeGroup.add(collar);
 
-      // 3. 金屬長鋤刃（寬 0.14, 厚 0.022, 垂直向下延伸 0.38）
       const bladeGeo = new THREE.BoxGeometry(0.14, 0.38, 0.022);
-      // 軸心定在刀刃頂端，向下長出
       bladeGeo.translate(0, -0.19, 0);
 
       const blade = new THREE.Mesh(bladeGeo, metalMat);
-      blade.position.set(0, 0, 0.65); // 焊在環箍最前端
-      blade.rotation.x = -0.22; // 與木柄呈約 75~80 度銳角，向下垂直入土
+      blade.position.set(0, 0, 0.65);
+      blade.rotation.x = -0.22;
       hoeGroup.add(blade);
 
       return hoeGroup;
     }
 
     // ==========================================
-    // 11. 地標模型工廠與障礙物管理
+    // 11. 地標工廠與障礙碰撞管理
     // ==========================================
     let islandObstacles = {}; 
     let globalWorldObstacles = [];
@@ -3833,8 +3508,7 @@ function adminClearAllOnlinePlayers() {
       if (!obsList) return false;
       for (let i = 0; i < obsList.length; i++) {
         const obs = obsList[i];
-        const dist = Math.hypot(localX - obs.x, localZ - obs.z);
-        if (dist < obs.r) return true;
+        if (Math.hypot(localX - obs.x, localZ - obs.z) < obs.r) return true;
       }
       return false;
     }
@@ -3864,9 +3538,8 @@ function adminClearAllOnlinePlayers() {
 
     function createNatureLandmark() {
       const group = new THREE.Group();
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3, metalness: 0.2 });
-      const headMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });
-      const spotMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });
+      const bodyMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xdc2626, roughness: 0.3, metalness: 0.2 });
+      const spotMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x111827, roughness: 0.5 });
 
       const bodyGeo = new THREE.SphereGeometry(1.5, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
       const body = new THREE.Mesh(bodyGeo, bodyMat);
@@ -3883,7 +3556,7 @@ function adminClearAllOnlinePlayers() {
       group.add(bottomCap);
 
       const headGeo = new THREE.SphereGeometry(0.7, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-      const head = new THREE.Mesh(headGeo, headMat);
+      const head = new THREE.Mesh(headGeo, spotMat);
       head.position.set(0, 0, 1.4);
       head.scale.set(1.0, 0.65, 0.85);
       head.castShadow = true;
@@ -3930,7 +3603,7 @@ function adminClearAllOnlinePlayers() {
 
         const pole = new THREE.Mesh(
           new THREE.CylinderGeometry(0.09, 0.22, 4.0, 16),
-          new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.25, metalness: 0.2 })
+          SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfafaf9, roughness: 0.25, metalness: 0.2 })
         );
         pole.position.y = 2.0;
         pole.castShadow = true;
@@ -3938,7 +3611,7 @@ function adminClearAllOnlinePlayers() {
 
         const nacelle = new THREE.Mesh(
           new THREE.CylinderGeometry(0.2, 0.22, 0.75, 12),
-          new THREE.MeshStandardMaterial({ color: 0xf5f5f4, roughness: 0.3 })
+          SharedPool.getMaterial('MeshStandardMaterial', { color: 0xf5f5f4, roughness: 0.3 })
         );
         nacelle.rotation.x = Math.PI / 2;
         nacelle.position.set(0, 4.0, 0);
@@ -3947,7 +3620,7 @@ function adminClearAllOnlinePlayers() {
 
         const noseCone = new THREE.Mesh(
           new THREE.ConeGeometry(0.16, 0.32, 16),
-          new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.6, roughness: 0.3 })
+          SharedPool.getMaterial('MeshStandardMaterial', { color: 0x059669, metalness: 0.6, roughness: 0.3 })
         );
         noseCone.rotation.x = Math.PI / 2;
         noseCone.position.set(0, 4.0, 0.48);
@@ -3959,7 +3632,7 @@ function adminClearAllOnlinePlayers() {
         for (let b = 0; b < 3; b++) {
           const blade = new THREE.Mesh(
             new THREE.BoxGeometry(0.11, 1.7, 0.04),
-            new THREE.MeshStandardMaterial({ color: 0xfafaf9, roughness: 0.2 })
+            SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfafaf9, roughness: 0.2 })
           );
           blade.position.y = 0.85;
           blade.castShadow = true;
@@ -3985,7 +3658,7 @@ function adminClearAllOnlinePlayers() {
 
       const tip = new THREE.Mesh(
         new THREE.ConeGeometry(0.65, 1.1, 12),
-        new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.15 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94a3b8, metalness: 0.85, roughness: 0.15 })
       );
       tip.rotation.x = Math.PI;
       tip.position.y = 0.55;
@@ -3994,7 +3667,7 @@ function adminClearAllOnlinePlayers() {
 
       const ring = new THREE.Mesh(
         new THREE.CylinderGeometry(2.2, 1.7, 0.55, 6),
-        new THREE.MeshStandardMaterial({ color: 0x000080, metalness: 0.6, roughness: 0.2, emissive: 0x2C75FF, emissiveIntensity: 0.35 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0x000080, metalness: 0.6, roughness: 0.2, emissive: 0x2C75FF, emissiveIntensity: 0.35 })
       );
       ring.position.y = 1.1;
       ring.castShadow = true;
@@ -4003,7 +3676,7 @@ function adminClearAllOnlinePlayers() {
 
       const top = new THREE.Mesh(
         new THREE.CylinderGeometry(1.5, 2.0, 0.38, 6),
-        new THREE.MeshStandardMaterial({ color: 0xFAF9F6, metalness: 0.65, roughness: 0.25, emissive: 0xFFFFFF, emissiveIntensity: 0.5 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFAF9F6, metalness: 0.65, roughness: 0.25, emissive: 0xFFFFFF, emissiveIntensity: 0.5 })
       );
       top.position.y = 1.48;
       top.castShadow = true;
@@ -4011,7 +3684,7 @@ function adminClearAllOnlinePlayers() {
 
       const core = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0xFF2800, metalness: 0.9, roughness: 0.1 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFF2800, metalness: 0.9, roughness: 0.1 })
       );
       core.position.y = 1.75;
       core.castShadow = true;
@@ -4032,7 +3705,7 @@ function adminClearAllOnlinePlayers() {
 
         const mTip = new THREE.Mesh(
           new THREE.ConeGeometry(0.12, 0.18, 8),
-          new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85 })
+          SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94a3b8, metalness: 0.85 })
         );
         mTip.rotation.x = Math.PI;
         mTip.position.y = 0.09;
@@ -4041,7 +3714,7 @@ function adminClearAllOnlinePlayers() {
 
         const mRing = new THREE.Mesh(
           new THREE.CylinderGeometry(0.32, 0.22, 0.09, 6),
-          new THREE.MeshStandardMaterial({ color: miniColors[i], metalness: 0.7, roughness: 0.25 })
+          SharedPool.getMaterial('MeshStandardMaterial', { color: miniColors[i], metalness: 0.7, roughness: 0.25 })
         );
         mRing.position.y = 0.2;
         mRing.castShadow = true;
@@ -4059,8 +3732,8 @@ function adminClearAllOnlinePlayers() {
       const signGroup = new THREE.Group();
       signGroup.name = "champion_signboard";
 
-      const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.85 });
-      const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.9 });
+      const woodMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x8b5a2b, roughness: 0.85 });
+      const darkWoodMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5c3a21, roughness: 0.9 });
 
       [-0.9, 0.9].forEach(x => {
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.075, 1.6, 8), darkWoodMat);
@@ -4128,6 +3801,7 @@ function adminClearAllOnlinePlayers() {
 
       if (championSignboard) {
         beybladeGroup.remove(championSignboard);
+        deepDispose(championSignboard);
         championSignboard = null;
       }
 
@@ -4139,8 +3813,8 @@ function adminClearAllOnlinePlayers() {
       if (now - champData.winTime < threeDaysMs) {
         championSignboard = createChampionSignboardMesh(champData.winnerName);
         beybladeGroup.add(championSignboard);
-      } else {
-        if (bbRef) bbRef.child('recent_champion').remove();
+      } else if (bbRef) {
+        bbRef.child('recent_champion').remove();
       }
     }
 
@@ -4151,15 +3825,15 @@ function adminClearAllOnlinePlayers() {
       const dbGroup = new THREE.Group();
       const bar = new THREE.Mesh(
         new THREE.CylinderGeometry(0.15, 0.15, 2.6, 16),
-        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 })
       );
       bar.rotation.z = Math.PI / 2;
       bar.position.y = 0.75;
       bar.castShadow = true;
       dbGroup.add(bar);
 
-      const plateMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
-      const collarMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
+      const plateMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
+      const collarMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
 
       [-0.9, 0.9].forEach(side => {
         const pBig = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.32, 6), plateMat);
@@ -4214,7 +3888,7 @@ function adminClearAllOnlinePlayers() {
       jumpRopeGroup.add(jumperMan);
       jumpRopeGroup.userData.zzzJumper = zzzJumper;
 
-      const ropeMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+      const ropeMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0xfacc15 });
       const initialCurve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(-1.65, 0.7, 0),
         new THREE.Vector3(0, 0.2, 0),
@@ -4232,10 +3906,10 @@ function adminClearAllOnlinePlayers() {
     function createReadingLandmark() {
       const group = new THREE.Group();
       const book = new THREE.Group();
-      const pageMat = new THREE.MeshStandardMaterial({ color: 0xfffbeb, roughness: 0.65 });
-      const coverMat = new THREE.MeshStandardMaterial({ color: 0x4c1d95, roughness: 0.4 });
-      const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
-      const textMat = new THREE.MeshBasicMaterial({ color: 0xD3D3D3 });
+      const pageMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfffbeb, roughness: 0.65 });
+      const coverMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x4c1d95, roughness: 0.4 });
+      const goldMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
+      const textMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0xD3D3D3 });
 
       const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 2.2, 12), coverMat);
       spine.position.set(0, 0.36, 0);
@@ -4274,7 +3948,7 @@ function adminClearAllOnlinePlayers() {
       const van = new THREE.Group();
       const cabin = new THREE.Mesh(
         new THREE.BoxGeometry(1.3, 1.2, 1.15),
-        new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.25, metalness: 0.1 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0x15803d, roughness: 0.25, metalness: 0.1 })
       );
       cabin.position.set(0, 0.75, 1.25);
       cabin.castShadow = true;
@@ -4282,7 +3956,7 @@ function adminClearAllOnlinePlayers() {
 
       const bumper = new THREE.Mesh(
         new THREE.BoxGeometry(1.36, 0.18, 0.18),
-        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0x334155, roughness: 0.8 })
       );
       bumper.position.set(0, 0.32, 1.85);
       van.add(bumper);
@@ -4306,7 +3980,7 @@ function adminClearAllOnlinePlayers() {
 
       const grille = new THREE.Mesh(
         new THREE.BoxGeometry(0.62, 0.24, 0.07),
-        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 })
       );
       grille.position.set(0, 0.56, 1.84);
       van.add(grille);
@@ -4316,7 +3990,7 @@ function adminClearAllOnlinePlayers() {
       rainbowColors.forEach((col, idx) => {
         const stripe = new THREE.Mesh(
           new THREE.BoxGeometry(1.48, 1.15, stripeWidth),
-          new THREE.MeshStandardMaterial({ color: col, roughness: 0.35 })
+          SharedPool.getMaterial('MeshStandardMaterial', { color: col, roughness: 0.35 })
         );
         stripe.position.set(0, 0.9, -1.05 + (idx + 0.5) * stripeWidth);
         stripe.castShadow = true;
@@ -4326,7 +4000,7 @@ function adminClearAllOnlinePlayers() {
       [-1, 1].forEach(side => {
         const wing = new THREE.Mesh(
           new THREE.BoxGeometry(0.07, 0.95, 1.75),
-          new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.3 })
+          SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfacc15, roughness: 0.3 })
         );
         wing.position.set(side * 0.95, 1.65, -0.15);
         wing.rotation.z = side * -0.6;
@@ -4335,15 +4009,15 @@ function adminClearAllOnlinePlayers() {
 
         const strut = new THREE.Mesh(
           new THREE.CylinderGeometry(0.02, 0.02, 0.68, 8),
-          new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 })
+          SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94a3b8, metalness: 0.9 })
         );
         strut.position.set(side * 0.82, 1.3, -0.15);
         strut.rotation.z = side * 0.45;
         van.add(strut);
       });
 
-      const tireMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
-      const rimMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.85, roughness: 0.2 });
+      const tireMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1e293b, roughness: 0.85 });
+      const rimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xd4d4d8, metalness: 0.85, roughness: 0.2 });
       [[-0.72, 0.28, 1.05], [0.72, 0.28, 1.05], [-0.72, 0.28, -0.55], [0.72, 0.28, -0.55]].forEach(pos => {
         const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.22, 16), tireMat);
         tire.rotation.z = Math.PI / 2;
@@ -4367,8 +4041,8 @@ function adminClearAllOnlinePlayers() {
     function createCivicsLandmark() {
       const group = new THREE.Group();
       const temple = new THREE.Group();
-      const marbleMat = new THREE.MeshStandardMaterial({ color: 0xF6F4F0, roughness: 0.45 });
-      const trimMat = new THREE.MeshStandardMaterial({ color: 0xF6F4F0, roughness: 0.35 });
+      const marbleMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF6F4F0, roughness: 0.45 });
+      const trimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF6F4F0, roughness: 0.35 });
 
       [3.6, 3.2, 2.8].forEach((w, i) => {
         const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.18, w * 0.8), marbleMat);
@@ -4420,17 +4094,14 @@ function adminClearAllOnlinePlayers() {
       return group;
     }
 
-// 🌟 修改後：統一生成荒島天然岩石群（南島、北島共用）
     function createWastelandLandmark(islandId) {
       const group = new THREE.Group();
-
-      const rockMat = new THREE.MeshStandardMaterial({ 
+      const rockMat = SharedPool.getMaterial('MeshStandardMaterial', { 
         color: 0x8C7B6B, 
         roughness: 0.9, 
         flatShading: true 
       });
 
-      // 中央主岩石
       const mainRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6, 0), rockMat);
       mainRock.scale.set(1.4, 0.9, 1.1);
       mainRock.position.set(0, 0.3, 0);
@@ -4438,7 +4109,6 @@ function adminClearAllOnlinePlayers() {
       mainRock.castShadow = true;
       group.add(mainRock);
 
-      // 周邊散落的碎石群
       [[-1.1, 0.25, 0.8], [0.9, 0.2, -0.7], [-0.6, 0.18, -1.0]].forEach(pos => {
         const smRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.35, 0), rockMat);
         smRock.position.set(...pos);
@@ -4447,19 +4117,17 @@ function adminClearAllOnlinePlayers() {
         group.add(smRock);
       });
 
-      // 註冊荒島碰撞體積（半徑 0.9 米）
       registerObstacle(islandId, 0, 0, 0.9);
       return group;
     }
 
     function createReclaimLandmarkStages(parentGroup) {
-      // 🌟 共用材質池，大幅減少記憶體佔用
-      const grassMat = new THREE.MeshStandardMaterial({ color: 0x65A30D, roughness: 0.8, flatShading: true });
-      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, roughness: 0.9, flatShading: true });
-      const ruinStoneMat = new THREE.MeshStandardMaterial({ color: 0x64748B, roughness: 0.95, flatShading: true });
-      const redTempleMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.5 });
-      const goldMat = new THREE.MeshStandardMaterial({ color: 0xFBBF24, metalness: 0.8, roughness: 0.2 });
-      const energyGlowMat = new THREE.MeshStandardMaterial({ 
+      const grassMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x65A30D, roughness: 0.8, flatShading: true });
+      const stoneMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94A3B8, roughness: 0.9, flatShading: true });
+      const ruinStoneMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x64748B, roughness: 0.95, flatShading: true });
+      const redTempleMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDC2626, roughness: 0.5 });
+      const goldMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFBBF24, metalness: 0.8, roughness: 0.2 });
+      const energyGlowMat = SharedPool.getMaterial('MeshStandardMaterial', { 
         color: 0x38BDF8, 
         emissive: 0x0284C7, 
         emissiveIntensity: 1.8,
@@ -4467,17 +4135,12 @@ function adminClearAllOnlinePlayers() {
         opacity: 0.85
       });
 
-      // 階段 1：25% 綠意平整草皮
-      stageMeshGrass = new THREE.Mesh(
-        new THREE.CylinderGeometry(4.2, 4.2, 0.12, 6), // 將原本的 18 改為 6
-        grassMat
-      );
+      stageMeshGrass = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.12, 6), grassMat);
       stageMeshGrass.position.y = 0.06;
-      stageMeshGrass.rotation.y = Math.PI / 6; // 加上與主島相同的旋轉角度，確保六角邊緣切齊
+      stageMeshGrass.rotation.y = Math.PI / 6;
       stageMeshGrass.visible = false;
       parentGroup.add(stageMeshGrass);
 
-      // 階段 2：50% 熱氣球降落坪
       stageMeshHelipad = new THREE.Group();
       const padBase = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.5, 0.18, 16), stoneMat);
       padBase.position.y = 0.1;
@@ -4498,7 +4161,6 @@ function adminClearAllOnlinePlayers() {
       stageMeshHelipad.visible = false;
       parentGroup.add(stageMeshHelipad);
 
-      // 階段 3：75% 古代神廟廢墟
       stageMeshRuinTemple = new THREE.Group();
       const ruinBase = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.35, 2.8), ruinStoneMat);
       ruinBase.position.y = 0.18;
@@ -4521,7 +4183,6 @@ function adminClearAllOnlinePlayers() {
       stageMeshRuinTemple.visible = false;
       parentGroup.add(stageMeshRuinTemple);
 
-      // 階段 4：100% 嶄新龜山福德神廟
       stageMeshNewTemple = new THREE.Group();
       const tBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.45, 3.2), stoneMat);
       tBase.position.y = 0.22;
@@ -4572,7 +4233,7 @@ function adminClearAllOnlinePlayers() {
 
       const log = new THREE.Mesh(
         new THREE.CylinderGeometry(0.4, 0.45, 0.28, 10),
-        new THREE.MeshStandardMaterial({ color: 0xB7A69B, roughness: 0.9 })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0xB7A69B, roughness: 0.9 })
       );
       log.position.y = 0.14;
       log.castShadow = true;
@@ -4585,7 +4246,7 @@ function adminClearAllOnlinePlayers() {
 
       const starShape = createStarShape(0.09, 0.045);
       const starGeo = new THREE.ShapeGeometry(starShape);
-      const starMat = new THREE.MeshBasicMaterial({ color: 0xFDE047, side: THREE.DoubleSide });
+      const starMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0xFDE047, side: THREE.DoubleSide });
       const chestStar = new THREE.Mesh(starGeo, starMat);
       chestStar.position.set(0, 0.65, 0.125);
       mascotLeader.add(chestStar);
@@ -4601,7 +4262,7 @@ function adminClearAllOnlinePlayers() {
     }
 
     // ==========================================
-    // 12. 島嶼之星 AI 對話系統
+    // 12. 島嶼之星 AI 互動
     // ==========================================
     function appendMascotMessage(sender, text) {
       const chatBox = document.getElementById('mascot-chat-box');
@@ -4768,7 +4429,7 @@ function adminClearAllOnlinePlayers() {
     const TREE_LEAF_COLORS = [0xd97706, 0xf59e0b, 0xea580c, 0xc2410c];
     function createTree() {
       const tree = new THREE.Group();
-      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c2b0c, roughness: 0.85 });
+      const trunkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5c2b0c, roughness: 0.85 });
 
       const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.22, 1.1, 8), trunkMat);
       trunk.position.y = 0.55;
@@ -4776,7 +4437,7 @@ function adminClearAllOnlinePlayers() {
       tree.add(trunk);
 
       const leafColor = getRandomItem(TREE_LEAF_COLORS);
-      const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, flatShading: true, roughness: 0.75 });
+      const leafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: leafColor, flatShading: true, roughness: 0.75 });
 
       const crownLower = new THREE.Mesh(new THREE.DodecahedronGeometry(0.72, 1), leafMat);
       crownLower.position.y = 1.25;
@@ -4793,14 +4454,14 @@ function adminClearAllOnlinePlayers() {
 
     function createFlower() {
       const flower = new THREE.Group();
-      const stemMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 });
+      const stemMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x15803d, roughness: 0.8 });
       const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.35, 6), stemMat);
       stem.position.y = 0.175;
       stem.castShadow = true;
       flower.add(stem);
 
       const leafGeo = new THREE.BoxGeometry(0.09, 0.02, 0.04);
-      const leafMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.7 });
+      const leafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x16a34a, roughness: 0.7 });
       const leaf = new THREE.Mesh(leafGeo, leafMat);
       leaf.position.set(0.04, 0.14, 0);
       leaf.rotation.z = -0.35;
@@ -4809,12 +4470,12 @@ function adminClearAllOnlinePlayers() {
       const headGroup = new THREE.Group();
       headGroup.position.set(0, 0.35, 0);
 
-      const centerMesh = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 }));
+      const centerMesh = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfacc15, roughness: 0.5 }));
       centerMesh.position.y = 0.015;
       headGroup.add(centerMesh);
 
       const petalColors = [0xf472b6, 0xfb7185, 0xf87171, 0xfb923c, 0xffffff, 0xc084fc, 0xa855f7, 0x38bdf8, 0xfde047, 0xff7f50];
-      const petalMat = new THREE.MeshStandardMaterial({ color: getRandomItem(petalColors), roughness: 0.45 });
+      const petalMat = SharedPool.getMaterial('MeshStandardMaterial', { color: getRandomItem(petalColors), roughness: 0.45 });
 
       const petalGeo = new THREE.SphereGeometry(0.05, 7, 7);
       petalGeo.scale(1.0, 0.35, 1.6);
@@ -4836,7 +4497,7 @@ function adminClearAllOnlinePlayers() {
 
     function createStreetLamp() {
       const lamp = new THREE.Group();
-      const metalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.3 });
+      const metalMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1e293b, metalness: 0.75, roughness: 0.3 });
 
       const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.3, 8), metalMat);
       lampBase.position.y = 0.15;
@@ -4846,7 +4507,7 @@ function adminClearAllOnlinePlayers() {
       pole.position.y = 1.25;
       lamp.add(pole);
 
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), SharedPool.getMaterial('MeshBasicMaterial', { color: 0xfef08a }));
       bulb.position.y = 2.5;
       lamp.add(bulb);
 
@@ -5124,19 +4785,17 @@ function adminClearAllOnlinePlayers() {
 
     let islandVinesList = [];
 
-function createIslandUnderbellyMesh(radius, islandColorHex) {
+    function createIslandUnderbellyMesh(radius, islandColorHex) {
       const rockGroup = new THREE.Group();
       
-      // 玄武岩/花崗岩深色岩石材質（保留低多邊形切面）
-      const rockMat = new THREE.MeshStandardMaterial({
+      const rockMat = SharedPool.getMaterial('MeshStandardMaterial', {
         color: 0x5C5446,
         roughness: 0.9,
         metalness: 0.05,
         flatShading: true
       });
 
-      // 帶有自然生機的陰面青苔岩材質
-      const mossRockMat = new THREE.MeshStandardMaterial({
+      const mossRockMat = SharedPool.getMaterial('MeshStandardMaterial', {
         color: 0x485838,
         roughness: 0.92,
         metalness: 0.03,
@@ -5145,49 +4804,38 @@ function createIslandUnderbellyMesh(radius, islandColorHex) {
         emissiveIntensity: 0.22
       });
 
-      // ==========================================
-      // 1. 主岩體：由尖錐改為倒卵形圓弧巨岩（下半球網格變形）
-      // ==========================================
-      const rockDepth = 4.6;       // 浮島底座總深度
-      const topRadius = radius * 0.94; // 吻合島嶼頂部外圍
+      const rockDepth = 4.6;
+      const topRadius = radius * 0.94;
       
-      // 使用下半球體（thetaStart = PI/2, thetaLength = PI/2），天然具備圓滑底部
       const mainRockGeo = new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5);
       const pos = mainRockGeo.attributes.position;
 
       for (let i = 0; i < pos.count; i++) {
         let x = pos.getX(i);
-        let y = pos.getY(i); // 範圍從 0 (島底接縫) 到 -1 (最底端圓頂)
+        let y = pos.getY(i);
         let z = pos.getZ(i);
 
-        const t = -y; // 下降深度比例: 0 (頂部) -> 1 (底端)
-
-        // 輪廓修飾：讓中段保持厚實微收，底部以圓滑弧度收斂（非銳角尖刺）
+        const t = -y;
         const taper = (1 - 0.28 * t) * (1 - 0.15 * Math.pow(t, 2));
 
-        // 大自然岩石的不規則起伏（頂部保持完全貼合防破面，中下部產生自然岩理切面）
         const noise = (t > 0.08) 
           ? (1 + (Math.sin(x * 6 + z * 4) * 0.07 + (Math.random() - 0.5) * 0.09) * Math.sin(t * Math.PI)) 
           : 1.0;
 
         pos.setX(i, x * topRadius * taper * noise);
         pos.setZ(i, z * topRadius * taper * noise);
-        pos.setY(i, y * rockDepth); // 縱向拉伸至指定深度
+        pos.setY(i, y * rockDepth);
       }
 
       mainRockGeo.computeVertexNormals();
 
       const mainRock = new THREE.Mesh(mainRockGeo, rockMat);
-      mainRock.position.y = -0.45; // 緊貼上方島嶼底面
+      mainRock.position.y = -0.45;
       mainRock.receiveShadow = true;
       rockGroup.add(mainRock);
 
-      // ==========================================
-      // 2. 風化附生岩與底座巨石群（增加大自然岩層層次）
-      // ==========================================
       const subRockGeo = new THREE.DodecahedronGeometry(0.7, 0);
 
-      // 上中段：懸崖側邊的突出岩塊（6塊）
       for (let i = 0; i < 6; i++) {
         const ang = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
         const dist = radius * (0.60 + Math.random() * 0.25);
@@ -5205,7 +4853,6 @@ function createIslandUnderbellyMesh(radius, islandColorHex) {
         rockGroup.add(subRock);
       }
 
-      // 下段底端：附著於圓弧底部的風化圓石基座（2~3塊微凸巨石，徹底弱化幾何感）
       for (let j = 0; j < 3; j++) {
         const bAng = (j / 3) * Math.PI * 2 + Math.random() * 0.5;
         const bDist = radius * (0.15 + Math.random() * 0.2);
@@ -5238,7 +4885,7 @@ function createIslandUnderbellyMesh(radius, islandColorHex) {
         const strands = 2 + Math.floor(Math.random() * 2);
 
         for (let s = 0; s < strands; s++) {
-          const mat = new THREE.MeshStandardMaterial({
+          const mat = SharedPool.getMaterial('MeshStandardMaterial', {
             color: vineColors[Math.floor(Math.random() * vineColors.length)],
             roughness: 0.8,
             side: THREE.DoubleSide,
@@ -5271,7 +4918,7 @@ function createIslandUnderbellyMesh(radius, islandColorHex) {
     }
     
     // ==========================================
-    // 13. 道路、鐵道與場景核心系統
+    // 13. 道路、鐵道與載具系統
     // ==========================================
     let scene, camera, renderer, controls;
     let islandGroups = [];
@@ -5289,7 +4936,6 @@ function createIslandUnderbellyMesh(radius, islandColorHex) {
     let targetLookAt = new THREE.Vector3(0, 0, 0);
     let isCartPaused = false;
 
-    // 🌟 視角狀態旗標與控制函式
     let isRidingCart = false;
     let isRidingBoat = false;
     let isViewMenuOpen = false;
@@ -5310,14 +4956,13 @@ function createIslandUnderbellyMesh(radius, islandColorHex) {
       }
     }
 
-function selectViewMode(mode) {
+    function selectViewMode(mode) {
       toggleViewMenu(false);
 
       const menuText = document.getElementById('view-menu-current-text');
       const cartBtn = document.getElementById('sub-btn-cart');
       const boatBtn = document.getElementById('sub-btn-boat');
 
-      // 🌟 1. 切換模式前，先將既有的台車與船隻音效全部停止
       if (typeof stopCustomAudio === 'function') {
         stopCustomAudio('cart');
         stopCustomAudio('boat');
@@ -5334,7 +4979,6 @@ function selectViewMode(mode) {
 
         resetToDefaultCamera();
 
-        // 🌟 只有在音樂處於開啟狀態時才播
         if (isBgmPlaying && typeof playCustomAudio === 'function') {
           playCustomAudio('ambient');
         }
@@ -5360,9 +5004,7 @@ function selectViewMode(mode) {
         if (boatBtn) boatBtn.classList.remove('active-mode');
         if (menuText) menuText.textContent = '台車巡航中';
 
-        // 🌟 2. 搭上台車時開始播放台車行駛音效
         if (typeof playCustomAudio === 'function') playCustomAudio('cart');
-
         showLiveBanner("🚋 已搭上龜山台車！正在環島欣賞沿途景色～");
       } 
       else if (mode === 'boat') {
@@ -5382,9 +5024,7 @@ function selectViewMode(mode) {
         if (cartBtn) cartBtn.classList.remove('active-mode');
         if (menuText) menuText.textContent = '巡邏艇破浪中';
 
-        // 🌟 3. 搭上巡邏艇時開始播放水上引擎/破浪音效
         if (typeof playCustomAudio === 'function') playCustomAudio('boat');
-
         showLiveBanner("🚤 已登上守護巡邏艇！正在破浪巡航～");
       }
     }
@@ -5395,10 +5035,9 @@ function selectViewMode(mode) {
     WAKE_PLANE_GEO.rotateX(-Math.PI / 2);
     let trailerCarts = [], cartProgress = 0, trackCurve = null;
 
-function createOuterLoopTrackAndCart() {
+    function createOuterLoopTrackAndCart() {
       const system = new THREE.Group();
 
-// 1. 高精度沿海陸地中心點取樣函式（精準建置在咖啡色岩岸陸地上、緊臨湖邊）
       function getTrackCenterPoint(theta) {
         const coastCurve = Math.sin(theta * 3) * 4.0 + Math.cos(theta * 5) * 2.2;
         const innerBoundary = 46 + coastCurve;
@@ -5407,7 +5046,6 @@ function createOuterLoopTrackAndCart() {
         const px = Math.cos(theta) * r;
         const pz = Math.sin(theta) * r;
 
-        // 🌟 配合陸地外擴至 135 米計算比例
         const normalizedR = Math.max(0, Math.min(1, 2.5 / (135 - innerBoundary)));
         const mountainWave = Math.sin(theta * 2) * 3.6 + Math.cos(theta * 4 + 0.8) * 2.8;
         const hillWave = Math.sin(theta * 6) * 1.4 + Math.cos(theta * 10) * 0.8;
@@ -5422,7 +5060,6 @@ function createOuterLoopTrackAndCart() {
         const angleDiff = Math.abs(Math.atan2(Math.sin(theta - BEACH_CENTER_ANGLE), Math.cos(theta - BEACH_CENTER_ANGLE)));
         const isUniqueBeachZone = Math.max(0, 1.0 - angleDiff / 0.75);
 
-        // 🌟 地基高度同步抬高
         const baseInlandRise = normalizedR * 3.8;
         let groundY = 0.05 + baseInlandRise;
         if (isUniqueBeachZone > 0.1) {
@@ -5433,12 +5070,10 @@ function createOuterLoopTrackAndCart() {
           groundY = 0.05 + baseInlandRise + steppedHeight * cliffRise * 0.85;
         }
 
-        // 🌟 核心抬高：由原本的 +0.18 調升至 +0.38，全面脫離山坡干涉
         const finalY = groundY + 0.38;
         return new THREE.Vector3(px, finalY, pz);
       }
 
-      // 🌟 2. 取樣節點由 32 個倍增至 64 個，完美貼合每一處地形起伏峰頂，絕不穿透土石
       const numPathNodes = 64;
       const rawPoints = [];
       for (let i = 0; i < numPathNodes; i++) {
@@ -5448,16 +5083,14 @@ function createOuterLoopTrackAndCart() {
 
       trackCurve = new THREE.CatmullRomCurve3(rawPoints, true, 'centripetal', 0.2);
 
-      // 3. 絕對完美重疊與貼合：鋼軌、枕木、道渣與地基全部以 trackCurve 為同心軸生成！
-      const railMat = new THREE.MeshStandardMaterial({ color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
-      // 經典玄武岩／花崗岩碎石灰道渣：
-      const ballastMat = new THREE.MeshStandardMaterial({ 
-      color: 0x555B66,       // 👈 帶微藍灰色調的天然碎石灰
-      roughness: 0.95,       // 👈 提高粗糙度，消除塑膠反光
-      metalness: 0.05,       // 👈 保留極微弱礦物感
-      flatShading: true      // 👈 保留稜角切面，使光影自然呈現碎石塊狀感
+      const railMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xA6A6A6, roughness: 0.4, metalness: 0.6 });
+      const ballastMat = SharedPool.getMaterial('MeshStandardMaterial', { 
+        color: 0x555B66, 
+        roughness: 0.95, 
+        metalness: 0.05, 
+        flatShading: true 
       });
-      const soilMat = new THREE.MeshStandardMaterial({ color: 0x3b2f2f, roughness: 0.95, flatShading: true });
+      const soilMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x3b2f2f, roughness: 0.95, flatShading: true });
 
       const divisions = 360;
       const innerPts = [], outerPts = [];
@@ -5469,7 +5102,6 @@ function createOuterLoopTrackAndCart() {
         const tan = trackCurve.getTangentAt(t);
         const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
 
-        // 🌟 鋼軌中心高度設為 pt.y + 0.20m（底端 0.16m，頂端 0.24m）
         const railY = pt.y + 0.20;
         const innerPt = pt.clone().add(normal.clone().multiplyScalar(-railGauge));
         innerPt.y = railY;
@@ -5483,11 +5115,9 @@ function createOuterLoopTrackAndCart() {
       const innerCurve = new THREE.CatmullRomCurve3(innerPts, true);
       const outerCurve = new THREE.CatmullRomCurve3(outerPts, true);
 
-      // 鋪設雙軌鋼軌（頂層：半徑 0.04m，平整架在枕木頂部）
       system.add(new THREE.Mesh(new THREE.TubeGeometry(innerCurve, 360, 0.04, 6, true), railMat));
       system.add(new THREE.Mesh(new THREE.TubeGeometry(outerCurve, 360, 0.04, 6, true), railMat));
 
-      // 🌟 定義局部頂點塑型函式：加入 bottomExtend 參數，讓下半部自動加深扎入土中
       function formatTrackTube(geo, curve, segments, radSegs, scaleY, offsetY, bottomExtend = 1.0) {
         const pos = geo.attributes.position;
         let idx = 0;
@@ -5497,7 +5127,6 @@ function createOuterLoopTrackAndCart() {
           for (let j = 0; j <= radSegs; j++) {
             const y = pos.getY(idx);
             const dy = y - pt.y;
-            // 下半部頂點加深向下伸展，牢牢埋入山坡內部
             const actualScale = (dy < 0) ? scaleY * bottomExtend : scaleY;
             pos.setY(idx, pt.y + dy * actualScale + offsetY);
             idx++;
@@ -5507,24 +5136,21 @@ function createOuterLoopTrackAndCart() {
         geo.computeVertexNormals();
       }
 
-      // 🌟 道渣層（保持不變，居中凸起於路基上方）
       const ballastGeo = new THREE.TubeGeometry(trackCurve, 360, 0.85, 8, true);
       formatTrackTube(ballastGeo, trackCurve, 360, 8, 0.20, -0.03);
       const ballastMesh = new THREE.Mesh(ballastGeo, ballastMat);
       ballastMesh.receiveShadow = true;
       system.add(ballastMesh);
 
-      // 🌟 土壤地基（底部向下加深 2.5 倍深入陸地內部，上方托住道渣）
       const soilGeo = new THREE.TubeGeometry(trackCurve, 360, 1.25, 8, true);
       formatTrackTube(soilGeo, trackCurve, 360, 8, 0.16, -0.18, 2.5);
       const soilMesh = new THREE.Mesh(soilGeo, soilMat);
       soilMesh.receiveShadow = true;
       system.add(soilMesh);
 
-      // 4. 400 根木頭枕木（中心高度 pt.y + 0.14m，頂部達 pt.y + 0.17m，半嵌於道渣中並托住鋼軌）
       const SLEEPER_COUNT = 400;
       const sleeperGeom = new THREE.BoxGeometry(1.45, 0.06, 0.18);
-      const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.85 });
+      const sleeperMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x45220c, roughness: 0.85 });
       const sleeperInstanced = new THREE.InstancedMesh(sleeperGeom, sleeperMat, SLEEPER_COUNT);
 
       const dummy = new THREE.Object3D();
@@ -5541,21 +5167,17 @@ function createOuterLoopTrackAndCart() {
       sleeperInstanced.receiveShadow = true;
       system.add(sleeperInstanced);
 
-      // ==========================================
-      // 🚂 復古橘色五分車機車頭與 8 節車廂建立
-      // ==========================================
       cartGroup = new THREE.Group();
       cartGroup.userData = { isCart: true };
 
-      const locoOrangeMat = new THREE.MeshStandardMaterial({ color: 0xEA580C, roughness: 0.42, metalness: 0.15 });
-      const locoStripeMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.4 });
-      const locoYellowMat = new THREE.MeshStandardMaterial({ color: 0xFACC15, roughness: 0.4 });
-      const ironChassisMat = new THREE.MeshStandardMaterial({ color: 0x1F2937, metalness: 0.85, roughness: 0.3 });
-      const roofWhiteMat = new THREE.MeshStandardMaterial({ color: 0xEDE9FE, roughness: 0.5 });
-      const windowGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x93C5FD, transmission: 0.75, opacity: 0.85, transparent: true, roughness: 0.1 });
-      const chromeMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.9, roughness: 0.2 });
+      const locoOrangeMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xEA580C, roughness: 0.42, metalness: 0.15 });
+      const locoStripeMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF8FAFC, roughness: 0.4 });
+      const locoYellowMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFACC15, roughness: 0.4 });
+      const ironChassisMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1F2937, metalness: 0.85, roughness: 0.3 });
+      const roofWhiteMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xEDE9FE, roughness: 0.5 });
+      const windowGlassMat = SharedPool.getMaterial('MeshPhysicalMaterial', { color: 0x93C5FD, transmission: 0.75, opacity: 0.85, transparent: true, roughness: 0.1 });
+      const chromeMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xE2E8F0, metalness: 0.9, roughness: 0.2 });
 
-      // 底盤與保險桿
       const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.12, 2.3), ironChassisMat);
       chassis.position.y = 0.22;
       chassis.castShadow = true;
@@ -5569,7 +5191,6 @@ function createOuterLoopTrackAndCart() {
       rearBumper.position.set(0, 0.24, -1.16);
       cartGroup.add(rearBumper);
 
-      // 前置引擎室
       const engineHood = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.52, 1.25), locoOrangeMat);
       engineHood.position.set(0, 0.54, 0.45);
       engineHood.castShadow = true;
@@ -5590,7 +5211,6 @@ function createOuterLoopTrackAndCart() {
       exhaustPipe.castShadow = true;
       cartGroup.add(exhaustPipe);
 
-      // 後置駕駛室
       const cabBody = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.88, 0.88), locoOrangeMat);
       cabBody.position.set(0, 0.72, -0.55);
       cabBody.castShadow = true;
@@ -5617,14 +5237,13 @@ function createOuterLoopTrackAndCart() {
         cartGroup.add(sideWindow);
       });
 
-      // 頭燈與車輪
       const headlightHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.18, 16), chromeMat);
       headlightHousing.rotation.x = Math.PI / 2;
       headlightHousing.position.set(0, 0.82, 1.05);
       headlightHousing.castShadow = true;
       cartGroup.add(headlightHousing);
 
-      const headlightLens = new THREE.Mesh(new THREE.CircleGeometry(0.13, 16), new THREE.MeshBasicMaterial({ color: 0xFEF08A }));
+      const headlightLens = new THREE.Mesh(new THREE.CircleGeometry(0.13, 16), SharedPool.getMaterial('MeshBasicMaterial', { color: 0xFEF08A }));
       headlightLens.position.set(0, 0.82, 1.145);
       cartGroup.add(headlightLens);
 
@@ -5647,13 +5266,12 @@ function createOuterLoopTrackAndCart() {
       cartGroup.traverse(child => { child.userData.isCart = true; });
       system.add(cartGroup);
 
-      // 8 節拖車車廂建立
       trailerCarts = [];
       const thinPlankThickness = 0.11;
-      const woodCartMat = new THREE.MeshStandardMaterial({ color: 0x5A452F, roughness: 0.65 });
-      const woodSeatMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.7 });
-      const logBarkMat = new THREE.MeshStandardMaterial({ color: 0x5C4033, roughness: 0.85 });
-      const logCoreMat = new THREE.MeshStandardMaterial({ color: 0xD2B48C, roughness: 0.6 });
+      const woodCartMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5A452F, roughness: 0.65 });
+      const woodSeatMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x8B5A2B, roughness: 0.7 });
+      const logBarkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5C4033, roughness: 0.85 });
+      const logCoreMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xD2B48C, roughness: 0.6 });
       const ironFrameMat = ironChassisMat;
 
       for (let i = 0; i < 8; i++) {
@@ -5678,9 +5296,7 @@ function createOuterLoopTrackAndCart() {
         });
 
         const floorY = 0.2 + thinPlankThickness;
-
-        // 🌟 關鍵修改 1：不論前 4 節載客或後 4 節運木，8 節車廂全部建立四角立柱
-        const postMat = new THREE.MeshStandardMaterial({ color: 0x45220c, roughness: 0.8 });
+        const postMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x45220c, roughness: 0.8 });
         const cornerPositions = [
           [-0.56, floorY + 0.46, -0.84],
           [ 0.56, floorY + 0.46, -0.84],
@@ -5689,17 +5305,13 @@ function createOuterLoopTrackAndCart() {
         ];
 
         cornerPositions.forEach(pos => {
-          // 🌟 關鍵修改 2：使用 BoxGeometry 建立長寬 0.08、高 0.92 的「方柱」
           const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.92, 0.08), postMat);
           post.position.set(...pos);
           post.castShadow = true;
           trailer.add(post);
-
-          // 🌟 關鍵修改 3：完全移除 SphereGeometry 圓頭（cap），保持方柱平頂
         });
 
         if (i < 4) {
-          // 前 4 節：載客座位配置
           [-0.45, 0.45].forEach(seatZ => {
             const bench = new THREE.Group();
 
@@ -5721,7 +5333,6 @@ function createOuterLoopTrackAndCart() {
             trailer.add(bench);
           });
         } else {
-          // 後 4 節：運木載重配置
           const logGroup = new THREE.Group();
           function createTimberLog(x, y, z) {
             const singleLog = new THREE.Group();
@@ -5756,10 +5367,8 @@ function createOuterLoopTrackAndCart() {
         trailer.traverse(child => { child.userData.isCart = true; });
         system.add(trailer);
         trailerCarts.push(trailer);
-      
       }
 
-      // 🌟 立即將機車頭與 8 節車廂定位到軌道真實陸地位置，防止初始停在湖中央 (0,0,0)
       if (trackCurve) {
         const initPos = trackCurve.getPointAt(0);
         const initTan = trackCurve.getTangentAt(0).normalize();
@@ -5799,10 +5408,10 @@ function createOuterLoopTrackAndCart() {
       patrolBoat = new THREE.Group();
       patrolBoat.userData = { isBoat: true };
 
-      const hullMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.35 });
-      const keelMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.4 });
-      const cabinMat = new THREE.MeshStandardMaterial({ color: 0x0284C7, roughness: 0.25 });
-      const yellowMat = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
+      const hullMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF8FAFC, roughness: 0.35 });
+      const keelMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDC2626, roughness: 0.4 });
+      const cabinMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x0284C7, roughness: 0.25 });
+      const yellowMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0xFBBF24 });
 
       const keelAft = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.22, 2.3), keelMat);
       keelAft.position.set(0, -0.08, 0.05);
@@ -5824,43 +5433,28 @@ function createOuterLoopTrackAndCart() {
       patrolBoat.add(radar);
       patrolBoat.userData.radar = radar;
 
-// ==========================================
-      // 🌟 船頭中央內嵌式長方形頭燈
-      // ==========================================
-      const lampHousingMat = new THREE.MeshStandardMaterial({ 
+      const lampHousingMat = SharedPool.getMaterial('MeshStandardMaterial', { 
         color: 0x1e293b, 
         metalness: 0.8, 
         roughness: 0.3 
       });
-      const lampGlassMat = new THREE.MeshBasicMaterial({ 
-        color: 0xfef08a // 亮黃色發光晶片
+      const lampGlassMat = SharedPool.getMaterial('MeshBasicMaterial', { 
+        color: 0xfef08a
       });
 
-      // 1. 內嵌燈槽外框（稍微凹入白色船頭立面）
-      // 寬 0.42, 高 0.14, 深 0.12
-      const lampHousing = new THREE.Mesh(
-        new THREE.BoxGeometry(0.42, 0.14, 0.12),
-        lampHousingMat
-      );
-      // Y=0.16 剛好位於白色船身垂直中心，Z=1.22 嵌入船體前端立面
+      const lampHousing = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.14, 0.12), lampHousingMat);
       lampHousing.position.set(0, 0.16, 1.22);
       lampHousing.castShadow = true;
       patrolBoat.add(lampHousing);
 
-      // 2. 齊平於船頭表面的長方形發光燈罩
-      const lampFace = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.38, 0.11),
-        lampGlassMat
-      );
-      // 微凸出燈槽前緣 (Z = 1.281)，與白色船頭前端切齊
+      const lampFace = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.11), lampGlassMat);
       lampFace.position.set(0, 0.16, 1.281);
       patrolBoat.add(lampFace);
 
-      // 3. 內嵌燈向前方海面照射的聚光燈
       const searchLight = new THREE.SpotLight(0xfef08a, 4.2, 14, Math.PI / 5, 0.45, 1.3);
       searchLight.position.set(0, 0.16, 1.30);
       const targetObj = new THREE.Object3D();
-      targetObj.position.set(0, -0.6, 6.5); // 向前方水面微傾斜照射
+      targetObj.position.set(0, -0.6, 6.5);
       patrolBoat.add(targetObj);
       searchLight.target = targetObj;
       patrolBoat.add(searchLight);
@@ -5869,7 +5463,7 @@ function createOuterLoopTrackAndCart() {
       patrolBoat.traverse(child => { child.userData.isBoat = true; });
 
       patrolBoat.userData.emitWake = function() {
-        const pMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75, depthWrite: false });
+        const pMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0xffffff, transparent: true, opacity: 0.75, depthWrite: false });
         [-0.32, 0.32].forEach(sideOffset => {
           const particle = new THREE.Mesh(WAKE_PLANE_GEO, pMat.clone());
           particle.position.set(sideOffset + (Math.random() - 0.5) * 0.15, -0.05, -1.15);
@@ -5882,9 +5476,7 @@ function createOuterLoopTrackAndCart() {
       boatSystem.add(patrolBoat);
       return boatSystem;
     }
-// ==========================================
-    // 🎈 節能低多邊形空中熱氣球系統（王國之淚・飽滿正圓氣囊 + 顯眼古文明衝能藍光）
-    // ==========================================
+
     let hotAirBalloon = null;
     let balloonEnergyBeam = null;
     let balloonEnergyCore = null;
@@ -5892,127 +5484,85 @@ function createOuterLoopTrackAndCart() {
     function createHotAirBalloon() {
       const balloonGroup = new THREE.Group();
 
-      // 🌟 王國之淚配色材質
-      const fabricClothMat = new THREE.MeshStandardMaterial({ 
+      const fabricClothMat = SharedPool.getMaterial('MeshStandardMaterial', { 
         color: 0xECE5D8, 
         roughness: 0.82, 
         flatShading: true 
       });
 
-      const zonaiBronzeMat = new THREE.MeshStandardMaterial({ 
+      const zonaiBronzeMat = SharedPool.getMaterial('MeshStandardMaterial', { 
         color: 0x224D42, 
         metalness: 0.65, 
         roughness: 0.35, 
         flatShading: true 
       });
 
-      // 🌟 古代文明藍色高自發光材質（大幅加強 emissiveIntensity 使其在遠處依然醒目）
-      const ancientBlueEnergyMat = new THREE.MeshStandardMaterial({
+      const ancientBlueEnergyMat = SharedPool.getMaterial('MeshStandardMaterial', {
         color: 0x38BDF8,
         emissive: 0x0284C7,
-        emissiveIntensity: 2.2, // 提高發光強度
+        emissiveIntensity: 2.2,
         roughness: 0.1,
         metalness: 0.2
       });
 
-      // 🌟 粗大、向上直衝注入氣球的古代藍色光柱（增強透明度與發光質感）
-      const beamGlowMat = new THREE.MeshBasicMaterial({
+      const beamGlowMat = SharedPool.getMaterial('MeshBasicMaterial', {
         color: 0x67E8F9,
         transparent: true,
-        opacity: 0.75, // 加強不透明度，遠看依然通透顯眼
+        opacity: 0.75,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         side: THREE.DoubleSide
       });
 
-      const basketStoneMat = new THREE.MeshStandardMaterial({ 
+      const basketStoneMat = SharedPool.getMaterial('MeshStandardMaterial', { 
         color: 0x334139, 
         metalness: 0.2, 
         roughness: 0.8, 
         flatShading: true 
       });
 
-      const ropeMat = new THREE.MeshBasicMaterial({ 
-        color: 0x5C4D3C 
-      });
+      const ropeMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0x5C4D3C });
 
-      // ==========================================
-      // 1. 氣囊本體（飽滿正圓球體設計，不再拉伸成細長橢圓）
-      // ==========================================
       const balloonBody = new THREE.Group();
       
-      // 正圓球體主氣囊（半徑加大至 3.2，等比例 1:1:1，圓潤飽滿）
-      const mainSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(3.2, 20, 16),
-        fabricClothMat
-      );
+      const mainSphere = new THREE.Mesh(new THREE.SphereGeometry(3.2, 20, 16), fabricClothMat);
       mainSphere.position.y = 4.4;
       mainSphere.castShadow = true;
       balloonBody.add(mainSphere);
 
-      // 下半部過渡環（微弧度收口，保留下開口以透出內部充能藍光）
-      const coneBottom = new THREE.Mesh(
-        new THREE.ConeGeometry(2.8, 1.2, 18, 1, true),
-        zonaiBronzeMat
-      );
+      const coneBottom = new THREE.Mesh(new THREE.ConeGeometry(2.8, 1.2, 18, 1, true), zonaiBronzeMat);
       coneBottom.rotation.x = Math.PI;
       coneBottom.position.y = 2.4;
       balloonBody.add(coneBottom);
 
-      // 氣囊底部進氣口金屬環（古代希卡藍光導能環）
-      const rim = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.35, 1.35, 0.28, 18),
-        ancientBlueEnergyMat
-      );
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.28, 18), ancientBlueEnergyMat);
       rim.position.y = 1.8;
       balloonBody.add(rim);
 
       balloonGroup.add(balloonBody);
 
-      // ==========================================
-      // 2. 吊籃中央：古代充能基座與往上衝射的粗壯藍色能量光柱
-      // ==========================================
-      // 古青銅底座
-      const emitterBase = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.35, 0.42, 0.25, 8), 
-        zonaiBronzeMat
-      );
+      const emitterBase = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 0.25, 8), zonaiBronzeMat);
       emitterBase.position.y = 0.88;
       balloonGroup.add(emitterBase);
 
-      // 中央懸浮的古代能量結晶核心（放大尺寸，旋轉閃耀）
-      balloonEnergyCore = new THREE.Mesh(
-        new THREE.OctahedronGeometry(0.28, 0),
-        ancientBlueEnergyMat
-      );
+      balloonEnergyCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.28, 0), ancientBlueEnergyMat);
       balloonEnergyCore.position.y = 1.25;
       balloonGroup.add(balloonEnergyCore);
 
-      // 🌟 粗壯的直衝充能光束（底部直徑 0.28m，往上灌入氣球擴散至 1.15m，視覺張力拉滿）
       const beamGeo = new THREE.CylinderGeometry(1.15, 0.28, 1.5, 14, 1, true);
       balloonEnergyBeam = new THREE.Mesh(beamGeo, beamGlowMat);
       balloonEnergyBeam.position.y = 1.95; 
       balloonGroup.add(balloonEnergyBeam);
 
-      // ==========================================
-      // 3. 吊籃與纜繩結構
-      // ==========================================
-      const basket = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.85, 0.72, 0.8, 8),
-        basketStoneMat
-      );
+      const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.72, 0.8, 8), basketStoneMat);
       basket.position.y = 0.4;
       basket.castShadow = true;
       balloonGroup.add(basket);
 
-      const basketRim = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.88, 0.88, 0.09, 8),
-        zonaiBronzeMat
-      );
+      const basketRim = new THREE.Mesh(new THREE.CylinderGeometry(0.88, 0.88, 0.09, 8), zonaiBronzeMat);
       basketRim.position.y = 0.8;
       balloonGroup.add(basketRim);
 
-      // 4 根固定纜繩（加粗距離以搭配正圓大氣囊）
       const ropeAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
       ropeAngles.forEach(ang => {
         const topX = Math.cos(ang) * 1.25;
@@ -6028,10 +5578,10 @@ function createOuterLoopTrackAndCart() {
         balloonGroup.add(rope);
       });
 
-      // 初始位置設定在西北方遠處大陸上空
       balloonGroup.position.set(-36, 21, -36);
       return balloonGroup;
     }
+
     let seaMonster = null, monsterBodyMesh = null, monsterTailPivot = null, monsterFins = [];
     let monsterState = {
       active: false,
@@ -6165,7 +5715,6 @@ function createOuterLoopTrackAndCart() {
       hemiLight = new THREE.HemisphereLight(timePhase.hemi, 0x0f172a, timePhase.light * 0.75);
       scene.add(hemiLight);
 
-      // 🌟 陰影視錐優化：精確包覆中央群島與鐵道（d = 32）
       dirLight = new THREE.DirectionalLight(timePhase.sun, timePhase.light * 0.75);
       dirLight.position.set(15, 48, 25);
       dirLight.castShadow = true;
@@ -6187,7 +5736,6 @@ function createOuterLoopTrackAndCart() {
       hotAirBalloon = createHotAirBalloon();
       scene.add(hotAirBalloon);
 
-      // 海洋網格建置（改為同心圓環網格，半徑 56 米，完全吻合內圈湖盆）
       const oceanGeo = new THREE.RingGeometry(0.1, 56, 72, 28);
       oceanGeo.rotateX(-Math.PI / 2);
       const oceanPos = oceanGeo.attributes.position;
@@ -6239,30 +5787,29 @@ function createOuterLoopTrackAndCart() {
         oceanInitialZ.push(oceanPos.getY(i));
       }
 
-      // 🌟 遠方大陸：關閉 castShadow，並以 THREE.InstancedMesh 合併 220 叢灌木為 1 次 Draw Call
       function createDistantMainland() {
         const continentGroup = new THREE.Group();
 
-        const landMat = new THREE.MeshStandardMaterial({
+        const landMat = SharedPool.getMaterial('MeshStandardMaterial', {
           vertexColors: true,
           roughness: 0.88,
           metalness: 0.0,
           flatShading: true
         });
 
-        const foliageMat = new THREE.MeshStandardMaterial({
+        const foliageMat = SharedPool.getMaterial('MeshStandardMaterial', {
           color: 0x488A4E,
           roughness: 0.76,
           flatShading: true
         });
 
-        const ruinStoneMat = new THREE.MeshStandardMaterial({
+        const ruinStoneMat = SharedPool.getMaterial('MeshStandardMaterial', {
           color: 0x7E827B,
           roughness: 0.9,
           flatShading: true
         });
 
-        const sheikahRuneMat = new THREE.MeshStandardMaterial({
+        const sheikahRuneMat = SharedPool.getMaterial('MeshStandardMaterial', {
           color: 0x38BDF8,
           emissive: 0x0284C7,
           emissiveIntensity: 0.85,
@@ -6290,7 +5837,6 @@ function createOuterLoopTrackAndCart() {
           const coastCurve = Math.sin(angle * 3) * 4.0 + Math.cos(angle * 5) * 2.2;
           const innerBoundary = 46 + coastCurve;
 
-          // 🌟 陸地朝外擴展至 135 米半徑，將視野內所有死角完全鋪滿
           const normalizedR = Math.max(0, Math.min(1, (dist - 35) / (135 - 35)));
           const adjustedDist = innerBoundary + normalizedR * (135 - innerBoundary);
 
@@ -6311,7 +5857,6 @@ function createOuterLoopTrackAndCart() {
           const angleDiff = Math.abs(Math.atan2(Math.sin(angle - BEACH_CENTER_ANGLE), Math.cos(angle - BEACH_CENTER_ANGLE)));
           const isUniqueBeachZone = Math.max(0, 1.0 - angleDiff / 0.75);
 
-          // 🌟 核心抬高：岸邊基準抬高至 -0.20m（高於湖水 -0.38m），且隨離岸距離穩定向上隆起 (+baseInlandRise)
           const baseInlandRise = normalizedR * 3.8;
           let finalY = 0.05 + baseInlandRise;
           let vertexColor = new THREE.Color();
@@ -6338,11 +5883,10 @@ function createOuterLoopTrackAndCart() {
         ringGeo.computeVertexNormals();
 
         const mainlandMesh = new THREE.Mesh(ringGeo, landMat);
-        mainlandMesh.castShadow = false; // 遠景關閉投射陰影
+        mainlandMesh.castShadow = false;
         mainlandMesh.receiveShadow = true;
         continentGroup.add(mainlandMesh);
 
-        // 🌟 THREE.InstancedMesh 灌木實例化渲染
         const TOTAL_BUSHES = 220;
         const bushBaseGeo = new THREE.DodecahedronGeometry(1.2, 1);
         bushBaseGeo.scale(1.2, 0.8, 1.0);
@@ -6384,7 +5928,6 @@ function createOuterLoopTrackAndCart() {
         bushInstancedMesh.instanceMatrix.needsUpdate = true;
         continentGroup.add(bushInstancedMesh);
 
-        // 希卡遺跡（尺寸放大 3 倍）
         (function createRuinType1() {
           const group = new THREE.Group();
           const ang = -2.2, distR = 0.46;
@@ -6445,14 +5988,13 @@ function createOuterLoopTrackAndCart() {
       }
       scene.add(createDistantMainland());
 
-      // 七島實體建置
       ISLAND_CONFIG.forEach(cfg => {
         const group = new THREE.Group();
         group.position.set(...cfg.pos);
 
         const baseRadius = cfg.radius;
         const sandRadius = baseRadius + 0.55;
-        const sandMat = new THREE.MeshStandardMaterial({
+        const sandMat = SharedPool.getMaterial('MeshStandardMaterial', {
           color: 0xFAF9F3,
           flatShading: true,
           roughness: 0.95,
@@ -6472,7 +6014,7 @@ function createOuterLoopTrackAndCart() {
           group.add(vines);
         }
 
-        const baseMat = new THREE.MeshStandardMaterial({ color: cfg.color, flatShading: true, roughness: 0.85 });
+        const baseMat = SharedPool.getMaterial('MeshStandardMaterial', { color: cfg.color, flatShading: true, roughness: 0.85 });
         const islandBase = new THREE.Mesh(new THREE.CylinderGeometry(baseRadius, baseRadius * 0.95, 0.9, 6), baseMat);
         islandBase.position.y = -0.43;
         islandBase.rotation.y = Math.PI / 6;
@@ -6635,55 +6177,56 @@ function createOuterLoopTrackAndCart() {
         });
       }
 
+      // 初始化 2 隻常駐麥塊狗狗
       const dogConfigs = [
-      { fur: 0xE5E3DC, collar: 0xDC2626, homeIsland: 1 },
-      { fur: 0xC27A23, collar: 0x2563EB, homeIsland: 2 }
-    ];
+        { fur: 0xE5E3DC, collar: 0xDC2626, homeIsland: 1 },
+        { fur: 0xC27A23, collar: 0x2563EB, homeIsland: 2 }
+      ];
 
-    dogConfigs.forEach((cfg, dIdx) => {
-      const dogMesh = createMinecraftDogMesh(cfg.fur, cfg.collar);
-      const zzzSprite = createSleepZzzSprite();
-      zzzSprite.position.set(0, 0.9, 0);
-      dogMesh.add(zzzSprite);
+      dogConfigs.forEach((cfg, dIdx) => {
+        const dogMesh = createMinecraftDogMesh(cfg.fur, cfg.collar);
+        const zzzSprite = createSleepZzzSprite();
+        zzzSprite.position.set(0, 0.9, 0);
+        dogMesh.add(zzzSprite);
 
-      const curIsland = ISLAND_CONFIG[cfg.homeIsland];
-      const ang = Math.random() * Math.PI * 2;
-      const rad = 2.0 + Math.random() * (curIsland.radius - 3.2);
-      const initX = curIsland.pos[0] + Math.cos(ang) * rad;
-      const initZ = curIsland.pos[2] + Math.sin(ang) * rad;
+        const curIsland = ISLAND_CONFIG[cfg.homeIsland];
+        const ang = Math.random() * Math.PI * 2;
+        const rad = 2.0 + Math.random() * (curIsland.radius - 3.2);
+        const initX = curIsland.pos[0] + Math.cos(ang) * rad;
+        const initZ = curIsland.pos[2] + Math.sin(ang) * rad;
 
-      dogMesh.position.set(initX, 0, initZ);
-      scene.add(dogMesh);
+        dogMesh.position.set(initX, 0, initZ);
+        scene.add(dogMesh);
 
-      const cheerAngle = (dIdx === 0 ? 0.35 : 3.45);
-      const cheerRadius = 2.6;
-      const sleepAngle = (dIdx === 0 ? 1.2 : 4.2);
-      const sleepRadius = 2.4;
+        const cheerAngle = (dIdx === 0 ? 0.35 : 3.45);
+        const cheerRadius = 2.6;
+        const sleepAngle = (dIdx === 0 ? 1.2 : 4.2);
+        const sleepRadius = 2.4;
 
-      villagers.push({
-        obj: dogMesh,
-        zzzSprite: zzzSprite,
-        homeIslandIdx: cfg.homeIsland,
-        currentIslandIdx: cfg.homeIsland,
-        targetIslandIdx: cfg.homeIsland,
-        state: 'wander',
-        currentX: initX,
-        currentZ: initZ,
-        targetX: initX,
-        targetZ: initZ,
-        walkCycle: Math.random() * 10,
-        waitTimer: Math.random() * 60,
-        speed: 0.024,
-        isJogging: true,
-        isSkirt: false,
-        isDog: true,
-        cheerType: 'jump_both',
-        stadiumPos: { x: Math.cos(cheerAngle) * cheerRadius, z: Math.sin(cheerAngle) * cheerRadius },
-        sleepPos: { x: Math.cos(sleepAngle) * sleepRadius, z: Math.sin(sleepAngle) * sleepRadius },
-        cheerPhase: Math.random() * Math.PI * 2,
-        sleepBreathPhase: Math.random() * Math.PI * 2
+        villagers.push({
+          obj: dogMesh,
+          zzzSprite: zzzSprite,
+          homeIslandIdx: cfg.homeIsland,
+          currentIslandIdx: cfg.homeIsland,
+          targetIslandIdx: cfg.homeIsland,
+          state: 'wander',
+          currentX: initX,
+          currentZ: initZ,
+          targetX: initX,
+          targetZ: initZ,
+          walkCycle: Math.random() * 10,
+          waitTimer: Math.random() * 60,
+          speed: 0.024,
+          isJogging: true,
+          isSkirt: false,
+          isDog: true,
+          cheerType: 'jump_both',
+          stadiumPos: { x: Math.cos(cheerAngle) * cheerRadius, z: Math.sin(cheerAngle) * cheerRadius },
+          sleepPos: { x: Math.cos(sleepAngle) * sleepRadius, z: Math.sin(sleepAngle) * sleepRadius },
+          cheerPhase: Math.random() * Math.PI * 2,
+          sleepBreathPhase: Math.random() * Math.PI * 2
+        });
       });
-    });
 
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
@@ -6795,7 +6338,6 @@ function createOuterLoopTrackAndCart() {
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
 
-        // 🌟 放寬距離門檻，解決 isFocusing 浮點數卡死
         if (isFocusing) {
           camera.position.lerp(targetCameraPos, 0.15);
           controls.target.lerp(targetLookAt, 0.15);
@@ -6830,9 +6372,6 @@ function createOuterLoopTrackAndCart() {
 
         windTurbineBlades.forEach(blade => { blade.rotation.z += 0.04; });
 
-
-       
-        // 深海巨獸游動
         if (seaMonster) {
           if (!monsterState.active) {
             monsterState.timer -= 0.016;
@@ -6870,7 +6409,6 @@ function createOuterLoopTrackAndCart() {
           vine.rotation.z = sway;
         });
 
-        // 🌊 移除 computeVertexNormals()，CPU 零負擔平滑海浪
         if (oceanMesh && oceanInitialZ && oceanInitialZ.length > 0) {
           const posAttr = oceanMesh.geometry.attributes.position;
           for (let i = 0; i < posAttr.count; i++) {
@@ -7021,30 +6559,28 @@ function createOuterLoopTrackAndCart() {
           playerVillager.companionSprite.position.y = 1.6 + Math.sin(time * 4.0) * 0.06;
         }
 
-if (cartGroup && trackCurve && !isCartPaused) {
-  cartProgress = (cartProgress + 0.00014) % 1.0;
-  const pos = trackCurve.getPointAt(cartProgress);
-  const tangent = trackCurve.getTangentAt(cartProgress).normalize();
+        if (cartGroup && trackCurve && !isCartPaused) {
+          cartProgress = (cartProgress + 0.00014) % 1.0;
+          const pos = trackCurve.getPointAt(cartProgress);
+          const tangent = trackCurve.getTangentAt(cartProgress).normalize();
 
-  // 🌟 將目標點與車身位置同步抬高 0.28，保持仰俯角與軌道坡度完全一致
-  cartGroup.position.set(pos.x, pos.y + 0.28, pos.z);
-  cartGroup.lookAt(pos.x + tangent.x * 2.0, pos.y + 0.28 + tangent.y * 2.0, pos.z + tangent.z * 2.0);
+          cartGroup.position.set(pos.x, pos.y + 0.28, pos.z);
+          cartGroup.lookAt(pos.x + tangent.x * 2.0, pos.y + 0.28 + tangent.y * 2.0, pos.z + tangent.z * 2.0);
 
-  if (trailerCarts && trailerCarts.length > 0) {
-    const spacing = 0.007;
-    trailerCarts.forEach((trailer, idx) => {
-      let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
-      if (tProg < 0) tProg += 1.0;
+          if (trailerCarts && trailerCarts.length > 0) {
+            const spacing = 0.007;
+            trailerCarts.forEach((trailer, idx) => {
+              let tProg = (cartProgress - (idx + 1) * spacing) % 1.0;
+              if (tProg < 0) tProg += 1.0;
 
-      const tPos = trackCurve.getPointAt(tProg);
-      const tTan = trackCurve.getTangentAt(tProg).normalize();
+              const tPos = trackCurve.getPointAt(tProg);
+              const tTan = trackCurve.getTangentAt(tProg).normalize();
 
-      // 🌟 同樣將拖車車廂同步抬高 0.28，徹底消除車輪懸空與翹起問題
-      trailer.position.set(tPos.x, tPos.y + 0.28, tPos.z);
-      trailer.lookAt(tPos.x + tTan.x * 2.0, tPos.y + 0.28 + tTan.y * 2.0, tPos.z + tTan.z * 2.0);
-    });
-  }
-}
+              trailer.position.set(tPos.x, tPos.y + 0.28, tPos.z);
+              trailer.lookAt(tPos.x + tTan.x * 2.0, tPos.y + 0.28 + tTan.y * 2.0, tPos.z + tTan.z * 2.0);
+            });
+          }
+        }
 
         if (patrolBoat && boatCurve && !isBoatPaused) {
           boatProgress -= 0.00015;
@@ -7377,124 +6913,106 @@ if (cartGroup && trackCurve && !isCartPaused) {
                 v.waitTimer = Math.floor(Math.random() * 80) + 40;
               }
             }
-            
-          } 
+          }
+
           if (v.isDog && limbs && limbs.tail) {
-              // 待機時慢搖、奔跑/應援時快搖
-              const wagSpeed = (v.waitTimer > 0) ? 4.0 : 12.0;
-              const wagAmp = (v.waitTimer > 0) ? 0.15 : 0.35;
-              limbs.tail.rotation.y = Math.sin(time * wagSpeed) * wagAmp;
-            }
+            const wagSpeed = (v.waitTimer > 0) ? 4.0 : 12.0;
+            const wagAmp = (v.waitTimer > 0) ? 0.15 : 0.35;
+            limbs.tail.rotation.y = Math.sin(time * wagSpeed) * wagAmp;
+          }
         });
 
-        
-        
-// 本機玩家動作與漫步邏輯
         if (playerVillager && playerVillager.obj && !playerVillager.isOnCart) {
           const limbs = playerVillager.obj.userData.limbs;
 
-          // 🌟 正在北荒地拿鋤頭墾荒的動作
           if (typeof isPlayerFarming !== 'undefined' && isPlayerFarming) {
-            const farmCycle = time * 4.2; // 揮鋤頻率
-            const swing = (Math.sin(farmCycle) + 1) * 0.5; // 0 ~ 1 往復波動
+            const farmCycle = time * 4.2;
+            const swing = (Math.sin(farmCycle) + 1) * 0.5;
 
-            // 身體配合彎腰俯衝
             playerVillager.obj.rotation.x = 0.15 + swing * 0.22;
             playerVillager.obj.position.y = (1.0 - swing) * 0.05;
 
             if (limbs) {
-              // 雙手握住鋤頭由上往下用力刨土
               limbs.rightArm.rotation.x = -1.6 + swing * 1.3;
               limbs.leftArm.rotation.x = -1.4 + swing * 1.1;
-              limbs.leftArm.rotation.z = -0.2; // 雙手向中央靠攏持柄
+              limbs.leftArm.rotation.z = -0.2;
               limbs.rightArm.rotation.z = 0.2;
-              limbs.leftLeg.rotation.x = -0.15; // 微屈膝
+              limbs.leftLeg.rotation.x = -0.15;
               limbs.rightLeg.rotation.x = 0.2;
             }
 
-            // 鋤頭向下刨到土時，隨機噴出極小的微塵碎屑
             if (swing > 0.88 && Math.random() < 0.25) {
               if (typeof spawnFootstepDust === 'function') {
                 spawnFootstepDust(playerVillager.currentX, 0, playerVillager.currentZ + 0.35);
               }
             }
+          } else if (playerVillager.waitTimer > 0) {
+            playerVillager.waitTimer--;
+            if (limbs) {
+              limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
+              limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
+              limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
+              limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
+            }
+            if (playerVillager.waitTimer <= 0) pickNextPlayerWanderTarget();
           } else {
-            // 🌟 非墾荒狀態才執行日常漫步（不使用 return，確保後面 renderer.render 順暢執行）
-            if (playerVillager.waitTimer > 0) {
-              playerVillager.waitTimer--;
+            const dx = playerVillager.targetX - playerVillager.currentX;
+            const dz = playerVillager.targetZ - playerVillager.currentZ;
+            const dist = Math.hypot(dx, dz);
+
+            if (dist > 0.08) {
+              playerVillager.currentX += (dx / dist) * playerVillager.speed;
+              playerVillager.currentZ += (dz / dist) * playerVillager.speed;
+
+              const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
+              applyWorldRepulsion(currentPos, 0.35);
+              playerVillager.currentX = currentPos.x;
+              playerVillager.currentZ = currentPos.z;
+
+              Object.values(otherPlayers).forEach(other => {
+                if (!other || !other.mesh) return;
+                const ox = playerVillager.currentX - other.mesh.position.x;
+                const oz = playerVillager.currentZ - other.mesh.position.z;
+                const odist = Math.hypot(ox, oz);
+                if (odist < 0.55 && odist > 0.001) {
+                  const push = (0.55 - odist) * 0.5;
+                  playerVillager.currentX += (ox / odist) * push;
+                  playerVillager.currentZ += (oz / odist) * push;
+                }
+              });
+
+              playerVillager.obj.position.x = playerVillager.currentX;
+              playerVillager.obj.position.z = playerVillager.currentZ;
+
+              playerVillager.obj.rotation.y = Math.atan2(dx, dz);
+
+              playerVillager.walkCycle += 0.18;
+              const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+              const armSwing = Math.sin(playerVillager.walkCycle) * 0.5;
+
+              if (Math.abs(Math.sin(playerVillager.walkCycle)) > 0.88 && Math.random() < 0.35) {
+                const rotY = playerVillager.obj.rotation.y;
+                const heelX = playerVillager.currentX - Math.sin(rotY) * 0.18;
+                const heelZ = playerVillager.currentZ - Math.cos(rotY) * 0.18;
+                spawnFootstepDust(heelX, 0, heelZ);
+              }
+
               if (limbs) {
-                limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(limbs.leftLeg.rotation.x, 0, 0.1);
-                limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(limbs.rightLeg.rotation.x, 0, 0.1);
-                limbs.leftArm.rotation.x = THREE.MathUtils.lerp(limbs.leftArm.rotation.x, 0, 0.1);
-                limbs.rightArm.rotation.x = THREE.MathUtils.lerp(limbs.rightArm.rotation.x, 0, 0.1);
+                limbs.leftLeg.rotation.x = legSwing;
+                limbs.rightLeg.rotation.x = -legSwing;
+                limbs.leftArm.rotation.x = -armSwing;
+                limbs.rightArm.rotation.x = armSwing;
               }
-              if (playerVillager.waitTimer <= 0) pickNextPlayerWanderTarget();
+              playerVillager.obj.position.y = Math.abs(Math.sin(playerVillager.walkCycle)) * 0.04;
             } else {
-              const dx = playerVillager.targetX - playerVillager.currentX;
-              const dz = playerVillager.targetZ - playerVillager.currentZ;
-              const dist = Math.hypot(dx, dz);
-
-              if (dist > 0.08) {
-                playerVillager.currentX += (dx / dist) * playerVillager.speed;
-                playerVillager.currentZ += (dz / dist) * playerVillager.speed;
-
-                const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
-                const wasBlocked = applyWorldRepulsion(currentPos, 0.35);
-                playerVillager.currentX = currentPos.x;
-                playerVillager.currentZ = currentPos.z;
-
-                Object.values(otherPlayers).forEach(other => {
-                  if (!other || !other.mesh) return;
-                  const ox = playerVillager.currentX - other.mesh.position.x;
-                  const oz = playerVillager.currentZ - other.mesh.position.z;
-                  const odist = Math.hypot(ox, oz);
-                  if (odist < 0.55 && odist > 0.001) {
-                    const push = (0.55 - odist) * 0.5;
-                    playerVillager.currentX += (ox / odist) * push;
-                    playerVillager.currentZ += (oz / odist) * push;
-                  }
-                });
-
-                playerVillager.obj.position.x = playerVillager.currentX;
-                playerVillager.obj.position.z = playerVillager.currentZ;
-
-                if (wasBlocked) {
-                  playerVillager.targetX = playerVillager.currentX;
-                  playerVillager.targetZ = playerVillager.currentZ;
-                  playerVillager.waitTimer = 20;
-                } else {
-                  playerVillager.obj.rotation.y = Math.atan2(dx, dz);
-                }
-
-                playerVillager.walkCycle += 0.18;
-                const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
-                const armSwing = Math.sin(playerVillager.walkCycle) * 0.5;
-
-                if (Math.abs(Math.sin(playerVillager.walkCycle)) > 0.88 && Math.random() < 0.35) {
-                  const rotY = playerVillager.obj.rotation.y;
-                  const heelX = playerVillager.currentX - Math.sin(rotY) * 0.18;
-                  const heelZ = playerVillager.currentZ - Math.cos(rotY) * 0.18;
-                  spawnFootstepDust(heelX, 0, heelZ);
-                }
-
-                if (limbs) {
-                  limbs.leftLeg.rotation.x = legSwing;
-                  limbs.rightLeg.rotation.x = -legSwing;
-                  limbs.leftArm.rotation.x = -armSwing;
-                  limbs.rightArm.rotation.x = armSwing;
-                }
-                playerVillager.obj.position.y = Math.abs(Math.sin(playerVillager.walkCycle)) * 0.04;
-              } else {
-                if (playerVillager.targetIslandIdx !== undefined) {
-                  playerVillager.currentIslandIdx = playerVillager.targetIslandIdx;
-                }
-                playerVillager.waitTimer = Math.floor(Math.random() * 120) + 60;
+              if (playerVillager.targetIslandIdx !== undefined) {
+                playerVillager.currentIslandIdx = playerVillager.targetIslandIdx;
               }
+              playerVillager.waitTimer = Math.floor(Math.random() * 120) + 60;
             }
           }
         }
 
-        // 多人同步對象平滑更新
         Object.values(otherPlayers).forEach(p => {
           const oldX = p.mesh.position.x;
           const oldZ = p.mesh.position.z;
@@ -7564,18 +7082,14 @@ if (cartGroup && trackCurve && !isCartPaused) {
           motesGeo.attributes.color.needsUpdate = true;
         } 
 
-// 🌟 乘客搭車視角：在內圈海岸邊緣行駛，近距離眺望中央 7 座島群
         if (isRidingCart && trailerCarts && trailerCarts.length >= 2 && trackCurve) {
           const seatCart = trailerCarts[1];
           const cartWorldPos = new THREE.Vector3();
           seatCart.getWorldPosition(cartWorldPos);
 
           const cTan = trackCurve.getTangentAt(cartProgress).normalize();
-
-          // 相機架設於第二節車廂上方略往前
           camera.position.set(cartWorldPos.x, cartWorldPos.y + 1.35, cartWorldPos.z).addScaledVector(cTan, 0.35);
 
-          // 視線朝前方延伸，並往世界中心（0, 0.8, 0）轉向
           const cartTargetLook = camera.position.clone().addScaledVector(cTan, 9.5);
           const centerDir = new THREE.Vector3(0, 0.8, 0).sub(camera.position).normalize();
           cartTargetLook.addScaledVector(centerDir, 7.5);
@@ -7583,42 +7097,30 @@ if (cartGroup && trackCurve && !isCartPaused) {
 
           camera.lookAt(cartTargetLook);
         }
-// 🌟 乘客搭船視角：朝向船頭前方，微偏中央群島的破浪第一人稱視角
+
         if (isRidingBoat && patrolBoat && boatCurve) {
           const boatWorldPos = new THREE.Vector3();
           patrolBoat.getWorldPosition(boatWorldPos);
 
-          // 1. 取得船隻前進切線方向向量（切線方向反向即為船頭朝向）
           const bTan = boatCurve.getTangentAt(boatProgress).normalize();
-          const forwardDir = bTan.clone().negate(); // 船頭前進方向
+          const forwardDir = bTan.clone().negate();
 
-          // 2. 將攝影機架設在駕駛艙頂部略靠前處（高度 Y + 0.85m，並往前微推 0.2m）
           camera.position.copy(boatWorldPos).add(new THREE.Vector3(0, 0.85, 0)).addScaledVector(forwardDir, 0.2);
 
-          // 3. 計算視線目標點：
-          // 先看向船頭正前方 12 米處
           const targetLook = camera.position.clone().addScaledVector(forwardDir, 12.0);
-
-          // 🌟 偏向權重由原本的 4.2 大幅提升至 8.5，使視線自然轉向中央群島約 40~45 度
           const centerDir = new THREE.Vector3(0, 1.0, 0).sub(camera.position).normalize();
           targetLook.addScaledVector(centerDir, 8.5);
-
-          // 5. 將視線高度微調至水面與地平線之間（感受迎面浪花與海平面）
           targetLook.y = 1.2;
 
           camera.lookAt(targetLook);
         }
-// 🎈 熱氣球巡航與北荒地降落坪（50%~75%）定期降落動態
+
         if (hotAirBalloon) {
-          // 1. 判定降落坪是否開放 (開墾進度介於 50% ~ 75% 之間)
           const isHelipadOpen = (northIslandProgress >= 50 && northIslandProgress < 75);
-          
-          // 2. 定期降落週期：每 60 秒為一輪，其中前 14 秒緩緩降落停泊於北島降落坪
           const cycleTime = time % 60;
           const isLandingTime = isHelipadOpen && (cycleTime < 14);
 
           if (isLandingTime) {
-            // 平滑緩降至北島降落坪表面（北島中心座標 X: 0, Z: -9.0，停降高度 Y: 1.0）
             const targetX = 0;
             const targetZ = -9.0;
             const targetY = 1.0;
@@ -7626,9 +7128,8 @@ if (cartGroup && trackCurve && !isCartPaused) {
             hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, targetX, 0.035);
             hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, targetZ, 0.035);
             hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, targetY, 0.035);
-            hotAirBalloon.rotation.y += 0.005; // 停泊時微微緩轉
+            hotAirBalloon.rotation.y += 0.005;
           } else {
-            // 正常巡航狀態：沿著遠方大陸前緣大半徑優雅飄遊
             const balloonAngle = time * 0.025 + Math.PI * 1.25; 
             const hoverRadiusX = 44.0;
             const hoverRadiusZ = 40.0;
@@ -7642,12 +7143,10 @@ if (cartGroup && trackCurve && !isCartPaused) {
             hotAirBalloon.rotation.x = Math.cos(time * 0.4) * 0.03;
           }
 
-          // 3. 古文明能量結晶持續自轉
           if (balloonEnergyCore) {
             balloonEnergyCore.rotation.y += 0.04;
           }
 
-          // 4. 向上衝能的藍色光柱能量脈衝
           if (balloonEnergyBeam) {
             const pulse = (Math.sin(time * 5.0) + 1) * 0.5;
             balloonEnergyBeam.material.opacity = 0.5 + pulse * 0.3;
@@ -7659,7 +7158,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
     }
 
     // ==========================================
-    // 15. 焦點運鏡、抽屜與標籤控制
+    // 15. 鏡頭聚焦點與面板控制
     // ==========================================
     function focusOnIsland(islandData) {
       if (!islandData || !islandData.pos) return;
@@ -7677,7 +7176,6 @@ if (cartGroup && trackCurve && !isCartPaused) {
     }
 
     function openDrawer(islandData) {
-      // 🌟 播放自備的實體 MP3 島嶼專屬音效
       if (typeof playCustomAudio === 'function' && islandData.id !== 'cart' && islandData.id !== 'boat') {
         playCustomAudio(islandData.id);
       }
@@ -7700,7 +7198,6 @@ if (cartGroup && trackCurve && !isCartPaused) {
       if (islandData.id === 'reading') renderDailyQuestionUI();
       if (islandData.id === 'wasteland_n') {
         generateGrade3MathQuestion();
-        // 🌟 僅在開墾進度未滿 50% 時才瞬移墾荒
         if (northIslandProgress < 50 && typeof startPlayerFarming === 'function') {
           startPlayerFarming();
         }
@@ -7711,7 +7208,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
 
     function closeDrawer() {
       if (typeof isPlayerFarming !== 'undefined' && isPlayerFarming) {
-        stopPlayerFarming(); // 🌟 關閉抽屜時：收起鋤頭，恢復日常隨機漫步
+        stopPlayerFarming();
       }
       document.getElementById('side-drawer').classList.remove('open');
       isCartPaused = false;
@@ -7743,13 +7240,11 @@ if (cartGroup && trackCurve && !isCartPaused) {
       }
     }
 
-// 🌟 修正後：支援視角折疊選單的重置相機函式
     function resetToDefaultCamera() {
       isRidingCart = false;
       isRidingBoat = false;
       controls.enabled = true;
 
-      // 🌟 重置相機時確保停止載具音效
       if (typeof stopCustomAudio === 'function') {
         stopCustomAudio('cart');
         stopCustomAudio('boat');
@@ -7757,7 +7252,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
       if (typeof playCustomAudio === 'function') {
         playCustomAudio('ambient');
       }
-      // 1. 重置摺疊選單按鈕的顯示文字與選中樣式
+
       const menuText = document.getElementById('view-menu-current-text');
       const cartBtn = document.getElementById('sub-btn-cart');
       const boatBtn = document.getElementById('sub-btn-boat');
@@ -7765,18 +7260,17 @@ if (cartGroup && trackCurve && !isCartPaused) {
       if (cartBtn) cartBtn.classList.remove('active-mode');
       if (boatBtn) boatBtn.classList.remove('active-mode');
 
-      // 2. 關閉右側抽屜並恢復載具移動
       if (typeof closeDrawer === 'function') {
         document.getElementById('side-drawer').classList.remove('open');
         isCartPaused = false;
         isBoatPaused = false;
       }
 
-      // 3. 觸發相機平滑平移回初始鳥瞰點
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 22, 46);
     }
+
     function startIslandApp() {
       init3D();
       initStudent();
@@ -7784,7 +7278,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
     }
 
     // ==========================================
-    // 16. 多人連線同步系統
+    // 16. 多人連線同步系統（位移節流 + 記憶體釋放）
     // ==========================================
     let otherPlayers = {};
     let myPlayerRef = null;
@@ -7802,16 +7296,36 @@ if (cartGroup && trackCurve && !isCartPaused) {
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       heartbeatTimer = setInterval(() => {
         if (playerVillager && myPlayerRef) {
-          myPlayerRef.update({
-            playerId: playerId,
-            seatNumber: currentStudent.seatNumber,
-            name: currentStudent.name,
-            avatar: currentStudent.avatar,
-            gender: currentStudent.gender,
-            x: playerVillager.isOnCart ? playerVillager.obj.getWorldPosition(new THREE.Vector3()).x : playerVillager.currentX,
-            z: playerVillager.isOnCart ? playerVillager.obj.getWorldPosition(new THREE.Vector3()).z : playerVillager.currentZ,
-            lastSeen: firebase.database.ServerValue.TIMESTAMP
-          });
+          const currentX = playerVillager.isOnCart 
+            ? playerVillager.obj.getWorldPosition(new THREE.Vector3()).x 
+            : playerVillager.currentX;
+          const currentZ = playerVillager.isOnCart 
+            ? playerVillager.obj.getWorldPosition(new THREE.Vector3()).z 
+            : playerVillager.currentZ;
+
+          // 🌟 Phase 1 優化：位移量 >= 0.2m 才寫入雲端座標，待機時僅更新時間戳
+          const hasMoved = (lastSyncedCoord.x === null) || 
+            (Math.hypot(currentX - lastSyncedCoord.x, currentZ - lastSyncedCoord.z) >= 0.2);
+
+          if (hasMoved) {
+            lastSyncedCoord.x = currentX;
+            lastSyncedCoord.z = currentZ;
+
+            myPlayerRef.update({
+              playerId: playerId,
+              seatNumber: currentStudent.seatNumber,
+              name: currentStudent.name,
+              avatar: currentStudent.avatar,
+              gender: currentStudent.gender,
+              x: Number(currentX.toFixed(2)),
+              z: Number(currentZ.toFixed(2)),
+              lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+          } else {
+            myPlayerRef.update({
+              lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+          }
         }
       }, 500);
 
@@ -7889,6 +7403,7 @@ if (cartGroup && trackCurve && !isCartPaused) {
     function removeOtherPlayer(key) {
       if (otherPlayers[key]) {
         scene.remove(otherPlayers[key].mesh);
+        deepDispose(otherPlayers[key].mesh); // 🌟 Phase 1 優化：釋放 GPU 顯存
         delete otherPlayers[key];
       }
     }
@@ -7901,3 +7416,5 @@ if (cartGroup && trackCurve && !isCartPaused) {
   </script>
 </body>
 </html>
+
+    /* ====== 前半段（Stage 1）結束點：請在此處銜接後半段（Stage 2） ====== */
