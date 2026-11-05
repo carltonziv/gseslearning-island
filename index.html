@@ -1820,7 +1820,8 @@
       db.ref(`daily_checkins/${today}/seat_${seat}`).once('value', snap => {
         const val = snap.val();
         if (val) {
-          const key = `island_checkin_${seat}_${today}`;
+          // ✅ 修正為與 getDailyCount/addDailyCount 一致的鍵名
+          const key = `island_checkin_seat_${seat}_${today}`;
           localStorage.setItem(key, JSON.stringify(val));
           updateMinimapStatus();
         }
@@ -2308,12 +2309,23 @@
       if (fBox) fBox.style.display = 'none';
     }
 
+    // ==========================================
+    // ⛏️ 提交解答・驗證批改並推進開墾進度（含防連點與訪客過濾）
+    // ==========================================
     function submitMathReclaim() {
+      // 1. 檢查是否全島已完工
       if (northIslandProgress >= 100) {
         alert('🎉 龜山福德神廟島已開墾完成囉！感謝探險家的付出！');
         return;
       }
 
+      // 🌟【關鍵 1：過濾訪客】限制只有正式座號學生能推進雲端墾荒進度
+      if (!currentStudent || currentStudent.seatNumber === '訪客') {
+        alert('🎒 訪客探險家可以練習解題，但正式開墾進度與共創能量需要由 301 班級同學登入座號注入喔！');
+        return;
+      }
+
+      // 2. 檢查每日打卡次數限制（每天限 1 次）
       if (!checkDailyLimit('wasteland_n')) return;
 
       if (!currentMathQuestion) {
@@ -2323,12 +2335,22 @@
 
       const inputVal = parseInt(document.getElementById('math-quiz-answer').value, 10);
       const fBox = document.getElementById('math-feedback-box');
+      const btnSubmit = document.getElementById('btn-submit-math');
 
+      // 檢查輸入是否為有效數字
       if (isNaN(inputVal)) {
         alert('請先在答案格中輸入計算數字喔！');
         return;
       }
 
+      // 🌟【關鍵 2：立即鎖定按鈕防止連點】點擊後立刻反灰，防止動畫期間重複觸發
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.style.opacity = '0.6';
+        btnSubmit.textContent = '⏳ 正在驗證解答與注入能量...';
+      }
+
+      // 3. 比對答案
       if (inputVal === currentMathQuestion.correctAnswer) {
         fBox.style.display = 'block';
         fBox.style.background = '#dcfce7';
@@ -2336,15 +2358,18 @@
         fBox.style.color = '#15803d';
         fBox.innerHTML = `<strong>🎉 算得太準確了！</strong><br>答案正確，成功為北荒地注入 3% 開墾進度！`;
 
+        // 停止持鋤頭動作
         if (typeof stopPlayerFarming === 'function' && isPlayerFarming) {
           stopPlayerFarming();
         }
 
+        // 計算並更新本地模型進度
         const nextProgress = Math.min((northIslandProgress || 0) + 3, 100);
         const willReachFull = (northIslandProgress < 100 && nextProgress >= 100);
 
         updateNorthIslandReclaimVisuals(nextProgress);
 
+        // 寫入 Firebase 雲端累積
         if (northIslandReclaimRef) {
           northIslandReclaimRef.transaction(current => {
             let next = (current || 0) + 3;
@@ -2356,12 +2381,14 @@
           });
         }
 
+        // 100% 完工慶祝
         if (willReachFull && totalEnergyRef) {
           totalEnergyRef.transaction(c => (c || 0) + 100);
           showLiveBanner("⛩️ 狂賀！北荒地神廟全面完工！全班獲得 100 點共創能量！");
           confetti({ particleCount: 150, spread: 100 });
         }
 
+        // 寫入打卡與試算表紀錄（成功完成後按鈕維持鎖定，由 rewardCheckin 關閉抽屜）
         rewardCheckin('wasteland_n', '龜山荒地開墾', `解答數學完成，貢獻了 3% 開墾進度`, {
           type: 'task_complete',
           seatNumber: currentStudent.seatNumber,
@@ -2375,11 +2402,18 @@
         }, 5);
 
       } else {
+        // 算錯時顯示提示，並【重新解鎖按鈕】讓學生可以重新作答
         fBox.style.display = 'block';
         fBox.style.background = '#fee2e2';
         fBox.style.border = '2px solid #ef4444';
         fBox.style.color = '#b91c1c';
         fBox.innerHTML = `<strong>💡 答案不太對喔！</strong><br>再拿計算紙仔細驗算一遍，加油！`;
+
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.style.opacity = '1';
+          btnSubmit.textContent = '⛏️ 提交解答・注入開墾能量';
+        }
       }
     }
 
@@ -7199,10 +7233,66 @@
       updateNightClosedState();
       updateSportTabStatus();
       if (islandData.id === 'reading') renderDailyQuestionUI();
+// ==========================================
+      // ⛏️ 北荒地抽屜開啟狀態檢核（含完工、今日已完成鎖定）
+      // ==========================================
       if (islandData.id === 'wasteland_n') {
-        generateGrade3MathQuestion();
-        if (northIslandProgress < 50 && typeof startPlayerFarming === 'function') {
-          startPlayerFarming();
+        const isDone = getDailyCount('wasteland_n') >= 1;
+        const btnSubmit = document.getElementById('btn-submit-math');
+        const qInput = document.getElementById('math-quiz-answer');
+        const fBox = document.getElementById('math-feedback-box');
+
+        if (northIslandProgress >= 100) {
+          // 狀態 A：神廟已 100% 完工
+          if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.style.opacity = '0.6';
+            btnSubmit.textContent = '⛩️ 神廟已開墾完工';
+          }
+          if (qInput) qInput.disabled = true;
+          if (fBox) {
+            fBox.style.display = 'block';
+            fBox.style.background = '#dcfce7';
+            fBox.style.border = '2px solid #22c55e';
+            fBox.style.color = '#15803d';
+            fBox.innerHTML = '🎉 <b>全班開墾已達 100%！</b><br>古代神廟已完工，感謝全班探險家的努力奉獻！';
+          }
+        } else if (isDone) {
+          // 狀態 B：今天已經解題打卡過 -> 鎖定輸入框與按鈕
+          if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.style.opacity = '0.6';
+            btnSubmit.textContent = '✅ 今日墾荒挑戰已完成 (+5 EXP已領取)';
+          }
+          if (qInput) {
+            qInput.disabled = true;
+            qInput.value = '';
+          }
+          if (fBox) {
+            fBox.style.display = 'block';
+            fBox.style.background = '#dcfce7';
+            fBox.style.border = '2px solid #22c55e';
+            fBox.style.color = '#15803d';
+            fBox.innerHTML = '🌟 <b>今日任務已完成！</b><br>你今天已經注入過開墾能量囉，明天再來挑戰新題目！';
+          }
+        } else {
+          // 狀態 C：今天尚未完成 -> 啟用按鈕、出新題目並開始揮鋤
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.style.opacity = '1';
+            btnSubmit.textContent = '⛏️ 提交解答・注入開墾能量';
+          }
+          if (qInput) {
+            qInput.disabled = false;
+            qInput.value = '';
+          }
+          if (fBox) fBox.style.display = 'none';
+
+          generateGrade3MathQuestion();
+
+          if (northIslandProgress < 50 && typeof startPlayerFarming === 'function') {
+            startPlayerFarming();
+          }
         }
       }
 
