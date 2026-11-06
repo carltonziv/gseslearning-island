@@ -8260,11 +8260,12 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
               playerVillager.currentX += (dx / dist) * playerVillager.speed;
               playerVillager.currentZ += (dz / dist) * playerVillager.speed;
 
-              const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
-              applyWorldRepulsion(currentPos, 0.35);
+const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
+              const wasBlocked = applyWorldRepulsion(currentPos, 0.35);
               playerVillager.currentX = currentPos.x;
               playerVillager.currentZ = currentPos.z;
 
+              let blockedByOther = false;
               Object.values(otherPlayers).forEach(other => {
                 if (!other || !other.mesh) return;
                 const ox = playerVillager.currentX - other.mesh.position.x;
@@ -8274,13 +8275,21 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
                   const push = (0.55 - odist) * 0.5;
                   playerVillager.currentX += (ox / odist) * push;
                   playerVillager.currentZ += (oz / odist) * push;
+                  blockedByOther = true;
                 }
               });
 
               playerVillager.obj.position.x = playerVillager.currentX;
               playerVillager.obj.position.z = playerVillager.currentZ;
 
-              playerVillager.obj.rotation.y = Math.atan2(dx, dz);
+              // 🌟 核心防卡死：若撞牆或被其他同學擋住，立即重設目標脫困
+              if (wasBlocked || blockedByOther) {
+                playerVillager.targetX = playerVillager.currentX;
+                playerVillager.targetZ = playerVillager.currentZ;
+                playerVillager.waitTimer = Math.floor(Math.random() * 30) + 10;
+              } else {
+                playerVillager.obj.rotation.y = Math.atan2(dx, dz);
+              }
 
               playerVillager.walkCycle += 0.18;
               const legSwing = Math.sin(playerVillager.walkCycle) * 0.5;
