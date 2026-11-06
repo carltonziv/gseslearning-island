@@ -14,6 +14,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <!-- Chart.js 圖表庫 (輕量繪製五向度雷達圖) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -740,6 +742,74 @@
     .progress-high { background: #dcfce7; color: #15803d; }
     .progress-mid  { background: #fef3c7; color: #b45309; }
     .progress-low  { background: #f1f5f9; color: #64748b; }
+    /* 🌟 五向度學習雷達圖專屬樣式 */
+    .radar-card {
+      max-width: 460px !important;
+      text-align: center;
+    }
+    .radar-profile-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #f0fdf4, #e0f2fe);
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 2px solid #bae6fd;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+    .radar-avatar-circle {
+      font-size: 2.2rem;
+      background: #ffffff;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      border: 2px solid #7dd3fc;
+    }
+    .radar-chart-container {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      margin: 8px 0 14px 0;
+    }
+    .radar-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .radar-stat-box {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 6px 2px;
+    }
+    .radar-stat-label {
+      font-size: 0.68rem;
+      color: #64748b;
+      font-weight: 700;
+      display: block;
+    }
+    .radar-stat-value {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #0284c7;
+    }
+    .radar-insight-box {
+      background: #fefce8;
+      border: 1.5px dashed #facc15;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      color: #713f12;
+      line-height: 1.5;
+      text-align: left;
+      margin-bottom: 14px;
+    }
   </style>
 </head>
 <body>
@@ -867,6 +937,67 @@
       <button class="drawer-close" style="background:#334155; color:#fff;" onclick="toggleBracketSidebar(false)">×</button>
     </div>
     <div id="bracket-tree-root" class="bracket-tree-container"></div>
+  </div>
+
+  <!-- 🌟 五向度學習雷達圖檔案彈窗 -->
+  <div id="modal-radar" class="modal-overlay hidden">
+    <div class="modal-card radar-card">
+      <div class="modal-header">
+        <h2 class="modal-title">🧭 探險家能力檔案</h2>
+        <button class="modal-close" onclick="closeStudentRadarModal()">×</button>
+      </div>
+
+      <div class="radar-profile-header">
+        <div class="radar-avatar-circle" id="radar-avatar">🐺</div>
+        <div>
+          <div style="font-weight:900; font-size:1.1rem; color:#0f172a;" id="radar-name">載入中...</div>
+          <div style="font-size:0.8rem; color:#0284c7; font-weight:800;" id="radar-title-badge">⚡ 301 探險先鋒</div>
+        </div>
+      </div>
+
+      <!-- Canvas 繪圖區 -->
+      <div class="radar-chart-container">
+        <canvas id="radarChartCanvas"></canvas>
+      </div>
+
+      <!-- 五向度數值小標籤 -->
+      <div class="radar-stats-grid">
+        <div class="radar-stat-box">
+          <span class="radar-stat-label">🌿生態</span>
+          <span class="radar-stat-value" id="stat-val-nature">0</span>
+        </div>
+        <div class="radar-stat-box">
+          <span class="radar-stat-label">🏃健體</span>
+          <span class="radar-stat-value" id="stat-val-sport">0</span>
+        </div>
+        <div class="radar-stat-box">
+          <span class="radar-stat-label">📖閱讀</span>
+          <span class="radar-stat-value" id="stat-val-reading">0</span>
+        </div>
+        <div class="radar-stat-box">
+          <span class="radar-stat-label">🏛️公民</span>
+          <span class="radar-stat-value" id="stat-val-civics">0</span>
+        </div>
+        <div class="radar-stat-box">
+          <span class="radar-stat-label">⛏️數理</span>
+          <span class="radar-stat-value" id="stat-val-math">0</span>
+        </div>
+      </div>
+
+      <!-- AI 探險分析導引 -->
+      <div class="radar-insight-box" id="radar-insight-text">
+        ⏳ 正在分析你的能力平衡數據...
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn-action btn-blue" id="btn-relogin-from-radar" style="padding:10px; font-size:0.9rem;" onclick="reloginFromRadar()">
+          🎒 切換身分 / 造型設定
+        </button>
+        <button class="btn-action" style="background:#64748b; padding:10px; font-size:0.9rem;" onclick="closeStudentRadarModal()">
+          關閉
+        </button>
+      </div>
+    </div>
   </div>
     
   <!-- 登入設定彈窗 -->
@@ -3380,8 +3511,8 @@
 
           rowsHtml += `
             <tr>
-              <td style="position:sticky; left:0; background:#f8fafc; font-weight:800; text-align:left; border-right:1.5px solid #cbd5e1;">
-                ${st.seatNumber}號 ${escapeHTML(st.name)}
+              <td style="position:sticky; left:0; background:#f8fafc; font-weight:800; text-align:left; border-right:1.5px solid #cbd5e1; cursor:pointer; color:#0284c7;" onclick="openStudentRadar('${st.seatNumber}', '${escapeHTML(st.name)}', '${st.avatar || '🐺'}')">
+                ${st.seatNumber}號 ${escapeHTML(st.name)} 📊
               </td>
               <td>${hasNature ? '<span class="cell-done">✓</span>' : '<span class="cell-none">–</span>'}</td>
               <td>${hasSportEx ? '<span class="cell-done">✓</span>' : '<span class="cell-none">–</span>'}</td>
@@ -3401,6 +3532,164 @@
       }).catch(err => {
         tbody.innerHTML = `<tr><td colspan="9" style="padding:20px; color:#ef4444;">讀取失敗：${escapeHTML(err.message)}</td></tr>`;
       });
+    }
+
+    // ==========================================
+    // 📊 五向度學習雷達圖系統（含記憶體清理與數據聚合）
+    // ==========================================
+    let studentRadarChartInstance = null;
+
+    // 開啟並渲染指定學生的五向度雷達圖
+    function openStudentRadar(seatNumber, studentName, avatar) {
+      if (!seatNumber || seatNumber === '訪客') {
+        alert('🎒 訪客探險家尚無長期累積的能力數據，請先登入正式座號喔！');
+        return;
+      }
+
+      const modal = document.getElementById('modal-radar');
+      const nameElem = document.getElementById('radar-name');
+      const avatarElem = document.getElementById('radar-avatar');
+      const badgeElem = document.getElementById('radar-title-badge');
+      const insightBox = document.getElementById('radar-insight-text');
+
+      if (nameElem) nameElem.textContent = `${seatNumber}號 ${studentName}`;
+      if (avatarElem) avatarElem.textContent = avatar || '🐺';
+      if (badgeElem) badgeElem.textContent = `⚡ 301島嶼探險家・座號 ${seatNumber}`;
+      if (insightBox) insightBox.innerHTML = '⏳ 正在讀取並聚合全期五向度打卡數據...';
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.zIndex = "99999";
+      }
+
+      // 聚合歷史數據：從 Firebase daily_checkins 累加該生在 5 大向度的總打卡次數
+      const stats = { nature: 0, sport: 0, reading: 0, civics: 0, math: 0 };
+
+      if (!db) {
+        renderRadarChart(stats);
+        return;
+      }
+
+      db.ref('daily_checkins').once('value', snap => {
+        const allDays = snap.val() || {};
+        const seatKey = `seat_${seatNumber}`;
+
+        Object.values(allDays).forEach(dayRecord => {
+          if (dayRecord && dayRecord[seatKey]) {
+            const rec = dayRecord[seatKey];
+            stats.nature += (rec.nature || 0);
+            stats.sport += (rec.sport_exercise || 0) + (rec.sport_health || 0);
+            stats.reading += (rec.reading_daily || 0) + (rec.reading_free || 0);
+            stats.civics += (rec.civics || 0);
+            stats.math += (rec.wasteland_n || 0);
+          }
+        });
+
+        // 更新小標籤數值
+        document.getElementById('stat-val-nature').textContent = stats.nature;
+        document.getElementById('stat-val-sport').textContent = stats.sport;
+        document.getElementById('stat-val-reading').textContent = stats.reading;
+        document.getElementById('stat-val-civics').textContent = stats.civics;
+        document.getElementById('stat-val-math').textContent = stats.math;
+
+        // 生成個人化學習導引
+        const labelsMap = [
+          { key: 'nature', name: '🌿 自然生態', val: stats.nature, tip: '多觀察校園昆蟲與植物' },
+          { key: 'sport', name: '🏃 體魄活力', val: stats.sport, tip: '多跑操場跳繩或記錄健康生活' },
+          { key: 'reading', name: '📖 閱讀素養', val: stats.reading, tip: '多看國語日報精讀與自由心得' },
+          { key: 'civics', name: '🏛️ 公民自律', val: stats.civics, tip: '落實桌面與抽屜衛生整潔' },
+          { key: 'math', name: '⛏️ 數理解難', val: stats.math, tip: '前往北荒地解題開墾福德神廟' }
+        ];
+
+        labelsMap.sort((a, b) => b.val - a.val);
+        const topDim = labelsMap[0];
+        const lowDim = labelsMap[labelsMap.length - 1];
+
+        if (insightBox) {
+          if (topDim.val === 0) {
+            insightBox.innerHTML = '🌱 <b>全新冒險啟程！</b> 目前各向度尚在摸索中，趕快前往各座島嶼完成今日打卡吧！';
+          } else {
+            insightBox.innerHTML = `🌟 <b>強項優勢：</b>【${topDim.name}】已累積達成 ${topDim.val} 次！<br>💡 <b>成長建議：</b>【${lowDim.name}】目前較少參與，建議${lowDim.tip}，均衡發展全島能力！`;
+          }
+        }
+
+        renderRadarChart(stats);
+      }).catch(err => {
+        console.warn("讀取五向度失敗，採用本地數據:", err);
+        renderRadarChart(stats);
+      });
+    }
+
+    // 繪製或刷新 Chart.js 雷達圖實例（確保內存完全釋放）
+    function renderRadarChart(stats) {
+      const canvas = document.getElementById('radarChartCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      // 🌟【關鍵守則】：每次繪製前先徹底銷毀舊實例，防止記憶體洩漏
+      if (studentRadarChartInstance) {
+        studentRadarChartInstance.destroy();
+        studentRadarChartInstance = null;
+      }
+
+      studentRadarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['🌿 自然生態', '🏃 體魄活力', '📖 閱讀素養', '🏛️ 公民自律', '⛏️ 數理解難'],
+          datasets: [{
+            label: '累積能力向度',
+            data: [stats.nature, stats.sport, stats.reading, stats.civics, stats.math],
+            backgroundColor: 'rgba(56, 189, 248, 0.28)',
+            borderColor: '#0284c7',
+            pointBackgroundColor: '#0284c7',
+            pointBorderColor: '#ffffff',
+            pointHoverBackgroundColor: '#ffffff',
+            pointHoverBorderColor: '#0284c7',
+            pointRadius: 4,
+            borderWidth: 2.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 600 },
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            r: {
+              angleLines: { color: 'rgba(203, 213, 225, 0.7)' },
+              grid: { color: 'rgba(203, 213, 225, 0.7)' },
+              pointLabels: {
+                font: { size: 11, weight: 'bold' },
+                color: '#334155'
+              },
+              suggestedMin: 0,
+              suggestedMax: 6,
+              ticks: {
+                stepSize: 2,
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 關閉雷達圖彈窗時，釋放 Canvas 資源
+    function closeStudentRadarModal() {
+      const modal = document.getElementById('modal-radar');
+      if (modal) modal.classList.add('hidden');
+      if (studentRadarChartInstance) {
+        studentRadarChartInstance.destroy();
+        studentRadarChartInstance = null;
+      }
+    }
+
+    // 從雷達圖直接跳轉至設定修改
+    function reloginFromRadar() {
+      closeStudentRadarModal();
+      initStudent();
     }
 
     // ==========================================
@@ -7651,6 +7940,18 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       isFocusing = true;
       targetLookAt.set(0, 0, 0);
       targetCameraPos.set(0, 22, 46);
+    }
+
+    // 🌟【綁定】：學生點擊 HUD 的「學生設定/個人頭像」按鈕時，直接開啟自己的五向度雷達圖
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+      profileBtn.addEventListener('click', () => {
+        if (!currentStudent || !currentStudent.seatNumber || currentStudent.seatNumber === '訪客') {
+          initStudent();
+        } else {
+          openStudentRadar(currentStudent.seatNumber, currentStudent.name, currentStudent.avatar);
+        }
+      });
     }
 
     function startIslandApp() {
