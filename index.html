@@ -1077,6 +1077,19 @@
       <div id="pause-notice-sport" class="paused-banner" style="display:none;">
         ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
       </div>
+      <!-- 🏃 健身運動島建設進度條 -->
+      <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 2px solid #f59e0b; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="color: #92400e; font-size: 1.0rem;" id="sport-dev-title">🏃 運動島設施升級工程</strong>
+          <span id="sport-dev-progress-text" style="font-size: 0.95rem; font-weight: 900; color: #b45309;">0 / 700 (0%)</span>
+        </div>
+        <div style="width: 100%; height: 16px; background: #e2e8f0; border-radius: 12px; overflow: hidden; border: 1.5px solid #f59e0b;">
+          <div id="sport-dev-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #f59e0b, #ea580c); transition: width 0.6s ease;"></div>
+        </div>
+        <p id="sport-dev-stage-desc" style="font-size: 0.82rem; color: #78350f; margin-top: 8px; line-height: 1.45;">
+          🏋️ 目前為重訓啞鈴廣場，全班累積運動生活能量，逐步解鎖校園運動設施！
+        </p>
+      </div>
       <div id="task-content-sport">
         <div class="tab-header">
           <button class="tab-btn active" id="tab-btn-sport1" onclick="switchSportTab('exercise')">🏃 增肌減脂</button>
@@ -1547,7 +1560,19 @@
     let stageReadingBookstore = null;     // 階段 3 (60%): 溫馨微型小書店
     let stageReadingConstruction = null;  // 階段 4 (80%): 施工中的圖書館
     let stageReadingDome = null;          // 階段 5 (100%): 未來透明穹頂書屋
+    // 🏃 運動島分階段建設專屬變數 (0~700 封頂)
+    let sportBuildEnergy = 0;
+    let sportBuildEnergyRef = null;
+    let sportIslandGroup = null;
+    let sportOriginalLandmark = null;
+    let stageSportPullupBar = null;       // 階段 1 (20% - 140分): 單槓設施
+    let stageSportSlide = null;           // 階段 2 (40% - 280分): 彩色溜滑梯
+    let stageSportBasketball = null;      // 階段 3 (60% - 420分): 經典籃球
+    let stageSportShoe = null;            // 階段 4 (80% - 560分): 跑鞋 (含勾勾標誌)
+    let stageSportTrack = null;           // 階段 5 (100% - 700分): 彩色 PU 跑道
+    let sportTrackRunners = [];           // 跑道上的 2 位迷你奔跑小人
     let currentMathQuestion = null;
+    let isPlayerFarming = false;
 
     let stageMeshGrass = null;
     let stageMeshHelipad = null;
@@ -1864,6 +1889,74 @@
         playerVillager = null;
       }
     }
+
+    function spawnPlayerCharacter() {
+  removePlayerCharacter();
+
+  const isGirl = (currentStudent.gender === 'girl');
+  const mesh = createCharacterMesh(isGirl);
+
+  const displayName = currentStudent.seatNumber === '訪客'
+    ? `${currentStudent.avatar} ${currentStudent.name}`
+    : `${currentStudent.seatNumber}號 ${currentStudent.name}`;
+
+  mesh.add(createPlayerNameplateSprite(displayName));
+  const compSprite = createCompanionSprite(currentStudent.avatar);
+  mesh.add(compSprite);
+
+  // 預設生成於生態島 (ISLAND_CONFIG[1])
+  const initIsland = ISLAND_CONFIG[1];
+  const spawnX = initIsland.pos[0] + 1.5;
+  const spawnZ = initIsland.pos[2] + 1.5;
+  mesh.position.set(spawnX, 0, spawnZ);
+  scene.add(mesh);
+
+  playerVillager = {
+    obj: mesh,
+    companionSprite: compSprite,
+    currentIslandIdx: 1,
+    targetIslandIdx: 1,
+    currentX: spawnX,
+    currentZ: spawnZ,
+    targetX: spawnX,
+    targetZ: spawnZ,
+    walkCycle: 0,
+    waitTimer: 60,
+    speed: 0.024,
+    isOnCart: false
+  };
+}
+
+function pickNextPlayerWanderTarget() {
+  if (!playerVillager) return;
+
+  const curCfg = ISLAND_CONFIG[playerVillager.currentIslandIdx] || ISLAND_CONFIG[1];
+  const curCenter = curCfg.pos;
+  let tx = curCenter[0];
+  let tz = curCenter[2];
+  let found = false;
+
+  for (let attempt = 0; attempt < 15; attempt++) {
+    const angle = Math.random() * Math.PI * 2;
+    const r = 1.5 + Math.random() * (curCfg.radius - 2.5);
+    const lx = Math.cos(angle) * r;
+    const lz = Math.sin(angle) * r;
+
+    if (!isPositionBlocked(curCfg.id, lx, lz)) {
+      tx = curCenter[0] + lx;
+      tz = curCenter[2] + lz;
+      found = true;
+      break;
+    }
+  }
+
+  if (found) {
+    playerVillager.targetX = tx;
+    playerVillager.targetZ = tz;
+  } else {
+    playerVillager.waitTimer = 40;
+  }
+}
 
     // ==========================================
     // 🌐 Phase 1 優化：GAS 名冊快取讀取
@@ -2265,6 +2358,13 @@
           return (next >= 1000) ? 1000 : next;
         });
       }
+        // 🌟 獨立推進運動島建設進度 (上限 700 封頂)
+        if ((islandId === 'sport_exercise' || islandId === 'sport_health') && sportBuildEnergyRef) {
+          sportBuildEnergyRef.transaction(curr => {
+            let next = (curr || 0) + customPoints;
+            return (next >= 700) ? 700 : next;
+          });
+        }
 
         liveFeedRef.push({
           student: `${currentStudent.seatNumber}號 ${currentStudent.avatar} ${currentStudent.name}`,
@@ -2289,6 +2389,11 @@
     if (db) {
       northIslandReclaimRef = db.ref('island_stats/north_island_reclaim');
       readingBuildEnergyRef = db.ref('island_stats/reading_build_energy');
+      sportBuildEnergyRef = db.ref('island_stats/sport_build_energy');
+      sportBuildEnergyRef.on('value', snap => {
+        const val = snap.val() || 0;
+        updateSportIslandVisuals(val);
+      });
       readingBuildEnergyRef.on('value', snap => {
         const val = snap.val() || 0;
         updateReadingIslandVisuals(val);
@@ -2685,6 +2790,24 @@
         }
       }
     }
+
+    function startPlayerFarming() {
+  isPlayerFarming = true;
+}
+
+function stopPlayerFarming() {
+  isPlayerFarming = false;
+  if (playerVillager && playerVillager.obj) {
+    playerVillager.obj.rotation.x = 0;
+    const limbs = playerVillager.obj.userData.limbs;
+    if (limbs) {
+      limbs.leftArm.rotation.set(0, 0, 0);
+      limbs.rightArm.rotation.set(0, 0, 0);
+      limbs.leftLeg.rotation.set(0, 0, 0);
+      limbs.rightLeg.rotation.set(0, 0, 0);
+    }
+  }
+}
 
     function updateNorthIslandReclaimVisuals(progress) {
       northIslandProgress = progress;
@@ -3107,6 +3230,25 @@
       }
       root.innerHTML = html;
     }
+
+    async function verifyTeacherPasswordWithBackend(inputPassword) {
+  if (!inputPassword) return false;
+  try {
+    const res = await fetch(GAS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        type: 'verify_teacher_pwd',
+        password: inputPassword
+      })
+    });
+    const data = await res.json();
+    return data && data.success === true;
+  } catch (err) {
+    // 網路斷線或 GAS 端尚未支援該 API 時的本機預設密碼驗證（可自行修改 301teacher）
+    return inputPassword === "301teacher";
+  }
+}
     
     async function adminPickWinner(matchIdx, playerNum) {
       const pwd = prompt('請輸入教師密碼以認證賽果：');
@@ -5021,6 +5163,270 @@
         }
       }
     }
+    // ==========================================
+    // 🏃 運動島：五階段 Low-Poly 具象化地標工廠 (單槓/滑梯/籃球/跑鞋/PU跑道)
+    // ==========================================
+    function createSportLandmarkStages(parentGroup) {
+      const metalSilverMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xE2E8F0, metalness: 0.85, roughness: 0.2 });
+      const metalBlueMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x0284C7, metalness: 0.5, roughness: 0.4 });
+      const rubberMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x334155, roughness: 0.9 });
+      const plasticYellowMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFACC15, roughness: 0.35 });
+      const plasticRedMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xEF4444, roughness: 0.35 });
+      const basketballOrangeMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xEA580C, roughness: 0.65 });
+      const blackSeamMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0x1E293B });
+      const puRedMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDC2626, roughness: 0.85, flatShading: true });
+      const puBlueMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x2563EB, roughness: 0.85, flatShading: true });
+      const whiteLineMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0xF8FAFC });
+
+      // ------------------------------------------
+      // 階段 1 (20% - 140分): 校園單槓設施 (雙高低槓 + 安全防護軟墊)
+      // ------------------------------------------
+      stageSportPullupBar = new THREE.Group();
+      const padMat = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 1.6), rubberMat);
+      padMat.position.y = 0.04;
+      stageSportPullupBar.add(padMat);
+
+      // 三根立柱形成高低兩組單槓
+      const postHeights = [1.8, 2.2, 1.8];
+      const postX = [-1.1, 0, 1.1];
+      for (let i = 0; i < 3; i++) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, postHeights[i], 12), metalBlueMat);
+        post.position.set(postX[i], postHeights[i] / 2, 0);
+        post.castShadow = true;
+        stageSportPullupBar.add(post);
+      }
+      // 橫槓 (低槓與高槓)
+      const bar1 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1, 8), metalSilverMat);
+      bar1.rotation.z = Math.PI / 2;
+      bar1.position.set(-0.55, 1.75, 0);
+      stageSportPullupBar.add(bar1);
+
+      const bar2 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1, 8), metalSilverMat);
+      bar2.rotation.z = Math.PI / 2;
+      bar2.position.set(0.55, 2.15, 0);
+      stageSportPullupBar.add(bar2);
+
+      stageSportPullupBar.position.set(0, 0, 0.2);
+      stageSportPullupBar.visible = false;
+      parentGroup.add(stageSportPullupBar);
+
+      // ------------------------------------------
+      // 階段 2 (40% - 280分): 彩色兒童溜滑梯 (階梯、高台與波浪滑道)
+      // ------------------------------------------
+      stageSportSlide = new THREE.Group();
+      // 支撐高台
+      const platform = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.12, 1.2), plasticYellowMat);
+      platform.position.set(-0.8, 1.6, 0);
+      stageSportSlide.add(platform);
+
+      // 四根支撐立柱
+      [[-1.3, -0.5], [-0.3, -0.5], [-1.3, 0.5], [-0.3, 0.5]].forEach(p => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 8), metalBlueMat);
+        leg.position.set(p[0], 0.8, p[1]);
+        stageSportSlide.add(leg);
+      });
+
+      // 攀爬小樓梯
+      for (let st = 0; st < 5; st++) {
+        const step = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.2), metalBlueMat);
+        step.position.set(-1.6 - st * 0.2, 0.3 + st * 0.28, 0);
+        stageSportSlide.add(step);
+      }
+
+      // 紅色傾斜溜滑梯道
+      const chute = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 0.8), plasticRedMat);
+      chute.position.set(0.45, 0.85, 0);
+      chute.rotation.z = -0.58;
+      chute.castShadow = true;
+      stageSportSlide.add(chute);
+
+      // 滑道兩側防護邊欄
+      [-0.42, 0.42].forEach(rz => {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.22, 0.05), plasticYellowMat);
+        rail.position.set(0.45, 0.95, rz);
+        rail.rotation.z = -0.58;
+        stageSportSlide.add(rail);
+      });
+
+      stageSportSlide.position.set(0, 0, 0.2);
+      stageSportSlide.visible = false;
+      parentGroup.add(stageSportSlide);
+
+      // ------------------------------------------
+      // 階段 3 (60% - 420分): 經典立體大籃球 (橘色球面與黑溝紋)
+      // ------------------------------------------
+      stageSportBasketball = new THREE.Group();
+      // 圓形黑色展台底座
+      const ballStand = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.3, 0.35, 16), rubberMat);
+      ballStand.position.y = 0.175;
+      stageSportBasketball.add(ballStand);
+
+      // 籃球本體
+      const bBall = new THREE.Mesh(new THREE.SphereGeometry(1.1, 24, 20), basketballOrangeMat);
+      bBall.position.y = 1.35;
+      bBall.castShadow = true;
+      stageSportBasketball.add(bBall);
+
+      // 籃球經典黑嵌線 (十字環 + 側邊弧環)
+      const ringEquator = new THREE.Mesh(new THREE.TorusGeometry(1.105, 0.022, 6, 32), blackSeamMat);
+      ringEquator.rotation.x = Math.PI / 2;
+      ringEquator.position.y = 1.35;
+      stageSportBasketball.add(ringEquator);
+
+      const ringMeridian = new THREE.Mesh(new THREE.TorusGeometry(1.105, 0.022, 6, 32), blackSeamMat);
+      ringMeridian.position.y = 1.35;
+      stageSportBasketball.add(ringMeridian);
+
+      stageSportBasketball.position.set(0, 0, 0.2);
+      stageSportBasketball.visible = false;
+      parentGroup.add(stageSportBasketball);
+
+      // ------------------------------------------
+      // 階段 4 (80% - 560分): 運動跑鞋 (拼色厚底跑鞋 + 白色勾勾標誌)
+      // ------------------------------------------
+      stageSportShoe = new THREE.Group();
+      // 跑鞋白氣墊大底
+      const sole = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.32, 2.8), SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF8FAFC, roughness: 0.5 }));
+      sole.position.y = 0.16;
+      sole.castShadow = true;
+      stageSportShoe.add(sole);
+
+      // 寶藍色透氣鞋面本體
+      const upper = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.65, 2.6), SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1D4ED8, roughness: 0.65 }));
+      upper.position.set(0, 0.55, -0.05);
+      upper.castShadow = true;
+      stageSportShoe.add(upper);
+
+      // 鞋頭弧形切角
+      const toeBox = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.66, 0.45, 12), SharedPool.getMaterial('MeshStandardMaterial', { color: 0x2563EB, roughness: 0.6 }));
+      toeBox.position.set(0, 0.48, 1.05);
+      stageSportShoe.add(toeBox);
+
+      // 鞋舌與黑色鞋帶
+      const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 1.2), SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1E293B }));
+      tongue.position.set(0, 0.88, 0.1);
+      tongue.rotation.x = -0.25;
+      stageSportShoe.add(tongue);
+
+      // 🌟 鞋側白色勾勾標誌 (Swoosh)
+      [-0.67, 0.67].forEach(sx => {
+        const swooshGroup = new THREE.Group();
+        const tailPart = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.75), whiteLineMat);
+        tailPart.rotation.x = 0.35;
+        swooshGroup.add(tailPart);
+
+        const hookPart = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.18, 0.28), whiteLineMat);
+        hookPart.position.set(0, -0.08, 0.32);
+        hookPart.rotation.x = -0.55;
+        swooshGroup.add(hookPart);
+
+        swooshGroup.position.set(sx, 0.62, 0);
+        stageSportShoe.add(swooshGroup);
+      });
+
+      stageSportShoe.position.set(0, 0, 0.2);
+      stageSportShoe.rotation.y = -Math.PI / 5;
+      stageSportShoe.visible = false;
+      parentGroup.add(stageSportShoe);
+
+      // ------------------------------------------
+      // 階段 5 (100% - 700分): 彩色 PU 跑道 (雙色環形跑道 + 2 位奔跑小NPC)
+      // ------------------------------------------
+      stageSportTrack = new THREE.Group();
+      // 外圈藍色 PU 跑道
+      const trackOuter = new THREE.Mesh(new THREE.RingGeometry(1.85, 2.7, 32), puBlueMat);
+      trackOuter.rotation.x = -Math.PI / 2;
+      trackOuter.position.y = 0.05;
+      trackOuter.receiveShadow = true;
+      stageSportTrack.add(trackOuter);
+
+      // 內圈紅色 PU 跑道
+      const trackInner = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.85, 32), puRedMat);
+      trackInner.rotation.x = -Math.PI / 2;
+      trackInner.position.y = 0.051;
+      trackInner.receiveShadow = true;
+      stageSportTrack.add(trackInner);
+
+      // 白色分道線與起跑標線
+      const laneLine = new THREE.Mesh(new THREE.RingGeometry(1.83, 1.87, 32), whiteLineMat);
+      laneLine.rotation.x = -Math.PI / 2;
+      laneLine.position.y = 0.055;
+      stageSportTrack.add(laneLine);
+
+      // 🌟 生成 2 位小尺寸跑者 (縮小至 0.55 倍)
+      sportTrackRunners = [];
+      const runnerConfigs = [
+        { laneRadius: 1.45, speed: 2.2, phase: 0.0, isGirl: false, clothes: 0xEF4444 },
+        { laneRadius: 2.25, speed: 1.8, phase: Math.PI, isGirl: true, clothes: 0x10B981 }
+      ];
+
+      runnerConfigs.forEach(cfg => {
+        const runnerMesh = createCharacterMesh(cfg.isGirl, undefined, cfg.clothes);
+        runnerMesh.scale.setScalar(0.55);
+        runnerMesh.position.set(cfg.laneRadius, 0.06, 0);
+        stageSportTrack.add(runnerMesh);
+
+        sportTrackRunners.push({
+          mesh: runnerMesh,
+          laneRadius: cfg.laneRadius,
+          speed: cfg.speed,
+          phase: cfg.phase
+        });
+      });
+
+      stageSportTrack.position.set(0, 0, 0.2);
+      stageSportTrack.visible = false;
+      parentGroup.add(stageSportTrack);
+    }
+    // ==========================================
+    // 🏃 運動島：建設階段外觀與抽屜進度即時刷新
+    // ==========================================
+    function updateSportIslandVisuals(energy) {
+      sportBuildEnergy = Math.min(Math.max(energy, 0), 700);
+      const progressPct = Math.min((sportBuildEnergy / 700) * 100, 100);
+
+      const pBar = document.getElementById('sport-dev-progress-bar');
+      const pText = document.getElementById('sport-dev-progress-text');
+      const pDesc = document.getElementById('sport-dev-stage-desc');
+      const pTitle = document.getElementById('sport-dev-title');
+
+      if (pBar) pBar.style.width = `${progressPct}%`;
+      if (pText) pText.textContent = `${sportBuildEnergy} / 700 (${Math.floor(progressPct)}%)`;
+
+      // 門檻判定 (0~139 / 140~279 / 280~419 / 420~559 / 560~699 / 700)
+      const isStage0 = sportBuildEnergy < 140;
+      const isStage1 = sportBuildEnergy >= 140 && sportBuildEnergy < 280;
+      const isStage2 = sportBuildEnergy >= 280 && sportBuildEnergy < 420;
+      const isStage3 = sportBuildEnergy >= 420 && sportBuildEnergy < 560;
+      const isStage4 = sportBuildEnergy >= 560 && sportBuildEnergy < 700;
+      const isStage5 = sportBuildEnergy >= 700;
+
+      // 切換地標 Mesh 顯隱
+      if (sportOriginalLandmark) sportOriginalLandmark.visible = isStage0;
+      if (stageSportPullupBar) stageSportPullupBar.visible = isStage1;
+      if (stageSportSlide) stageSportSlide.visible = isStage2;
+      if (stageSportBasketball) stageSportBasketball.visible = isStage3;
+      if (stageSportShoe) stageSportShoe.visible = isStage4;
+      if (stageSportTrack) stageSportTrack.visible = isStage5;
+
+      // 抽屜內引導文案
+      if (pDesc) {
+        if (isStage5) {
+          if (pTitle) pTitle.textContent = "🏟️ 運動島・活力 PU 跑道 (建設完工)";
+          pDesc.innerHTML = "✨ <b>全班運動達標 700 能量！</b> 繽紛彩色跑道落成，迷你探險家們正活力奔跑！";
+        } else if (isStage4) {
+          pDesc.textContent = "👟 象徵疾風速度的跑鞋雕像就位！全速奔馳，迎接最後的完工目標！";
+        } else if (isStage3) {
+          pDesc.textContent = "🏀 巨型熱血籃球落成！為全島注入滿滿的運動朝氣與活力！";
+        } else if (isStage2) {
+          pDesc.textContent = "🛝 歡樂彩色溜滑梯登場！島嶼洋溢著校園操場的歡笑聲～";
+        } else if (isStage1) {
+          pDesc.textContent = "🤸 單槓運動設施搭建完成！強健體魄，挑戰肌力新極限！";
+        } else {
+          pDesc.textContent = "🏋️ 目前為重訓啞鈴廣場，全班累積運動生活能量，逐步解鎖校園運動設施！";
+        }
+      }
+    }
 
     function createStarShape(radius, innerRadius) {
       const shape = new THREE.Shape();
@@ -6878,6 +7284,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           beybladeLandmarkGroup = landmark;
         } else if (cfg.id === 'sport') {
           landmark = createSportLandmark();
+          sportOriginalLandmark = landmark; // 🌟 捕捉原始啞鈴地標
         } else if (cfg.id === 'reading') {
           landmark = createReadingLandmark();
           readingOriginalLandmark = landmark; // 🌟 用大括號妥善包覆
@@ -6898,6 +7305,11 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         if (cfg.id === 'reading') {
           readingIslandGroup = group;
           createReadingLandmarkStages(group);
+        }
+
+        if (cfg.id === 'sport') {
+          sportIslandGroup = group;
+          createSportLandmarkStages(group);
         }
 
         if (cfg.id === 'beyblade') {
@@ -6985,6 +7397,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       setupAmbientMotesSystem();
       updateNorthIslandReclaimVisuals(northIslandProgress);
       updateReadingIslandVisuals(readingBuildEnergy);
+      updateSportIslandVisuals(sportBuildEnergy); // 🌟 開局同步運動島進度外觀
 
       // 初始化 16 位常駐村民
       const totalVillagers = 16;
@@ -7232,6 +7645,28 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         }
 
         windTurbineBlades.forEach(blade => { blade.rotation.z += 0.04; });
+
+        // 🏃 運動島 PU 跑道：2 位迷你小跑者繞圈奔跑動畫
+        if (stageSportTrack && stageSportTrack.visible && sportTrackRunners.length > 0) {
+          sportTrackRunners.forEach(r => {
+            const currentAngle = time * (r.speed * 0.45) + r.phase;
+            r.mesh.position.x = Math.cos(currentAngle) * r.laneRadius;
+            r.mesh.position.z = Math.sin(currentAngle) * r.laneRadius;
+            r.mesh.rotation.y = -currentAngle + Math.PI / 2;
+
+            // 跑步時手腳協調擺動
+            const runCycle = time * (r.speed * 4.5) + r.phase;
+            const swing = Math.sin(runCycle) * 0.65;
+            const limbs = r.mesh.userData.limbs;
+            if (limbs) {
+              limbs.leftLeg.rotation.x = swing;
+              limbs.rightLeg.rotation.x = -swing;
+              limbs.leftArm.rotation.x = -swing;
+              limbs.rightArm.rotation.x = swing;
+            }
+            r.mesh.position.y = 0.06 + Math.abs(Math.sin(runCycle)) * 0.05;
+          });
+        }
 
         if (seaMonster) {
           if (!monsterState.active) {
