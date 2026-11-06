@@ -1137,6 +1137,19 @@
       <div id="pause-notice-reading" class="paused-banner" style="display:none;">
         ⚔️ 戰鬥陀螺大賽進行中！全員已移至中央島觀賽應援，本島任務暫停！
       </div>
+      <!-- 📚 閱讀島聚沙成塔建設進度條 -->
+      <div style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 2px solid #a855f7; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="color: #6b21a8; font-size: 1.0rem;" id="reading-dev-title">📚 閱讀島書香升級工程</strong>
+          <span id="reading-dev-progress-text" style="font-size: 0.95rem; font-weight: 900; color: #7e22ce;">0 / 1000 (0%)</span>
+        </div>
+        <div style="width: 100%; height: 16px; background: #e2e8f0; border-radius: 12px; overflow: hidden; border: 1.5px solid #a855f7;">
+          <div id="reading-dev-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #c084fc, #9333ea); transition: width 0.6s ease;"></div>
+        </div>
+        <p id="reading-dev-stage-desc" style="font-size: 0.82rem; color: #581c87; margin-top: 8px; line-height: 1.45;">
+          📖 目前由彩虹行動書車巡迴駐點，全班累積閱讀能量，逐步打造夢幻書屋！
+        </p>
+      </div>
       <div id="task-content-reading">
         <div class="tab-header">
           <button type="button" class="tab-btn active" id="tab-btn-read-daily" onclick="switchReadingTab('daily')">📰 今日讀報挑戰</button>
@@ -1524,6 +1537,16 @@
     let northIslandReclaimRef = null;
     let northIslandGroup = null;
     let northIslandRocks = null;
+    // 📚 閱讀島分階段建設專屬變數
+    let readingBuildEnergy = 0;
+    let readingBuildEnergyRef = null;
+    let readingIslandGroup = null;
+    let readingOriginalLandmark = null;
+    let stageReadingBookcase = null;      // 階段 1 (20%): 20本小書櫃
+    let stageReadingCoffee = null;        // 階段 2 (40%): 咖啡桌與翻開的書
+    let stageReadingBookstore = null;     // 階段 3 (60%): 溫馨微型小書店
+    let stageReadingConstruction = null;  // 階段 4 (80%): 施工中的圖書館
+    let stageReadingDome = null;          // 階段 5 (100%): 未來透明穹頂書屋
     let currentMathQuestion = null;
 
     let stageMeshGrass = null;
@@ -2235,6 +2258,14 @@
           return next;
         });
 
+        // 🌟 獨立推進閱讀島建設進度 (上限 1000)
+      if (islandId === 'reading_daily' && readingBuildEnergyRef) {
+        readingBuildEnergyRef.transaction(curr => {
+          let next = (curr || 0) + customPoints;
+          return (next >= 1000) ? 1000 : next;
+        });
+      }
+
         liveFeedRef.push({
           student: `${currentStudent.seatNumber}號 ${currentStudent.avatar} ${currentStudent.name}`,
           msg: `${message} (+${customPoints} 能量)`,
@@ -2257,6 +2288,11 @@
     }
     if (db) {
       northIslandReclaimRef = db.ref('island_stats/north_island_reclaim');
+      readingBuildEnergyRef = db.ref('island_stats/reading_build_energy');
+      readingBuildEnergyRef.on('value', snap => {
+        const val = snap.val() || 0;
+        updateReadingIslandVisuals(val);
+      });
       northIslandReclaimRef.on('value', snap => {
         const val = snap.val() || 0;
         updateNorthIslandReclaimVisuals(val);
@@ -3425,6 +3461,14 @@
             return next;
           });
         }
+
+        // 🌟 審核通過自由閱讀心得，推進閱讀島建設 10 點
+      if (readingBuildEnergyRef) {
+        readingBuildEnergyRef.transaction(curr => {
+          let next = (curr || 0) + pts;
+          return (next >= 1000) ? 1000 : next;
+        });
+      }
 
         if (liveFeedRef) {
           liveFeedRef.push({
@@ -4718,6 +4762,264 @@
 
       stageMeshNewTemple.visible = false;
       parentGroup.add(stageMeshNewTemple);
+    }
+
+    // ==========================================
+    // 📚 閱讀島：五階段 Low-Poly 具象化地標工廠
+    // ==========================================
+    function createReadingLandmarkStages(parentGroup) {
+      const woodDarkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5C3A21, roughness: 0.85 });
+      const woodWarmMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x8B5A2B, roughness: 0.75 });
+      const woodLightMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xD2B48C, roughness: 0.7 });
+      const stoneMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xE2E8F0, roughness: 0.45 });
+      const roofMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x7E22CE, roughness: 0.5 });
+      const goldMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFBBF24, metalness: 0.8, roughness: 0.2 });
+      const steelMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x334155, metalness: 0.8, roughness: 0.3 });
+
+      // ------------------------------------------
+      // 階段 1 (20% - 200分): 林間開放式小書櫃 (約放20本書)
+      // ------------------------------------------
+      stageReadingBookcase = new THREE.Group();
+      const caseBase = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 1.2), woodDarkMat);
+      caseBase.position.y = 0.08;
+      stageReadingBookcase.add(caseBase);
+
+      const shelfFrame = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.6, 0.6), woodWarmMat);
+      shelfFrame.position.set(0, 0.9, 0);
+      stageReadingBookcase.add(shelfFrame);
+
+      const bookColors = [0xEF4444, 0x3B82F6, 0x10B981, 0xF59E0B, 0xEC4899, 0x8B5CF6, 0x14B8A6];
+      // 擺放上下兩層、約 20 本直立彩色書脊
+      for (let layer = 0; layer < 2; layer++) {
+        const ly = 0.55 + layer * 0.7;
+        for (let b = 0; b < 10; b++) {
+          const bMat = SharedPool.getMaterial('MeshStandardMaterial', { color: bookColors[b % bookColors.length], roughness: 0.5 });
+          const bookH = 0.38 + Math.random() * 0.12;
+          const bookMesh = new THREE.Mesh(new THREE.BoxGeometry(0.12, bookH, 0.42), bMat);
+          bookMesh.position.set(-0.75 + b * 0.165, ly, 0.12);
+          bookMesh.rotation.z = (b === 4 || b === 9) ? 0.22 : 0;
+          stageReadingBookcase.add(bookMesh);
+        }
+      }
+      stageReadingBookcase.position.set(0, 0, 0.2);
+      stageReadingBookcase.visible = false;
+      parentGroup.add(stageReadingBookcase);
+
+      // ------------------------------------------
+      // 階段 2 (40% - 400分): 戶外閱讀咖啡座 (一杯咖啡與一本翻開的書)
+      // ------------------------------------------
+      stageReadingCoffee = new THREE.Group();
+      const tablePlate = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.12, 16), woodWarmMat);
+      tablePlate.position.y = 0.85;
+      stageReadingCoffee.add(tablePlate);
+
+      const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.18, 0.85, 8), woodDarkMat);
+      tableLeg.position.y = 0.425;
+      stageReadingCoffee.add(tableLeg);
+
+      // 兩張原木休閒椅
+      [-1.4, 1.4].forEach(chairX => {
+        const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.08, 10), woodLightMat);
+        seat.position.set(chairX, 0.48, 0);
+        stageReadingCoffee.add(seat);
+        const sLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.48, 6), woodDarkMat);
+        sLeg.position.set(chairX, 0.24, 0);
+        stageReadingCoffee.add(sLeg);
+      });
+
+      // 桌上的翻開大書
+      const openBookMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFFFBEB, roughness: 0.6 });
+      [-0.22, 0.22].forEach(bx => {
+        const pageWing = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.04, 0.52), openBookMat);
+        pageWing.position.set(bx, 0.94, -0.15);
+        pageWing.rotation.z = (bx < 0 ? 0.15 : -0.15);
+        stageReadingCoffee.add(pageWing);
+      });
+
+      // 冒熱氣的咖啡杯
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.16, 12), SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFAFAFA }));
+      cup.position.set(0.35, 0.98, 0.25);
+      stageReadingCoffee.add(cup);
+      const saucer = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.02, 12), SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94A3B8 }));
+      saucer.position.set(0.35, 0.91, 0.25);
+      stageReadingCoffee.add(saucer);
+
+      stageReadingCoffee.position.set(0, 0, 0.2);
+      stageReadingCoffee.visible = false;
+      parentGroup.add(stageReadingCoffee);
+
+      // ------------------------------------------
+      // 階段 3 (60% - 600分): 溫馨微型小書店 (含木窗與紫色斜屋頂)
+      // ------------------------------------------
+      stageReadingBookstore = new THREE.Group();
+      const houseBody = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.8, 2.4), woodLightMat);
+      houseBody.position.y = 0.9;
+      stageReadingBookstore.add(houseBody);
+
+      // 紫色三角斜屋頂
+      const cabinRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 1.1, 4), roofMat);
+      cabinRoof.rotation.y = Math.PI / 4;
+      cabinRoof.scale.set(1.1, 1.0, 1.0);
+      cabinRoof.position.y = 2.3;
+      stageReadingBookstore.add(cabinRoof);
+
+      // 前門與玻璃展示窗
+      const door = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.08), woodDarkMat);
+      door.position.set(-0.8, 0.6, 1.21);
+      stageReadingBookstore.add(door);
+
+      const glassWin = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 0.9, 0.08),
+        new THREE.MeshPhysicalMaterial({ color: 0xBAE6FD, transmission: 0.7, opacity: 0.8, transparent: true })
+      );
+      glassWin.position.set(0.55, 0.9, 1.21);
+      stageReadingBookstore.add(glassWin);
+
+      // 門口遮陽木雨棚
+      const awning = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.08, 0.75), woodWarmMat);
+      awning.position.set(0, 1.7, 1.55);
+      awning.rotation.x = 0.25;
+      stageReadingBookstore.add(awning);
+
+      stageReadingBookstore.position.set(0, 0, 0.2);
+      stageReadingBookstore.visible = false;
+      parentGroup.add(stageReadingBookstore);
+
+      // ------------------------------------------
+      // 階段 4 (80% - 800分): 施工中的現代圖書館 (鋼骨與鷹架)
+      // ------------------------------------------
+      stageReadingConstruction = new THREE.Group();
+      const libraryBase = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.35, 2.8), stoneMat);
+      libraryBase.position.y = 0.18;
+      stageReadingConstruction.add(libraryBase);
+
+      // 四根現代鋼骨樑柱
+      [[-1.3, -1.0], [1.3, -1.0], [-1.3, 1.0], [1.3, 1.0]].forEach(pos => {
+        const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.24, 2.4, 0.24), steelMat);
+        pillar.position.set(pos[0], 1.35, pos[1]);
+        stageReadingConstruction.add(pillar);
+      });
+
+      // 頂部鋼樑橫架
+      const topBeam = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.2, 2.4), steelMat);
+      topBeam.position.set(0, 2.5, 0);
+      stageReadingConstruction.add(topBeam);
+
+      // 施工木鷹架與斜撐
+      const scaffoldMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xD97706, roughness: 0.9 });
+      for (let s = 0; s < 3; s++) {
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.8, 6), scaffoldMat);
+        pole.position.set(-1.6 + s * 1.6, 1.4, 1.35);
+        stageReadingConstruction.add(pole);
+      }
+      const scaffoldPlank = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.08, 0.35), scaffoldMat);
+      scaffoldPlank.position.set(0, 1.5, 1.35);
+      stageReadingConstruction.add(scaffoldPlank);
+
+      // 黃黑工程警告護欄
+      const warningBar = new THREE.Mesh(
+        new THREE.BoxGeometry(2.6, 0.14, 0.06),
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFACC15, roughness: 0.4 })
+      );
+      warningBar.position.set(0, 0.5, 1.55);
+      stageReadingConstruction.add(warningBar);
+
+      stageReadingConstruction.position.set(0, 0, 0.2);
+      stageReadingConstruction.visible = false;
+      parentGroup.add(stageReadingConstruction);
+
+      // ------------------------------------------
+      // 階段 5 (100% - 1000分): 未來透明半球穹頂書屋
+      // ------------------------------------------
+      stageReadingDome = new THREE.Group();
+      // 精緻六角形基座
+      const domeBase = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.4, 0.4, 6), stoneMat);
+      domeBase.position.y = 0.2;
+      stageReadingDome.add(domeBase);
+
+      const goldTrim = new THREE.Mesh(new THREE.RingGeometry(2.7, 2.9, 32), goldMat);
+      goldTrim.rotation.x = -Math.PI / 2;
+      goldTrim.position.y = 0.41;
+      stageReadingDome.add(goldTrim);
+
+      // 內部金色多寶格書架核心
+      const coreRack = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 2.2, 8), goldMat);
+      coreRack.position.set(0, 1.3, 0);
+      stageReadingDome.add(coreRack);
+
+      // 🌟 未來半透明半球頂 (高折射玻璃)
+      const domeGlassMat = new THREE.MeshPhysicalMaterial({
+        color: 0xE0F2FE,
+        transmission: 0.85,
+        opacity: 0.65,
+        transparent: true,
+        roughness: 0.1,
+        metalness: 0.1,
+        ior: 1.5,
+        depthWrite: false
+      });
+      const glassDome = new THREE.Mesh(new THREE.SphereGeometry(2.7, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.5), domeGlassMat);
+      glassDome.position.y = 0.4;
+      stageReadingDome.add(glassDome);
+
+      // 穹頂金色收頂寶珠
+      const topOrb = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), goldMat);
+      topOrb.position.set(0, 3.12, 0);
+      stageReadingDome.add(topOrb);
+
+      stageReadingDome.position.set(0, 0, 0.2);
+      stageReadingDome.visible = false;
+      parentGroup.add(stageReadingDome);
+    }
+
+    // ==========================================
+    // 📚 閱讀島：建設階段外觀與抽屜進度即時刷新
+    // ==========================================
+    function updateReadingIslandVisuals(energy) {
+      readingBuildEnergy = Math.min(Math.max(energy, 0), 1000);
+      const progressPct = Math.min((readingBuildEnergy / 1000) * 100, 100);
+
+      const pBar = document.getElementById('reading-dev-progress-bar');
+      const pText = document.getElementById('reading-dev-progress-text');
+      const pDesc = document.getElementById('reading-dev-stage-desc');
+      const pTitle = document.getElementById('reading-dev-title');
+
+      if (pBar) pBar.style.width = `${progressPct}%`;
+      if (pText) pText.textContent = `${readingBuildEnergy} / 1000 (${Math.floor(progressPct)}%)`;
+
+      // 階段門檻判定 (0~199 / 200~399 / 400~599 / 600~799 / 800~999 / 1000)
+      const isStage0 = readingBuildEnergy < 200;
+      const isStage1 = readingBuildEnergy >= 200 && readingBuildEnergy < 400;
+      const isStage2 = readingBuildEnergy >= 400 && readingBuildEnergy < 600;
+      const isStage3 = readingBuildEnergy >= 600 && readingBuildEnergy < 800;
+      const isStage4 = readingBuildEnergy >= 800 && readingBuildEnergy < 1000;
+      const isStage5 = readingBuildEnergy >= 1000;
+
+      // 切換地標 Mesh 顯隱
+      if (readingOriginalLandmark) readingOriginalLandmark.visible = isStage0;
+      if (stageReadingBookcase) stageReadingBookcase.visible = isStage1;
+      if (stageReadingCoffee) stageReadingCoffee.visible = isStage2;
+      if (stageReadingBookstore) stageReadingBookstore.visible = isStage3;
+      if (stageReadingConstruction) stageReadingConstruction.visible = isStage4;
+      if (stageReadingDome) stageReadingDome.visible = isStage5;
+
+      // 抽屜內文字引導
+      if (pDesc) {
+        if (isStage5) {
+          if (pTitle) pTitle.textContent = "🏛️ 閱讀島・未來穹頂書屋 (建設完工)";
+          pDesc.innerHTML = "✨ <b>全班閱讀達標 1000 能量！</b> 璀璨透明半球穹頂書屋落成，智慧之光永恆照耀全島！";
+        } else if (isStage4) {
+          pDesc.textContent = "🏗️ 鋼骨與鷹架林立！大圖書館正如火如荼施工中，就差最後一哩路！";
+        } else if (isStage3) {
+          pDesc.textContent = "🏡 溫馨街角小書店落成！探險家們可以在屋棚下挑選喜愛的讀物～";
+        } else if (isStage2) {
+          pDesc.textContent = "☕ 露天咖啡座與翻開的書本就位！微風吹拂，正是品味閱讀的好時光。";
+        } else if (isStage1) {
+          pDesc.textContent = "🪵 質樸的林間小書櫃打造完成！裡面陳列著探險家們精選的讀物。";
+        } else {
+          pDesc.textContent = "📖 目前由彩虹行動書車巡迴駐點，全班閱讀打卡累積能量，逐步進化島嶼！";
+        }
+      }
     }
 
     function createStarShape(radius, innerRadius) {
@@ -6574,9 +6876,14 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           landmark = createBeybladeModel();
           beybladeBaseMesh = islandBase;
           beybladeLandmarkGroup = landmark;
-        } else if (cfg.id === 'sport') landmark = createSportLandmark();
-        else if (cfg.id === 'reading') landmark = createReadingLandmark();
-        else if (cfg.id === 'civics') landmark = createCivicsLandmark();
+        } else if (cfg.id === 'sport') {
+          landmark = createSportLandmark();
+        } else if (cfg.id === 'reading') {
+          landmark = createReadingLandmark();
+          readingOriginalLandmark = landmark; // 🌟 用大括號妥善包覆
+        } else if (cfg.id === 'civics') {
+          landmark = createCivicsLandmark();
+        }
         else if (cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s') {
           landmark = createWastelandLandmark(cfg.id);
           if (cfg.id === 'wasteland_n') {
@@ -6587,6 +6894,10 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         if (cfg.id === 'wasteland_n') {
           northIslandGroup = group;
           createReclaimLandmarkStages(group);
+        }
+        if (cfg.id === 'reading') {
+          readingIslandGroup = group;
+          createReadingLandmarkStages(group);
         }
 
         if (cfg.id === 'beyblade') {
@@ -6673,6 +6984,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       setupRainSystem();
       setupAmbientMotesSystem();
       updateNorthIslandReclaimVisuals(northIslandProgress);
+      updateReadingIslandVisuals(readingBuildEnergy);
 
       // 初始化 16 位常駐村民
       const totalVillagers = 16;
