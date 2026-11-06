@@ -677,6 +677,69 @@
       stroke: rgba(248, 113, 113, 0.9);
       stroke-width: 1.5;
     }
+    /* 🌟 教師後台：全班學習任務檢核矩陣樣式 */
+    #modal-teacher .modal-card {
+      max-width: 820px;
+    }
+    .matrix-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .matrix-scroll-wrapper {
+      max-height: 320px;
+      overflow-x: auto;
+      overflow-y: auto;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .matrix-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 800;
+      padding: 9px 8px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    .matrix-table td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #475569;
+    }
+    .matrix-table tr:hover td {
+      background: #f8fafc;
+    }
+    .cell-done {
+      color: #16a34a;
+      font-weight: 900;
+      font-size: 0.95rem;
+    }
+    .cell-none {
+      color: #cbd5e1;
+      font-weight: 700;
+    }
+    .matrix-progress-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.75rem;
+    }
+    .progress-high { background: #dcfce7; color: #15803d; }
+    .progress-mid  { background: #fef3c7; color: #b45309; }
+    .progress-low  { background: #f1f5f9; color: #64748b; }
   </style>
 </head>
 <body>
@@ -805,7 +868,7 @@
     </div>
     <div id="bracket-tree-root" class="bracket-tree-container"></div>
   </div>
-
+    
   <!-- 登入設定彈窗 -->
   <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-card">
@@ -1209,6 +1272,39 @@
         <h2 class="modal-title">🔑 教師專屬管理後台</h2>
         <button class="modal-close" onclick="closeAllModals()">×</button>
       </div>
+      <div class="form-group">
+        <div class="matrix-toolbar">
+          <label style="font-size:0.95rem; font-weight:900; color:#0f172a; margin:0;">
+            📊 今日全班學習任務檢核矩陣（<span id="matrix-today-label">載入中</span>）
+          </label>
+          <button type="button" class="btn-action btn-blue" style="width:auto; padding:4px 12px; font-size:0.78rem;" onclick="adminLoadCheckinMatrix()">
+            🔄 重新整理數據
+          </button>
+        </div>
+        <div class="matrix-scroll-wrapper">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th style="position:sticky; left:0; z-index:3; background:#e2e8f0;">學生</th>
+                <th>🌿 生態</th>
+                <th>🏃 增肌</th>
+                <th>🌙 生活</th>
+                <th>📰 讀報</th>
+                <th>📖 閱讀</th>
+                <th>🏛️ 公民</th>
+                <th>⛏️ 墾荒</th>
+                <th>完成率</th>
+              </tr>
+            </thead>
+            <tbody id="matrix-table-body">
+              <tr>
+                <td colspan="9" style="padding:20px; color:#94a3b8;">載入學生打卡數據中...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <hr style="margin:14px 0; border:0; border-top:1px solid #e2e8f0;">
       <div class="form-group">
         <label>⚡ 全班共創能量控制</label>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -2929,6 +3025,7 @@
         if (modal) {
           modal.classList.remove('hidden');
           modal.style.zIndex = "99999";
+          adminLoadCheckinMatrix(); // 🌟【新增：開啟後台時自動獲取全班今日矩陣】
         }
       };
 
@@ -3224,6 +3321,86 @@
     function adminRejectReading(reviewKey) {
       if (!confirm('確定要退回此篇心得嗎？退回後學生需重新撰寫。')) return;
       if (db) db.ref(`pending_reviews/reading/${reviewKey}`).remove();
+    }
+    // ==========================================
+    // 📊 教師後台：全班今日學習檢核矩陣資料處理
+    // ==========================================
+    function adminLoadCheckinMatrix() {
+      const tbody = document.getElementById('matrix-table-body');
+      const todayLabel = document.getElementById('matrix-today-label');
+      if (!tbody) return;
+
+      const today = getTodayKey();
+      if (todayLabel) todayLabel.textContent = today;
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:20px; color:#64748b;">⏳ 正在統計全班打卡數據...</td></tr>';
+
+      if (!db) {
+        tbody.innerHTML = '<tr><td colspan="9" style="padding:20px; color:#ef4444;">資料庫未連線</td></tr>';
+        return;
+      }
+
+      // 單次抓取當日所有學生的打卡節點
+      db.ref(`daily_checkins/${today}`).once('value', snap => {
+        const cloudData = snap.val() || {};
+        const students = (rosterList && rosterList.length > 0) ? rosterList : [];
+
+        if (students.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" style="padding:20px; color:#94a3b8;">名冊載入中或尚無學生資料</td></tr>';
+          return;
+        }
+
+        // 依座號由小到大排序
+        const sortedList = [...students].sort((a, b) => Number(a.seatNumber) - Number(b.seatNumber));
+        let rowsHtml = '';
+
+        sortedList.forEach(st => {
+          const seatKey = `seat_${st.seatNumber}`;
+          const rec = cloudData[seatKey] || {};
+
+          // 判定各項目是否達成
+          const hasNature = (rec.nature || 0) >= 1;
+          const hasSportEx = (rec.sport_exercise || 0) >= 1;
+          const hasSportHealth = (rec.sport_health || 0) >= 1;
+          const hasReadDaily = (rec.reading_daily || 0) >= 1;
+          const readFreeCount = rec.reading_free || 0; // 每天上限 3 次
+          const hasCivics = (rec.civics || 0) >= 1;
+          const hasMath = (rec.wasteland_n || 0) >= 1;
+
+          // 計算達成項目總分（共 7 大任務）
+          let doneTasksCount = 0;
+          if (hasNature) doneTasksCount++;
+          if (hasSportEx) doneTasksCount++;
+          if (hasSportHealth) doneTasksCount++;
+          if (hasReadDaily) doneTasksCount++;
+          if (readFreeCount > 0) doneTasksCount++;
+          if (hasCivics) doneTasksCount++;
+          if (hasMath) doneTasksCount++;
+
+          const pillClass = (doneTasksCount >= 5) ? 'progress-high' : (doneTasksCount >= 2 ? 'progress-mid' : 'progress-low');
+
+          rowsHtml += `
+            <tr>
+              <td style="position:sticky; left:0; background:#f8fafc; font-weight:800; text-align:left; border-right:1.5px solid #cbd5e1;">
+                ${st.seatNumber}號 ${escapeHTML(st.name)}
+              </td>
+              <td>${hasNature ? '<span class="cell-done">✓</span>' : '<span class="cell-none">–</span>'}</td>
+              <td>${hasSportEx ? '<span class="cell-done">✓</span>' : '<span class="cell-none">–</span>'}</td>
+              <td>${hasSportHealth ? '<span class="cell-done">✓</span>' : '<span class="cell-none">–</span>'}</td>
+              <td>${hasReadDaily ? '<span class="cell-done">✓</span>' : '<span class="cell-none">–</span>'}</td>
+              <td>${readFreeCount > 0 ? `<span class="cell-done">${readFreeCount}/3</span>` : '<span class="cell-none">–</span>'}</td>
+              <td>${hasCivics ? '<span class="cell-done">✓</span>' : '<span class="cell-none">–</span>'}</td>
+              <td>${hasMath ? '<span class="cell-done">✓</span>' : '<span class="cell-none">–</span>'}</td>
+              <td>
+                <span class="matrix-progress-pill ${pillClass}">${doneTasksCount} / 7</span>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.innerHTML = rowsHtml;
+      }).catch(err => {
+        tbody.innerHTML = `<tr><td colspan="9" style="padding:20px; color:#ef4444;">讀取失敗：${escapeHTML(err.message)}</td></tr>`;
+      });
     }
 
     // ==========================================
