@@ -1522,6 +1522,18 @@
         <label>👥 線上連線人物管理</label>
         <button class="btn-action btn-red" style="background:#b91c1c;" onclick="adminClearAllOnlinePlayers()">🗑️ 清除所有線上使用者 NPC</button>
       </div>
+      <!-- 🌟【新增】：北荒地神廟劇情事件控制 -->
+      <div class="form-group" style="margin-top: 10px;">
+        <label>⛩️ 北荒地神廟劇情事件控制</label>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-action btn-red" style="background:#ea580c; flex:1;" onclick="adminDamageTemple(75)">
+            ⚡ 海怪襲擊：打回廢墟 (75%)
+          </button>
+          <button type="button" class="btn-action btn-red" style="background:#b91c1c; flex:1;" onclick="adminDamageTemple(0)">
+            💥 巨浪吞沒：重歸荒地 (0%)
+          </button>
+        </div>
+      </div>
       <hr style="margin:16px 0; border:0; border-top:1px solid #e2e8f0;">
       <div class="form-group">
         <label>📚 閱讀島待審心得清單 (<span id="pending-reading-count">0</span> 筆)</label>
@@ -2983,7 +2995,7 @@ function stopPlayerFarming() {
         northIslandRocks.visible = (progress < 50);
       }
 
-      if (isCompleted) {
+if (isCompleted) {
         if (pTitle) pTitle.textContent = "⛩️ 龜山福德神廟島 (開墾完成)";
         if (pDesc) pDesc.innerHTML = "✨ <b>全班開墾完成！</b> 古代龜山福德神廟重獲新生，能量長駐，庇佑全島探險家！";
         
@@ -2993,12 +3005,26 @@ function stopPlayerFarming() {
           targetCfg.subtitle = "全班自主開墾建立・能量流轉";
           targetCfg.color = 0x86EFAC;
         }
-      } else if (progress >= 75) {
-        if (pDesc) pDesc.textContent = "🏛️ 荒地上升起了塵封已久的古代龜山福德神廟廢墟，就差最後一哩路喚醒神廟能量！";
-      } else if (progress >= 50) {
-        if (pDesc) pDesc.textContent = "🎈 空中熱氣球降落坪打造完成！熱氣球將會定期降落於此歇息～";
-      } else if (progress >= 25) {
-        if (pDesc) pDesc.textContent = "🌱 雜草碎石已化為平整草皮，初具綠洲雛形！繼續解題擴建吧！";
+      } else {
+        // 🌟【關鍵修復】：當進度小於 100% 時，即時將抽屜與地圖名稱還原為「受損修復中」
+        if (pTitle) pTitle.textContent = "⛏️ 龜山荒地開墾工程";
+
+        const targetCfg = ISLAND_CONFIG.find(c => c.id === 'wasteland_n');
+        if (targetCfg) {
+          targetCfg.title = (progress >= 75) ? "受損的神廟廢墟" : "荒地";
+          targetCfg.subtitle = (progress >= 75) ? "神廟受海怪衝擊毀損，全班集力解題重建中！" : "這片土地沉睡已久，似乎正在等待某種契機被喚醒...";
+          targetCfg.color = 0xC2B280;
+        }
+
+        if (progress >= 75) {
+          if (pDesc) pDesc.textContent = "🏛️ 荒地上升起了塵封已久的古代龜山福德神廟廢墟，就差最後一哩路喚醒神廟能量！";
+        } else if (progress >= 50) {
+          if (pDesc) pDesc.textContent = "🎈 空中熱氣球降落坪打造完成！熱氣球將會定期降落於此歇息～";
+        } else if (progress >= 25) {
+          if (pDesc) pDesc.textContent = "🌱 雜草碎石已化為平整草皮，初具綠洲雛形！繼續解題擴建吧！";
+        } else {
+          if (pDesc) pDesc.textContent = "🌱 目前雜草叢生，期待全班探險家透過解答數學難題，注入開墾生機！";
+        }
       }
     }
 
