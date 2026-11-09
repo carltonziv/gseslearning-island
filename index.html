@@ -999,6 +999,54 @@
       </div>
     </div>
   </div>
+
+  <!-- 🚨 海怪襲擊登入警告彈窗 (11/11 07:30 ~ 11/13 12:00) -->
+  <div id="modal-monster-alert" class="modal-overlay hidden" style="z-index: 200005;">
+    <div class="modal-card" style="border: 4px solid #ef4444; background: #0f172a; color: #fff; text-align: center; max-width: 480px;">
+      <div style="background: #ef4444; color: #fff; font-weight: 900; font-size: 1.1rem; padding: 6px; border-radius: 12px; margin-bottom: 12px;">
+        ⚠️ 緊急紅色警報・海怪奇襲中 ⚠️
+      </div>
+
+      <!-- 👾 像素風格海怪正面頭像 -->
+      <div style="display: flex; justify-content: center; margin-bottom: 14px;">
+        <svg width="120" height="120" viewBox="0 0 16 16" style="image-rendering: pixelated; background: #1e293b; border-radius: 16px; border: 3px solid #38bdf8; padding: 6px;">
+          <rect x="2" y="1" width="2" height="3" fill="#0284c7" />
+          <rect x="12" y="1" width="2" height="3" fill="#0284c7" />
+          <rect x="3" y="2" width="2" height="3" fill="#38bdf8" />
+          <rect x="11" y="2" width="2" height="3" fill="#38bdf8" />
+          <rect x="4" y="3" width="8" height="9" fill="#0369a1" />
+          <rect x="3" y="5" width="10" height="7" fill="#0284c7" />
+          <rect x="2" y="7" width="12" height="5" fill="#0284c7" />
+          <rect x="4" y="6" width="2" height="2" fill="#ef4444" />
+          <rect x="10" y="6" width="2" height="2" fill="#ef4444" />
+          <rect x="5" y="6" width="1" height="1" fill="#fef08a" />
+          <rect x="11" y="6" width="1" height="1" fill="#fef08a" />
+          <rect x="5" y="9" width="6" height="3" fill="#0f172a" />
+          <rect x="5" y="9" width="1" height="1" fill="#ffffff" />
+          <rect x="7" y="9" width="2" height="1" fill="#ffffff" />
+          <rect x="10" y="9" width="1" height="1" fill="#ffffff" />
+          <rect x="6" y="11" width="1" height="1" fill="#ffffff" />
+          <rect x="9" y="11" width="1" height="1" fill="#ffffff" />
+        </svg>
+      </div>
+
+      <h3 style="color: #f87171; font-size: 1.25rem; font-weight: 900; margin-bottom: 8px;">
+        🌊 遠古海怪「利維坦」逼近龜山島！
+      </h3>
+      <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.6; text-align: left; background: rgba(30, 41, 59, 0.7); padding: 12px; border-radius: 12px; border-left: 4px solid #ef4444; margin-bottom: 14px;">
+        海怪正掀起狂風暴雨逼近北島！全班 8 位探險家必須在 <b style="color:#fde047;">11/13 中午 12:00 前</b> 共同解開除法謎題，凝聚 <b style="color:#38bdf8;">100 點</b> 防禦法陣擊退巨獸！<br>
+        <span style="color:#f87171;">⚠️ 若期限內未能達標，神廟將坍塌化為原始荒地，一切建設將歸零重來！</span>
+      </p>
+
+      <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:14px;">
+        ⏰ 作戰期限：11/11 (三) 07:30 ～ 11/13 (五) 12:00
+      </div>
+
+      <button type="button" class="btn-action btn-red" onclick="dismissMonsterAlertModal()">
+        ⚔️ 拔劍迎戰！前往福德神廟！
+      </button>
+    </div>
+  </div>
     
   <!-- 登入設定彈窗 -->
   <div id="login-modal" class="modal-overlay hidden">
@@ -1403,7 +1451,7 @@
         
         <div class="form-group">
           <label>你的計算結果：</label>
-          <input type="number" id="math-quiz-answer" placeholder="請輸入整數答案" style="font-size:1.1rem; font-weight:bold; letter-spacing:1px;">
+          <input type="text" id="math-quiz-answer" placeholder="輸入答案 (例如：22...4 或 商22餘4)" style="font-size:1.0rem; font-weight:bold; letter-spacing:1px;">
         </div>
 
         <div id="math-feedback-box" style="display:none; border-radius:12px; padding:10px; margin-bottom:12px; font-size:0.85rem;"></div>
@@ -1573,6 +1621,15 @@
     let sportTrackRunners = [];           // 跑道上的 2 位迷你奔跑小人
     let currentMathQuestion = null;
     let isPlayerFarming = false;
+    // 🐙 海怪奇襲時段排程 (2026/11/11 07:30 ~ 2026/11/13 12:00) 與 100 點能量設定
+    const MONSTER_EVENT_CONFIG = {
+      startTime: new Date(2026, 10, 10, 7, 30, 0).getTime(), // 11月11日 07:30
+      endTime: new Date(2026, 10, 13, 12, 0, 0).getTime(),    // 11月13日 12:00
+      targetEnergy: 100
+    };
+    let currentMonsterEvent = { isActive: false, targetEnergy: 100, currentEnergy: 0 };
+    let currentMonsterQuestionData = null;
+    let monsterEventRef = null;
 
     let stageMeshGrass = null;
     let stageMeshHelipad = null;
@@ -2122,6 +2179,15 @@ function pickNextPlayerWanderTarget() {
           if (typeof toggleBracketSidebar === 'function') toggleBracketSidebar(true);
         }, 800);
       }
+
+      // 🚨 登入後核對時段：若正處於 11/11 07:30 ~ 11/13 12:00 且未擊退，彈出紅色警報說明
+      checkMonsterEventStatus();
+      if (currentMonsterEvent && currentMonsterEvent.isActive) {
+        setTimeout(() => {
+          const mModal = document.getElementById('modal-monster-alert');
+          if (mModal) mModal.classList.remove('hidden');
+        }, 500);
+      }
     });
 
     // ==========================================
@@ -2388,6 +2454,17 @@ function pickNextPlayerWanderTarget() {
     }
     if (db) {
       northIslandReclaimRef = db.ref('island_stats/north_island_reclaim');
+      // 🐙 即時監聽 Firebase 海怪事件節點
+      monsterEventRef = db.ref('island_stats/sea_monster_event');
+      monsterEventRef.on('value', snap => {
+        const val = snap.val() || {};
+        currentMonsterEvent.currentEnergy = val.currentEnergy || 0;
+        currentMonsterEvent.targetEnergy = val.targetEnergy || 100;
+        checkMonsterEventStatus();
+      });
+
+      // 每分鐘自動核對作戰時段與截止結算
+      setInterval(checkMonsterEventStatus, 60000);
       readingBuildEnergyRef = db.ref('island_stats/reading_build_energy');
       sportBuildEnergyRef = db.ref('island_stats/sport_build_energy');
       sportBuildEnergyRef.on('value', snap => {
@@ -2683,110 +2760,183 @@ function pickNextPlayerWanderTarget() {
       if (fBox) fBox.style.display = 'none';
     }
 
+// ==========================================
+    // 🐙 海怪防衛戰作戰排程、出題與 AI 批改系統
     // ==========================================
-    // ⛏️ 提交解答・驗證批改並推進開墾進度（含防連點與訪客過濾）
-    // ==========================================
-    function submitMathReclaim() {
-      // 1. 檢查是否全島已完工
-      if (northIslandProgress >= 100) {
-        alert('🎉 龜山福德神廟島已開墾完成囉！感謝探險家的付出！');
-        return;
-      }
 
-      // 🌟【關鍵 1：過濾訪客】限制只有正式座號學生能推進雲端墾荒進度
+    // 🐙 1. 核對當前時間是否在海怪奇襲時段內，並執行失敗/勝利結算
+    function checkMonsterEventStatus() {
+      const now = Date.now();
+      const inWindow = (now >= MONSTER_EVENT_CONFIG.startTime && now <= MONSTER_EVENT_CONFIG.endTime);
+      const isDefeated = (currentMonsterEvent.currentEnergy >= MONSTER_EVENT_CONFIG.targetEnergy);
+
+      if (inWindow) {
+        if (!isDefeated) {
+          currentMonsterEvent.isActive = true;
+          if (seaMonster && !monsterState.active) triggerSeaMonsterEncounter();
+          applyWeatherEffect({ type: 'rainy', isRaining: true, text: '海怪暴風雨來襲' });
+        } else {
+          currentMonsterEvent.isActive = false; // 已達標 100 點，擊退海怪
+        }
+      } else if (now > MONSTER_EVENT_CONFIG.endTime) {
+        // 超過 11/13 12:00 結算
+        if (currentMonsterEvent.isActive) {
+          currentMonsterEvent.isActive = false;
+          if (!isDefeated) {
+            // ⚠️ 失敗懲罰：未滿 100 點，神廟倒塌歸零，變回原始荒島
+            if (db && currentStudent && currentStudent.seatNumber !== '訪客') {
+              db.ref('island_stats/north_island_reclaim').set(0);
+              db.ref('island_stats/sea_monster_event/isActive').set(false);
+            }
+            updateNorthIslandReclaimVisuals(0);
+            alert("⛈️ 期限已過！全班防禦能量未達 100 點，福德神廟遭海怪摧毀倒塌，化為原始荒島！");
+          } else {
+            showLiveBanner("🎉 榮譽勝利！全班成功凝聚 100 點能量擊退海怪，神廟守護成功！");
+          }
+        }
+      } else {
+        currentMonsterEvent.isActive = false;
+      }
+    }
+
+    // 🐙 2. 關閉警報視窗並開啟頂部跑馬燈
+    function dismissMonsterAlertModal() {
+      const modal = document.getElementById('modal-monster-alert');
+      if (modal) modal.classList.add('hidden');
+
+      showLiveBanner("🚨【緊急作戰】海怪襲擊警報！請探險家盡速至龜山福德神廟迎擊！");
+      const banner = document.getElementById('live-banner');
+      if (banner) {
+        banner.style.background = 'linear-gradient(135deg, #dc2626, #991b1b)';
+        banner.style.border = '2px solid #fef08a';
+      }
+    }
+
+    // 🐙 3. 向 GAS / Groq AI 索取除法題目
+    async function fetchMonsterQuestionFromAI() {
+      const qTopic = document.getElementById('math-quiz-topic');
+      const qDesc = document.getElementById('math-quiz-desc');
+      const fBox = document.getElementById('math-feedback-box');
+      const btnSubmit = document.getElementById('btn-submit-math');
+      const ansInput = document.getElementById('math-quiz-answer');
+      
+      if (qTopic) qTopic.textContent = "🌊 島嶼之星正在觀測海面動向，透過 Groq 生成迎擊謎題中...";
+      if (qDesc) qDesc.textContent = "翻開計算紙列出除法直式，準備注入防禦能量！";
+      if (fBox) fBox.style.display = 'none';
+      if (ansInput) { ansInput.disabled = false; ansInput.value = ''; }
+      if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = "⏳ 載入除法謎題中..."; }
+
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ type: 'get_monster_question' })
+        });
+        
+        currentMonsterQuestionData = await res.json();
+        if (qTopic) qTopic.textContent = currentMonsterQuestionData.question;
+        if (qDesc) qDesc.textContent = "💡 請拿計算紙列出直式算算看，輸入商與餘數（如：22...4 或 商22餘4）！";
+        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = "⛏️ 送出解答・發動防禦法陣"; }
+      } catch (err) {
+        if (qTopic) qTopic.textContent = "海面通訊不良，請關閉抽屜後重新點開試試！";
+        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = "重試"; }
+      }
+    }
+
+    // 🐙 4. 送交答案：由 Groq AI 智慧批改並累加防守能量
+    async function submitMathReclaim() {
       if (!currentStudent || currentStudent.seatNumber === '訪客') {
-        alert('🎒 訪客探險家可以練習解題，但正式開墾進度與共創能量需要由 301 班級同學登入座號注入喔！');
+        alert('🎒 訪客探險家無法參與正式迎擊，請以 301 班級座號登入注入防禦能量！');
         return;
       }
 
-      // 2. 檢查每日打卡次數限制（每天限 1 次）
       if (!checkDailyLimit('wasteland_n')) return;
 
-      if (!currentMathQuestion) {
-        generateGrade3MathQuestion();
-        return;
-      }
-
-      const inputVal = parseInt(document.getElementById('math-quiz-answer').value, 10);
+      const ansInput = document.getElementById('math-quiz-answer');
+      const studentAns = ansInput.value.trim();
       const fBox = document.getElementById('math-feedback-box');
       const btnSubmit = document.getElementById('btn-submit-math');
 
-      // 檢查輸入是否為有效數字
-      if (isNaN(inputVal)) {
-        alert('請先在答案格中輸入計算數字喔！');
+      if (!studentAns) {
+        alert('請先在答案格中輸入你的計算結果喔！');
         return;
       }
 
-      // 🌟【關鍵 2：立即鎖定按鈕防止連點】點擊後立刻反灰，防止動畫期間重複觸發
       if (btnSubmit) {
         btnSubmit.disabled = true;
-        btnSubmit.style.opacity = '0.6';
-        btnSubmit.textContent = '⏳ 正在驗證解答與注入能量...';
+        btnSubmit.textContent = '⚡ 島嶼之星與 Groq 正在驗證你的算式...';
       }
 
-      // 3. 比對答案
-      if (inputVal === currentMathQuestion.correctAnswer) {
+      const questionText = (currentMonsterEvent && currentMonsterEvent.isActive && currentMonsterQuestionData)
+        ? currentMonsterQuestionData.question 
+        : (currentMathQuestion ? currentMathQuestion.question : "除法計算");
+
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            type: 'evaluate_monster_answer',
+            question: questionText,
+            studentAnswer: studentAns,
+            seatNumber: currentStudent.seatNumber,
+            studentName: `${currentStudent.avatar} ${currentStudent.name}`
+          })
+        });
+
+        const result = await res.json();
         fBox.style.display = 'block';
-        fBox.style.background = '#dcfce7';
-        fBox.style.border = '2px solid #22c55e';
-        fBox.style.color = '#15803d';
-        fBox.innerHTML = `<strong>🎉 算得太準確了！</strong><br>答案正確，成功為北荒地注入 3% 開墾進度！`;
 
-        // 停止持鋤頭動作
-        if (typeof stopPlayerFarming === 'function' && isPlayerFarming) {
-          stopPlayerFarming();
+        if (result.passed) {
+          fBox.style.background = '#dcfce7';
+          fBox.style.border = '2px solid #22c55e';
+          fBox.style.color = '#15803d';
+          fBox.innerHTML = `<strong>🎉 迎擊成功！</strong><br>${result.feedback || "計算完全正確，成功激發防禦法陣！"}`;
+
+          confetti({ particleCount: 110, spread: 85 });
+
+          // 累加防守反攻能量 (+5 點)
+          if (db && monsterEventRef) {
+            monsterEventRef.child('currentEnergy').transaction(curr => {
+              const next = (curr || 0) + 5;
+              return (next >= 100) ? 100 : next;
+            });
+          }
+
+          rewardCheckin('wasteland_n', '海怪迎擊戰', `成功解答除法謎題，注入防禦能量！`, {
+            type: 'task_complete',
+            seatNumber: currentStudent.seatNumber,
+            studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+            islandTitle: '龜山福德神廟',
+            taskTitle: '海怪除法防衛戰',
+            points: 5,
+            detail1: questionText,
+            detail2: `學生作答: ${studentAns}`,
+            verifier: 'Groq AI 戰術認證'
+          }, 5);
+
+          if (ansInput) ansInput.disabled = true;
+          if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = '✅ 今日迎擊已完成 (+5 防禦能量)';
+          }
+        } else {
+          // 答錯：顯示 Groq 引導提示
+          fBox.style.background = '#fef3c7';
+          fBox.style.border = '2px solid #f59e0b';
+          fBox.style.color = '#b45309';
+          fBox.innerHTML = `<strong>💡 島嶼之星提示：</strong><br>${result.feedback || "答案不太對喔，再檢查一下餘數有沒有算錯！"}`;
+
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = '⛏️ 重新驗算・再次迎擊';
+          }
         }
-
-        // 計算並更新本地模型進度
-        const nextProgress = Math.min((northIslandProgress || 0) + 3, 100);
-        const willReachFull = (northIslandProgress < 100 && nextProgress >= 100);
-
-        updateNorthIslandReclaimVisuals(nextProgress);
-
-        // 寫入 Firebase 雲端累積
-        if (northIslandReclaimRef) {
-          northIslandReclaimRef.transaction(current => {
-            let next = (current || 0) + 3;
-            return (next >= 100) ? 100 : next;
-          }, (error, committed) => {
-            if (error || !committed) {
-              northIslandReclaimRef.set(nextProgress);
-            }
-          });
-        }
-
-        // 100% 完工慶祝
-        if (willReachFull && totalEnergyRef) {
-          totalEnergyRef.transaction(c => (c || 0) + 100);
-          showLiveBanner("⛩️ 狂賀！北荒地神廟全面完工！全班獲得 100 點共創能量！");
-          confetti({ particleCount: 150, spread: 100 });
-        }
-
-        // 寫入打卡與試算表紀錄（成功完成後按鈕維持鎖定，由 rewardCheckin 關閉抽屜）
-        rewardCheckin('wasteland_n', '龜山荒地開墾', `解答數學完成，貢獻了 3% 開墾進度`, {
-          type: 'task_complete',
-          seatNumber: currentStudent.seatNumber,
-          studentName: `${currentStudent.avatar} ${currentStudent.name}`,
-          islandTitle: '北荒地開墾',
-          taskTitle: '小三數學挑戰',
-          points: 5,
-          detail1: currentMathQuestion.question,
-          detail2: `學生答案: ${inputVal}`,
-          verifier: '島嶼之星 數學認證'
-        }, 5);
-
-      } else {
-        // 算錯時顯示提示，並【重新解鎖按鈕】讓學生可以重新作答
-        fBox.style.display = 'block';
-        fBox.style.background = '#fee2e2';
-        fBox.style.border = '2px solid #ef4444';
-        fBox.style.color = '#b91c1c';
-        fBox.innerHTML = `<strong>💡 答案不太對喔！</strong><br>再拿計算紙仔細驗算一遍，加油！`;
-
+      } catch (err) {
+        alert('連線逾時，請檢查網路狀態！');
         if (btnSubmit) {
           btnSubmit.disabled = false;
-          btnSubmit.style.opacity = '1';
-          btnSubmit.textContent = '⛏️ 提交解答・注入開墾能量';
+          btnSubmit.textContent = '⛏️ 重新送出';
         }
       }
     }
@@ -8564,7 +8714,7 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
       updateNightClosedState();
       updateSportTabStatus();
       if (islandData.id === 'reading') renderDailyQuestionUI();
-// ==========================================
+      // ==========================================
       // ⛏️ 北荒地抽屜開啟狀態檢核（含完工、今日已完成鎖定）
       // ==========================================
       if (islandData.id === 'wasteland_n') {
@@ -8573,57 +8723,44 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
         const qInput = document.getElementById('math-quiz-answer');
         const fBox = document.getElementById('math-feedback-box');
 
-        if (northIslandProgress >= 100) {
-          // 狀態 A：神廟已 100% 完工
-          if (btnSubmit) {
-            btnSubmit.disabled = true;
-            btnSubmit.style.opacity = '0.6';
-            btnSubmit.textContent = '⛩️ 神廟已開墾完工';
+checkMonsterEventStatus();
+        const isEventActive = currentMonsterEvent && currentMonsterEvent.isActive;
+
+        if (isEventActive) {
+          // 🌟【情境 1：11/11 07:30 ~ 11/13 12:00 海怪奇襲期間】
+          const pTitle = document.getElementById('dev-progress-title');
+          const pDesc = document.getElementById('dev-stage-desc');
+          if (pTitle) pTitle.textContent = "🐙 龜山福德神廟・海怪迎擊作戰";
+          if (pDesc) pDesc.innerHTML = `<span style="color:#dc2626; font-weight:800;">🚨 海怪正試圖摧毀神廟！全班防禦進度：${currentMonsterEvent.currentEnergy || 0} / 100 點</span><br><small style="color:#78350f;">截止時間：11/13 中午 12:00（未達標神廟將坍塌化為荒地）</small>`;
+
+          if (isDone) {
+            if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = '✅ 今日迎擊已完成 (+5 EXP已領取)'; }
+            if (qInput) qInput.disabled = true;
+            if (fBox) {
+              fBox.style.display = 'block';
+              fBox.style.background = '#dcfce7';
+              fBox.style.border = '2px solid #22c55e';
+              fBox.style.color = '#15803d';
+              fBox.innerHTML = '🌟 <b>今日迎擊已達標！</b><br>你今天已經注入過防禦能量，明天再來協力禦敵！';
+            }
+          } else {
+            // 尚未迎擊：呼叫 Groq AI 出題
+            fetchMonsterQuestionFromAI();
           }
+        } else if (northIslandProgress >= 100) {
+          // 🌟【情境 2：神廟完工且非奇襲時段 (風平浪靜)】
+          if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = '⛩️ 神廟已開墾完工 (風平浪靜)'; }
           if (qInput) qInput.disabled = true;
           if (fBox) {
             fBox.style.display = 'block';
             fBox.style.background = '#dcfce7';
             fBox.style.border = '2px solid #22c55e';
             fBox.style.color = '#15803d';
-            fBox.innerHTML = '🎉 <b>全班開墾已達 100%！</b><br>古代神廟已完工，感謝全班探險家的努力奉獻！';
-          }
-        } else if (isDone) {
-          // 狀態 B：今天已經解題打卡過 -> 鎖定輸入框與按鈕
-          if (btnSubmit) {
-            btnSubmit.disabled = true;
-            btnSubmit.style.opacity = '0.6';
-            btnSubmit.textContent = '✅ 今日墾荒挑戰已完成 (+5 EXP已領取)';
-          }
-          if (qInput) {
-            qInput.disabled = true;
-            qInput.value = '';
-          }
-          if (fBox) {
-            fBox.style.display = 'block';
-            fBox.style.background = '#dcfce7';
-            fBox.style.border = '2px solid #22c55e';
-            fBox.style.color = '#15803d';
-            fBox.innerHTML = '🌟 <b>今日任務已完成！</b><br>你今天已經注入過開墾能量囉，明天再來挑戰新題目！';
+            fBox.innerHTML = '🎉 <b>神廟守護中！</b><br>全島風平浪靜，注意外海隨時可能有海怪奇襲！';
           }
         } else {
-          // 狀態 C：今天尚未完成 -> 啟用按鈕、出新題目並開始揮鋤
-          if (btnSubmit) {
-            btnSubmit.disabled = false;
-            btnSubmit.style.opacity = '1';
-            btnSubmit.textContent = '⛏️ 提交解答・注入開墾能量';
-          }
-          if (qInput) {
-            qInput.disabled = false;
-            qInput.value = '';
-          }
-          if (fBox) fBox.style.display = 'none';
-
-          generateGrade3MathQuestion();
-
-          if (northIslandProgress < 50 && typeof startPlayerFarming === 'function') {
-            startPlayerFarming();
-          }
+          // 🌟【情境 3：神廟被毀或未滿 100% 時的常態小三墾荒題】
+          if (!isDone) generateGrade3MathQuestion();
         }
       }
 
