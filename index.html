@@ -878,7 +878,7 @@
 
       <div class="hud-view-sub-btn" id="sub-btn-cart" onclick="selectViewMode('cart')">
         <span id="sub-icon-cart">🚋</span>
-        <span id="sub-text-cart">搭上台車</span>
+        <span id="sub-text-cart">搭上輕便車</span>
       </div>
 
       <div class="hud-view-sub-btn" id="sub-btn-boat" onclick="selectViewMode('boat')">
@@ -1341,14 +1341,14 @@
       </div>
     </div>
 
-    <!-- 7. 龜山台車文史導覽面板 -->
+    <!-- 7. 龜山輕便車文史導覽面板 -->
     <div id="panel-cart" style="display:none;">
       <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 16px; padding: 14px; margin-bottom: 16px;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
           <span style="font-size:1.4rem;">🚋</span>
-          <strong style="color: #92400e; font-size: 1.05rem;">龜山輕便台車・文史記憶</strong>
+          <strong style="color: #92400e; font-size: 1.05rem;">龜山輕便車・文史記憶</strong>
         </div>
-        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">跟著台車走過百年光陰，看看它是如何陪伴龜山庄一步步成長！</p>
+        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">跟著輕便車走過百年光陰，看看它是如何陪伴龜山庄一步步成長！</p>
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; line-height: 1.7; color: #334155;">
@@ -1357,7 +1357,7 @@
             🏗️ 第一階段（1903～1905年）：蓋電廠的「大力士工程車」
           </div>
           <p style="margin: 0; color: #475569;">
-            一百多年前為了在龜山興建全臺灣第一座水力發電廠，工人們沿著溪邊鋪設臨時小軌道，靠著台車把巨大沉重的發電機和鋼鐵建材推進深山。
+            一百多年前為了在龜山興建全臺灣第一座水力發電廠，工人們沿著溪邊鋪設臨時小軌道，靠著輕便車把巨大沉重的發電機和鋼鐵建材推進深山。
           </p>
         </div>
 
@@ -1366,7 +1366,7 @@
             🍵 第二階段（1920年代～1940年代）：運茶葉與大木頭的「山中黑馬」
           </div>
           <p style="margin: 0; color: #475569;">
-            這個時期軌道正式鋪滿新店到烏來的山路，龜山成為最重要的轉運站，工人每天推著台車，把山裡採收的包種茶和大木材一車車送出山外販售。
+            這個時期軌道正式鋪滿新店到烏來的山路，龜山成為最重要的轉運站，工人每天推著輕便車，把山裡採收的包種茶和大木材一車車送出山外販售。
           </p>
         </div>
 
@@ -1375,7 +1375,7 @@
             🎒 第三階段（1950年代～1960年代）：載大家出門的「山區小公車」
           </div>
           <p style="margin: 0; color: #475569;">
-            戰後初期山裡還沒有平坦的大馬路，台車變成了居民最棒的計程車，大人出門買菜、小朋友去學校上課，全靠台車叔叔在後方推車滑行代步。
+            戰後初期山裡還沒有平坦的大馬路，輕便車變成了居民最棒的計程車，大人出門買菜、小朋友去學校上課，全靠輕便車叔叔在後方推車滑行代步。
           </p>
         </div>
 
@@ -1384,7 +1384,7 @@
             🛣️ 第四階段（1970年代～現在）：交棒給大馬路的「退休老朋友」
           </div>
           <p style="margin: 0; color: #475569;">
-            隨著新烏公路拓寬鋪上柏油，跑得更快的大公車開進來，龜山的台車鐵軌便功成身退被拆除，只留下烏來瀑布那一段轉身變成現在大家愛搭的觀光小火車。
+            隨著新烏公路拓寬鋪上柏油，跑得更快的大公車開進來，龜山的輕便車鐵軌便功成身退被拆除，只留下烏來瀑布那一段轉身變成現在大家愛搭的觀光小火車。
           </p>
         </div>
       </div>
@@ -2713,7 +2713,7 @@ function pickNextPlayerWanderTarget() {
             const ticketPrice = Math.floor(Math.random() * 320) + 130;
             const people = Math.floor(Math.random() * 6) + 3;
             return {
-              text: `志工隊參觀烏來台車博物館，全票每張 ${ticketPrice} 元，共有 ${people} 位隊員購票入場，請問車票費用總共是多少元？`,
+              text: `志工隊參觀烏來輕便車博物館，全票每張 ${ticketPrice} 元，共有 ${people} 位隊員購票入場，請問車票費用總共是多少元？`,
               ans: ticketPrice * people
             };
           },
@@ -6375,10 +6375,10 @@ function selectViewMode(mode) {
         if (cartBtn) cartBtn.classList.add('active-mode');
         if (boatBtn) boatBtn.classList.remove('active-mode');
         if (balloonBtn) balloonBtn.classList.remove('active-mode'); // 🌟 補上這行：移除熱氣球高亮
-        if (menuText) menuText.textContent = '台車巡航中';
+        if (menuText) menuText.textContent = '輕便車巡航中';
 
         if (typeof playCustomAudio === 'function') playCustomAudio('cart');
-        showLiveBanner("🚋 已搭上龜山台車！正在環島欣賞沿途景色～");
+        showLiveBanner("🚋 已搭上龜山輕便車！正在環島欣賞沿途景色～");
       } 
       else if (mode === 'boat') {
         if (isRidingBoat) {
@@ -7707,13 +7707,13 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         });
 
         if (cartHit && cartGroup) {
-          showLiveBanner("🚋 正在瀏覽：龜山台車百年林業文史！");
+          showLiveBanner("🚋 正在瀏覽：龜山輕便車百年林業文史！");
           confetti({ particleCount: 35, spread: 50 });
 
           isFocusing = true;
           targetLookAt.copy(cartGroup.position).add(new THREE.Vector3(0, 0.7, 0));
           targetCameraPos.set(cartGroup.position.x - 3.0, cartGroup.position.y + 4.2, cartGroup.position.z + 6.8);
-          openDrawer({ id: 'cart', title: '🚋 龜山台車文史誌', subtitle: '見證新店溪上游至烏來的林業軌道發展歷程' });
+          openDrawer({ id: 'cart', title: '🚋 龜山輕便車文史誌', subtitle: '見證新店溪上游至烏來的林業軌道發展歷程' });
           return;
         }
 
