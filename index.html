@@ -2506,11 +2506,23 @@ function pickNextPlayerWanderTarget() {
       });
     }
 
-    function showLiveBanner(text) {
+function showLiveBanner(text) {
       const banner = document.getElementById('live-banner');
+      if (!banner) return;
       banner.textContent = text;
+      // 一般推播通知維持預設橘黃色外觀
+      banner.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+      banner.style.border = 'none';
       banner.classList.add('show');
-      setTimeout(() => banner.classList.remove('show'), 4000);
+
+      setTimeout(() => {
+        // 🌟 關鍵判定：若海怪襲擊中，4 秒後自動切回紅色的常駐防禦跑馬燈；若無事件則收回隱藏
+        if (currentMonsterEvent && currentMonsterEvent.isActive) {
+          updateMonsterAlertBanner(true);
+        } else {
+          banner.classList.remove('show');
+        }
+      }, 4000);
     }
 
     function closeAllModals() {
@@ -2776,7 +2788,26 @@ function pickNextPlayerWanderTarget() {
     // 🐙 海怪防衛戰作戰排程、出題與 AI 批改系統
     // ==========================================
 
-    // 🐙 1. 核對當前時間是否在海怪奇襲時段內，並執行失敗/勝利結算
+    // 🌟【新增】：海怪常駐跑馬燈控制（襲擊期間常駐頂部，解除時縮回隱藏並還原預設樣式）
+    function updateMonsterAlertBanner(show) {
+      const banner = document.getElementById('live-banner');
+      if (!banner) return;
+
+      if (show) {
+        // 常駐頂部，並即時顯示全班當前防禦能量進度
+        banner.textContent = `🚨【緊急作戰】海怪奇襲中！全班防禦能量：${currentMonsterEvent.currentEnergy || 0} / 100 點 (截止 11/13 12:00)`;
+        banner.style.background = 'linear-gradient(135deg, #dc2626, #991b1b)';
+        banner.style.border = '2px solid #fef08a';
+        banner.classList.add('show');
+      } else {
+        // 警報解除：縮回頂部並恢復為預設橘色
+        banner.classList.remove('show');
+        banner.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        banner.style.border = 'none';
+      }
+    }
+
+    // 🐙 1. 核對當前時間是否在海怪奇襲時段內，並連動常駐橫幅狀態
     function checkMonsterEventStatus() {
       const now = Date.now();
       const inWindow = (now >= MONSTER_EVENT_CONFIG.startTime && now <= MONSTER_EVENT_CONFIG.endTime);
@@ -2785,17 +2816,21 @@ function pickNextPlayerWanderTarget() {
       if (inWindow) {
         if (!isDefeated) {
           currentMonsterEvent.isActive = true;
+          updateMonsterAlertBanner(true); // 🚨 襲擊中：開啟常駐跑馬燈
           if (seaMonster && !monsterState.active) triggerSeaMonsterEncounter();
           applyWeatherEffect({ type: 'rainy', isRaining: true, text: '海怪暴風雨來襲' });
         } else {
           currentMonsterEvent.isActive = false; // 已達標 100 點，擊退海怪
+          updateMonsterAlertBanner(false);      // ✅ 擊退海怪：跑馬燈自動隱藏縮回！
         }
       } else if (now > MONSTER_EVENT_CONFIG.endTime) {
         // 超過 11/13 12:00 結算
         if (currentMonsterEvent.isActive) {
           currentMonsterEvent.isActive = false;
+          updateMonsterAlertBanner(false);      // ⏱️ 作戰時間截止：跑馬燈自動隱藏縮回！
+          
           if (!isDefeated) {
-            // ⚠️ 失敗懲罰：未滿 100 點，神廟倒塌歸零，變回原始荒島
+            // ⚠️ 失敗懲罰：未滿 100 點，神廟倒塌歸零
             if (db && currentStudent && currentStudent.seatNumber !== '訪客') {
               db.ref('island_stats/north_island_reclaim').set(0);
               db.ref('island_stats/sea_monster_event/isActive').set(false);
@@ -2808,20 +2843,17 @@ function pickNextPlayerWanderTarget() {
         }
       } else {
         currentMonsterEvent.isActive = false;
+        updateMonsterAlertBanner(false);
       }
     }
 
-    // 🐙 2. 關閉警報視窗並開啟頂部跑馬燈
+    // 🐙 2. 關閉警報彈窗並直接呼叫常駐跑馬燈
     function dismissMonsterAlertModal() {
       const modal = document.getElementById('modal-monster-alert');
       if (modal) modal.classList.add('hidden');
 
-      showLiveBanner("🚨【緊急作戰】海怪襲擊警報！請探險家盡速至龜山福德神廟迎擊！");
-      const banner = document.getElementById('live-banner');
-      if (banner) {
-        banner.style.background = 'linear-gradient(135deg, #dc2626, #991b1b)';
-        banner.style.border = '2px solid #fef08a';
-      }
+      // 關閉彈窗後，立即將海怪警報常駐在畫面頂部
+      updateMonsterAlertBanner(true);
     }
 
     // 🐙 3. 向 GAS / Groq AI 索取除法題目
