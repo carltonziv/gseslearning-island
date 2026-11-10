@@ -2060,17 +2060,23 @@ function pickNextPlayerWanderTarget() {
       }
     }
 
-    function applyRosterData(data) {
-      rosterList = data.students || [];
-      if (data.dailyQuestion) {
-        currentDailyQuestion = data.dailyQuestion;
-        if (typeof renderDailyQuestionUI === 'function') renderDailyQuestionUI();
-      }
-      renderSelectOptions();
-      if (data.weather && typeof applyWeatherEffect === 'function') {
-        applyWeatherEffect(data.weather);
-      }
+function applyRosterData(data) {
+  rosterList = data.students || [];
+  if (data.dailyQuestion) {
+    currentDailyQuestion = data.dailyQuestion;
+    if (typeof renderDailyQuestionUI === 'function') renderDailyQuestionUI();
+  }
+  renderSelectOptions();
+
+  // 🌟 將 GAS 回傳的真實天氣儲存備用
+  if (data.weather) {
+    realLocalWeather = data.weather;
+    // 若當前不在海怪襲擊期間，才直接套用真實天氣
+    if (!currentMonsterEvent || !currentMonsterEvent.isActive) {
+      applyWeatherEffect(data.weather);
     }
+  }
+}
 
     function fallbackRoster() {
       const select = document.getElementById('select-identity');
@@ -2808,7 +2814,7 @@ function showLiveBanner(text) {
     }
 
     // 🐙 1. 核對當前時間是否在海怪奇襲時段內，並連動常駐橫幅狀態
-    function checkMonsterEventStatus() {
+      function checkMonsterEventStatus() {
       const now = Date.now();
       const inWindow = (now >= MONSTER_EVENT_CONFIG.startTime && now <= MONSTER_EVENT_CONFIG.endTime);
       const isDefeated = (currentMonsterEvent.currentEnergy >= MONSTER_EVENT_CONFIG.targetEnergy);
@@ -2818,10 +2824,15 @@ function showLiveBanner(text) {
           currentMonsterEvent.isActive = true;
           updateMonsterAlertBanner(true); // 🚨 襲擊中：開啟常駐跑馬燈
           if (seaMonster && !monsterState.active) triggerSeaMonsterEncounter();
-          applyWeatherEffect({ type: 'rainy', isRaining: true, text: '海怪暴風雨來襲' });
+          
+          // ⛈️ 警報期間：強制切換為壓迫感強烈的暴風雨
+          applyStormWeather();
         } else {
           currentMonsterEvent.isActive = false; // 已達標 100 點，擊退海怪
           updateMonsterAlertBanner(false);      // ✅ 擊退海怪：跑馬燈自動隱藏縮回！
+          
+          // 🌤️ 守護成功：解除暴風雨，恢復新店當地氣象
+          revertToLocalWeather();
         }
       } else if (now > MONSTER_EVENT_CONFIG.endTime) {
         // 超過 11/13 12:00 結算
@@ -2829,6 +2840,9 @@ function showLiveBanner(text) {
           currentMonsterEvent.isActive = false;
           updateMonsterAlertBanner(false);      // ⏱️ 作戰時間截止：跑馬燈自動隱藏縮回！
           
+          // 🌤️ 事件結束：恢復新店當地氣象
+          revertToLocalWeather();
+
           if (!isDefeated) {
             // ⚠️ 失敗懲罰：未滿 100 點，神廟倒塌歸零
             if (db && currentStudent && currentStudent.seatNumber !== '訪客') {
@@ -5943,6 +5957,7 @@ if (isCompleted) {
     }
 
     let currentWeather = { type: 'sunny', text: '新店 偵測中...' };
+    let realLocalWeather = null;
     let rainSystem = null, rainGeo = null;
     const RAIN_COUNT = 1200;
 
@@ -5992,6 +6007,30 @@ if (isCompleted) {
         if (rainSystem) rainSystem.visible = false;
       }
     }
+
+    // ⛈️ 啟動海怪暴風雨特寫：加厚迷霧、降下驟雨
+function applyStormWeather() {
+  if (rainSystem) rainSystem.visible = true;
+  if (scene && scene.fog) {
+    scene.fog.near = 15;
+    scene.fog.far = 65; // 大幅縮減能見度，營造狂風暴雨壓迫感
+  }
+  const timeBadge = document.getElementById('time-badge');
+  if (timeBadge) {
+    const curPhase = getTimePhase();
+    timeBadge.textContent = `🕒 ${curPhase.name} ｜ ⚡ 海怪暴風雨肆虐中！`;
+  }
+}
+
+// 🌤️ 警報解除：無縫恢復為新店即時氣象
+function revertToLocalWeather() {
+  if (realLocalWeather) {
+    applyWeatherEffect(realLocalWeather);
+  } else {
+    // 預設晴朗保底
+    applyWeatherEffect({ type: 'sunny', text: '新店 晴朗', isRaining: false });
+  }
+}
 
     let ambientMotesSystem = null, motesGeo = null;
     const MOTES_COUNT = 40;
@@ -8563,8 +8602,9 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
 
         if (rainSystem && rainSystem.visible && rainGeo) {
           const positions = rainGeo.attributes.position.array;
+          const dropSpeed = (currentMonsterEvent && currentMonsterEvent.isActive) ? 1.6 : 0.75;
           for (let i = 1; i < positions.length; i += 3) {
-            positions[i] -= 0.75;
+            positions[i] -= dropSpeed;
             if (positions[i] < 0) positions[i] = 25;
           }
           rainGeo.attributes.position.needsUpdate = true;
