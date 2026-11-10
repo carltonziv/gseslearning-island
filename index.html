@@ -3649,6 +3649,34 @@ if (isCompleted) {
         });
     }
 
+    // 🌟【補上】：教師後台發動劇情事件，重置神廟進度至荒地或廢墟
+    function adminDamageTemple(targetProgress = 0) {
+      const desc = targetProgress === 0 ? "【0% 徹底重歸荒地】" : "【75% 古代神廟廢墟】";
+      if (!confirm(`⚠️ 確定要發動劇情事件，將神廟狀態退回為 ${desc} 嗎？\n所有在線學生的畫面將即時同步拆毀外觀，並重新解鎖出題！`)) {
+        return;
+      }
+
+      if (northIslandReclaimRef) {
+        northIslandReclaimRef.set(targetProgress).then(() => {
+          const bannerText = targetProgress === 0 
+            ? "🚨 警報！深海海怪掀起滔天巨浪吞沒北島，神廟被徹底摧毀，全班速前往重新開墾！" 
+            : "⚡ 警報！海怪引發強震衝擊北荒地，神廟石柱斷裂化為廢墟，急需全班解題修復！";
+          
+          showLiveBanner(bannerText);
+          if (liveFeedRef) {
+            liveFeedRef.push({
+              student: "【⚠️ 緊急劇情事件】",
+              msg: bannerText,
+              time: firebase.database.ServerValue.TIMESTAMP
+            });
+          }
+          alert(`✅ 已成功將神廟狀態改為 ${desc}！全班抽屜任務已同步重啟解鎖。`);
+        }).catch(err => {
+          alert('設定失敗，請檢查權限：' + err.message);
+        });
+      }
+    }
+
     function adminRemoveChampionSignboard() {
       if (confirm('確定要提前移除戰鬥陀螺島前方的冠軍木頭告示牌嗎？')) {
         if (bbRef) bbRef.child('recent_champion').remove();
@@ -8365,9 +8393,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
             return;
           }
 
-          if (isTournamentActive) {
-            // ... (接續原本的陀螺大賽邏輯) ...
-
+         
           if (isTournamentActive) {
             v.currentIslandIdx = 0;
             const destX = v.stadiumPos.x;
