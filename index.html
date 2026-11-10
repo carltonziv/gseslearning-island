@@ -8317,6 +8317,56 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           }
 
           if (v.zzzSprite && v.zzzSprite.visible) v.zzzSprite.visible = false;
+          if (v.zzzSprite && v.zzzSprite.visible) v.zzzSprite.visible = false;
+
+          // ==========================================
+          // 🚨【新增】：海怪奇襲期間——村民面向北方祈禱集氣、狗狗朝北狂吠
+          // ==========================================
+          if (currentMonsterEvent && currentMonsterEvent.isActive) {
+            // 1. 計算朝向正北方「龜山福德神廟島」(X: 0, Z: -9.0) 的精準角度
+            const toTempleX = 0 - v.obj.position.x;
+            const toTempleZ = -9.0 - v.obj.position.z;
+            v.obj.rotation.y = Math.atan2(toTempleX, toTempleZ);
+            v.obj.rotation.x = 0;
+
+            if (v.isDog) {
+              // 🐕 狗狗：緊盯北方外海，頭部快速上下狂吠、尾巴緊繃擺動
+              if (limbs) {
+                if (limbs.head) {
+                  limbs.head.rotation.x = -0.28 + Math.sin(time * 16.0) * 0.18; // 抬頭對北狂吠
+                }
+                if (limbs.tail) {
+                  limbs.tail.rotation.y = Math.sin(time * 18.0) * 0.35; // 緊張警戒擺尾
+                }
+                limbs.leftLeg.rotation.x = 0;
+                limbs.rightLeg.rotation.x = 0;
+                limbs.leftArm.rotation.x = 0;
+                limbs.rightArm.rotation.x = 0;
+              }
+              // 吠叫時微幅前肢蹬動
+              v.obj.position.y = (Math.sin(time * 16.0) > 0.7) ? 0.025 : 0;
+            } else {
+              // 🧍 村民：雙手朝天高舉施展防禦法陣、隨祈禱節奏微幅律動
+              v.obj.position.y = Math.abs(Math.sin(time * 2.2 + idx)) * 0.04;
+
+              if (limbs) {
+                const prayWave = Math.sin(time * 3.5 + idx) * 0.14;
+                limbs.leftArm.rotation.x = -2.6 + prayWave;  // 雙手朝天高舉集氣
+                limbs.rightArm.rotation.x = -2.6 + prayWave;
+                limbs.leftArm.rotation.z = 0.22;
+                limbs.rightArm.rotation.z = -0.22;
+                limbs.leftLeg.rotation.x = 0;
+                limbs.rightLeg.rotation.x = 0;
+                if (limbs.skirt) limbs.skirt.rotation.x = 0;
+              }
+            }
+
+            // 🌟 關鍵跳出：警報期間停在原地專注禦敵，略過下方的尋路與碰撞偵測，大幅提升效能！
+            return;
+          }
+
+          if (isTournamentActive) {
+            // ... (接續原本的陀螺大賽邏輯) ...
 
           if (isTournamentActive) {
             v.currentIslandIdx = 0;
