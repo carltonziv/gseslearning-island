@@ -8784,13 +8784,27 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
 checkMonsterEventStatus();
         const isEventActive = currentMonsterEvent && currentMonsterEvent.isActive;
 
-        if (isEventActive) {
+if (isEventActive) {
           // 🌟【情境 1：11/11 07:30 ~ 11/13 12:00 海怪奇襲期間】
           const pTitle = document.getElementById('dev-progress-title');
           const pDesc = document.getElementById('dev-stage-desc');
-          if (pTitle) pTitle.textContent = "🐙 龜山福德神廟・海怪迎擊作戰";
-          if (pDesc) pDesc.innerHTML = `<span style="color:#dc2626; font-weight:800;">🚨 海怪正試圖摧毀神廟！全班防禦進度：${currentMonsterEvent.currentEnergy || 0} / 100 點</span><br><small style="color:#78350f;">截止時間：11/13 中午 12:00（未達標神廟將坍塌化為荒地）</small>`;
+          const pBar = document.getElementById('dev-progress-bar');
+          const pText = document.getElementById('dev-progress-text');
 
+          // 🌟 計算當前防禦能量百分比 (0~100%)
+          const defEnergy = currentMonsterEvent.currentEnergy || 0;
+          const targetEnergy = currentMonsterEvent.targetEnergy || 100;
+          const defPct = Math.min(Math.floor((defEnergy / targetEnergy) * 100), 100);
+
+          if (pTitle) pTitle.textContent = "🐙 龜山福德神廟・海怪迎擊作戰";
+          if (pText) pText.textContent = `${defEnergy} / ${targetEnergy} (${defPct}%)`;
+          if (pBar) {
+            pBar.style.width = `${defPct}%`;
+            // 海怪期間改為防禦護盾的青藍光漸層
+            pBar.style.background = 'linear-gradient(90deg, #0284c7, #38bdf8)';
+          }
+
+          if (pDesc) pDesc.innerHTML = `<span style="color:#dc2626; font-weight:800;">🚨 海怪正試圖摧毀神廟！全班防禦進度：${defEnergy} / ${targetEnergy} 點</span><br><small style="color:#78350f;">截止時間：11/13 中午 12:00（未達標神廟將坍塌化為荒地）</small>`;
           if (isDone) {
             if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = '✅ 今日迎擊已完成 (+5 EXP已領取)'; }
             if (qInput) qInput.disabled = true;
@@ -8805,8 +8819,16 @@ checkMonsterEventStatus();
             // 尚未迎擊：呼叫 Groq AI 出題
             fetchMonsterQuestionFromAI();
           }
-        } else if (northIslandProgress >= 100) {
+          } else if (northIslandProgress >= 100) {
           // 🌟【情境 2：神廟完工且非奇襲時段 (風平浪靜)】
+          const pBar = document.getElementById('dev-progress-bar');
+          const pText = document.getElementById('dev-progress-text');
+          if (pBar) {
+            pBar.style.width = '100%';
+            pBar.style.background = 'linear-gradient(90deg, #f59e0b, #10b981)';
+          }
+          if (pText) pText.textContent = '100%';
+
           if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = '⛩️ 神廟已開墾完工 (風平浪靜)'; }
           if (qInput) qInput.disabled = true;
           if (fBox) {
@@ -8818,6 +8840,14 @@ checkMonsterEventStatus();
           }
         } else {
           // 🌟【情境 3：神廟被毀或未滿 100% 時的常態小三墾荒題】
+          const pBar = document.getElementById('dev-progress-bar');
+          const pText = document.getElementById('dev-progress-text');
+          if (pBar) {
+            pBar.style.width = `${northIslandProgress}%`;
+            pBar.style.background = 'linear-gradient(90deg, #f59e0b, #10b981)';
+          }
+          if (pText) pText.textContent = `${northIslandProgress}%`;
+
           if (!isDone) generateGrade3MathQuestion();
         }
       }
