@@ -1784,7 +1784,7 @@
       }
     }
 
-    const ISLAND_AUDIO_MAP = {
+const ISLAND_AUDIO_MAP = {
       nature: new Audio('./sounds/nature.mp3'),
       sport: new Audio('./sounds/sport.mp3'),
       reading: new Audio('./sounds/reading.mp3'),
@@ -1794,14 +1794,12 @@
       temple_completed: new Audio('./sounds/temple.mp3'),
       wasteland_s: new Audio('./sounds/wasteland_s.mp3'),
       cart: new Audio('./sounds/cart.mp3'),
-      boat: new Audio('./sounds/boat.mp3'),
-      ambient: new Audio('./sounds/ambient.mp3')
+      boat: new Audio('./sounds/boat.mp3')
     };
 
     Object.values(ISLAND_AUDIO_MAP).forEach(audio => { audio.volume = 0.3; });
     if (ISLAND_AUDIO_MAP.cart) { ISLAND_AUDIO_MAP.cart.loop = true; ISLAND_AUDIO_MAP.cart.volume = 0.3; }
     if (ISLAND_AUDIO_MAP.boat) { ISLAND_AUDIO_MAP.boat.loop = true; ISLAND_AUDIO_MAP.boat.volume = 0.3; }
-    if (ISLAND_AUDIO_MAP.ambient) { ISLAND_AUDIO_MAP.ambient.loop = true; ISLAND_AUDIO_MAP.ambient.volume = 0.1; }
 
     function playCustomAudio(islandId) {
       let playKey = islandId;
