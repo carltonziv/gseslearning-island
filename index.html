@@ -1002,6 +1002,30 @@
 
   <!-- 🚨 海怪襲擊登入警告彈窗 (11/11 07:30 ~ 11/16 12:00) -->
   <div id="modal-monster-alert" class="modal-overlay hidden" style="z-index: 200005;">
+    <!-- 🎉 海怪擊退勝利紀念彈窗 -->
+  <div id="modal-monster-victory" class="modal-overlay hidden" style="z-index: 200005;">
+    <div class="modal-card" style="border: 4px solid #f59e0b; background: #fffbeb; color: #1e293b; text-align: center; max-width: 480px;">
+      <div style="background: #f59e0b; color: #fff; font-weight: 900; font-size: 1.1rem; padding: 6px; border-radius: 12px; margin-bottom: 12px;">
+        🎉 榮譽勝利・海怪擊退成功 🎉
+      </div>
+
+      <!-- 🌟 生成的勝利紀念照放在這裡 -->
+      <div style="display: flex; justify-content: center; margin-bottom: 14px;">
+        <img src="image_generation_content/15639254328300804002" alt="勝利紀念照" style="width: 100%; border-radius: 16px; border: 3px solid #fbbf24; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+      </div>
+
+      <h3 style="color: #d97706; font-size: 1.25rem; font-weight: 900; margin-bottom: 8px;">
+        神廟守護成功！
+      </h3>
+      <p style="color: #78350f; font-size: 0.92rem; line-height: 1.6; text-align: left; background: rgba(253, 230, 138, 0.5); padding: 12px; border-radius: 12px; border-left: 4px solid #f59e0b; margin-bottom: 16px;">
+        太棒了！全班 8 位探險家齊心協力凝聚了 <b style="color:#b45309;">100 點</b> 防禦能量，成功將遠古海怪「利維坦」趕回深海！龜山福德神廟已恢復平靜，感謝你們的努力！
+      </p>
+
+      <button type="button" class="btn-action btn-green" onclick="document.getElementById('modal-monster-victory').classList.add('hidden')">
+        🌟 繼續我們的島嶼探險！
+      </button>
+    </div>
+  </div>
     <div class="modal-card" style="border: 4px solid #ef4444; background: #0f172a; color: #fff; text-align: center; max-width: 480px;">
       <div style="background: #ef4444; color: #fff; font-weight: 900; font-size: 1.1rem; padding: 6px; border-radius: 12px; margin-bottom: 12px;">
         ⚠️ 緊急紅色警報・海怪奇襲中 ⚠️
@@ -2183,13 +2207,27 @@ function applyRosterData(data) {
         }, 800);
       }
 
-      // 🚨 登入後核對時段：若正處於 11/11 07:30 ~ 11/16 12:00 且未擊退，彈出紅色警報說明
+// 🚨 登入後核對時段與狀態：決定顯示【警報】或【勝利】彈窗
       checkMonsterEventStatus();
-      if (currentMonsterEvent && currentMonsterEvent.isActive) {
+      const nowTime = Date.now();
+      const inWindow = (nowTime >= MONSTER_EVENT_CONFIG.startTime && nowTime <= MONSTER_EVENT_CONFIG.endTime);
+      const isDefeated = (currentMonsterEvent.currentEnergy >= MONSTER_EVENT_CONFIG.targetEnergy);
+
+      if (inWindow && !isDefeated) {
+        // 奇襲中，且能量尚未達標
         setTimeout(() => {
           const mModal = document.getElementById('modal-monster-alert');
           if (mModal) mModal.classList.remove('hidden');
         }, 500);
+      } else if (isDefeated) {
+        // 已經成功擊退！利用 sessionStorage 讓學生在每次開啟網頁時只會看到一次，避免每次切換身分都重複彈出
+        if (!sessionStorage.getItem('hasSeenVictory')) {
+          setTimeout(() => {
+            const vModal = document.getElementById('modal-monster-victory');
+            if (vModal) vModal.classList.remove('hidden');
+            sessionStorage.setItem('hasSeenVictory', 'true');
+          }, 500);
+        }
       }
     });
 
