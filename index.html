@@ -1754,27 +1754,18 @@
     bgmAudio.volume = 0.35;
     let isBgmPlaying = false;
 
-    function toggleBGM() {
-      const ambientAudio = ISLAND_AUDIO_MAP.ambient;
+function toggleBGM() {
       if (!isBgmPlaying) {
         bgmAudio.play().then(() => {
           isBgmPlaying = true;
           updateBgmButtonUI();
         }).catch(err => console.warn("背景音樂播放提示:", err));
-
-        if (ambientAudio) {
-          ambientAudio.play().catch(err => console.warn("環境音效播放提示:", err));
-        }
       } else {
         bgmAudio.pause();
-        if (ambientAudio) {
-          ambientAudio.pause();
-        }
         isBgmPlaying = false;
         updateBgmButtonUI();
       }
     }
-
     function updateBgmButtonUI() {
       const icon = document.getElementById('bgm-icon');
       const text = document.getElementById('bgm-text');
@@ -1808,7 +1799,6 @@ const ISLAND_AUDIO_MAP = {
       }
       const audio = ISLAND_AUDIO_MAP[playKey];
       if (audio) {
-        if (playKey === 'ambient' && !audio.paused) return;
         audio.currentTime = 0;
         audio.play().catch(err => console.warn(`[音效播放提示] ${playKey} 播放受阻:`, err));
       }
@@ -2180,9 +2170,6 @@ function applyRosterData(data) {
         controls.update();
       }
 
-      if (typeof playCustomAudio === 'function') {
-        playCustomAudio('ambient');
-      }
       spawnPlayerCharacter();
 
       setTimeout(() => {
@@ -6464,7 +6451,7 @@ function selectViewMode(mode) {
         stopCustomAudio('boat');
       }
 
-      if (mode === 'panoramic') {
+if (mode === 'panoramic') {
         isRidingCart = false;
         isRidingBoat = false;
         isRidingBalloon = false;
@@ -6477,16 +6464,9 @@ function selectViewMode(mode) {
 
         resetToDefaultCamera();
 
-        if (isBgmPlaying && typeof playCustomAudio === 'function') {
-          playCustomAudio('ambient');
-        }
-
         showLiveBanner("🧭 已切換為全景鳥瞰視角");
       }
       else if (mode === 'cart') {
-        if (typeof stopCustomAudio === 'function') {
-          stopCustomAudio('ambient');
-        }
         if (isRidingCart) {
           selectViewMode('panoramic');
           return;
@@ -9023,12 +9003,9 @@ if (isEventActive) {
       isRidingBalloon = false;
       controls.enabled = true;
 
-      if (typeof stopCustomAudio === 'function') {
+if (typeof stopCustomAudio === 'function') {
         stopCustomAudio('cart');
         stopCustomAudio('boat');
-      }
-      if (typeof playCustomAudio === 'function') {
-        playCustomAudio('ambient');
       }
 
       const menuText = document.getElementById('view-menu-current-text');
