@@ -1000,7 +1000,7 @@
     </div>
   </div>
 
-  <!-- 🚨 海怪襲擊登入警告彈窗 (11/11 07:30 ~ 11/13 12:00) -->
+  <!-- 🚨 海怪襲擊登入警告彈窗 (11/11 07:30 ~ 11/16 12:00) -->
   <div id="modal-monster-alert" class="modal-overlay hidden" style="z-index: 200005;">
     <div class="modal-card" style="border: 4px solid #ef4444; background: #0f172a; color: #fff; text-align: center; max-width: 480px;">
       <div style="background: #ef4444; color: #fff; font-weight: 900; font-size: 1.1rem; padding: 6px; border-radius: 12px; margin-bottom: 12px;">
@@ -1034,12 +1034,12 @@
         🌊 遠古海怪「利維坦」逼近龜山島！
       </h3>
       <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.6; text-align: left; background: rgba(30, 41, 59, 0.7); padding: 12px; border-radius: 12px; border-left: 4px solid #ef4444; margin-bottom: 14px;">
-        海怪正掀起狂風暴雨逼近北島！全班 8 位探險家必須在 <b style="color:#fde047;">11/13 中午 12:00 前</b> 共同解開除法謎題，凝聚 <b style="color:#38bdf8;">100 點</b> 防禦法陣擊退巨獸！<br>
+        海怪正掀起狂風暴雨逼近北島！全班 8 位探險家必須在 <b style="color:#fde047;">11/16 中午 12:00 前</b> 共同解開除法謎題，凝聚 <b style="color:#38bdf8;">100 點</b> 防禦法陣擊退巨獸！<br>
         <span style="color:#f87171;">⚠️ 若期限內未能達標，神廟將坍塌化為原始荒地，一切建設將歸零重來！</span>
       </p>
 
       <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:14px;">
-        ⏰ 作戰期限：11/11 (三) 07:30 ～ 11/13 (五) 12:00
+        ⏰ 作戰期限：11/11 (三) 07:30 ～ 11/16 (五) 12:00
       </div>
 
       <button type="button" class="btn-action btn-red" onclick="dismissMonsterAlertModal()">
@@ -1633,10 +1633,10 @@
     let sportTrackRunners = [];           // 跑道上的 2 位迷你奔跑小人
     let currentMathQuestion = null;
     let isPlayerFarming = false;
-    // 🐙 海怪奇襲時段排程 (2026/11/11 07:30 ~ 2026/11/13 12:00) 與 100 點能量設定
+    // 🐙 海怪奇襲時段排程 (2026/11/11 07:30 ~ 2026/11/16 12:00) 與 100 點能量設定
     const MONSTER_EVENT_CONFIG = {
       startTime: new Date(2026, 10, 10, 7, 30, 0).getTime(), // 11月11日 07:30
-      endTime: new Date(2026, 10, 16, 12, 0, 0).getTime(),    // 11月13日 12:00
+      endTime: new Date(2026, 10, 16, 12, 0, 0).getTime(),    // 11月16日 12:00
       targetEnergy: 100
     };
     let currentMonsterEvent = { isActive: false, targetEnergy: 100, currentEnergy: 0 };
@@ -2198,7 +2198,7 @@ function applyRosterData(data) {
         }, 800);
       }
 
-      // 🚨 登入後核對時段：若正處於 11/11 07:30 ~ 11/13 12:00 且未擊退，彈出紅色警報說明
+      // 🚨 登入後核對時段：若正處於 11/11 07:30 ~ 11/16 12:00 且未擊退，彈出紅色警報說明
       checkMonsterEventStatus();
       if (currentMonsterEvent && currentMonsterEvent.isActive) {
         setTimeout(() => {
@@ -2801,7 +2801,7 @@ function showLiveBanner(text) {
 
       if (show) {
         // 常駐頂部，並即時顯示全班當前防禦能量進度
-        banner.textContent = `🚨【緊急作戰】海怪奇襲中！全班防禦能量：${currentMonsterEvent.currentEnergy || 0} / 100 點 (截止 11/13 12:00)`;
+        banner.textContent = `🚨【緊急作戰】海怪奇襲中！全班防禦能量：${currentMonsterEvent.currentEnergy || 0} / 100 點 (截止 11/16 12:00)`;
         banner.style.background = 'linear-gradient(135deg, #dc2626, #991b1b)';
         banner.style.border = '2px solid #fef08a';
         banner.classList.add('show');
@@ -2835,7 +2835,7 @@ function showLiveBanner(text) {
           revertToLocalWeather();
         }
       } else if (now > MONSTER_EVENT_CONFIG.endTime) {
-        // 超過 11/13 12:00 結算
+        // 超過 11/16 12:00 結算
         if (currentMonsterEvent.isActive) {
           currentMonsterEvent.isActive = false;
           updateMonsterAlertBanner(false);      // ⏱️ 作戰時間截止：跑馬燈自動隱藏縮回！
@@ -8901,7 +8901,7 @@ checkMonsterEventStatus();
         const isEventActive = currentMonsterEvent && currentMonsterEvent.isActive;
 
 if (isEventActive) {
-          // 🌟【情境 1：11/11 07:30 ~ 11/13 12:00 海怪奇襲期間】
+          // 🌟【情境 1：11/11 07:30 ~ 11/16 12:00 海怪奇襲期間】
           const pTitle = document.getElementById('dev-progress-title');
           const pDesc = document.getElementById('dev-stage-desc');
           const pBar = document.getElementById('dev-progress-bar');
