@@ -4131,8 +4131,8 @@ if (isCompleted) {
     // ==========================================
     // 9. 時段背景色彩精準判定（僅保留這一份）
     // ==========================================
-    function getTimePhase() {
-      const hour = new Date().getHours();
+    function getTimePhase(customHour) {
+  const hour = (customHour !== undefined) ? customHour : new Date().getHours();
       if (hour >= 3 && hour < 6) {
         return { phase: 'dawn', name: '透早', bg: '#F3F6F8', light: 0.65, sun: 0xffedd5, hemi: 0xf8fafc };
       } else if (hour >= 6 && hour < 11) {
@@ -4764,6 +4764,12 @@ if (isCompleted) {
     }
 
     let jumpRopeGroup = null, jumperMan = null, ropeMesh = null;
+    const ropeCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-1.65, 0.7, 0),
+    new THREE.Vector3(0, 0.2, 0),
+    new THREE.Vector3(1.65, 0.7, 0)
+]);
+    const ropeTempVec = new THREE.Vector3();
 
     function createSportLandmark() {
       const group = new THREE.Group();
@@ -4833,14 +4839,11 @@ if (isCompleted) {
       jumpRopeGroup.add(jumperMan);
       jumpRopeGroup.userData.zzzJumper = zzzJumper;
 
-      const ropeMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0xfacc15 });
-      const initialCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-1.65, 0.7, 0),
-        new THREE.Vector3(0, 0.2, 0),
-        new THREE.Vector3(1.65, 0.7, 0)
-      ]);
-      const ropeGeo = new THREE.TubeGeometry(initialCurve, 24, 0.035, 6, false);
-      ropeMesh = new THREE.Mesh(ropeGeo, ropeMat);
+      const ropeMat = SharedPool.getMaterial('LineBasicMaterial', { color: 0xfacc15 });
+      const ropeGeo = new THREE.BufferGeometry();
+      ropeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(25 * 3), 3));
+      ropeMesh = new THREE.Line(ropeGeo, ropeMat);
+      ropeMesh.frustumCulled = false;
       jumpRopeGroup.add(ropeMesh);
 
       group.add(jumpRopeGroup);
@@ -6422,6 +6425,7 @@ function revertToLocalWeather() {
 
     let oceanMesh = null;
     let oceanInitialZ = [];
+    let oceanFrameCounter = 0; // 🌟 控制海浪每 2 幀更新一次
 
     let isFocusing = false;
     let targetCameraPos = new THREE.Vector3(0, 22, 46);
@@ -7264,7 +7268,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       hotAirBalloon = createHotAirBalloon();
       scene.add(hotAirBalloon);
 
-      const oceanGeo = new THREE.RingGeometry(0.1, 56, 72, 28);
+      const oceanGeo = new THREE.RingGeometry(0.1, 56, 48, 16);
       oceanGeo.rotateX(-Math.PI / 2);
       const oceanPos = oceanGeo.attributes.position;
       const oceanColors = [];
@@ -7884,8 +7888,9 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       let clock = new THREE.Clock();
 
       function animate() {
-        requestAnimationFrame(animate);
-        const time = clock.getElapsedTime();
+  requestAnimationFrame(animate);
+  const time = clock.getElapsedTime();
+  const currentHour = new Date().getHours(); // 🌟 每幀只取得一次時間
 
         if (isFocusing) {
           camera.position.lerp(targetCameraPos, 0.15);
@@ -7903,7 +7908,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           }
         }
 
-        const currentPhase = getTimePhase();
+        const currentPhase = getTimePhase(currentHour);
         if (currentPhase.name !== lastPhaseName) {
           lastPhaseName = currentPhase.name;
           document.getElementById('time-badge').textContent = `🕒 時段：${currentPhase.name}`;
@@ -7980,7 +7985,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           vine.rotation.z = sway;
         });
 
-        if (oceanMesh && oceanInitialZ && oceanInitialZ.length > 0) {
+        if (oceanMesh && oceanInitialZ && oceanInitialZ.length > 0 && (oceanFrameCounter++ % 2 === 0)) {
           const posAttr = oceanMesh.geometry.attributes.position;
           for (let i = 0; i < posAttr.count; i++) {
             const u = posAttr.getX(i);
@@ -8065,7 +8070,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         }
 
         if (mascotLeader) {
-          const currentHour = new Date().getHours();
+          
           const isMascotSleeping = (currentHour >= 22 || currentHour < 7);
           const mascotLimbs = mascotLeader.userData.limbs;
 
@@ -8207,88 +8212,97 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           }
         }
         
-        if (ropeMesh && jumperMan && jumpRopeGroup) {
-          const currentHour = new Date().getHours();
-          const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
-          const swingerA = jumpRopeGroup.userData.swingerA;
-          const swingerB = jumpRopeGroup.userData.swingerB;
-          const zzzA = jumpRopeGroup.userData.zzzA;
-          const zzzB = jumpRopeGroup.userData.zzzB;
-          const zzzJumper = jumpRopeGroup.userData.zzzJumper;
+if (ropeMesh && jumperMan && jumpRopeGroup) {
+  const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
+  const swingerA = jumpRopeGroup.userData.swingerA;
+  const swingerB = jumpRopeGroup.userData.swingerB;
+  const zzzA = jumpRopeGroup.userData.zzzA;
+  const zzzB = jumpRopeGroup.userData.zzzB;
+  const zzzJumper = jumpRopeGroup.userData.zzzJumper;
+  const posArr = ropeMesh.geometry.attributes.position.array;
 
-          if (isJumperSleeping) {
-            const pStart = new THREE.Vector3(-1.45, 0.05, 0);
-            const pMid = new THREE.Vector3(0, 0.05, 0.1);
-            const pEnd = new THREE.Vector3(1.45, 0.05, 0);
+  if (isJumperSleeping) {
+    ropeCurve.points[0].set(-1.45, 0.05, 0);
+    ropeCurve.points[1].set(0, 0.05, 0.1);
+    ropeCurve.points[2].set(1.45, 0.05, 0);
+    for (let i = 0; i <= 24; i++) {
+      ropeCurve.getPoint(i / 24, ropeTempVec);
+      posArr[i * 3] = ropeTempVec.x;
+      posArr[i * 3 + 1] = ropeTempVec.y;
+      posArr[i * 3 + 2] = ropeTempVec.z;
+    }
+    ropeMesh.geometry.attributes.position.needsUpdate = true;
+    ropeMesh.position.set(0, 0, 0);
 
-            ropeMesh.geometry.dispose();
-            ropeMesh.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([pStart, pMid, pEnd]), 20, 0.03, 6, false);
-            ropeMesh.position.set(0, 0, 0);
+    const sleepBreath = Math.sin(time * 2.0) * 0.015;
+    jumperMan.position.set(0, -0.15 + sleepBreath, 0);
+    jumperMan.rotation.x = 0.25;
 
-            const sleepBreath = Math.sin(time * 2.0) * 0.015;
-            jumperMan.position.set(0, -0.15 + sleepBreath, 0);
-            jumperMan.rotation.x = 0.25;
+    if (jumperMan.userData.limbs) {
+      jumperMan.userData.limbs.leftLeg.rotation.x = -1.45;
+      jumperMan.userData.limbs.rightLeg.rotation.x = -1.45;
+    }
+    if (swingerA) swingerA.position.y = -0.15 + sleepBreath;
+    if (swingerB) swingerB.position.y = -0.15 + sleepBreath;
 
-            if (jumperMan.userData.limbs) {
-              jumperMan.userData.limbs.leftLeg.rotation.x = -1.45;
-              jumperMan.userData.limbs.rightLeg.rotation.x = -1.45;
-            }
-            if (swingerA) swingerA.position.y = -0.15 + sleepBreath;
-            if (swingerB) swingerB.position.y = -0.15 + sleepBreath;
+    [zzzA, zzzB, zzzJumper].forEach((zzz, i) => {
+      if (zzz) {
+        zzz.visible = true;
+        const floatProgress = (time * 0.5 + i * 0.3) % 1.0;
+        zzz.position.y = 1.35 + floatProgress * 0.45;
+        zzz.material.opacity = Math.sin(floatProgress * Math.PI) * 0.85;
+      }
+    });
+  } else {
+    const ropeAngle = time * 5.0;
+    jumperMan.rotation.x = 0;
+    jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
 
-            [zzzA, zzzB, zzzJumper].forEach((zzz, i) => {
-              if (zzz) {
-                zzz.visible = true;
-                const floatProgress = (time * 0.5 + i * 0.3) % 1.0;
-                zzz.position.y = 1.35 + floatProgress * 0.45;
-                zzz.material.opacity = Math.sin(floatProgress * Math.PI) * 0.85;
-              }
-            });
-          } else {
-            const ropeAngle = time * 5.0;
-            jumperMan.rotation.x = 0;
-            jumperMan.position.y = Math.max(0, Math.sin(ropeAngle - Math.PI / 2) * 0.55);
+    if (jumperMan.userData.limbs) {
+      jumperMan.userData.limbs.leftLeg.rotation.x = 0;
+      jumperMan.userData.limbs.rightLeg.rotation.x = 0;
+    }
 
-            if (jumperMan.userData.limbs) {
-              jumperMan.userData.limbs.leftLeg.rotation.x = 0;
-              jumperMan.userData.limbs.rightLeg.rotation.x = 0;
-            }
+    const circleY = Math.sin(ropeAngle) * 0.22;
+    const circleZ = Math.cos(ropeAngle) * 0.22;
 
-            const circleY = Math.sin(ropeAngle) * 0.22;
-            const circleZ = Math.cos(ropeAngle) * 0.22;
+    if (swingerA && swingerA.userData.limbs) {
+      swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
+      swingerA.userData.limbs.rightArm.rotation.y = circleY;
+    }
+    if (swingerB && swingerB.userData.limbs) {
+      swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
+      swingerB.userData.limbs.leftArm.rotation.y = -circleY;
+    }
 
-            if (swingerA && swingerA.userData.limbs) {
-              swingerA.userData.limbs.rightArm.rotation.x = -1.2 + circleZ;
-              swingerA.userData.limbs.rightArm.rotation.y = circleY;
-            }
-            if (swingerB && swingerB.userData.limbs) {
-              swingerB.userData.limbs.leftArm.rotation.x = -1.2 + circleZ;
-              swingerB.userData.limbs.leftArm.rotation.y = -circleY;
-            }
+    // 🌟 直接複用曲線控制點與暫存向量，完全零記憶體配置、零網格重建
+    ropeCurve.points[0].set(0, -0.42, 0.1);
+    swingerA.userData.limbs.rightArm.localToWorld(ropeCurve.points[0]);
+    jumpRopeGroup.worldToLocal(ropeCurve.points[0]);
 
-            const handLocalOffset = new THREE.Vector3(0, -0.42, 0.1);
-            const handPosA = new THREE.Vector3();
-            swingerA.userData.limbs.rightArm.localToWorld(handPosA.copy(handLocalOffset));
-            jumpRopeGroup.worldToLocal(handPosA);
+    ropeCurve.points[2].set(0, -0.42, 0.1);
+    swingerB.userData.limbs.leftArm.localToWorld(ropeCurve.points[2]);
+    jumpRopeGroup.worldToLocal(ropeCurve.points[2]);
 
-            const handPosB = new THREE.Vector3();
-            swingerB.userData.limbs.leftArm.localToWorld(handPosB.copy(handLocalOffset));
-            jumpRopeGroup.worldToLocal(handPosB);
+    const midY = 0.6 + Math.cos(ropeAngle) * 0.85;
+    const midZ = Math.sin(ropeAngle) * 0.85;
+    ropeCurve.points[1].set(0, midY, midZ);
 
-            const midY = 0.6 + Math.cos(ropeAngle) * 0.85;
-            const midZ = Math.sin(ropeAngle) * 0.85;
-            const handMid = new THREE.Vector3(0, midY, midZ);
+    for (let i = 0; i <= 24; i++) {
+      ropeCurve.getPoint(i / 24, ropeTempVec);
+      posArr[i * 3] = ropeTempVec.x;
+      posArr[i * 3 + 1] = ropeTempVec.y;
+      posArr[i * 3 + 2] = ropeTempVec.z;
+    }
+    ropeMesh.geometry.attributes.position.needsUpdate = true;
 
-            ropeMesh.geometry.dispose();
-            ropeMesh.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([handPosA, handMid, handPosB]), 24, 0.035, 6, false);
+    if (zzzA) zzzA.visible = false;
+    if (zzzB) zzzB.visible = false;
+    if (zzzJumper) zzzJumper.visible = false;
+  }
+}
 
-            if (zzzA) zzzA.visible = false;
-            if (zzzB) zzzB.visible = false;
-            if (zzzJumper) zzzJumper.visible = false;
-          }
-        }
-
-        const currentHour = new Date().getHours();
+        
         const isSleepingTime = (currentHour >= 23 || currentHour < 6);
         
         villagers.forEach((v, idx) => {
