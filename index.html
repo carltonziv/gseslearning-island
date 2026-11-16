@@ -2220,15 +2220,12 @@ function applyRosterData(data) {
           const mModal = document.getElementById('modal-monster-alert');
           if (mModal) mModal.classList.remove('hidden');
         }, 500);
-      } else if (isVictoryToday) {
-        const seenKey = `seen_monster_victory_${currentStudent.seatNumber}_${todayStr}`;
-        if (!localStorage.getItem(seenKey)) {
-          setTimeout(() => {
-            const vModal = document.getElementById('modal-monster-victory');
-            if (vModal) vModal.classList.remove('hidden');
-            localStorage.setItem(seenKey, 'true');
-          }, 500);
-        }
+} else if (isVictoryToday) {
+        // 擊退當天每次玩家登入都會顯示一次勝利圖；隔天日期不同即自動隱藏
+        setTimeout(() => {
+          const vModal = document.getElementById('modal-monster-victory');
+          if (vModal) vModal.classList.remove('hidden');
+        }, 500);
       }
     });
 
