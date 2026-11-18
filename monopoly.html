@@ -17,16 +17,15 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #2b1d14; /* 荒地深褐底色，避免縮放邊緣露白 */
+      background-color: #241710;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
     }
 
-    /* 底層 2.5D 畫布 */
     #game-canvas {
       display: block;
       width: 100%;
       height: 100%;
-      touch-action: none; /* 交由 JS 處理單指拖曳與雙指縮放 */
+      touch-action: none;
       cursor: grab;
     }
 
@@ -34,7 +33,6 @@
       cursor: grabbing;
     }
 
-    /* 上層懸浮 UI 層（點擊穿透畫布，僅按鈕可互動） */
     #ui-layer {
       position: fixed;
       inset: 0;
@@ -53,10 +51,9 @@
       gap: 12px;
     }
 
-    /* 左上角標題與狀態膠囊 */
     .title-badge {
       pointer-events: auto;
-      background: rgba(45, 30, 20, 0.82);
+      background: rgba(45, 30, 20, 0.85);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border: 1.5px solid rgba(235, 185, 115, 0.45);
@@ -78,7 +75,6 @@
       color: #d7bfa5;
     }
 
-    /* 右上角控制群組 */
     .top-actions {
       display: flex;
       align-items: center;
@@ -124,10 +120,9 @@
       background: linear-gradient(135deg, #e57743 0%, #c4522a 100%);
     }
 
-    /* 底部操作提示 */
     .bottom-hint {
       align-self: center;
-      background: rgba(38, 25, 17, 0.75);
+      background: rgba(38, 25, 17, 0.78);
       color: #dec7ad;
       font-size: 0.78rem;
       padding: 6px 14px;
@@ -144,7 +139,7 @@
     <div class="top-bar">
       <div class="title-badge">
         <h1>🏜️ 南方荒地探險</h1>
-        <p id="status-text">階段一：2.5D 等角棋盤測試中</p>
+        <p id="status-text">階段一：2.5D 等角棋盤（水平校正版）</p>
       </div>
 
       <div class="top-actions">
@@ -165,7 +160,7 @@
   <script>
     /**
      * ============================================================================
-     * 1. 主網頁通訊與生命週期管理 (Main Island <-> Monopoly Bridge)
+     * 1. 主網頁通訊與生命週期管理
      * ============================================================================
      */
     const GameBridge = {
@@ -175,12 +170,10 @@
       },
 
       init() {
-        // 解析主網頁可能透過 URL 傳入的初始參數 (例如 ?uid=30101&coins=500)
         const params = new URLSearchParams(window.location.search);
         if (params.has('uid')) this.playerData.uid = params.get('uid');
         if (params.has('coins')) this.playerData.coins = Number(params.get('coins')) || 0;
 
-        // 監聽來自主網頁的 postMessage 指令
         window.addEventListener('message', (event) => {
           if (event.origin !== window.location.origin) return;
           const { type, payload } = event.data || {};
@@ -198,21 +191,15 @@
       },
 
       closeAndReturn() {
-        // 1. 停止渲染迴圈以釋放 GPU/CPU 資源
         Engine.stopLoop();
-
-        // 2. 通知同網域主網頁關閉內視窗並喚醒主島嶼
         const message = {
           type: 'MONOPOLY_CLOSE',
-          payload: {
-            coins: this.playerData.coins
-          }
+          payload: { coins: this.playerData.coins }
         };
 
         if (window.parent && window.parent !== window) {
           window.parent.postMessage(message, window.location.origin);
         } else {
-          // 單獨開啟網頁測試時的友善提示
           alert(`已觸發返回島嶼指令！\n傳送資料：${JSON.stringify(message)}`);
         }
       }
@@ -220,58 +207,48 @@
 
     /**
      * ============================================================================
-     * 2. 等角投影與 6x6（外圍 20 格）南方荒地棋盤資料
+     * 2. 等角投影與 6x6（外圍 20 格）水平校正棋盤資料
      * ============================================================================
      */
     const ISO_CONFIG = {
-      GRID_SIZE: 6,     // 6x6 網格，外圍一圈共 (6-1)*4 = 20 格
-      TILE_W: 112,      // 菱形頂面寬度
-      TILE_H: 56,       // 菱形頂面高度 (2:1 標準等角比例)
-      BASE_Z: 22        // 方塊基本厚度
+      GRID_SIZE: 6,     // 6x6 網格，外圍一圈 20 格
+      TILE_W: 116,      // 菱形頂面寬度
+      TILE_H: 62,       // 微調俯視傾角，減少扁平反向透視錯覺
+      BASE_Z: 28        // 加厚石板底座，增加穩重落地感
     };
 
-    // 南方荒地色票定義
     const PALETTE = {
-      bgTop: '#3a2418',
-      bgBottom: '#1f130c',
-      // 荒地內圈地面
-      innerSandTop: '#d7b482',
-      innerSandLeft: '#b6905e',
-      innerSandRight: '#967244',
-      // 外圍環狀地塊（沙黃與赤褐交錯）
-      sand: { top: '#ebd09e', left: '#c9a870', right: '#a3824e', stroke: '#826336' },
-      terracotta: { top: '#d98a5b', left: '#b5683d', right: '#8f4c27', stroke: '#6e3617' },
-      start: { top: '#f5b841', left: '#cf9123', right: '#a36e12', stroke: '#784e07' },
-      oasisTile: { top: '#68b8a8', left: '#499485', right: '#327063', stroke: '#204f45' }
+      bgTop: '#3d281b',
+      bgBottom: '#1a100a',
+      // 荒地內圈地面（與外圍齊平，避免下陷造成視覺斷裂）
+      innerSandTop: '#d4b07d',
+      innerSandLeft: '#b38d5b',
+      innerSandRight: '#916d40',
+      // 外圍環狀地塊
+      sand: { top: '#edd2a1', left: '#c7a56d', right: '#9e7d49', stroke: '#7a5c30' },
+      terracotta: { top: '#db8d5e', left: '#b3663b', right: '#8a4824', stroke: '#663114' },
+      start: { top: '#f5bc47', left: '#cc9023', right: '#9e6b11', stroke: '#6e4706' },
+      oasisTile: { top: '#6abaa9', left: '#499485', right: '#316e61', stroke: '#1f4d43' }
     };
 
-    // 建立 20 格環狀陣列（順時針方向：上邊 -> 右邊 -> 下邊 -> 左邊）
     function createBoardTiles() {
       const N = ISO_CONFIG.GRID_SIZE;
       const coords = [];
 
-      // 上邊 (0,0) -> (4,0)
+      // 順時針外圍 20 格
       for (let x = 0; x < N - 1; x++) coords.push({ gx: x, gy: 0 });
-      // 右邊 (5,0) -> (5,4)
       for (let y = 0; y < N - 1; y++) coords.push({ gx: N - 1, gy: y });
-      // 下邊 (5,5) -> (1,5)
       for (let x = N - 1; x > 0; x--) coords.push({ gx: x, gy: N - 1 });
-      // 左邊 (0,5) -> (0,1)
       for (let y = N - 1; y > 0; y--) coords.push({ gx: 0, gy: y });
 
       return coords.map((pos, index) => {
         const isCorner = (pos.gx === 0 || pos.gx === N - 1) && (pos.gy === 0 || pos.gy === N - 1);
         let style = index % 2 === 0 ? PALETTE.sand : PALETTE.terracotta;
-        let elevation = 0; // 額外凸起高度
 
         if (index === 0) {
           style = PALETTE.start;
-          elevation = 8; // 起點營地略高
         } else if (index === 5 || index === 15) {
           style = PALETTE.oasisTile;
-          elevation = 4;
-        } else if (isCorner) {
-          elevation = 5;
         }
 
         return {
@@ -279,7 +256,6 @@
           gx: pos.gx,
           gy: pos.gy,
           isCorner,
-          elevation,
           style,
           label: index === 0 ? '起點' : `${index}`
         };
@@ -302,7 +278,6 @@
       height: 0,
       dpr: 1,
 
-      // 相機狀態（平移與縮放）
       camera: {
         x: 0,
         y: 0,
@@ -311,7 +286,6 @@
         maxScale: 2.2
       },
 
-      // 互動指標狀態
       pointer: {
         isDragging: false,
         lastX: 0,
@@ -323,11 +297,10 @@
         this.ctx = this.canvas.getContext('2d');
         this.bindEvents();
         this.observeResize();
-        this.resetCamera(false);
+        this.resetCamera();
         this.startLoop();
       },
 
-      // 使用 ResizeObserver 監聽視窗尺寸與 DPR 變化
       observeResize() {
         const resizeObserver = new ResizeObserver((entries) => {
           for (const entry of entries) {
@@ -347,49 +320,72 @@
         resizeObserver.observe(document.body);
       },
 
-      // 將棋盤完整置中並自動計算合適的初始縮放比例
-      resetCamera(animate = true) {
+      resetCamera() {
         const w = this.width || window.innerWidth;
         const h = this.height || window.innerHeight;
 
-        // 6x6 棋盤在等角投影下的理論總寬高
         const boardPixelW = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_W;
         const boardPixelH = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_H + 80;
 
         const fitScale = Math.min(
           (w * 0.85) / boardPixelW,
           (h * 0.78) / boardPixelH,
-          1.25
+          1.22
         );
 
         this.camera.scale = Math.max(this.camera.minScale, fitScale);
         this.camera.x = w / 2;
-        // 網格中心點 (2.5, 2.5) 的垂直偏移校正
         const centerGridY = (ISO_CONFIG.GRID_SIZE - 1) * (ISO_CONFIG.TILE_H / 2);
-        this.camera.y = h / 2 - centerGridY * this.camera.scale + 10;
+        this.camera.y = h / 2 - centerGridY * this.camera.scale + 6;
       },
 
-      // 核心數學轉換：網格座標 (gx, gy) -> 等角中心螢幕座標 (sx, sy)
       gridToIso(gx, gy) {
         const sx = (gx - gy) * (ISO_CONFIG.TILE_W / 2);
         const sy = (gx + gy) * (ISO_CONFIG.TILE_H / 2);
         return { sx, sy };
       },
 
-      // 繪製單一 2.5D 立體等角方塊
-      drawIsoBlock(ctx, gx, gy, zHeight, style, topOffsetY = 0) {
+      // 繪製整個棋盤下方的深色環境接地陰影，消除懸浮感
+      drawBoardGroundShadow(ctx) {
+        const N = ISO_CONFIG.GRID_SIZE;
+        const hw = ISO_CONFIG.TILE_W / 2;
+        const hh = ISO_CONFIG.TILE_H / 2;
+        const z = ISO_CONFIG.BASE_Z;
+
+        // 計算整個 6x6 棋盤最外圍四個頂點的投影座標
+        const topCorner = this.gridToIso(0, 0);
+        const rightCorner = this.gridToIso(N - 1, 0);
+        const bottomCorner = this.gridToIso(N - 1, N - 1);
+        const leftCorner = this.gridToIso(0, N - 1);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(topCorner.sx, topCorner.sy - hh + z + 10);
+        ctx.lineTo(rightCorner.sx + hw + 14, rightCorner.sy + z + 12);
+        ctx.lineTo(bottomCorner.sx, bottomCorner.sy + hh + z + 18);
+        ctx.lineTo(leftCorner.sx - hw - 14, leftCorner.sy + z + 12);
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(10, 5, 2, 0.55)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        ctx.shadowBlur = 28;
+        ctx.shadowOffsetY = 12;
+        ctx.fill();
+        ctx.restore();
+      },
+
+      // 繪製單一 2.5D 水平齊平石板方塊
+      drawIsoBlock(ctx, gx, gy, zHeight, style, hasInnerBorder = false) {
         const { sx, sy } = this.gridToIso(gx, gy);
         const hw = ISO_CONFIG.TILE_W / 2;
         const hh = ISO_CONFIG.TILE_H / 2;
-        const topY = sy - topOffsetY;
 
-        // 頂面四個頂點 (上、右、下、左)
-        const pTop = { x: sx, y: topY - hh };
-        const pRight = { x: sx + hw, y: topY };
-        const pBottom = { x: sx, y: topY + hh };
-        const pLeft = { x: sx - hw, y: topY };
+        const pTop = { x: sx, y: sy - hh };
+        const pRight = { x: sx + hw, y: sy };
+        const pBottom = { x: sx, y: sy + hh };
+        const pLeft = { x: sx - hw, y: sy };
 
-        // 1. 繪製左側面
+        // 1. 左側面
         ctx.beginPath();
         ctx.moveTo(pLeft.x, pLeft.y);
         ctx.lineTo(pBottom.x, pBottom.y);
@@ -404,7 +400,7 @@
           ctx.stroke();
         }
 
-        // 2. 繪製右側面
+        // 2. 右側面
         ctx.beginPath();
         ctx.moveTo(pBottom.x, pBottom.y);
         ctx.lineTo(pRight.x, pRight.y);
@@ -419,7 +415,7 @@
           ctx.stroke();
         }
 
-        // 3. 繪製頂面菱形
+        // 3. 頂面菱形
         ctx.beginPath();
         ctx.moveTo(pTop.x, pTop.y);
         ctx.lineTo(pRight.x, pRight.y);
@@ -434,13 +430,27 @@
           ctx.stroke();
         }
 
-        return { sx, topY };
+        // 起點與角落格內縮裝飾框（用平面線條區分特殊格，避免高低差造成透視錯覺）
+        if (hasInnerBorder) {
+          const inset = 0.76;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy - hh * inset);
+          ctx.lineTo(sx + hw * inset, sy);
+          ctx.lineTo(sx, sy + hh * inset);
+          ctx.lineTo(sx - hw * inset, sy);
+          ctx.closePath();
+          ctx.strokeStyle = 'rgba(110, 65, 20, 0.45)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        return { sx, sy };
       },
 
-      // 繪製棋盤中央的「南方荒地岩石與小綠洲」裝飾
+      // 繪製中央荒地底板與造景
       drawCentralWasteland(ctx) {
         const N = ISO_CONFIG.GRID_SIZE;
-        // 1. 先鋪設中央 4x4 荒地沙土底板 (gx: 1..4, gy: 1..4)
+        // 中央 4x4 地面與外圍保持完全相同高度，形成完整平坦的桌面
         for (let sum = 2; sum <= (N - 2) * 2; sum++) {
           for (let gx = 1; gx <= N - 2; gx++) {
             const gy = sum - gx;
@@ -449,43 +459,38 @@
                 ctx,
                 gx,
                 gy,
-                ISO_CONFIG.BASE_Z - 4,
+                ISO_CONFIG.BASE_Z,
                 {
                   top: PALETTE.innerSandTop,
                   left: PALETTE.innerSandLeft,
                   right: PALETTE.innerSandRight,
-                  stroke: 'rgba(130, 99, 54, 0.35)'
-                },
-                -4
+                  stroke: 'rgba(130, 99, 54, 0.25)'
+                }
               );
             }
           }
         }
 
-        // 2. 繪製小綠洲水池（位於中央偏右下方 gx: 2.8, gy: 2.8）
+        // 小綠洲水池
         const oasisPos = this.gridToIso(2.75, 2.75);
         ctx.save();
-        ctx.translate(oasisPos.sx, oasisPos.sy + 4);
+        ctx.translate(oasisPos.sx, oasisPos.sy);
 
-        // 綠洲周圍草皮邊緣
         ctx.beginPath();
-        ctx.ellipse(0, 0, 74, 37, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 74, 39, 0, 0, Math.PI * 2);
         ctx.fillStyle = '#7ba85b';
         ctx.fill();
 
-        // 湖水外圈
         ctx.beginPath();
-        ctx.ellipse(0, 2, 62, 30, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 2, 62, 32, 0, 0, Math.PI * 2);
         ctx.fillStyle = '#3898a8';
         ctx.fill();
 
-        // 湖水內圈高光
         ctx.beginPath();
-        ctx.ellipse(-4, 1, 44, 20, 0, 0, Math.PI * 2);
+        ctx.ellipse(-4, 1, 44, 21, 0, 0, Math.PI * 2);
         ctx.fillStyle = '#5bc2cf';
         ctx.fill();
 
-        // 水波紋線條
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -496,27 +501,22 @@
         ctx.stroke();
         ctx.restore();
 
-        // 3. 繪製荒地赤褐岩石群（位於中央偏左上方 gx: 1.7, gy: 1.8）
+        // 荒地岩石群與迷你仙人掌
         this.drawRockCluster(ctx, 1.75, 1.85);
-
-        // 4. 繪製兩株迷你仙人掌點綴綠洲旁
         this.drawCactus(ctx, 3.4, 2.1, 0.9);
         this.drawCactus(ctx, 2.1, 3.3, 0.75);
       },
 
-      // 幾何多面體荒地岩石群
       drawRockCluster(ctx, gx, gy) {
         const { sx, sy } = this.gridToIso(gx, gy);
         ctx.save();
-        ctx.translate(sx, sy + 2);
+        ctx.translate(sx, sy);
 
-        // 地面陰影
         ctx.beginPath();
-        ctx.ellipse(4, 6, 46, 22, 0, 0, Math.PI * 2);
+        ctx.ellipse(4, 6, 46, 23, 0, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(70, 42, 22, 0.35)';
         ctx.fill();
 
-        // 主岩體（左亮面）
         ctx.beginPath();
         ctx.moveTo(-28, 4);
         ctx.lineTo(-10, -34);
@@ -526,7 +526,6 @@
         ctx.fillStyle = '#c46d45';
         ctx.fill();
 
-        // 主岩體（右暗面）
         ctx.beginPath();
         ctx.moveTo(-10, -34);
         ctx.lineTo(14, -22);
@@ -537,7 +536,6 @@
         ctx.fillStyle = '#8f4729';
         ctx.fill();
 
-        // 副岩塊（前方小石）
         ctx.beginPath();
         ctx.moveTo(8, 12);
         ctx.lineTo(20, -6);
@@ -550,20 +548,17 @@
         ctx.restore();
       },
 
-      // 幾何仙人掌
       drawCactus(ctx, gx, gy, scale = 1) {
         const { sx, sy } = this.gridToIso(gx, gy);
         ctx.save();
-        ctx.translate(sx, sy + 2);
+        ctx.translate(sx, sy);
         ctx.scale(scale, scale);
 
-        // 陰影
         ctx.beginPath();
         ctx.ellipse(0, 2, 10, 5, 0, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(50, 35, 20, 0.3)';
         ctx.fill();
 
-        // 主幹與側枝
         ctx.strokeStyle = '#3b7a43';
         ctx.lineCap = 'round';
         ctx.lineWidth = 7;
@@ -585,7 +580,6 @@
         ctx.restore();
       },
 
-      // 主渲染函式（嚴格遵守由後往前的畫家演算法 Painter's Algorithm）
       render() {
         const ctx = this.ctx;
         if (!ctx) return;
@@ -593,7 +587,7 @@
         ctx.save();
         ctx.scale(this.dpr, this.dpr);
 
-        // 1. 繪製漸層背景
+        // 1. 漸層背景
         const bgGrad = ctx.createRadialGradient(
           this.width / 2, this.height / 2, 40,
           this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.75
@@ -603,53 +597,41 @@
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, this.width, this.height);
 
-        // 2. 套用相機平移與縮放變換
+        // 2. 相機變換
         ctx.translate(this.camera.x, this.camera.y);
         ctx.scale(this.camera.scale, this.camera.scale);
 
-        // 3. 繪製棋盤後半部外圍格子 (gx + gy < 5 的區域，位於中央造景後方)
+        // 3. 先畫棋盤整體落地陰影，建立穩固的地面基準
+        this.drawBoardGroundShadow(ctx);
+
+        // 4. 後半部外圍格子
         const backTiles = BOARD_TILES.filter(t => (t.gx + t.gy) < ISO_CONFIG.GRID_SIZE - 1)
           .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
 
         for (const tile of backTiles) {
-          const pos = this.drawIsoBlock(
-            ctx,
-            tile.gx,
-            tile.gy,
-            ISO_CONFIG.BASE_Z + tile.elevation,
-            tile.style,
-            tile.elevation
-          );
-          this.drawTileLabel(ctx, pos.sx, pos.topY, tile.label);
+          const pos = this.drawIsoBlock(ctx, tile.gx, tile.gy, ISO_CONFIG.BASE_Z, tile.style, tile.isCorner);
+          this.drawTileLabel(ctx, pos.sx, pos.sy, tile.label);
         }
 
-        // 4. 繪製中央荒地與綠洲造景
+        // 5. 中央荒地與綠洲造景
         this.drawCentralWasteland(ctx);
 
-        // 5. 繪製棋盤前半部外圍格子 (gx + gy >= 5 的區域，位於中央造景前方)
+        // 6. 前半部外圍格子
         const frontTiles = BOARD_TILES.filter(t => (t.gx + t.gy) >= ISO_CONFIG.GRID_SIZE - 1)
           .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
 
         for (const tile of frontTiles) {
-          const pos = this.drawIsoBlock(
-            ctx,
-            tile.gx,
-            tile.gy,
-            ISO_CONFIG.BASE_Z + tile.elevation,
-            tile.style,
-            tile.elevation
-          );
-          this.drawTileLabel(ctx, pos.sx, pos.topY, tile.label);
+          const pos = this.drawIsoBlock(ctx, tile.gx, tile.gy, ISO_CONFIG.BASE_Z, tile.style, tile.isCorner);
+          this.drawTileLabel(ctx, pos.sx, pos.sy, tile.label);
         }
 
         ctx.restore();
       },
 
-      // 在方塊頂面繪製編號或起點標示
-      drawTileLabel(ctx, sx, topY, text) {
+      drawTileLabel(ctx, sx, sy, text) {
         ctx.save();
-        ctx.translate(sx, topY);
-        ctx.fillStyle = 'rgba(65, 38, 18, 0.75)';
+        ctx.translate(sx, sy);
+        ctx.fillStyle = 'rgba(65, 38, 18, 0.78)';
         ctx.font = 'bold 13px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -676,15 +658,9 @@
         }
       },
 
-      /**
-       * ==========================================================================
-       * 4. 滑鼠拖曳、滾輪縮放與觸控雙指縮放事件綁定
-       * ==========================================================================
-       */
       bindEvents() {
         const canvas = this.canvas;
 
-        // 滑鼠拖曳平移
         canvas.addEventListener('mousedown', (e) => {
           this.pointer.isDragging = true;
           this.pointer.lastX = e.clientX;
@@ -693,10 +669,8 @@
 
         window.addEventListener('mousemove', (e) => {
           if (!this.pointer.isDragging) return;
-          const dx = e.clientX - this.pointer.lastX;
-          const dy = e.clientY - this.pointer.lastY;
-          this.camera.x += dx;
-          this.camera.y += dy;
+          this.camera.x += e.clientX - this.pointer.lastX;
+          this.camera.y += e.clientY - this.pointer.lastY;
           this.pointer.lastX = e.clientX;
           this.pointer.lastY = e.clientY;
         });
@@ -705,14 +679,12 @@
           this.pointer.isDragging = false;
         });
 
-        // 滑鼠滾輪以游標為中心縮放
         canvas.addEventListener('wheel', (e) => {
           e.preventDefault();
           const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
           this.zoomAt(e.clientX, e.clientY, zoomFactor);
         }, { passive: false });
 
-        // 觸控單指平移與雙指縮放 (支援 iPad)
         canvas.addEventListener('touchstart', (e) => {
           if (e.touches.length === 1) {
             this.pointer.isDragging = true;
@@ -727,10 +699,8 @@
         canvas.addEventListener('touchmove', (e) => {
           e.preventDefault();
           if (e.touches.length === 1 && this.pointer.isDragging) {
-            const dx = e.touches[0].clientX - this.pointer.lastX;
-            const dy = e.touches[0].clientY - this.pointer.lastY;
-            this.camera.x += dx;
-            this.camera.y += dy;
+            this.camera.x += e.touches[0].clientX - this.pointer.lastX;
+            this.camera.y += e.touches[0].clientY - this.pointer.lastY;
             this.pointer.lastX = e.touches[0].clientX;
             this.pointer.lastY = e.touches[0].clientY;
           } else if (e.touches.length === 2) {
@@ -750,7 +720,6 @@
           this.pointer.pinchDist = 0;
         });
 
-        // UI 按鈕事件
         document.getElementById('btn-reset-view').addEventListener('click', () => {
           this.resetCamera();
         });
@@ -761,9 +730,10 @@
       },
 
       getTouchDistance(touches) {
-        const dx = touches[0].clientX - touches[1].clientX;
-        const dy = touches[0].clientY - touches[1].clientY;
-        return Math.hypot(dx, dy);
+        return Math.hypot(
+          touches[0].clientX - touches[1].clientX,
+          touches[0].clientY - touches[1].clientY
+        );
       },
 
       zoomAt(screenX, screenY, factor) {
@@ -774,19 +744,8 @@
         );
         if (newScale === oldScale) return;
 
-        // 保持滑鼠/雙指中心點在世界座標中的位置不偏移
         const worldX = (screenX - this.camera.x) / oldScale;
         const worldY = (screenY - this.camera.y) / oldScale;
 
         this.camera.scale = newScale;
-        this.camera.x = screenX - worldX * newScale;
-        this.camera.y = screenY - worldY * newScale;
-      }
-    };
-
-    // 啟動遊戲引擎與通訊橋接
-    GameBridge.init();
-    Engine.init();
-  </script>
-</body>
-</html>
+        this
