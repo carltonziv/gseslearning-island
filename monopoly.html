@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>南方荒地大富翁 - 2.5D 探險</title>
+  <title>龜山桂山大富翁 - 2.5D 在地探險</title>
   <style>
     * {
       box-sizing: border-box;
@@ -57,8 +57,8 @@
       pointer-events: auto;
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(42, 27, 18, 0.88);
+      gap: 8px;
+      background: rgba(42, 27, 18, 0.9);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border: 1.5px solid rgba(235, 185, 115, 0.45);
@@ -66,31 +66,53 @@
       padding: 8px 14px;
       color: #faebd7;
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      flex-wrap: wrap;
     }
 
     .stat-item {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 2px 8px;
+      padding: 2px 6px;
     }
 
     .stat-divider {
       width: 1px;
-      height: 22px;
+      height: 24px;
       background: rgba(235, 185, 115, 0.25);
     }
 
     .stat-label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #cbb094;
     }
 
     .stat-value {
-      font-size: 1.05rem;
+      font-size: 1.02rem;
       font-weight: 700;
       color: #ffd17a;
       font-variant-numeric: tabular-nums;
+    }
+
+    .stat-value.energy {
+      color: #7ee8fa;
+    }
+
+    .btn-exchange-mini {
+      background: linear-gradient(135deg, #2b9eb3 0%, #1d7385 100%);
+      color: #fff;
+      border: 1px solid rgba(173, 240, 255, 0.5);
+      border-radius: 10px;
+      padding: 6px 11px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+      transition: transform 0.12s ease;
+    }
+
+    .btn-exchange-mini:active {
+      transform: scale(0.95);
     }
 
     .top-actions {
@@ -141,6 +163,193 @@
       border: 1px solid rgba(255, 215, 180, 0.5);
     }
 
+    /* 左側「已購買地契」按鈕 */
+    .left-deed-trigger {
+      position: fixed;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: auto;
+      z-index: 15;
+      background: linear-gradient(180deg, #5e3d26 0%, #3d2515 100%);
+      border: 2px solid #e6b46e;
+      color: #ffebc7;
+      border-radius: 16px;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+      transition: transform 0.15s ease;
+    }
+
+    .left-deed-trigger:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    .left-deed-trigger .icon {
+      font-size: 1.45rem;
+    }
+
+    .left-deed-trigger .label {
+      writing-mode: vertical-rl;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .left-deed-trigger .badge {
+      background: #e06d34;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid #ffd5b8;
+    }
+
+    /* 左側滑出地契卡片抽屜 */
+    .deed-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 9, 5, 0.55);
+      backdrop-filter: blur(3px);
+      z-index: 30;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    .deed-drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .deed-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: min(360px, 86vw);
+      background: #2c1c12;
+      border-right: 2px solid #c9965b;
+      box-shadow: 12px 0 32px rgba(0, 0, 0, 0.6);
+      z-index: 31;
+      transform: translateX(-102%);
+      transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+      display: flex;
+      flex-direction: column;
+      pointer-events: auto;
+    }
+
+    .deed-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(235, 185, 115, 0.25);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffebc7;
+    }
+
+    .drawer-header h2 {
+      font-size: 1.08rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-close-drawer {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #f3dec3;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      align-content: start;
+    }
+
+    .empty-deeds {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #b89b7e;
+      padding: 40px 16px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* 像素風格地契卡片 */
+    .deed-card {
+      background: linear-gradient(180deg, #f7ebd4 0%, #e6d1ae 100%);
+      border: 2px solid #9c6f3e;
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+      color: #38200e;
+    }
+
+    .deed-card-tag {
+      width: 100%;
+      text-align: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: #fff;
+      background: #8f5629;
+    }
+
+    .pixel-art-frame {
+      width: 84px;
+      height: 84px;
+      background: #2b211a;
+      border: 2px solid #6e4823;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      image-rendering: pixelated;
+    }
+
+    .pixel-art-frame canvas {
+      width: 72px;
+      height: 72px;
+      image-rendering: pixelated;
+    }
+
+    .deed-card-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    .deed-card-val {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #7d491c;
+    }
+
     /* 底部操作控制台 */
     .bottom-dock {
       display: flex;
@@ -151,7 +360,7 @@
     }
 
     .tile-banner {
-      background: rgba(36, 23, 15, 0.86);
+      background: rgba(36, 23, 15, 0.88);
       backdrop-filter: blur(6px);
       border: 1px solid rgba(235, 185, 115, 0.35);
       color: #f5e1c8;
@@ -159,7 +368,6 @@
       border-radius: 999px;
       font-size: 0.85rem;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s ease;
     }
 
     .roll-panel {
@@ -214,20 +422,149 @@
       background: linear-gradient(135deg, #ffbe4d 0%, #e08826 100%);
       transform: translateY(-1px);
     }
+
+    /* 通用互動彈窗（購買地產 / 能量兌換） */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 9, 5, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 40;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      pointer-events: auto;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(380px, 92vw);
+      background: linear-gradient(180deg, #3b2517 0%, #26160d 100%);
+      border: 2px solid #e6b46e;
+      border-radius: 20px;
+      padding: 22px;
+      color: #faebd7;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.65);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 14px;
+    }
+
+    .modal-card h3 {
+      font-size: 1.22rem;
+      color: #ffd17a;
+    }
+
+    .modal-desc {
+      font-size: 0.9rem;
+      color: #dfc6ab;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 11px 14px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #49a868 0%, #2f7d49 100%);
+      color: #fff;
+      border: 1px solid #9be3b2;
+    }
+
+    .exchange-control {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(235, 185, 115, 0.3);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .exchange-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.92rem;
+    }
+
+    .exchange-stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .step-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #e6b46e;
+      background: #4f3320;
+      color: #ffebc7;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
   <canvas id="game-canvas"></canvas>
 
+  <!-- 左側「已購買地契」觸發按鈕 -->
+  <button id="btn-open-deeds" class="left-deed-trigger" title="檢視已購買的所有權地契">
+    <span class="icon">📜</span>
+    <span class="label">已購地契</span>
+    <span class="badge" id="ui-deed-count">0</span>
+  </button>
+
+  <!-- 左側滑出地契卡片抽屜 -->
+  <div id="deed-backdrop" class="deed-drawer-backdrop"></div>
+  <aside id="deed-drawer" class="deed-drawer">
+    <div class="drawer-header">
+      <h2>📜 我的領地卡片（<span id="drawer-count">0</span>/16）</h2>
+      <button id="btn-close-deeds" class="btn-close-drawer">✕</button>
+    </div>
+    <div class="drawer-body" id="deed-card-list">
+      <div class="empty-deeds">尚未購買任何地點。<br>兌換金幣並移動到地點上即可買下所有權！</div>
+    </div>
+  </aside>
+
+  <!-- 主 UI 懸浮層 -->
   <div id="ui-layer">
     <div class="top-bar">
       <div class="hud-stats">
         <div class="stat-item">
+          <span>⚡</span>
+          <div>
+            <div class="stat-label">個人能量</div>
+            <div class="stat-value energy" id="ui-energy">50</div>
+          </div>
+        </div>
+        <button id="btn-open-exchange" class="btn-exchange-mini">⚡ 兌換金幣</button>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
           <span>🪙</span>
           <div>
-            <div class="stat-label">探險金幣</div>
-            <div class="stat-value" id="ui-coins">500</div>
+            <div class="stat-label">持有金幣</div>
+            <div class="stat-value" id="ui-coins">0</div>
           </div>
         </div>
         <div class="stat-divider"></div>
@@ -238,32 +575,18 @@
             <div class="stat-value" id="ui-dice-left">15</div>
           </div>
         </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span>🧭</span>
-          <div>
-            <div class="stat-label">完成圈數</div>
-            <div class="stat-value" id="ui-laps">0</div>
-          </div>
-        </div>
       </div>
 
       <div class="top-actions">
-        <button id="btn-follow" class="btn btn-secondary active" title="移動時鏡頭自動跟隨角色">
-          🎥 跟隨：開
-        </button>
-        <button id="btn-reset-view" class="btn btn-secondary" title="顯示完整棋盤">
-          🎯 全覽
-        </button>
-        <button id="btn-exit" class="btn btn-exit">
-          🏝️ 返回島嶼
-        </button>
+        <button id="btn-follow" class="btn btn-secondary active">🎥 跟隨：開</button>
+        <button id="btn-reset-view" class="btn btn-secondary">🎯 全覽</button>
+        <button id="btn-exit" class="btn btn-exit">🏝️ 返回島嶼</button>
       </div>
     </div>
 
     <div class="bottom-dock">
       <div class="tile-banner" id="ui-tile-info">
-        📍 目前位置：<strong>探險營地（起點）</strong>
+        📍 目前位置：<strong>🚩 探險營地（起點）</strong>
       </div>
 
       <div class="roll-panel">
@@ -273,36 +596,83 @@
     </div>
   </div>
 
+  <!-- 彈窗 1：能量兌換金幣 -->
+  <div id="modal-exchange" class="modal-overlay">
+    <div class="modal-card">
+      <h3>⚡ 個人能量兌換金幣</h3>
+      <p class="modal-desc">將主網頁累積的學習能量兌換為探險金幣<br>（兌換比例：<strong>1 能量 = 10 金幣</strong>）</p>
+
+      <div class="exchange-control">
+        <div class="exchange-row">
+          <span>可用能量：</span>
+          <strong style="color:#7ee8fa;" id="ex-avail-energy">50</strong>
+        </div>
+        <div class="exchange-stepper">
+          <button class="step-btn" id="ex-minus">-5</button>
+          <div style="min-width:110px;">
+            <div style="font-size:0.75rem;color:#cbb094;">投入能量</div>
+            <div style="font-size:1.35rem;font-weight:800;color:#fff;" id="ex-spend-amount">10</div>
+          </div>
+          <button class="step-btn" id="ex-plus">+5</button>
+        </div>
+        <div class="exchange-row" style="border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+          <span>可獲得金幣：</span>
+          <strong style="color:#ffd17a;font-size:1.1rem;" id="ex-gain-coins">+100 🪙</strong>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="ex-cancel">取消</button>
+        <button class="btn btn-primary" id="ex-confirm">確認兌換</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 2：購買地點所有權 -->
+  <div id="modal-buy" class="modal-overlay">
+    <div class="modal-card">
+      <div class="pixel-art-frame">
+        <canvas id="buy-pixel-preview" width="16" height="16"></canvas>
+      </div>
+      <h3 id="buy-title">龜山國小</h3>
+      <p class="modal-desc" id="buy-desc">是否花費 20 金幣購買此地點的所有權？</p>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="buy-skip">暫不購買</button>
+        <button class="btn btn-primary" id="buy-confirm">🪙 購買所有權</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /**
      * ============================================================================
-     * 1. 遊戲狀態與主網頁通訊橋接
+     * 1. 遊戲核心狀態與主網頁通訊橋接（能量 <-> 金幣）
      * ============================================================================
      */
+    const EXCHANGE_RATE = 10; // 1 點個人能量 = 10 遊戲金幣
+
     const GameState = {
       uid: 'guest',
-      coins: 500,
+      energy: 50,       // 主網頁個人所得能量（預設 50 供獨立測試，連線後由主網頁覆寫）
+      coins: 0,         // 遊戲內金幣（必須由能量兌換，踩格子不主動送金幣）
       diceLeft: 15,
-      laps: 0,
       currentTileIndex: 0,
-      phase: 'IDLE' // 'IDLE' | 'ROLLING' | 'MOVING' | 'EVENT'
+      ownedTileIds: [], // 已購得所有權的格子 ID 陣列
+      phase: 'IDLE'     // 'IDLE' | 'ROLLING' | 'MOVING' | 'MODAL'
     };
 
     const GameBridge = {
       init() {
         const params = new URLSearchParams(window.location.search);
         if (params.has('uid')) GameState.uid = params.get('uid');
-        if (params.has('coins')) {
-          const incomingCoins = Number(params.get('coins'));
-          if (!Number.isNaN(incomingCoins) && incomingCoins > 0) {
-            GameState.coins = incomingCoins;
-          }
+        if (params.has('energy')) {
+          const val = Number(params.get('energy'));
+          if (!Number.isNaN(val) && val >= 0) GameState.energy = val;
         }
-        if (params.has('dice')) {
-          const incomingDice = Number(params.get('dice'));
-          if (!Number.isNaN(incomingDice) && incomingDice > 0) {
-            GameState.diceLeft = incomingDice;
-          }
+        if (params.has('coins')) {
+          const val = Number(params.get('coins'));
+          if (!Number.isNaN(val) && val >= 0) GameState.coins = val;
         }
         HUD.update();
 
@@ -312,6 +682,7 @@
 
           if (type === 'MONOPOLY_INIT' && payload) {
             if (payload.uid) GameState.uid = payload.uid;
+            if (typeof payload.energy === 'number') GameState.energy = payload.energy;
             if (typeof payload.coins === 'number') GameState.coins = payload.coins;
             if (typeof payload.diceLeft === 'number') GameState.diceLeft = payload.diceLeft;
             HUD.update();
@@ -325,31 +696,34 @@
 
       closeAndReturn() {
         Engine.stopLoop();
+        const ownedNames = GameState.ownedTileIds.map(id => BOARD_TILES[id].name);
         const message = {
           type: 'MONOPOLY_CLOSE',
           payload: {
+            energy: GameState.energy,
             coins: GameState.coins,
-            laps: GameState.laps
+            ownedTileIds: GameState.ownedTileIds,
+            ownedNames
           }
         };
 
         if (window.parent && window.parent !== window) {
           window.parent.postMessage(message, window.location.origin);
         } else {
-          alert(`已觸發返回島嶼指令！\n結算資料：${JSON.stringify(message.payload)}`);
+          alert(`已觸發返回島嶼指令！\n回傳主網頁資料：\n${JSON.stringify(message.payload, null, 2)}`);
         }
       }
     };
 
     /**
      * ============================================================================
-     * 2. 等角投影與 20 格南方荒地完整地塊配置（起點位於最下方 (5,5)）
+     * 2. 龜山與桂山 20 格在地配置（起點置底，四邊中間 16 格 + 三角落橋樑溪流）
      * ============================================================================
      */
     const ISO_CONFIG = {
       GRID_SIZE: 6,
-      TILE_W: 118,
-      TILE_H: 63,
+      TILE_W: 124,
+      TILE_H: 66,
       BASE_Z: 28
     };
 
@@ -359,40 +733,47 @@
       innerSandTop: '#d4b07d',
       innerSandLeft: '#b38d5b',
       innerSandRight: '#916d40',
-      // 特殊格色票
-      start: { top: '#f5bc47', left: '#cc9023', right: '#9e6b11', stroke: '#6e4706' },
-      oasis: { top: '#66baa8', left: '#469484', right: '#2f6e61', stroke: '#1d4d43' },
-      event: { top: '#b88ad9', left: '#9465b5', right: '#70458f', stroke: '#4c2b63' },
-      storm: { top: '#8c7668', left: '#6b574b', right: '#4d3d33', stroke: '#332720' },
-      // 四大區域可開墾荒地色票
-      zone1: { top: '#edd2a1', left: '#c7a56d', right: '#9e7d49', stroke: '#7a5c30' }, // 淺沙丘區
-      zone2: { top: '#e3a574', left: '#bd7e4f', right: '#945b32', stroke: '#6e3f1d' }, // 赤陶土區
-      zone3: { top: '#d98762', left: '#b3613e', right: '#8a4224', stroke: '#632a12' }, // 紅岩礦區
-      zone4: { top: '#c9976b', left: '#a37148', right: '#7d502d', stroke: '#593519' }  // 古遺跡區
+      // 角落格（起點 + 三座橋樑與溪流）
+      start:  { top: '#f5bc47', left: '#cc9023', right: '#9e6b11', stroke: '#6e4706' },
+      bridge: { top: '#78b8a8', left: '#539182', right: '#396b5f', stroke: '#224a40' },
+      river:  { top: '#5ea9d6', left: '#3e84b0', right: '#296085', stroke: '#18405c' },
+      // 四個邊的區域色票
+      side1:  { top: '#edd2a1', left: '#c7a56d', right: '#9e7d49', stroke: '#7a5c30' }, // 左下邊（龜山街區與茶廠）
+      side2:  { top: '#e3a878', left: '#bd8153', right: '#945d34', stroke: '#6e401e' }, // 左上邊（桂山電廠與水庫）
+      side3:  { top: '#d98c68', left: '#b36644', right: '#8a4629', stroke: '#632d16' }, // 右上邊（教會與童軍營地）
+      side4:  { top: '#cfa074', left: '#a87a50', right: '#825833', stroke: '#5c3a1d' }  // 右下邊（土地公廟與訓練所）
     };
 
-    // 20 格具體內容定義（從最下方起點順時針排列）
+    // 嚴格依照指定順序定義 20 格
     const TILE_BLUEPRINTS = [
-      { type: 'START', name: '探險營地', icon: '🚩', price: 0, style: PALETTE.start },
-      { type: 'LAND',  name: '風蝕沙丘', icon: '🏜️', price: 100, zone: 1, style: PALETTE.zone1 },
-      { type: 'LAND',  name: '仙人掌坡', icon: '🌵', price: 100, zone: 1, style: PALETTE.zone1 },
-      { type: 'EVENT', name: '古陶遺跡', icon: '❓', price: 0, style: PALETTE.event },
-      { type: 'LAND',  name: '乾涸河床', icon: '🪨', price: 120, zone: 1, style: PALETTE.zone1 },
-      { type: 'OASIS', name: '西側綠洲', icon: '💧', price: 0, style: PALETTE.oasis },
-      { type: 'LAND',  name: '赤陶高地', icon: '⛰️', price: 150, zone: 2, style: PALETTE.zone2 },
-      { type: 'LAND',  name: '陶土工坊', icon: '🏺', price: 150, zone: 2, style: PALETTE.zone2 },
-      { type: 'EVENT', name: '星象石陣', icon: '❓', price: 0, style: PALETTE.event },
-      { type: 'LAND',  name: '落日峽谷', icon: '🌅', price: 180, zone: 2, style: PALETTE.zone2 },
-      { type: 'STORM', name: '熱風沙暴', icon: '🌪️', price: 0, style: PALETTE.storm },
-      { type: 'LAND',  name: '紅岩礦脈', icon: '⛏️', price: 200, zone: 3, style: PALETTE.zone3 },
-      { type: 'LAND',  name: '鐵鏽台地', icon: '🧱', price: 200, zone: 3, style: PALETTE.zone3 },
-      { type: 'EVENT', name: '商隊殘骸', icon: '❓', price: 0, style: PALETTE.event },
-      { type: 'LAND',  name: '熔岩裂谷', icon: '🌋', price: 240, zone: 3, style: PALETTE.zone3 },
-      { type: 'OASIS', name: '東側湧泉', icon: '💧', price: 0, style: PALETTE.oasis },
-      { type: 'LAND',  name: '巨石哨站', icon: '🗿', price: 260, zone: 4, style: PALETTE.zone4 },
-      { type: 'LAND',  name: '風車廢墟', icon: '⚙️', price: 280, zone: 4, style: PALETTE.zone4 },
-      { type: 'STORM', name: '流沙陷阱', icon: '🌪️', price: 0, style: PALETTE.storm },
-      { type: 'LAND',  name: '黃金沙海', icon: '👑', price: 300, zone: 4, style: PALETTE.zone4 }
+      // 0: 最下方起點
+      { type: 'START',    name: '探險營地',         price: 0,   pixelType: 'camp',    zoneLabel: '起點',   style: PALETTE.start },
+      // 1~4: 左下邊中間四格
+      { type: 'PROPERTY', name: '龜山國小',         price: 20,  pixelType: 'school',  zoneLabel: '龜山文教', style: PALETTE.side1 },
+      { type: 'PROPERTY', name: '台灣銀行倉庫',     price: 30,  pixelType: 'warehouse',zoneLabel: '龜山文教', style: PALETTE.side1 },
+      { type: 'PROPERTY', name: '文山茶廠',         price: 40,  pixelType: 'tea',     zoneLabel: '龜山文教', style: PALETTE.side1 },
+      { type: 'PROPERTY', name: '桂山發電廠',       price: 50,  pixelType: 'power',   zoneLabel: '龜山文教', style: PALETTE.side1 },
+      // 5: 左側角落
+      { type: 'LANDMARK', name: '上龜山橋',         price: 0,   pixelType: 'bridge',  zoneLabel: '地標',   style: PALETTE.bridge },
+      // 6~9: 左上邊中間四格
+      { type: 'PROPERTY', name: '桂山冰廠',         price: 70,  pixelType: 'ice',     zoneLabel: '水庫風光', style: PALETTE.side2 },
+      { type: 'PROPERTY', name: '翡翠水庫',         price: 100, pixelType: 'dam',     zoneLabel: '水庫風光', style: PALETTE.side2 },
+      { type: 'PROPERTY', name: '龜山水力發電廠遺址', price: 110, pixelType: 'ruin',  zoneLabel: '水庫風光', style: PALETTE.side2 },
+      { type: 'PROPERTY', name: '龜山天主堂',       price: 80,  pixelType: 'church',  zoneLabel: '水庫風光', style: PALETTE.side2 },
+      // 10: 最上方角落
+      { type: 'LANDMARK', name: '下龜山橋',         price: 0,   pixelType: 'bridge',  zoneLabel: '地標',   style: PALETTE.bridge },
+      // 11~14: 右上邊中間四格
+      { type: 'PROPERTY', name: '龜山教會',         price: 90,  pixelType: 'chapel',  zoneLabel: '山林聚落', style: PALETTE.side3 },
+      { type: 'PROPERTY', name: '全家便利店',       price: 40,  pixelType: 'store',   zoneLabel: '山林聚落', style: PALETTE.side3 },
+      { type: 'PROPERTY', name: '林務局',           price: 50,  pixelType: 'forest',  zoneLabel: '山林聚落', style: PALETTE.side3 },
+      { type: 'PROPERTY', name: '童軍龜山營地',     price: 80,  pixelType: 'scout',   zoneLabel: '山林聚落', style: PALETTE.side3 },
+      // 15: 右側角落
+      { type: 'LANDMARK', name: '南勢溪',           price: 0,   pixelType: 'river',   zoneLabel: '地標',   style: PALETTE.river },
+      // 16~19: 右下邊中間四格
+      { type: 'PROPERTY', name: '龜山土地公廟',     price: 110, pixelType: 'temple',  zoneLabel: '古道人文', style: PALETTE.side4 },
+      { type: 'PROPERTY', name: '舊茶寮遺址',       price: 80,  pixelType: 'teahut',  zoneLabel: '古道人文', style: PALETTE.side4 },
+      { type: 'PROPERTY', name: '台電訓練所',       price: 120, pixelType: 'training',zoneLabel: '古道人文', style: PALETTE.side4 },
+      { type: 'PROPERTY', name: '籃球場',           price: 50,  pixelType: 'court',   zoneLabel: '古道人文', style: PALETTE.side4 }
     ];
 
     function createBoardTiles() {
@@ -414,7 +795,7 @@
           gy: pos.gy,
           isCorner,
           ...bp,
-          level: 0 // 預留給階段三開墾建築等級 (0~3)
+          owned: false
         };
       });
     }
@@ -423,20 +804,355 @@
 
     /**
      * ============================================================================
-     * 3. 探險者棋子動態與漂浮文字系統
+     * 3. 16x16 復古像素繪圖引擎（為每個龜山地點繪製專屬像素卡片插畫）
+     * ============================================================================
+     */
+    const PixelArtRenderer = {
+      // 16x16 色票對照表
+      colors: {
+        '.': null,
+        'K': '#1c140e', // 深褐輪廓
+        'W': '#fffdf7', // 純白
+        'S': '#87ceeb', // 天空藍
+        'B': '#2b7bb9', // 溪水/水庫藍
+        'G': '#4a9e48', // 山林綠
+        'D': '#286127', // 深樹綠
+        'R': '#d9483b', // 磚紅/廟宇紅
+        'Y': '#f5c242', // 金黃/屋瓦
+        'O': '#e07a38', // 陶橘色
+        'T': '#a66e38', // 木頭褐
+        'L': '#d9b382', // 淺沙木
+        'M': '#8c969e', // 水泥灰
+        'C': '#545d66'  // 深岩灰
+      },
+
+      // 16x16 像素矩陣圖庫
+      sprites: {
+        school: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSRRSSSSSSS',
+          'SSSSSSRRRRSSSSSS',
+          'SSSSSRRRRRRSSSSS',
+          'SSWWWWWWWWWWWWSS',
+          'SSWBBWWYYWWBBWSS',
+          'SSWBBWWYYWWBBWSS',
+          'SSWWWWWWWWWWWWSS',
+          'SSWBBWWRRWBBBWSS',
+          'SSWBBWWRRWBBBWSS',
+          'GGGGGGGGGGGGGGGG',
+          'GGGGGGGGGGGGGGGG',
+          'LLLLLLLLLLLLLLLL',
+          'LLLLLLLLLLLLLLLL',
+          'GGGGGGGGGGGGGGGG',
+          'GGGGGGGGGGGGGGGG'
+        ],
+        warehouse: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSSSSSSSSSS',
+          'SSCCCCCCCCCCCCSS',
+          'SMMMMMMMMMMMMMMS',
+          'SMMMMMMMMMMMMMMS',
+          'SMMTTTTTTTTTTMMS',
+          'SMMTLLLLLLLLTMMS',
+          'SMMTLYYYYYYLTMMS',
+          'SMMTLYYYYYYLTMMS',
+          'SMMTLLLLLLLLTMMS',
+          'SMMTTTTTTTTTTMMS',
+          'MMMMMMMMMMMMMMMM',
+          'CCCCCCCCCCCCCCCC',
+          'LLLLLLLLLLLLLLLL',
+          'LLLLLLLLLLLLLLLL',
+          'CCCCCCCCCCCCCCCC'
+        ],
+        tea: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSGGGGSSSSSS',
+          'SSSSGGGGGGGGSSSS',
+          'SSGGGGGGGGGGGGSS',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDGGGGGGGGDDDD',
+          'GGGGGGGGGGGGGGGG',
+          'SSGGGGGGGGGGGGSS',
+          'SSTTTTTTTTTTTTSS',
+          'SSTLLTTTTTTLLTSS',
+          'SSTLLTTTTTTLLTSS',
+          'SSTTTTTTTTTTTTSS',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD'
+        ],
+        power: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSMMMSSSSSSWWSS',
+          'SSSMMMSSSSSWWWSS',
+          'SSSMMMSSSSSSSSSS',
+          'SSSMMMSSSSSSSSSS',
+          'SSSMMMYYYYYYSSSS',
+          'SSSMMMYWWWWYSSSS',
+          'SSSMMMYWYYWYSSSS',
+          'SSSMMMYWWWWYSSSS',
+          'SSSMMMYYYYYYSSSS',
+          'CCCCCCCCCCCCCCCC',
+          'CMMMMMMMMMMMMMMC',
+          'BBBBBBBBBBBBBBBB',
+          'BBBBWWWWBBBBBBBB',
+          'BBBBBBBBBBBBBBBB',
+          'CCCCCCCCCCCCCCCC'
+        ],
+        ice: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSOOOOSSSSSS',
+          'SSSSSOOOOOOSSSSS',
+          'SSSSOOOOOOOOSSSS',
+          'SSSSOOOOOOOOSSSS',
+          'SSSSOOOOOOOOSSSS',
+          'SSSSOOOOOOOOSSSS',
+          'SSSSOOOOOOOOSSSS',
+          'SSSSSOOOOOOSSSSS',
+          'SSSSSSLLLLSSSSSS',
+          'SSSSSSLLLLSSSSSS',
+          'SSSSSSLLLLSSSSSS',
+          'SSSSSSLLLLSSSSSS',
+          'SSSSSSSLLSSSSSSS',
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSSSSSSSSSS'
+        ],
+        dam: [
+          'GGGGGGGGGGGGGGGG',
+          'DGGGGGGGGGGGGGGD',
+          'BBBBBBBBBBBBBBBB',
+          'BBBBBBBBBBBBBBBB',
+          'WWWWWWWWWWWWWWWW',
+          'MMMMMMMMMMMMMMMM',
+          'MMBBBBMMMMBBBBMM',
+          'MMBBBBMMMMBBBBMM',
+          'MMBBBBMMMMBBBBMM',
+          'MMBBBBMMMMBBBBMM',
+          'MMMMMMMMMMMMMMMM',
+          'BBBBBBBBBBBBBBBB',
+          'BBBBWWWWBBBBWWBB',
+          'BBBBBBBBBBBBBBBB',
+          'BBBBBBBBBBBBBBBB',
+          'GGGGGGGGGGGGGGGG'
+        ],
+        ruin: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSGGGGSSSSSS',
+          'SSSSGGGGGGGGSSSS',
+          'SSCCGGGGGGGGCCSS',
+          'SSCCMMMMMMMMCCSS',
+          'SSCMMCCCCCCMMCSS',
+          'SSCMMCSSSSCMMCSS',
+          'SSCMMCSSSSCMMCSS',
+          'GGCMMCCCCCCMMCGG',
+          'GGMMMMMMMMMMMMGG',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDGGGGGGGGDDDD',
+          'BBBBBBBBBBBBBBBB',
+          'BBBBBBBBBBBBBBBB',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD'
+        ],
+        church: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSYYSSSSSSS',
+          'SSSSSSYYYYSSSSSS',
+          'SSSSSSSYYSSSSSSS',
+          'SSSSSSSRRSSSSSSS',
+          'SSSSSSRRRRSSSSSS',
+          'SSSSSRRRRRRSSSSS',
+          'SSSSWWWWWWWWSSSS',
+          'SSSSWBBWWBBWSSSS',
+          'SSSSWWWWWWWWSSSS',
+          'SSSSWWRRRRWWSSSS',
+          'SSSSWWRRRRWWSSSS',
+          'GGGGGGGGGGGGGGGG',
+          'LLLLLLLLLLLLLLLL',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD'
+        ],
+        chapel: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSYYSSSSSSS',
+          'SSSSSSYYYYSSSSSS',
+          'SSSSSSSYYSSSSSSS',
+          'SSSSSSSTTTSSSSSS',
+          'SSSSSSTTTTTSSSSS',
+          'SSSSSTTTTTTTSSSS',
+          'SSSSLLLLLLLLSSSS',
+          'SSSSLYYWWYYLSSSS',
+          'SSSSLLLLLLLLSSSS',
+          'SSSSLLTTTTLLSSSS',
+          'SSSSLLTTTTLLSSSS',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD'
+        ],
+        store: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSSSSSSSSSS',
+          'SSBBBBBBBBBBBBSS',
+          'SSGGGGGGGGGGGGSS',
+          'SSWWWWWWWWWWWWSS',
+          'SSWSSSSSSSSSSWSS',
+          'SSWSSSSSSSSSSWSS',
+          'SSWSSWWWWWWSSWSS',
+          'SSWSSWSSSSWSSWSS',
+          'SSWSSWSSSSWSSWSS',
+          'MMMMMMMMMMMMMMMM',
+          'LLLLLLLLLLLLLLLL',
+          'LLLLLLLLLLLLLLLL',
+          'CCCCCCCCCCCCCCCC',
+          'CCCCCCCCCCCCCCCC'
+        ],
+        forest: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSDDSSSSDDSSSS',
+          'SSSDDDDSSDDBBDSS',
+          'SSDDDDDDDDDDDDSS',
+          'SSSDDDDSSDDBBDSS',
+          'SSSSDDSSSSDDSSSS',
+          'SSSSTTSGGSTTSGGG',
+          'GGGGTTGGGGTTGGGG',
+          'GGTTTTTTTTTTTTGG',
+          'GGTLLLLLLLLLLTGG',
+          'GGTTTTTTTTTTTTGG',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDGGGGGGGGDDDD',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD',
+          'GGGGGGGGGGGGGGGG'
+        ],
+        scout: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSRRSSSSSSS',
+          'SSSSSSSRSSSSSSSS',
+          'SSSSSSSTSSSSSSSS',
+          'SSSSSSSTSSSSSSSS',
+          'SSSSSSOOSSSSSSSS',
+          'SSSSSOOOOSSSSSSS',
+          'SSSSOOOOOOSSSSSS',
+          'SSSOOOOOOOOSSSSS',
+          'SSOOOOCCOOOOSSSS',
+          'SOOOOOCCOOOOOSSS',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDGGGGGGGGDDDD',
+          'GGGGGGGGGGGGGGGG',
+          'LLLLLLLLLLLLLLLL',
+          'GGGGGGGGGGGGGGGG'
+        ],
+        temple: [
+          'SSSSSSSSSSSSSSSS',
+          'SSYYRRRRRRRRYYSS',
+          'SYYYYRRRRRRYYYYS',
+          'SSRRRRRRRRRRRRSS',
+          'SSSTTTTTTTTTTSSS',
+          'SSSTRRYYYYRRTSGG',
+          'SSSTRRYYYYRRTSGG',
+          'SSSTRRRRRRRRTSGG',
+          'SSSTRRKKKKRRTSGG',
+          'SSSTRRKKKKRRTSGG',
+          'MMMMMMMMMMMMMMMM',
+          'LLLLLLLLLLLLLLLL',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD'
+        ],
+        teahut: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSGGGGSSSSSS',
+          'SSSSGGGGGGGGSSSS',
+          'GGGGGGGGGGGGGGGG',
+          'SSSSSTTTTTTSSSSS',
+          'SSSSTTTTTTTTSSSS',
+          'SSSTTTTTTTTTTSSS',
+          'SSSSLLLLLLLLSSSS',
+          'SSSSLTTTTTTLSSSS',
+          'SSSSLTTTTTTLSSSS',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDGGGGGGGGDDDD',
+          'GGGGGGGGGGGGGGGG',
+          'LLLLLLLLLLLLLLLL',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD'
+        ],
+        training: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSSSSSSSSSS',
+          'SSMMMMMMMMMMMMSS',
+          'SMMMMMMMMMMMMMMS',
+          'SMBBMMBBMMBBMMBS',
+          'SMMMMMMMMMMMMMMS',
+          'SMBBMMBBMMBBMMBS',
+          'SMMMMMMMMMMMMMMS',
+          'SMMMMMYYYYMMMMMS',
+          'SMMMMMYBBYMMMMMS',
+          'GGGGGGGGGGGGGGGG',
+          'LLLLLLLLLLLLLLLL',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD'
+        ],
+        court: [
+          'SSSSSSSSSSSSSSSS',
+          'SSSSSSSSSSSSSSSS',
+          'SSSTTTTTTTTTTSSS',
+          'SSSTWWWWWWWWTSGG',
+          'SSSTWWRRRRWWTSGG',
+          'SSSTWWWWWWWWTSGG',
+          'SSSSSSSMMSSSSSSS',
+          'SSSSSSSMMSSSSSSS',
+          'OOOOOOOMMOOOOOOO',
+          'OWWWWWWWWWWWWWWO',
+          'OWWWWRRRRRRWWWWO',
+          'OWWWWWWWWWWWWWWO',
+          'OOOOOOOOOOOOOOOO',
+          'GGGGGGGGGGGGGGGG',
+          'DDDDDDDDDDDDDDDD',
+          'GGGGGGGGGGGGGGGG'
+        ]
+      },
+
+      drawToCanvas(canvas, type) {
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 16, 16);
+        const matrix = this.sprites[type] || this.sprites.school;
+
+        for (let y = 0; y < 16; y++) {
+          const row = matrix[y];
+          for (let x = 0; x < 16; x++) {
+            const ch = row[x];
+            const color = this.colors[ch];
+            if (color) {
+              ctx.fillStyle = color;
+              ctx.fillRect(x, y, 1, 1);
+            }
+          }
+        }
+      }
+    };
+
+    /**
+     * ============================================================================
+     * 4. 探險者棋子動態與漂浮文字系統
      * ============================================================================
      */
     const PlayerPawn = {
       gx: BOARD_TILES[0].gx,
       gy: BOARD_TILES[0].gy,
       jumpHeight: 0,
-      scaleSquash: 1, // 落地擠壓彈性效果
+      scaleSquash: 1,
 
-      // 逐格跳躍動畫佇列
       stepQueue: [],
       isHopping: false,
       hopProgress: 0,
-      hopDuration: 0.28, // 每跳一格花費秒數
+      hopDuration: 0.26,
       startPos: { gx: 5, gy: 5 },
       targetPos: { gx: 5, gy: 5 },
       onAllStepsComplete: null,
@@ -474,21 +1190,11 @@
         this.hopProgress = 0;
         this.isHopping = true;
 
-        // 更新邏輯格位
         GameState.currentTileIndex = nextIndex;
-
-        // 經過起點（且不是最後一步停在起點，或每次經過都給獎勵）
-        if (nextIndex === 0) {
-          GameState.laps += 1;
-          GameState.coins += 200;
-          HUD.update();
-          FloatingTexts.spawn(nextTile.gx, nextTile.gy, '+200 經過起點!', '#ffd54f');
-        }
       },
 
       update(dt) {
         if (!this.isHopping) {
-          // 待機微幅呼吸起伏
           this.scaleSquash = 1 + Math.sin(performance.now() * 0.005) * 0.025;
           return;
         }
@@ -498,29 +1204,26 @@
           this.gx = this.targetPos.gx;
           this.gy = this.targetPos.gy;
           this.jumpHeight = 0;
-          this.scaleSquash = 0.88; // 落地瞬間微壓扁
+          this.scaleSquash = 0.88;
           this.startNextHop();
           return;
         }
 
         const t = this.hopProgress;
-        // 線性插值水平移動
         this.gx = this.startPos.gx + (this.targetPos.gx - this.startPos.gx) * t;
         this.gy = this.startPos.gy + (this.targetPos.gy - this.startPos.gy) * t;
-        // 拋物線跳躍高度
         this.jumpHeight = Math.sin(t * Math.PI) * 34;
         this.scaleSquash = 1 + Math.sin(t * Math.PI) * 0.12;
       }
     };
 
-    // 頭頂漂浮提示文字（例如 +200 金幣）
     const FloatingTexts = {
       list: [],
       spawn(gx, gy, text, color = '#ffe082') {
         const { sx, sy } = Engine.gridToIso(gx, gy);
         this.list.push({
           sx,
-          sy: sy - 42,
+          sy: sy - 44,
           text,
           color,
           age: 0,
@@ -542,7 +1245,7 @@
           const alpha = Math.max(0, 1 - item.age / item.life);
           ctx.save();
           ctx.globalAlpha = alpha;
-          ctx.font = 'bold 15px sans-serif';
+          ctx.font = 'bold 14px sans-serif';
           ctx.textAlign = 'center';
           ctx.fillStyle = '#2b1506';
           ctx.fillText(item.text, item.sx + 1, item.sy + 1);
@@ -555,19 +1258,26 @@
 
     /**
      * ============================================================================
-     * 4. HUD 介面與擲骰流程控制
+     * 5. HUD 介面、能量兌換視窗、購買所有權與左側地契卡片抽屜
      * ============================================================================
      */
     const HUD = {
+      exchangeSpend: 10,
+
       update() {
+        document.getElementById('ui-energy').textContent = GameState.energy;
         document.getElementById('ui-coins').textContent = GameState.coins;
         document.getElementById('ui-dice-left').textContent = GameState.diceLeft;
-        document.getElementById('ui-laps').textContent = GameState.laps;
+        document.getElementById('ui-deed-count').textContent = GameState.ownedTileIds.length;
+        document.getElementById('drawer-count').textContent = GameState.ownedTileIds.length;
 
         const tile = BOARD_TILES[GameState.currentTileIndex];
-        const desc = tile.price > 0 ? `（地價 ${tile.price} 🪙）` : '';
+        let statusTag = '';
+        if (tile.type === 'PROPERTY') {
+          statusTag = tile.owned ? '（✅ 已擁有所有權）' : `（價值 ${tile.price} 🪙）`;
+        }
         document.getElementById('ui-tile-info').innerHTML =
-          `📍 目前位置：<strong>${tile.icon} ${tile.name}</strong>${desc}`;
+          `📍 目前位置：<strong>${tile.name}</strong>${statusTag}`;
 
         const rollBtn = document.getElementById('btn-roll');
         if (GameState.diceLeft <= 0 && GameState.phase === 'IDLE') {
@@ -610,29 +1320,143 @@
         }, 55);
       },
 
-      // 抵達格子後的即時回饋（階段二基礎互動，階段三將擴充開墾與事件彈窗）
       handleTileArrival() {
         const tile = BOARD_TILES[GameState.currentTileIndex];
 
-        if (tile.type === 'OASIS') {
-          GameState.coins += 150;
-          FloatingTexts.spawn(tile.gx, tile.gy, '+150 綠洲補給!', '#80cbc4');
-        } else if (tile.type === 'STORM') {
-          const loss = Math.min(GameState.coins, 100);
-          GameState.coins -= loss;
-          FloatingTexts.spawn(tile.gx, tile.gy, `-${loss} 沙暴損失`, '#ff8a65');
-        } else if (tile.type === 'EVENT') {
-          FloatingTexts.spawn(tile.gx, tile.gy, '發現神秘遺跡!', '#e1bee7');
+        if (tile.type === 'PROPERTY') {
+          if (tile.owned) {
+            FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7');
+            GameState.phase = 'IDLE';
+            this.update();
+          } else {
+            this.openBuyModal(tile);
+          }
+        } else {
+          FloatingTexts.spawn(tile.gx, tile.gy, `抵達${tile.name}`, '#ffe082');
+          GameState.phase = 'IDLE';
+          this.update();
         }
+      },
 
+      // --- 購買地點所有權彈窗 ---
+      openBuyModal(tile) {
+        GameState.phase = 'MODAL';
+        this.update();
+
+        const modal = document.getElementById('modal-buy');
+        const previewCanvas = document.getElementById('buy-pixel-preview');
+        PixelArtRenderer.drawToCanvas(previewCanvas, tile.pixelType);
+
+        document.getElementById('buy-title').textContent = tile.name;
+        const canAfford = GameState.coins >= tile.price;
+
+        document.getElementById('buy-desc').innerHTML = canAfford
+          ? `價值 <strong>${tile.price} 🪙</strong>，是否購買此地點的所有權？`
+          : `購買需要 <strong>${tile.price} 🪙</strong>（目前持有 ${GameState.coins} 🪙），金幣不足！可先用個人能量兌換金幣。`;
+
+        const confirmBtn = document.getElementById('buy-confirm');
+        confirmBtn.disabled = !canAfford;
+        confirmBtn.textContent = canAfford ? `🪙 花費 ${tile.price} 購買` : '金幣不足';
+
+        confirmBtn.onclick = () => {
+          if (GameState.coins >= tile.price && !tile.owned) {
+            GameState.coins -= tile.price;
+            tile.owned = true;
+            GameState.ownedTileIds.push(tile.id);
+            FloatingTexts.spawn(tile.gx, tile.gy, `買下${tile.name}!`, '#ffd54f');
+            this.renderDeedCards();
+          }
+          this.closeBuyModal();
+        };
+
+        document.getElementById('buy-skip').onclick = () => {
+          this.closeBuyModal();
+        };
+
+        modal.classList.add('show');
+      },
+
+      closeBuyModal() {
+        document.getElementById('modal-buy').classList.remove('show');
         GameState.phase = 'IDLE';
         this.update();
+      },
+
+      // --- 個人能量兌換金幣彈窗 ---
+      openExchangeModal() {
+        if (GameState.phase === 'ROLLING' || GameState.phase === 'MOVING') return;
+        this.exchangeSpend = Math.min(10, GameState.energy);
+        this.refreshExchangeUI();
+        document.getElementById('modal-exchange').classList.add('show');
+      },
+
+      refreshExchangeUI() {
+        document.getElementById('ex-avail-energy').textContent = GameState.energy;
+        document.getElementById('ex-spend-amount').textContent = this.exchangeSpend;
+        document.getElementById('ex-gain-coins').textContent = `+${this.exchangeSpend * EXCHANGE_RATE} 🪙`;
+        document.getElementById('ex-confirm').disabled = this.exchangeSpend <= 0 || GameState.energy < this.exchangeSpend;
+      },
+
+      // --- 渲染左側已購地契卡片抽屜 ---
+      renderDeedCards() {
+        const container = document.getElementById('deed-card-list');
+        container.innerHTML = '';
+
+        if (GameState.ownedTileIds.length === 0) {
+          container.innerHTML = '<div class="empty-deeds">尚未購買任何地點。<br>兌換金幣並移動到地點上即可買下所有權！</div>';
+          return;
+        }
+
+        for (const id of GameState.ownedTileIds) {
+          const tile = BOARD_TILES[id];
+          const card = document.createElement('div');
+          card.className = 'deed-card';
+
+          const tag = document.createElement('div');
+          tag.className = 'deed-card-tag';
+          tag.textContent = tile.zoneLabel;
+
+          const frame = document.createElement('div');
+          frame.className = 'pixel-art-frame';
+          const pCanvas = document.createElement('canvas');
+          pCanvas.width = 16;
+          pCanvas.height = 16;
+          PixelArtRenderer.drawToCanvas(pCanvas, tile.pixelType);
+          frame.appendChild(pCanvas);
+
+          const title = document.createElement('div');
+          title.className = 'deed-card-title';
+          title.textContent = tile.name;
+
+          const val = document.createElement('div');
+          val.className = 'deed-card-val';
+          val.textContent = `價值 ${tile.price} 🪙`;
+
+          card.appendChild(tag);
+          card.appendChild(frame);
+          card.appendChild(title);
+          card.appendChild(val);
+          container.appendChild(card);
+        }
+      },
+
+      toggleDeedDrawer(open) {
+        const drawer = document.getElementById('deed-drawer');
+        const backdrop = document.getElementById('deed-backdrop');
+        if (open) {
+          this.renderDeedCards();
+          drawer.classList.add('open');
+          backdrop.classList.add('open');
+        } else {
+          drawer.classList.remove('open');
+          backdrop.classList.remove('open');
+        }
       }
     };
 
     /**
      * ============================================================================
-     * 5. 2.5D Canvas 渲染與鏡頭跟隨引擎
+     * 6. 2.5D Canvas 渲染與鏡頭跟隨引擎
      * ============================================================================
      */
     const Engine = {
@@ -706,7 +1530,7 @@
         const fitScale = Math.min(
           (w * 0.85) / boardPixelW,
           (h * 0.74) / boardPixelH,
-          1.18
+          1.16
         );
 
         this.camera.scale = Math.max(this.camera.minScale, fitScale || 1);
@@ -724,7 +1548,6 @@
 
       updateCameraFollow(dt) {
         if (!this.camera.autoFollow || this.pointer.isDragging) return;
-        // 僅在角色移動時平滑聚焦棋子，待機時保持舒適視野
         if (GameState.phase !== 'MOVING') return;
 
         const { sx, sy } = this.gridToIso(PlayerPawn.gx, PlayerPawn.gy);
@@ -844,32 +1667,64 @@
           ctx.stroke();
         }
 
-        // 繪製格子圖示與地名/價格
-        this.drawTileContent(ctx, sx, sy, tile);
+        if (tile.id >= 0) {
+          this.drawTileContent(ctx, sx, sy, tile);
+        }
       },
 
       drawTileContent(ctx, sx, sy, tile) {
         ctx.save();
         ctx.translate(sx, sy);
 
-        // 圖示
-        ctx.font = '15px sans-serif';
+        // 長地名自動分兩行顯示，確保不超出菱形邊界
+        ctx.fillStyle = '#2e1808';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(tile.icon, 0, -7);
 
-        // 地名
-        ctx.fillStyle = '#3b210e';
-        ctx.font = 'bold 10.5px sans-serif';
-        ctx.fillText(tile.name, 0, 7);
-
-        // 若為地產則顯示地價
-        if (tile.price > 0) {
-          ctx.fillStyle = 'rgba(65, 35, 12, 0.75)';
+        if (tile.name.length > 5) {
           ctx.font = 'bold 9.5px sans-serif';
-          ctx.fillText(`$${tile.price}`, 0, 18);
+          const mid = Math.ceil(tile.name.length / 2);
+          ctx.fillText(tile.name.slice(0, mid), 0, -9);
+          ctx.fillText(tile.name.slice(mid), 0, 2);
+        } else {
+          ctx.font = 'bold 10.5px sans-serif';
+          ctx.fillText(tile.name, 0, tile.price > 0 ? -4 : 0);
         }
 
+        // 若為地產則顯示價值
+        if (tile.price > 0) {
+          ctx.fillStyle = tile.owned ? '#1b5e20' : 'rgba(65, 35, 12, 0.85)';
+          ctx.font = 'bold 9.5px sans-serif';
+          ctx.fillText(tile.owned ? '★已購' : `$${tile.price}`, 0, 14);
+        }
+
+        ctx.restore();
+
+        // 若已購買所有權，在格子上方角落插上一面金色領地小旗幟
+        if (tile.owned) {
+          this.drawOwnerFlag(ctx, sx + 26, sy - 4);
+        }
+      },
+
+      drawOwnerFlag(ctx, fx, fy) {
+        ctx.save();
+        ctx.translate(fx, fy);
+        // 旗桿
+        ctx.strokeStyle = '#3d230e';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -18);
+        ctx.stroke();
+
+        // 金紅三角旗面
+        ctx.fillStyle = '#e53935';
+        ctx.beginPath();
+        ctx.moveTo(0, -18);
+        ctx.lineTo(12, -14);
+        ctx.lineTo(0, -10);
+        ctx.closePath();
+        ctx.fill();
         ctx.restore();
       },
 
@@ -883,9 +1738,9 @@
                 gx,
                 gy,
                 id: -1,
-                icon: '',
                 name: '',
                 price: 0,
+                owned: false,
                 style: {
                   top: PALETTE.innerSandTop,
                   left: PALETTE.innerSandLeft,
@@ -1005,31 +1860,26 @@
         ctx.restore();
       },
 
-      // 繪製 2.5D 探險者棋子（帶動態地面投影與寬邊探險帽）
       drawPlayerPawn(ctx) {
         const { sx, sy } = this.gridToIso(PlayerPawn.gx, PlayerPawn.gy);
         const jumpY = PlayerPawn.jumpHeight;
         const shadowScale = Math.max(0.45, 1 - jumpY / 65);
 
         ctx.save();
-        // 1. 地面投影（隨跳躍高度縮小淡化）
         ctx.beginPath();
         ctx.ellipse(sx, sy + 2, 15 * shadowScale, 8 * shadowScale, 0, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(30, 15, 5, ${0.42 * shadowScale})`;
         ctx.fill();
 
-        // 2. 移動至棋子腳底座標（套用跳躍與彈性形變）
         ctx.translate(sx, sy - jumpY);
         const sq = PlayerPawn.scaleSquash;
         ctx.scale(2 - sq, sq);
 
-        // 披風/背包陰影
         ctx.fillStyle = '#8c3b19';
         ctx.beginPath();
         ctx.roundRect(-10, -24, 20, 16, 6);
         ctx.fill();
 
-        // 身體（探險服）
         ctx.fillStyle = '#2d6a8e';
         ctx.beginPath();
         ctx.moveTo(-9, -4);
@@ -1042,13 +1892,11 @@
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // 紅色領巾
         ctx.fillStyle = '#e04f33';
         ctx.beginPath();
         ctx.ellipse(0, -21, 7, 3, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // 頭部
         ctx.fillStyle = '#ffdfc4';
         ctx.beginPath();
         ctx.arc(0, -29, 8.5, 0, Math.PI * 2);
@@ -1057,14 +1905,12 @@
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // 眼睛
         ctx.fillStyle = '#2b1a10';
         ctx.beginPath();
         ctx.arc(-2.8, -28.5, 1.3, 0, Math.PI * 2);
         ctx.arc(2.8, -28.5, 1.3, 0, Math.PI * 2);
         ctx.fill();
 
-        // 寬邊探險帽（帽簷）
         ctx.fillStyle = '#d99b43';
         ctx.beginPath();
         ctx.ellipse(0, -34, 15, 5.5, 0, 0, Math.PI * 2);
@@ -1073,7 +1919,6 @@
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // 探險帽（帽頂）
         ctx.fillStyle = '#eab159';
         ctx.beginPath();
         ctx.arc(0, -35, 8.5, Math.PI, 0);
@@ -1090,7 +1935,6 @@
         ctx.save();
         ctx.scale(this.dpr, this.dpr);
 
-        // 1. 漸層背景
         const bgGrad = ctx.createRadialGradient(
           this.width / 2, this.height / 2, 40,
           this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.75
@@ -1100,34 +1944,26 @@
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, this.width, this.height);
 
-        // 2. 相機變換
         ctx.translate(this.camera.x, this.camera.y);
         ctx.scale(this.camera.scale, this.camera.scale);
 
-        // 3. 棋盤整體落地陰影
         this.drawBoardGroundShadow(ctx);
 
-        // 4. 後半部外圍格子
         const backTiles = BOARD_TILES.filter(t => (t.gx + t.gy) < ISO_CONFIG.GRID_SIZE - 1)
           .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
         for (const tile of backTiles) {
           this.drawIsoBlock(ctx, tile);
         }
 
-        // 5. 中央荒地與綠洲造景
         this.drawCentralWasteland(ctx);
 
-        // 6. 前半部外圍格子
         const frontTiles = BOARD_TILES.filter(t => (t.gx + t.gy) >= ISO_CONFIG.GRID_SIZE - 1)
           .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
         for (const tile of frontTiles) {
           this.drawIsoBlock(ctx, tile);
         }
 
-        // 7. 繪製探險者棋子（位於所有地面格之上）
         this.drawPlayerPawn(ctx);
-
-        // 8. 繪製頭頂漂浮提示文字
         FloatingTexts.draw(ctx);
 
         ctx.restore();
@@ -1223,20 +2059,39 @@
           this.pointer.pinchDist = 0;
         });
 
-        document.getElementById('btn-roll').addEventListener('click', () => {
-          HUD.triggerRoll();
-        });
+        // 擲骰與視角控制
+        document.getElementById('btn-roll').addEventListener('click', () => HUD.triggerRoll());
+        document.getElementById('btn-follow').addEventListener('click', () => this.setAutoFollow(!this.camera.autoFollow));
+        document.getElementById('btn-reset-view').addEventListener('click', () => this.resetCamera());
+        document.getElementById('btn-exit').addEventListener('click', () => GameBridge.closeAndReturn());
 
-        document.getElementById('btn-follow').addEventListener('click', () => {
-          this.setAutoFollow(!this.camera.autoFollow);
-        });
+        // 左側已購地契抽屜開關
+        document.getElementById('btn-open-deeds').addEventListener('click', () => HUD.toggleDeedDrawer(true));
+        document.getElementById('btn-close-deeds').addEventListener('click', () => HUD.toggleDeedDrawer(false));
+        document.getElementById('deed-backdrop').addEventListener('click', () => HUD.toggleDeedDrawer(false));
 
-        document.getElementById('btn-reset-view').addEventListener('click', () => {
-          this.resetCamera();
+        // 能量兌換金幣視窗控制
+        document.getElementById('btn-open-exchange').addEventListener('click', () => HUD.openExchangeModal());
+        document.getElementById('ex-cancel').addEventListener('click', () => {
+          document.getElementById('modal-exchange').classList.remove('show');
         });
-
-        document.getElementById('btn-exit').addEventListener('click', () => {
-          GameBridge.closeAndReturn();
+        document.getElementById('ex-minus').addEventListener('click', () => {
+          HUD.exchangeSpend = Math.max(1, HUD.exchangeSpend - 5);
+          HUD.refreshExchangeUI();
+        });
+        document.getElementById('ex-plus').addEventListener('click', () => {
+          HUD.exchangeSpend = Math.min(GameState.energy, HUD.exchangeSpend + 5);
+          HUD.refreshExchangeUI();
+        });
+        document.getElementById('ex-confirm').addEventListener('click', () => {
+          if (HUD.exchangeSpend > 0 && GameState.energy >= HUD.exchangeSpend) {
+            const gained = HUD.exchangeSpend * EXCHANGE_RATE;
+            GameState.energy -= HUD.exchangeSpend;
+            GameState.coins += gained;
+            HUD.update();
+            FloatingTexts.spawn(PlayerPawn.gx, PlayerPawn.gy, `兌換 +${gained} 🪙`, '#7ee8fa');
+          }
+          document.getElementById('modal-exchange').classList.remove('show');
         });
       },
 
