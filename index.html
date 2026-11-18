@@ -5478,8 +5478,8 @@ if (isCompleted) {
       padMat.position.y = 0.04;
       stageSportPullupBar.add(padMat);
 
-      // 三根立柱形成高低兩組單槓
-      const postHeights = [1.8, 2.2, 1.8];
+// 三根立柱形成高低兩組單槓
+      const postHeights = [1.8, 2.2, 2.2]; // 原本為 [1.8, 2.2, 1.8]
       const postX = [-1.1, 0, 1.1];
       for (let i = 0; i < 3; i++) {
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, postHeights[i], 12), metalBlueMat);
