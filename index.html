@@ -5498,6 +5498,24 @@ if (isCompleted) {
       bar2.position.set(0.55, 2.15, 0);
       stageSportPullupBar.add(bar2);
 
+      // 👇 --- 新增：固定吊單槓的 NPC --- 👇
+      // 建立一個穿著綠色運動服的小男孩模型
+      const hangingNPC = createCharacterMesh(false, 0x8D5524, 0x10B981); 
+      hangingNPC.position.set(0.55, 0.9, 0); // 調整 Y 軸高度 (0.9) 使雙手剛好握住 2.15 的高槓
+      hangingNPC.rotation.y = 0; // 面向前方
+
+      const hLimbs = hangingNPC.userData.limbs;
+      if (hLimbs) {
+        hLimbs.leftArm.rotation.x = Math.PI;   // 左手向上高舉 180 度
+        hLimbs.rightArm.rotation.x = Math.PI;  // 右手向上高舉 180 度
+        hLimbs.leftArm.rotation.z = -0.15;     // 手臂微向內收，貼合握槓姿勢
+        hLimbs.rightArm.rotation.z = 0.15;
+        
+        hLimbs.leftLeg.rotation.x = -0.3;      // 雙腿微微向後彎曲，呈現懸空出力的感覺
+        hLimbs.rightLeg.rotation.x = -0.3;
+      }
+      stageSportPullupBar.add(hangingNPC);
+
       stageSportPullupBar.position.set(0, 0, 0.2);
       stageSportPullupBar.visible = false;
       parentGroup.add(stageSportPullupBar);
