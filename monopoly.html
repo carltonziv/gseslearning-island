@@ -139,7 +139,7 @@
     <div class="top-bar">
       <div class="title-badge">
         <h1>🏜️ 南方荒地探險</h1>
-        <p id="status-text">階段一：2.5D 等角棋盤（水平校正版）</p>
+        <p id="status-text">階段一：2.5D 等角棋盤（起點置底版）</p>
       </div>
 
       <div class="top-actions">
@@ -207,7 +207,7 @@
 
     /**
      * ============================================================================
-     * 2. 等角投影與 6x6（外圍 20 格）水平校正棋盤資料
+     * 2. 等角投影與 6x6（外圍 20 格，起點位於最下方 (5,5)）
      * ============================================================================
      */
     const ISO_CONFIG = {
@@ -233,10 +233,15 @@
       const N = ISO_CONFIG.GRID_SIZE;
       const coords = [];
 
-      for (let x = 0; x < N - 1; x++) coords.push({ gx: x, gy: 0 });
-      for (let y = 0; y < N - 1; y++) coords.push({ gx: N - 1, gy: y });
+      // 從最下方角落 (N-1, N-1) 出發，依順時針方向排列：
+      // 1. 左下邊：(5,5) -> (1,5)（往畫面左上方前進）
       for (let x = N - 1; x > 0; x--) coords.push({ gx: x, gy: N - 1 });
+      // 2. 左上邊：(0,5) -> (0,1)（往畫面右上方前進）
       for (let y = N - 1; y > 0; y--) coords.push({ gx: 0, gy: y });
+      // 3. 右上邊：(0,0) -> (4,0)（往畫面右下方前進）
+      for (let x = 0; x < N - 1; x++) coords.push({ gx: x, gy: 0 });
+      // 4. 右下邊：(5,0) -> (5,4)（往畫面左下方回到起點）
+      for (let y = 0; y < N - 1; y++) coords.push({ gx: N - 1, gy: y });
 
       return coords.map((pos, index) => {
         const isCorner = (pos.gx === 0 || pos.gx === N - 1) && (pos.gy === 0 || pos.gy === N - 1);
@@ -308,7 +313,6 @@
           this.canvas.width = Math.floor(this.width * this.dpr);
           this.canvas.height = Math.floor(this.height * this.dpr);
 
-          // 首次取得有效視窗尺寸時，自動將棋盤置中
           if (!this.hasInitializedView) {
             this.resetCamera();
             this.hasInitializedView = true;
@@ -319,7 +323,6 @@
           }
         };
 
-        // 立即嘗試抓取當前尺寸
         updateSize(window.innerWidth, window.innerHeight);
 
         const resizeObserver = new ResizeObserver((entries) => {
