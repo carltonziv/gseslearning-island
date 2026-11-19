@@ -87,7 +87,7 @@
       margin-top: 3px;
     }
 
-    /* 今日任務兌換骰子橫幅 */
+    /* 骰子計算橫幅 */
     .quest-dice-banner {
       background: rgba(25, 16, 10, 0.8);
       border: 1.5px solid rgba(126, 232, 250, 0.35);
@@ -102,9 +102,9 @@
 
     .quest-items {
       display: flex;
-      gap: 14px;
+      gap: 10px;
       flex-wrap: wrap;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       color: #e6d2bc;
     }
 
@@ -891,14 +891,16 @@
         <button id="lobby-exit-btn" class="btn btn-exit">🏝️ 返回島嶼</button>
       </div>
 
-      <!-- 每日任務兌換骰子明細 -->
+      <!-- 骰子數量計算明細（基本 15 顆 + 當日完成閱讀島或運動島任務再加 2 顆） -->
       <div class="quest-dice-banner">
         <div class="quest-items">
-          <div class="quest-chip">📰 今日讀報挑戰：<strong id="quest-read-count" style="color:#7ee8fa;">0</strong> 次</div>
-          <div class="quest-chip">💪 增肌減脂任務：<strong id="quest-fit-count" style="color:#7ee8fa;">0</strong> 次</div>
+          <div class="quest-chip">🎲 基本骰子：<strong style="color:#ffd54f;">15</strong> 顆</div>
+          <div class="quest-chip">📰 閱讀島：<strong id="quest-read-count" style="color:#7ee8fa;">0</strong> 次</div>
+          <div class="quest-chip">💪 運動島：<strong id="quest-fit-count" style="color:#7ee8fa;">0</strong> 次</div>
+          <div class="quest-chip" id="quest-bonus-chip" style="color:#81c784;">✨ 任務加碼：+0 顆</div>
         </div>
         <div class="quest-total-dice">
-          🎲 本局獲得骰子：<span id="quest-dice-total">4</span> 顆 <span style="font-size:0.75rem;font-weight:normal;">(每次換2顆，上限20顆)</span>
+          🎲 本局總骰子：<span id="quest-dice-total">15</span> 顆
         </div>
       </div>
 
@@ -977,7 +979,7 @@
           <span>🎲</span>
           <div>
             <div class="stat-label">剩餘骰子</div>
-            <div class="stat-value" id="ui-dice-left">4</div>
+            <div class="stat-value" id="ui-dice-left">15</div>
           </div>
         </div>
       </div>
@@ -1098,15 +1100,17 @@
 
     const EXCHANGE_RATE = 10; // 1 點個人能量 = 10 遊戲金幣
     const TOLL_RATIO = 0.3;   // 過路費為地價的 30%
-    const MAX_DICE_CAP = 20;  // 每日任務兌換骰子上限為 20 顆
+    const BASE_DICE = 15;     // 基本骰子數：15 顆
+    const QUEST_BONUS_DICE = 2; // 當日完成閱讀島或運動島任務：再加 2 顆
 
     function calcTollFee(price) {
       return Math.max(1, Math.ceil(price * TOLL_RATIO));
     }
 
+    // 基本 15 顆，若當日有完成閱讀島或運動島任務，再加 2 顆
     function calcQuestDice(readCount, fitCount) {
-      const totalTasks = Math.max(0, Number(readCount) || 0) + Math.max(0, Number(fitCount) || 0);
-      return Math.min(MAX_DICE_CAP, totalTasks * 2);
+      const hasCompletedAny = (Number(readCount) || 0) > 0 || (Number(fitCount) || 0) > 0;
+      return BASE_DICE + (hasCompletedAny ? QUEST_BONUS_DICE : 0);
     }
 
     /**
@@ -1214,14 +1218,14 @@
      */
     const GameState = {
       uid: 'player_' + Math.random().toString(36).slice(2, 7),
-      playerName: '', // 由主網頁傳入的學生姓名（如：王小明）
+      playerName: '',
       selectedNpcId: 'ranger',
       personalEnergy: 50,
       coins: 0,
 
-      readChallengeCount: 1,
-      fitnessQuestCount: 1,
-      diceLeft: 4,
+      readChallengeCount: 0,
+      fitnessQuestCount: 0,
+      diceLeft: BASE_DICE,
 
       ownedTileIds: [],
       phase: 'LOBBY', // 'LOBBY' | 'IDLE' | 'ROLLING' | 'MOVING' | 'MODAL' | 'FINISHED'
@@ -1235,7 +1239,6 @@
       processedTollIds: new Set()
     };
 
-    // 取得本機玩家在主網頁的短名稱（若無傳入則使用所選 NPC 名稱）
     function getMyShortName() {
       const custom = (GameState.playerName || '').trim();
       if (custom) return custom;
@@ -1288,17 +1291,25 @@
       },
 
       recalculateInitialDice() {
+        const hasBonus = GameState.readChallengeCount > 0 || GameState.fitnessQuestCount > 0;
         GameState.diceLeft = calcQuestDice(GameState.readChallengeCount, GameState.fitnessQuestCount);
+
         document.getElementById('lobby-energy-val').textContent = GameState.personalEnergy;
         document.getElementById('quest-read-count').textContent = GameState.readChallengeCount;
         document.getElementById('quest-fit-count').textContent = GameState.fitnessQuestCount;
         document.getElementById('quest-dice-total').textContent = GameState.diceLeft;
 
+        const bonusChip = document.getElementById('quest-bonus-chip');
+        if (hasBonus) {
+          bonusChip.innerHTML = `✨ 任務加碼：<strong style="color:#ffd54f;">+${QUEST_BONUS_DICE} 顆</strong>`;
+          bonusChip.style.color = '#81c784';
+        } else {
+          bonusChip.innerHTML = `✨ 任務加碼：<strong>+0 顆</strong>（完成任一島任務可再 +2 顆）`;
+          bonusChip.style.color = '#cbb094';
+        }
+
         const joinBtn = document.getElementById('btn-join-match');
-        if (GameState.diceLeft <= 0) {
-          joinBtn.disabled = true;
-          joinBtn.textContent = '今日尚無可用骰子（請先完成島嶼任務）';
-        } else if (!GameState.roomId) {
+        if (!GameState.roomId) {
           joinBtn.disabled = false;
           joinBtn.textContent = '🔍 隨機配對加入';
         }
@@ -1378,7 +1389,6 @@
         badge.style.color = '#ffd54f';
       },
 
-      // 組合大廳與順位顯示名稱（例如：「王小明 (阿岳)」）
       buildDisplayName(npcId) {
         const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
         const custom = (GameState.playerName || '').trim();
@@ -1595,7 +1605,6 @@
             }
             GameState.currentTurnUid = turnUid;
 
-            // 同步所有玩家的棋子位置與主網頁短名稱
             sortedPlayers.forEach((p) => {
               const displayLabel = p.shortName || p.name;
               if (p.uid !== GameState.uid) {
@@ -3011,7 +3020,6 @@
           ctx.fillRect(-5, -33, 3, 3);
           ctx.fillRect(2, -33, 3, 3);
 
-          // 頭頂玩家名牌（動態測量主網頁玩家名稱寬度）
           const nameLabel = pawn.displayName || npc.name;
           ctx.font = 'bold 8.5px sans-serif';
           const tagW = Math.max(36, ctx.measureText(nameLabel).width + 10);
