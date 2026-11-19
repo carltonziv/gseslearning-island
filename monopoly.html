@@ -622,7 +622,7 @@
       color: #7d491c;
     }
 
-    /* 底部操作控制台 */
+    /* 底部操作控制台與立體點點骰子 */
     .bottom-dock {
       display: flex;
       flex-direction: column;
@@ -653,27 +653,51 @@
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
     }
 
+    /* 3x3 網格點點骰子面 */
     .dice-box {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: linear-gradient(145deg, #fffdf8 0%, #e8dcc8 100%);
-      border: 2px solid #c9a673;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: #4a2a14;
+      width: 52px;
+      height: 52px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #fffdf8 0%, #e6d7be 100%);
+      border: 2.5px solid #b58c52;
+      box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.9),
+        inset 0 -3px 5px rgba(92, 62, 28, 0.25),
+        0 4px 10px rgba(0, 0, 0, 0.4);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 7px;
+      gap: 2px;
+      place-items: center;
+    }
+
+    .dice-pip {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #5c381e 0%, #261408 100%);
+      box-shadow: 0 1px 1px rgba(255, 255, 255, 0.65);
+    }
+
+    /* 1 點與 4 點經典紅點 */
+    .dice-pip.red {
+      background: radial-gradient(circle at 35% 35%, #ff5252 0%, #b71c1c 100%);
+    }
+
+    /* 1 點稍微放大更醒目 */
+    .dice-pip.ace {
+      width: 13px;
+      height: 13px;
     }
 
     .dice-box.rolling {
-      animation: diceShake 0.12s infinite alternate;
+      animation: diceShake 0.11s infinite alternate;
     }
 
     @keyframes diceShake {
-      0% { transform: rotate(-10deg) scale(1.06); }
-      100% { transform: rotate(10deg) scale(1.06); }
+      0% { transform: rotate(-12deg) scale(1.08); }
+      100% { transform: rotate(12deg) scale(1.08); }
     }
 
     .btn-roll {
@@ -935,9 +959,9 @@
   <!-- ================= 階段二：2.5D 遊戲主畫布與介面 ================= -->
   <canvas id="game-canvas"></canvas>
 
-  <button id="btn-open-deeds" class="left-deed-trigger" title="檢視已購買的領地卡片">
+  <button id="btn-open-deeds" class="left-deed-trigger" title="檢視已購買的所有權地契">
     <span style="font-size:1.4rem;">📜</span>
-    <span class="label">已購領地</span>
+    <span class="label">已購地契</span>
     <span class="badge" id="ui-deed-count">0</span>
   </button>
 
@@ -997,7 +1021,7 @@
       </div>
 
       <div class="roll-panel">
-        <div class="dice-box" id="ui-dice-face">🎲</div>
+        <div class="dice-box" id="ui-dice-face" aria-label="骰子點數"></div>
         <button id="btn-roll" class="btn btn-roll" disabled>等待回合</button>
       </div>
     </div>
@@ -1098,19 +1122,52 @@
       appId: "1:653484667317:web:0bf59888751518309729fc"
     };
 
-    const EXCHANGE_RATE = 10; // 1 點個人能量 = 10 遊戲金幣
-    const TOLL_RATIO = 0.3;   // 過路費為地價的 30%
-    const BASE_DICE = 15;     // 基本骰子數：15 顆
+    const EXCHANGE_RATE = 10;   // 1 點個人能量 = 10 遊戲金幣
+    const TOLL_RATIO = 0.3;     // 過路費為地價的 30%
+    const BASE_DICE = 15;       // 基本骰子數：15 顆
     const QUEST_BONUS_DICE = 2; // 當日完成閱讀島或運動島任務：再加 2 顆
 
     function calcTollFee(price) {
       return Math.max(1, Math.ceil(price * TOLL_RATIO));
     }
 
-    // 基本 15 顆，若當日有完成閱讀島或運動島任務，再加 2 顆
     function calcQuestDice(readCount, fitCount) {
       const hasCompletedAny = (Number(readCount) || 0) > 0 || (Number(fitCount) || 0) > 0;
       return BASE_DICE + (hasCompletedAny ? QUEST_BONUS_DICE : 0);
+    }
+
+    /**
+     * ============================================================================
+     * 點點骰子（Pips）渲染器（3x3 格子點位對應表）
+     * 位置索引：0:左上, 1:中上, 2:右上, 3:左中, 4:正中, 5:右中, 6:左下, 7:中下, 8:右下
+     * ============================================================================
+     */
+    const DICE_PIP_LAYOUTS = {
+      1: [4],
+      2: [2, 6],
+      3: [2, 4, 6],
+      4: [0, 2, 6, 8],
+      5: [0, 2, 4, 6, 8],
+      6: [0, 2, 3, 5, 6, 8]
+    };
+
+    function renderDiceFace(value) {
+      const diceBox = document.getElementById('ui-dice-face');
+      if (!diceBox) return;
+      const faceVal = DICE_PIP_LAYOUTS[value] ? value : 1;
+      const activePositions = new Set(DICE_PIP_LAYOUTS[faceVal]);
+      const isRedFace = faceVal === 1 || faceVal === 4;
+
+      diceBox.innerHTML = '';
+      diceBox.title = `${faceVal} 點`;
+
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('span');
+        if (activePositions.has(i)) {
+          cell.className = 'dice-pip' + (isRedFace ? ' red' : '') + (faceVal === 1 ? ' ace' : '');
+        }
+        diceBox.appendChild(cell);
+      }
     }
 
     /**
@@ -1260,6 +1317,7 @@
           GameState.fitnessQuestCount = Math.max(0, Number(params.get('fitCount')) || 0);
         }
 
+        renderDiceFace(5); // 初始顯示立體 5 點骰面
         this.updatePlayerNameDisplay();
         this.recalculateInitialDice();
 
@@ -1845,7 +1903,7 @@
         HUD.updateTurnPanel();
 
         const steps = Math.floor(Math.random() * 6) + 1;
-        document.getElementById('ui-dice-face').textContent = steps;
+        renderDiceFace(steps);
         document.getElementById('ui-tile-info').innerHTML = `🎲 隊友 <strong>${bot.name}</strong> 擲出了 ${steps} 點！`;
 
         PawnManager.enqueueSteps(bot.uid, steps, (finalTileIndex) => {
@@ -2302,12 +2360,12 @@
         let ticks = 0;
 
         const rollInterval = setInterval(() => {
-          diceBox.textContent = Math.floor(Math.random() * 6) + 1;
+          renderDiceFace(Math.floor(Math.random() * 6) + 1);
           ticks++;
           if (ticks >= 10) {
             clearInterval(rollInterval);
             diceBox.classList.remove('rolling');
-            diceBox.textContent = finalSteps;
+            renderDiceFace(finalSteps);
 
             GameState.phase = 'MOVING';
             this.update();
