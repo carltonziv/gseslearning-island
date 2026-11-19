@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>龜山桂山大富翁 - 2.5D 多人連線探險</title>
-  <!-- 引入 Firebase App 與 Realtime Database SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
@@ -155,7 +154,6 @@
       line-height: 1.35;
     }
 
-    /* 配對等候室面板 */
     .match-panel {
       background: rgba(22, 14, 9, 0.75);
       border: 1.5px solid rgba(235, 185, 115, 0.35);
@@ -330,6 +328,12 @@
       border: 1px solid #9be3b2;
     }
 
+    .btn-warning {
+      background: linear-gradient(135deg, #e67e22 0%, #b85814 100%);
+      color: #fff;
+      border: 1px solid #ffd2a6;
+    }
+
     .btn-exit {
       background: linear-gradient(135deg, #d96b38 0%, #b54822 100%);
       color: #fff8f0;
@@ -352,7 +356,7 @@
       border: 1.5px solid rgba(235, 185, 115, 0.35);
       border-radius: 16px;
       padding: 10px;
-      min-width: 138px;
+      min-width: 145px;
     }
 
     .turn-player-card {
@@ -504,7 +508,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
       color: #38200e;
     }
@@ -544,7 +548,7 @@
     }
 
     .deed-card-val {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: #7d491c;
     }
@@ -617,7 +621,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 9, 5, 0.65);
+      background: rgba(15, 9, 5, 0.68);
       backdrop-filter: blur(4px);
       z-index: 40;
       display: none;
@@ -632,7 +636,7 @@
     }
 
     .modal-card {
-      width: min(380px, 92vw);
+      width: min(390px, 92vw);
       background: linear-gradient(180deg, #3b2517 0%, #26160d 100%);
       border: 2px solid #e6b46e;
       border-radius: 20px;
@@ -644,6 +648,11 @@
       align-items: center;
       text-align: center;
       gap: 14px;
+    }
+
+    .modal-card.toll-alert {
+      border-color: #ff8a65;
+      background: linear-gradient(180deg, #452218 0%, #26120c 100%);
     }
 
     .modal-card h3 {
@@ -720,10 +729,8 @@
         <button id="lobby-exit-btn" class="btn btn-exit">🏝️ 返回島嶼</button>
       </div>
 
-      <!-- 四種麥塊像素風 NPC 卡片 -->
       <div class="npc-grid" id="npc-grid"></div>
 
-      <!-- 多人配對狀態面板 -->
       <div class="match-panel">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <strong style="color:#ffd17a;font-size:0.95rem;" id="match-status-title">📡 尚未加入配對房間</strong>
@@ -869,24 +876,43 @@
     </div>
   </div>
 
+  <!-- 彈窗 3：踩到別人領地支付過路費 -->
+  <div id="modal-toll" class="modal-overlay">
+    <div class="modal-card toll-alert">
+      <div class="pixel-art-frame">
+        <canvas id="toll-owner-preview" width="16" height="16"></canvas>
+      </div>
+      <h3 id="toll-title" style="color:#ffab91;">💸 進入他人領地！</h3>
+      <p class="modal-desc" id="toll-desc">這裡是隊友的領地，需支付過路費。</p>
+
+      <div class="modal-actions" id="toll-actions">
+        <button class="btn btn-warning" id="toll-pay-btn">💸 支付過路費</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /**
      * ============================================================================
      * 0. FIREBASE 設定區（請填入你的 Firebase Realtime Database 設定）
-     * 若保留預設空值，系統會自動啟用「模擬雙人連線模式」方便單機測試！
      * ============================================================================
      */
     const FIREBASE_CONFIG = {
-      apiKey: "AIzaSyCy7qTN9EnUAyFgWG8Xkrf4YPI8q9ik_GA",
-      authDomain: "gses-monopoly.firebaseapp.com",
-      databaseURL: "https://gses-monopoly-default-rtdb.asia-southeast1.firebasedatabase.app/", // 例如: "https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app"
-      projectId: "gses-monopoly",
-      storageBucket: "gses-monopoly.firebasestorage.app",
-      messagingSenderId: "653484667317",
-      appId: "1:653484667317:web:0bf59888751518309729fc"
+      apiKey: "",
+      authDomain: "",
+      databaseURL: "",
+      projectId: "",
+      storageBucket: "",
+      messagingSenderId: "",
+      appId: ""
     };
 
-    const EXCHANGE_RATE = 10; // 1 點個人能量 = 10 金幣
+    const EXCHANGE_RATE = 10; // 1 點個人能量 = 10 遊戲金幣
+    const TOLL_RATIO = 0.3;   // 過路費為地點價值的 30%（無條件進位）
+
+    function calcTollFee(price) {
+      return Math.max(1, Math.ceil(price * TOLL_RATIO));
+    }
 
     /**
      * ============================================================================
@@ -1017,19 +1043,9 @@
     ];
 
     const NPC_PIXEL_COLORS = {
-      '.': null,
-      'K': '#1b120c',
-      'W': '#ffffff',
-      'F': '#ffd7b5', // 麥塊膚色
-      'N': '#e0a982', // 鼻子陰影
-      'M': '#a86449', // 嘴巴
-      'P': '#e57373', // 微笑紅唇
-      'B': '#4e342e', // 棕色頭髮/褲子
-      'G': '#388e3c', // 巡守綠
-      'R': '#d32f2f', // 紅帽/紅衣
-      'Y': '#fbc02d', // 工程黃
-      'O': '#f57c00', // 探險橘
-      'C': '#37474f'  // 深灰工作褲
+      '.': null, 'K': '#1b120c', 'W': '#ffffff', 'F': '#ffd7b5', 'N': '#e0a982',
+      'M': '#a86449', 'P': '#e57373', 'B': '#4e342e', 'G': '#388e3c',
+      'R': '#d32f2f', 'Y': '#fbc02d', 'O': '#f57c00', 'C': '#37474f'
     };
 
     function drawNpcAvatarToCanvas(canvas, npcId) {
@@ -1050,24 +1066,24 @@
 
     /**
      * ============================================================================
-     * 2. 遊戲核心狀態與主網頁能量閉環結算（個人能量 <-> 金幣）
+     * 2. 遊戲核心狀態與主網頁能量閉環結算
      * ============================================================================
      */
     const GameState = {
       uid: 'player_' + Math.random().toString(36).slice(2, 7),
       playerName: '探險者',
       selectedNpcId: 'ranger',
-      personalEnergy: 50,   // 個人累積能量（由主網頁傳入）
-      coins: 0,             // 本局兌換得到的金幣
+      personalEnergy: 50,   // 個人累積能量
+      coins: 0,             // 本局持有金幣
       diceLeft: 15,
       ownedTileIds: [],     // 自己買下的地產 ID
       phase: 'LOBBY',       // 'LOBBY' | 'IDLE' | 'ROLLING' | 'MOVING' | 'MODAL'
 
-      // 多人房間狀態
       roomId: null,
       isSimulatedBotMode: false,
-      players: [],          // 依 joinOrder 排序的玩家陣列 [{ uid, name, npcId, joinOrder, tileIndex, coins, isBot }]
-      currentTurnUid: null
+      players: [],          // 依 joinOrder 排序的玩家陣列
+      currentTurnUid: null,
+      processedTollIds: new Set() // 避免重複領取同一筆過路費通知
     };
 
     const GameBridge = {
@@ -1103,12 +1119,10 @@
         });
       },
 
-      // 離開遊戲時：剩餘金幣自動換回個人累積能量，且不影響全班累積能量
       closeAndReturn() {
         Engine.stopLoop();
         MultiplayerManager.leaveRoom();
 
-        // 計算剩餘金幣自動兌換回的個人能量
         const refundedEnergy = Math.floor(GameState.coins / EXCHANGE_RATE);
         const finalPersonalEnergy = GameState.personalEnergy + refundedEnergy;
         const leftoverCoins = GameState.coins % EXCHANGE_RATE;
@@ -1118,10 +1132,10 @@
           type: 'MONOPOLY_CLOSE',
           payload: {
             uid: GameState.uid,
-            personalEnergy: finalPersonalEnergy, // 更新後的個人累積能量
-            refundedEnergy: refundedEnergy,       // 本次剩餘金幣自動轉回的能量
+            personalEnergy: finalPersonalEnergy,
+            refundedEnergy: refundedEnergy,
             remainingCoins: leftoverCoins,
-            affectClassEnergy: false,             // 明確標記：不影響全班累積能量
+            affectClassEnergy: false, // 明確標記：不影響全班累積能量
             ownedTileIds: GameState.ownedTileIds,
             ownedNames
           }
@@ -1142,7 +1156,7 @@
 
     /**
      * ============================================================================
-     * 3. Firebase Realtime Database 多人配對與順序輪流引擎（2～4人）
+     * 3. Firebase Realtime Database 多人配對、順序輪流與過路費交易同步
      * ============================================================================
      */
     const MultiplayerManager = {
@@ -1177,7 +1191,6 @@
         badge.style.color = '#ffd54f';
       },
 
-      // 玩家選好 NPC 後點擊「隨機配對加入」
       async joinRandomMatch() {
         const joinBtn = document.getElementById('btn-join-match');
         joinBtn.disabled = true;
@@ -1187,7 +1200,6 @@
         const myDisplayName = `${myNpc.name}(${GameState.uid.slice(-4)})`;
 
         if (GameState.isSimulatedBotMode) {
-          // 模擬配對：自己為 1 號位，並加入 1 位自動隊友滿足「2人以上才能玩」條件
           GameState.roomId = 'sim_room_01';
           const botNpc = NPC_ROSTER.find(n => n.id !== GameState.selectedNpcId) || NPC_ROSTER[1];
           GameState.players = [
@@ -1197,6 +1209,7 @@
               npcId: GameState.selectedNpcId,
               joinOrder: 1,
               tileIndex: 0,
+              coins: GameState.coins,
               isBot: false
             },
             {
@@ -1205,6 +1218,7 @@
               npcId: botNpc.id,
               joinOrder: 2,
               tileIndex: 0,
+              coins: 300,
               isBot: true
             }
           ];
@@ -1217,7 +1231,6 @@
           return;
         }
 
-        // 真實 Firebase Realtime Database 隨機配對邏輯
         try {
           const roomsRef = this.db.ref('monopoly_rooms');
           const snapshot = await roomsRef.orderByChild('status').equalTo('waiting').once('value');
@@ -1232,7 +1245,6 @@
           });
 
           if (!targetRoomId) {
-            // 建立新房間，自己為第一位登入者
             const newRoomRef = roomsRef.push();
             targetRoomId = newRoomRef.key;
             await newRoomRef.set({
@@ -1245,7 +1257,6 @@
           GameState.roomId = targetRoomId;
           this.roomRef = this.db.ref(`monopoly_rooms/${targetRoomId}`);
 
-          // 寫入自己的玩家資料（以伺服器時間戳記作為登入先後順序）
           const myPlayerRef = this.roomRef.child(`players/${GameState.uid}`);
           await myPlayerRef.set({
             uid: GameState.uid,
@@ -1253,16 +1264,39 @@
             npcId: GameState.selectedNpcId,
             joinedAt: firebase.database.ServerValue.TIMESTAMP,
             tileIndex: 0,
+            coins: GameState.coins,
             isBot: false
           });
           myPlayerRef.onDisconnect().remove();
 
-          // 監聽房間即時變化
+          // 監聽過路費入帳事件（當別人踩到你的領地並支付過路費時）
+          this.roomRef.child('tollEvents').on('child_added', (snap) => {
+            const evt = snap.val();
+            const evtId = snap.key;
+            if (!evt || GameState.processedTollIds.has(evtId)) return;
+            GameState.processedTollIds.add(evtId);
+
+            if (evt.toUid === GameState.uid && evt.amount > 0) {
+              GameState.coins += evt.amount;
+              this.syncMyCoins();
+              HUD.update();
+              const myPawn = PawnManager.pawns[GameState.uid];
+              if (myPawn) {
+                FloatingTexts.spawn(
+                  myPawn.gx,
+                  myPawn.gy,
+                  `收到 ${evt.fromName} 過路費 +${evt.amount} 🪙!`,
+                  '#81c784'
+                );
+              }
+            }
+          });
+
+          // 監聽房間即時狀態
           this.roomRef.on('value', (snap) => {
             const roomData = snap.val();
             if (!roomData || !roomData.players) return;
 
-            // 依照登入房間的時間先後順序排序（最多取前 4 人）
             const sortedPlayers = Object.values(roomData.players)
               .sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0))
               .slice(0, 4)
@@ -1271,7 +1305,6 @@
             GameState.players = sortedPlayers;
             GameState.currentTurnUid = roomData.currentTurnUid || sortedPlayers[0]?.uid;
 
-            // 同步地塊所有權
             if (roomData.tiles) {
               Object.entries(roomData.tiles).forEach(([tid, tInfo]) => {
                 const tile = BOARD_TILES[Number(tid)];
@@ -1283,7 +1316,6 @@
               });
             }
 
-            // 同步其他玩家棋子視覺位置
             sortedPlayers.forEach((p) => {
               if (p.uid !== GameState.uid) {
                 PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0);
@@ -1311,7 +1343,6 @@
                 startBtn.textContent = '等待 1 號房主開始...';
               }
 
-              // 若房間狀態已轉為 playing 或滿 4 人，自動進入遊戲
               if (roomData.status === 'playing' || count >= 4) {
                 if (isHost && roomData.status !== 'playing') {
                   this.roomRef.update({
@@ -1372,7 +1403,6 @@
         GameState.phase = 'IDLE';
         document.getElementById('lobby-screen').classList.add('hidden');
 
-        // 初始化所有玩家在棋盤上的 2.5D 麥塊棋子
         GameState.players.forEach((p) => {
           PawnManager.createOrUpdatePawn(p.uid, p.npcId, p.tileIndex || 0);
         });
@@ -1382,7 +1412,6 @@
         HUD.update();
       },
 
-      // 同步自己的移動步數到 Firebase
       syncMyPosition(tileIndex) {
         const me = GameState.players.find(p => p.uid === GameState.uid);
         if (me) me.tileIndex = tileIndex;
@@ -1392,12 +1421,22 @@
         }
       },
 
-      // 同步買下的地產所有權到 Firebase
+      syncMyCoins() {
+        const me = GameState.players.find(p => p.uid === GameState.uid);
+        if (me) me.coins = GameState.coins;
+
+        if (!GameState.isSimulatedBotMode && this.roomRef) {
+          this.roomRef.child(`players/${GameState.uid}`).update({ coins: GameState.coins });
+        }
+      },
+
       syncTilePurchase(tile) {
         const myNpc = NPC_ROSTER.find(n => n.id === GameState.selectedNpcId) || NPC_ROSTER[0];
         tile.ownerUid = GameState.uid;
         tile.ownerName = myNpc.name;
         tile.ownerNpcId = myNpc.id;
+
+        this.syncMyCoins();
 
         if (!GameState.isSimulatedBotMode && this.roomRef) {
           this.roomRef.child(`tiles/${tile.id}`).set({
@@ -1408,7 +1447,27 @@
         }
       },
 
-      // 輪替到下一位玩家（依照登入房間的先後順序循環）
+      // 支付過路費給其他玩家
+      sendTollPayment(tile, amount) {
+        const myNpc = NPC_ROSTER.find(n => n.id === GameState.selectedNpcId) || NPC_ROSTER[0];
+        this.syncMyCoins();
+
+        if (GameState.isSimulatedBotMode) {
+          const bot = GameState.players.find(p => p.uid === tile.ownerUid);
+          if (bot) bot.coins = (bot.coins || 0) + amount;
+        } else if (this.roomRef) {
+          this.roomRef.child('tollEvents').push({
+            fromUid: GameState.uid,
+            fromName: myNpc.name,
+            toUid: tile.ownerUid,
+            tileId: tile.id,
+            tileName: tile.name,
+            amount,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          });
+        }
+      },
+
       advanceNextTurn() {
         const list = GameState.players;
         if (list.length === 0) return;
@@ -1425,7 +1484,6 @@
         HUD.updateTurnPanel();
         HUD.update();
 
-        // 若為單機模擬模式且輪到 AI 隊友，自動執行一次隊友移動
         if (GameState.isSimulatedBotMode && nextPlayer.isBot) {
           setTimeout(() => this.runSimulatedBotTurn(nextPlayer), 900);
         }
@@ -1439,14 +1497,29 @@
         PawnManager.enqueueSteps(bot.uid, steps, (finalTileIndex) => {
           bot.tileIndex = finalTileIndex;
           const tile = BOARD_TILES[finalTileIndex];
-          // 隊友有 50% 機率買下無主地
-          if (tile.type === 'PROPERTY' && !tile.ownerUid && Math.random() > 0.5) {
-            const botNpc = NPC_ROSTER.find(n => n.id === bot.npcId) || NPC_ROSTER[1];
-            tile.ownerUid = bot.uid;
-            tile.ownerName = botNpc.name;
-            tile.ownerNpcId = botNpc.id;
-            FloatingTexts.spawn(tile.gx, tile.gy, `${botNpc.name}買下${tile.name}`, '#81d4fa');
+          const botNpc = NPC_ROSTER.find(n => n.id === bot.npcId) || NPC_ROSTER[1];
+
+          if (tile.type === 'PROPERTY') {
+            if (!tile.ownerUid && (bot.coins || 0) >= tile.price && Math.random() > 0.35) {
+              // 隊友買地
+              bot.coins -= tile.price;
+              tile.ownerUid = bot.uid;
+              tile.ownerName = botNpc.name;
+              tile.ownerNpcId = botNpc.id;
+              FloatingTexts.spawn(tile.gx, tile.gy, `${botNpc.name}買下${tile.name}`, '#81d4fa');
+            } else if (tile.ownerUid && tile.ownerUid !== bot.uid) {
+              // 隊友踩到你的領地，支付過路費給你！
+              const fee = calcTollFee(tile.price);
+              const paid = Math.min(bot.coins || 0, fee);
+              bot.coins = Math.max(0, (bot.coins || 0) - paid);
+              if (tile.ownerUid === GameState.uid && paid > 0) {
+                GameState.coins += paid;
+                HUD.update();
+                FloatingTexts.spawn(tile.gx, tile.gy, `${botNpc.name}付過路費 +${paid} 🪙!`, '#ffd54f');
+              }
+            }
           }
+          HUD.updateTurnPanel();
           this.advanceNextTurn();
         });
       },
@@ -1538,7 +1611,7 @@
 
     /**
      * ============================================================================
-     * 5. 16x16 地點像素繪圖引擎（用於地契卡片與購買預覽）
+     * 5. 16x16 地點像素繪圖引擎
      * ============================================================================
      */
     const PixelArtRenderer = {
@@ -1588,7 +1661,7 @@
      * ============================================================================
      */
     const PawnManager = {
-      pawns: {}, // uid -> pawnState
+      pawns: {},
 
       createOrUpdatePawn(uid, npcId, tileIndex) {
         const tile = BOARD_TILES[tileIndex] || BOARD_TILES[0];
@@ -1692,7 +1765,7 @@
       list: [],
       spawn(gx, gy, text, color = '#ffe082') {
         const { sx, sy } = Engine.gridToIso(gx, gy);
-        this.list.push({ sx, sy: sy - 46, text, color, age: 0, life: 1.5 });
+        this.list.push({ sx, sy: sy - 46, text, color, age: 0, life: 1.6 });
       },
       update(dt) {
         for (let i = this.list.length - 1; i >= 0; i--) {
@@ -1720,7 +1793,7 @@
 
     /**
      * ============================================================================
-     * 7. HUD 介面、角色大廳渲染與回合控制
+     * 7. HUD 介面、購買、過路費互動與左側地契抽屜
      * ============================================================================
      */
     const HUD = {
@@ -1751,7 +1824,7 @@
           card.insertBefore(pBox, card.firstChild);
 
           card.addEventListener('click', () => {
-            if (GameState.roomId) return; // 已配對後鎖定角色
+            if (GameState.roomId) return;
             GameState.selectedNpcId = npc.id;
             document.querySelectorAll('.npc-card').forEach(el => {
               el.classList.toggle('selected', el.dataset.npcId === npc.id);
@@ -1795,9 +1868,13 @@
         const tile = BOARD_TILES[myPawn ? myPawn.tileIndex : 0];
         let statusTag = '';
         if (tile.type === 'PROPERTY') {
-          if (tile.ownerUid === GameState.uid) statusTag = '（✅ 你的領地）';
-          else if (tile.ownerUid) statusTag = `（🚩 ${tile.ownerName} 的領地）`;
-          else statusTag = `（價值 ${tile.price} 🪙）`;
+          if (tile.ownerUid === GameState.uid) {
+            statusTag = '（✅ 你的領地）';
+          } else if (tile.ownerUid) {
+            statusTag = `（🚩 ${tile.ownerName} 的領地｜過路費 ${calcTollFee(tile.price)} 🪙）`;
+          } else {
+            statusTag = `（價值 ${tile.price} 🪙）`;
+          }
         }
         document.getElementById('ui-tile-info').innerHTML =
           `📍 你的位置：<strong>${tile.name}</strong>${statusTag}`;
@@ -1855,21 +1932,111 @@
       handleTileArrival(tileIndex) {
         const tile = BOARD_TILES[tileIndex];
 
-        if (tile.type === 'PROPERTY' && !tile.ownerUid) {
-          this.openBuyModal(tile);
-        } else {
-          if (tile.ownerUid === GameState.uid) {
+        if (tile.type === 'PROPERTY') {
+          if (!tile.ownerUid) {
+            // 無主地 -> 開啟購買視窗
+            this.openBuyModal(tile);
+          } else if (tile.ownerUid === GameState.uid) {
+            // 自己的領地
             FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7');
-          } else if (tile.ownerUid) {
-            FloatingTexts.spawn(tile.gx, tile.gy, `參觀 ${tile.ownerName} 的領地`, '#90caf9');
+            GameState.phase = 'IDLE';
+            MultiplayerManager.advanceNextTurn();
           } else {
-            FloatingTexts.spawn(tile.gx, tile.gy, `抵達 ${tile.name}`, '#ffe082');
+            // 踩到別人的領地 -> 開啟支付過路費彈窗
+            this.openTollModal(tile);
           }
+        } else {
+          FloatingTexts.spawn(tile.gx, tile.gy, `抵達 ${tile.name}`, '#ffe082');
           GameState.phase = 'IDLE';
           MultiplayerManager.advanceNextTurn();
         }
       },
 
+      // --- 踩到別人領地支付過路費彈窗 ---
+      openTollModal(tile) {
+        GameState.phase = 'MODAL';
+        this.update();
+
+        const modal = document.getElementById('modal-toll');
+        const tollFee = calcTollFee(tile.price);
+        drawNpcAvatarToCanvas(document.getElementById('toll-owner-preview'), tile.ownerNpcId || 'ranger');
+
+        document.getElementById('toll-title').textContent = `💸 進入 ${tile.ownerName} 的【${tile.name}】`;
+        const actionsDiv = document.getElementById('toll-actions');
+        actionsDiv.innerHTML = '';
+
+        if (GameState.coins >= tollFee) {
+          // 情境 A：持有金幣足夠支付
+          document.getElementById('toll-desc').innerHTML =
+            `地價 ${tile.price} 🪙，需支付 30% 過路費：<strong style="color:#ffab91;font-size:1.1rem;">${tollFee} 🪙</strong>`;
+
+          const payBtn = document.createElement('button');
+          payBtn.className = 'btn btn-warning';
+          payBtn.textContent = `💸 支付 ${tollFee} 🪙 過路費`;
+          payBtn.onclick = () => {
+            GameState.coins -= tollFee;
+            MultiplayerManager.sendTollPayment(tile, tollFee);
+            FloatingTexts.spawn(tile.gx, tile.gy, `支付過路費 -${tollFee} 🪙`, '#ff8a65');
+            this.closeTollModal();
+          };
+          actionsDiv.appendChild(payBtn);
+        } else {
+          // 情境 B：金幣不足，檢查是否能用個人能量自動兌換補足
+          const deficit = tollFee - GameState.coins;
+          const neededEnergy = Math.ceil(deficit / EXCHANGE_RATE);
+
+          if (GameState.personalEnergy >= neededEnergy) {
+            document.getElementById('toll-desc').innerHTML =
+              `需支付過路費 <strong style="color:#ffab91;">${tollFee} 🪙</strong>（目前僅有 ${GameState.coins} 🪙）。<br>` +
+              `可使用 <strong style="color:#7ee8fa;">${neededEnergy} ⚡ 個人能量</strong> 自動兌換並支付！`;
+
+            const exPayBtn = document.createElement('button');
+            exPayBtn.className = 'btn btn-primary';
+            exPayBtn.textContent = `⚡ 兌換 ${neededEnergy} 能量並支付`;
+            exPayBtn.onclick = () => {
+              GameState.personalEnergy -= neededEnergy;
+              GameState.coins += neededEnergy * EXCHANGE_RATE;
+              GameState.coins -= tollFee;
+              MultiplayerManager.sendTollPayment(tile, tollFee);
+              FloatingTexts.spawn(tile.gx, tile.gy, `兌換並支付 -${tollFee} 🪙`, '#ffab91');
+              this.closeTollModal();
+            };
+            actionsDiv.appendChild(exPayBtn);
+          } else {
+            // 情境 C：金幣與個人能量皆不足以全額支付（清空身上所有資源交付地主）
+            const maxGained = GameState.personalEnergy * EXCHANGE_RATE;
+            const totalPayable = GameState.coins + maxGained;
+
+            document.getElementById('toll-desc').innerHTML =
+              `需支付過路費 <strong style="color:#ffab91;">${tollFee} 🪙</strong>，但您的金幣與能量皆不足！<br>` +
+              `將盡力交付身上所有資源（共 <strong style="color:#ffd17a;">${totalPayable} 🪙</strong>）給地主。`;
+
+            const bankruptBtn = document.createElement('button');
+            bankruptBtn.className = 'btn btn-warning';
+            bankruptBtn.textContent = `交付所有資源 (${totalPayable} 🪙)`;
+            bankruptBtn.onclick = () => {
+              GameState.personalEnergy = 0;
+              GameState.coins = 0;
+              if (totalPayable > 0) {
+                MultiplayerManager.sendTollPayment(tile, totalPayable);
+              }
+              FloatingTexts.spawn(tile.gx, tile.gy, `傾囊支付 -${totalPayable} 🪙`, '#ef5350');
+              this.closeTollModal();
+            };
+            actionsDiv.appendChild(bankruptBtn);
+          }
+        }
+
+        modal.classList.add('show');
+      },
+
+      closeTollModal() {
+        document.getElementById('modal-toll').classList.remove('show');
+        GameState.phase = 'IDLE';
+        MultiplayerManager.advanceNextTurn();
+      },
+
+      // --- 購買地點所有權彈窗 ---
       openBuyModal(tile) {
         GameState.phase = 'MODAL';
         this.update();
@@ -1879,9 +2046,10 @@
 
         document.getElementById('buy-title').textContent = tile.name;
         const canAfford = GameState.coins >= tile.price;
+        const tollFee = calcTollFee(tile.price);
 
         document.getElementById('buy-desc').innerHTML = canAfford
-          ? `價值 <strong>${tile.price} 🪙</strong>，是否用金幣購買此地點的所有權？`
+          ? `價值 <strong>${tile.price} 🪙</strong>（過路費 ${tollFee} 🪙），是否購買所有權？`
           : `需要 <strong>${tile.price} 🪙</strong>（目前持有 ${GameState.coins} 🪙），金幣不足！可先點上方「⚡ 兌換金幣」。`;
 
         const confirmBtn = document.getElementById('buy-confirm');
@@ -1958,7 +2126,7 @@
 
           const val = document.createElement('div');
           val.className = 'deed-card-val';
-          val.textContent = `價值 ${tile.price} 🪙`;
+          val.textContent = `價值 ${tile.price} ｜ 過路費 ${calcTollFee(tile.price)} 🪙`;
 
           card.appendChild(tag);
           card.appendChild(frame);
@@ -2217,9 +2385,9 @@
 
         if (tile.price > 0) {
           if (tile.ownerUid) {
-            ctx.fillStyle = '#1b5e20';
+            ctx.fillStyle = tile.ownerUid === GameState.uid ? '#1b5e20' : '#b71c1c';
             ctx.font = 'bold 9px sans-serif';
-            ctx.fillText(`★${tile.ownerName}`, 0, 14);
+            ctx.fillText(`★${tile.ownerName} (過路$${calcTollFee(tile.price)})`, 0, 14);
           } else {
             ctx.fillStyle = 'rgba(65, 35, 12, 0.85)';
             ctx.font = 'bold 9.5px sans-serif';
@@ -2336,7 +2504,6 @@
         ctx.restore();
       },
 
-      // 繪製 2.5D 麥塊方塊人棋子（多人在同一格時自動微幅錯開）
       drawAllMinecraftPawns(ctx) {
         const pawnList = Object.values(PawnManager.pawns)
           .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
@@ -2358,7 +2525,6 @@
           const shadowScale = Math.max(0.45, 1 - jumpY / 65);
 
           ctx.save();
-          // 地面投影
           ctx.beginPath();
           ctx.ellipse(sx, sy + 2, 13 * shadowScale, 7 * shadowScale, 0, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(30, 15, 5, ${0.42 * shadowScale})`;
@@ -2368,7 +2534,6 @@
           const sq = pawn.scaleSquash;
           ctx.scale(2 - sq, sq);
 
-          // 麥塊方塊雙腿
           ctx.fillStyle = npc.pantsColor;
           ctx.fillRect(-7, -12, 6, 11);
           ctx.fillRect(1, -12, 6, 11);
@@ -2377,34 +2542,28 @@
           ctx.strokeRect(-7, -12, 6, 11);
           ctx.strokeRect(1, -12, 6, 11);
 
-          // 麥塊方塊身體
           ctx.fillStyle = npc.shirtColor;
           ctx.fillRect(-8, -24, 16, 12);
           ctx.strokeRect(-8, -24, 16, 12);
 
-          // 麥塊左右手臂
           ctx.fillStyle = '#ffd7b5';
           ctx.fillRect(-12, -23, 4, 10);
           ctx.fillRect(8, -23, 4, 10);
           ctx.strokeRect(-12, -23, 4, 10);
           ctx.strokeRect(8, -23, 4, 10);
 
-          // 麥塊大方塊頭部
           ctx.fillStyle = '#ffd7b5';
           ctx.fillRect(-9, -40, 18, 16);
           ctx.strokeRect(-9, -40, 18, 16);
 
-          // 麥塊帽子/頭髮頂部
           ctx.fillStyle = npc.hatColor;
           ctx.fillRect(-10, -43, 20, 6);
           ctx.strokeRect(-10, -43, 20, 6);
 
-          // 麥塊方形眼睛
           ctx.fillStyle = '#1b120c';
           ctx.fillRect(-5, -33, 3, 3);
           ctx.fillRect(2, -33, 3, 3);
 
-          // 頭頂名稱標籤
           ctx.fillStyle = 'rgba(25, 15, 8, 0.8)';
           ctx.beginPath();
           ctx.roundRect(-18, -56, 36, 12, 4);
@@ -2540,23 +2699,19 @@
           this.pointer.pinchDist = 0;
         });
 
-        // 大廳配對與返回按鈕
         document.getElementById('btn-join-match').addEventListener('click', () => MultiplayerManager.joinRandomMatch());
         document.getElementById('btn-start-game').addEventListener('click', () => MultiplayerManager.startGameHost());
         document.getElementById('lobby-exit-btn').addEventListener('click', () => GameBridge.closeAndReturn());
 
-        // 遊戲內控制按鈕
         document.getElementById('btn-roll').addEventListener('click', () => HUD.triggerRoll());
         document.getElementById('btn-follow').addEventListener('click', () => this.setAutoFollow(!this.camera.autoFollow));
         document.getElementById('btn-reset-view').addEventListener('click', () => this.resetCamera());
         document.getElementById('btn-exit').addEventListener('click', () => GameBridge.closeAndReturn());
 
-        // 左側已購地契抽屜
         document.getElementById('btn-open-deeds').addEventListener('click', () => HUD.toggleDeedDrawer(true));
         document.getElementById('btn-close-deeds').addEventListener('click', () => HUD.toggleDeedDrawer(false));
         document.getElementById('deed-backdrop').addEventListener('click', () => HUD.toggleDeedDrawer(false));
 
-        // 能量兌換金幣視窗
         document.getElementById('btn-open-exchange').addEventListener('click', () => HUD.openExchangeModal());
         document.getElementById('ex-cancel').addEventListener('click', () => {
           document.getElementById('modal-exchange').classList.remove('show');
@@ -2574,6 +2729,7 @@
             const gained = HUD.exchangeSpend * EXCHANGE_RATE;
             GameState.personalEnergy -= HUD.exchangeSpend;
             GameState.coins += gained;
+            MultiplayerManager.syncMyCoins();
             HUD.update();
             const myPawn = PawnManager.pawns[GameState.uid];
             if (myPawn) FloatingTexts.spawn(myPawn.gx, myPawn.gy, `兌換 +${gained} 🪙`, '#7ee8fa');
@@ -2600,7 +2756,6 @@
       }
     };
 
-    // 啟動初始化
     GameBridge.init();
     HUD.initLobby();
     MultiplayerManager.init();
