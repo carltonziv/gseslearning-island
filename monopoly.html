@@ -421,7 +421,7 @@
       border: 1.5px solid rgba(235, 185, 115, 0.35);
       border-radius: 16px;
       padding: 10px;
-      min-width: 162px;
+      min-width: 170px;
     }
 
     .turn-player-card {
@@ -886,7 +886,7 @@
       <div class="lobby-header">
         <div>
           <h1>⛏️ 龜山探險</h1>
-          <div class="lobby-sub">選擇麥塊探險角色並配對 2～4 位玩家（先選先贏），全場骰子用盡時結算總積分！</div>
+          <div class="lobby-sub">歡迎 <strong id="lobby-player-name" style="color:#ffd54f;">探險者</strong>！請選擇角色並配對 2～4 位玩家（先選先贏）</div>
         </div>
         <button id="lobby-exit-btn" class="btn btn-exit">🏝️ 返回島嶼</button>
       </div>
@@ -1209,12 +1209,12 @@
 
     /**
      * ============================================================================
-     * 2. 遊戲核心狀態與主網頁任務/能量對接
+     * 2. 遊戲核心狀態與主網頁玩家名稱／任務／能量對接
      * ============================================================================
      */
     const GameState = {
       uid: 'player_' + Math.random().toString(36).slice(2, 7),
-      playerName: '探險者',
+      playerName: '', // 由主網頁傳入的學生姓名（如：王小明）
       selectedNpcId: 'ranger',
       personalEnergy: 50,
       coins: 0,
@@ -1231,15 +1231,23 @@
       players: [],
       takenNpcMap: {},
       currentTurnUid: null,
-      pendingSummaryAfterAction: false, // 標記房間已進入結算，等待本機最後步伐與交易彈窗結束後再顯示
+      pendingSummaryAfterAction: false,
       processedTollIds: new Set()
     };
+
+    // 取得本機玩家在主網頁的短名稱（若無傳入則使用所選 NPC 名稱）
+    function getMyShortName() {
+      const custom = (GameState.playerName || '').trim();
+      if (custom) return custom;
+      const npc = NPC_ROSTER.find(n => n.id === GameState.selectedNpcId) || NPC_ROSTER[0];
+      return `${npc.name}(${GameState.uid.slice(-4)})`;
+    }
 
     const GameBridge = {
       init() {
         const params = new URLSearchParams(window.location.search);
         if (params.has('uid')) GameState.uid = params.get('uid');
-        if (params.has('name')) GameState.playerName = params.get('name');
+        if (params.has('name')) GameState.playerName = params.get('name').trim();
         if (params.has('energy')) {
           const val = Number(params.get('energy'));
           if (!Number.isNaN(val) && val >= 0) GameState.personalEnergy = val;
@@ -1249,6 +1257,7 @@
           GameState.fitnessQuestCount = Math.max(0, Number(params.get('fitCount')) || 0);
         }
 
+        this.updatePlayerNameDisplay();
         this.recalculateInitialDice();
 
         window.addEventListener('message', (event) => {
@@ -1257,10 +1266,11 @@
 
           if (type === 'MONOPOLY_INIT' && payload) {
             if (payload.uid) GameState.uid = payload.uid;
-            if (payload.name) GameState.playerName = payload.name;
+            if (payload.name) GameState.playerName = String(payload.name).trim();
             if (typeof payload.energy === 'number') GameState.personalEnergy = payload.energy;
             if (typeof payload.readCount === 'number') GameState.readChallengeCount = payload.readCount;
             if (typeof payload.fitCount === 'number') GameState.fitnessQuestCount = payload.fitCount;
+            this.updatePlayerNameDisplay();
             this.recalculateInitialDice();
           } else if (type === 'MONOPOLY_PAUSE') {
             Engine.stopLoop();
@@ -1268,6 +1278,13 @@
             Engine.startLoop();
           }
         });
+      },
+
+      updatePlayerNameDisplay() {
+        const nameEl = document.getElementById('lobby-player-name');
+        if (nameEl) {
+          nameEl.textContent = GameState.playerName || '探險者';
+        }
       },
 
       recalculateInitialDice() {
@@ -1301,6 +1318,7 @@
           type: 'MONOPOLY_CLOSE',
           payload: {
             uid: GameState.uid,
+            name: getMyShortName(),
             personalEnergy: finalPersonalEnergy,
             refundedEnergy: refundedEnergy,
             remainingCoins: leftoverCoins,
@@ -1315,6 +1333,7 @@
         } else {
           alert(
             `已結算並準備返回主島嶼！\n` +
+            `• 玩家：${getMyShortName()}\n` +
             `• 剩餘金幣 ${GameState.coins} 🪙 已自動換回 ${refundedEnergy} ⚡ 個人能量\n` +
             `• 最終個人累積能量：${finalPersonalEnergy} ⚡（不影響全班能量）\n` +
             `• 購得地點：${ownedNames.length > 0 ? ownedNames.join('、') : '無'}`
@@ -1359,8 +1378,13 @@
         badge.style.color = '#ffd54f';
       },
 
+      // 組合大廳與順位顯示名稱（例如：「王小明 (阿岳)」）
       buildDisplayName(npcId) {
         const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
+        const custom = (GameState.playerName || '').trim();
+        if (custom) {
+          return `${custom} (${npc.name})`;
+        }
         return `${npc.name}(${GameState.uid.slice(-4)})`;
       },
 
@@ -1370,17 +1394,22 @@
         GameState.selectedNpcId = newNpcId;
         HUD.refreshLobbyNpcCards();
 
+        const shortName = getMyShortName();
+        const fullName = this.buildDisplayName(newNpcId);
+
         if (GameState.isSimulatedBotMode && GameState.roomId) {
           const me = GameState.players.find(p => p.uid === GameState.uid);
           if (me) {
             me.npcId = newNpcId;
-            me.name = this.buildDisplayName(newNpcId);
+            me.name = fullName;
+            me.shortName = shortName;
           }
           this.renderLobbySlots();
         } else if (!GameState.isSimulatedBotMode && this.roomRef) {
           await this.roomRef.child(`players/${GameState.uid}`).update({
             npcId: newNpcId,
-            name: this.buildDisplayName(newNpcId)
+            name: fullName,
+            shortName: shortName
           });
         }
       },
@@ -1400,6 +1429,7 @@
             {
               uid: GameState.uid,
               name: this.buildDisplayName(GameState.selectedNpcId),
+              shortName: getMyShortName(),
               npcId: GameState.selectedNpcId,
               joinOrder: 1,
               tileIndex: 0,
@@ -1410,6 +1440,7 @@
             {
               uid: 'bot_partner',
               name: botName,
+              shortName: botNpc.name,
               npcId: botNpc.id,
               joinOrder: 2,
               tileIndex: 0,
@@ -1469,6 +1500,7 @@
           await myPlayerRef.set({
             uid: GameState.uid,
             name: this.buildDisplayName(GameState.selectedNpcId),
+            shortName: getMyShortName(),
             npcId: GameState.selectedNpcId,
             joinedAt: firebase.database.ServerValue.TIMESTAMP,
             tileIndex: 0,
@@ -1517,7 +1549,7 @@
 
             sortedPlayers.forEach((p, idx) => {
               if (p.uid !== GameState.uid) {
-                newTakenMap[p.npcId] = p.name;
+                newTakenMap[p.npcId] = p.shortName || p.name;
                 if (p.npcId === GameState.selectedNpcId && idx < myIndex) {
                   conflictWithEarlierPlayer = true;
                 }
@@ -1563,12 +1595,15 @@
             }
             GameState.currentTurnUid = turnUid;
 
-            // 同步遠端玩家最後一步跳躍，並在跳躍完成後檢查是否要顯示已收到的結算視窗
+            // 同步所有玩家的棋子位置與主網頁短名稱
             sortedPlayers.forEach((p) => {
+              const displayLabel = p.shortName || p.name;
               if (p.uid !== GameState.uid) {
-                PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0, () => {
+                PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel, () => {
                   this.tryShowPendingSummary();
                 });
+              } else if (PawnManager.pawns[p.uid]) {
+                PawnManager.pawns[p.uid].displayName = displayLabel;
               }
             });
 
@@ -1607,7 +1642,6 @@
               HUD.updateTurnPanel();
               HUD.update();
 
-              // 唯有當房間狀態正式標記為 'finished'（代表最後一位玩家的步伐與交易彈窗皆已完成）才準備結算
               if (roomData.status === 'finished') {
                 GameState.pendingSummaryAfterAction = true;
                 this.tryShowPendingSummary();
@@ -1621,7 +1655,6 @@
         }
       },
 
-      // 確保所有棋子都已完成跳躍動畫、且本機沒有正在進行的擲骰/移動/交易彈窗，才正式開啟結算視窗
       tryShowPendingSummary() {
         if (!GameState.pendingSummaryAfterAction || GameState.phase === 'FINISHED') return;
 
@@ -1679,7 +1712,8 @@
         document.getElementById('lobby-screen').classList.add('hidden');
 
         GameState.players.forEach((p) => {
-          PawnManager.createOrUpdatePawn(p.uid, p.npcId, p.tileIndex || 0);
+          const displayLabel = p.shortName || p.name;
+          PawnManager.createOrUpdatePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel);
         });
 
         Engine.resetCamera();
@@ -1712,24 +1746,24 @@
       },
 
       syncTilePurchase(tile) {
-        const myNpc = NPC_ROSTER.find(n => n.id === GameState.selectedNpcId) || NPC_ROSTER[0];
+        const ownerDisplay = getMyShortName();
         tile.ownerUid = GameState.uid;
-        tile.ownerName = myNpc.name;
-        tile.ownerNpcId = myNpc.id;
+        tile.ownerName = ownerDisplay;
+        tile.ownerNpcId = GameState.selectedNpcId;
 
         this.syncMyPlayerStats();
 
         if (!GameState.isSimulatedBotMode && this.roomRef) {
           this.roomRef.child(`tiles/${tile.id}`).set({
             ownerUid: GameState.uid,
-            ownerName: myNpc.name,
-            ownerNpcId: myNpc.id
+            ownerName: ownerDisplay,
+            ownerNpcId: GameState.selectedNpcId
           });
         }
       },
 
       sendTollPayment(tile, amount) {
-        const myNpc = NPC_ROSTER.find(n => n.id === GameState.selectedNpcId) || NPC_ROSTER[0];
+        const payerDisplay = getMyShortName();
         this.syncMyPlayerStats();
 
         if (GameState.isSimulatedBotMode) {
@@ -1738,7 +1772,7 @@
         } else if (this.roomRef) {
           this.roomRef.child('tollEvents').push({
             fromUid: GameState.uid,
-            fromName: myNpc.name,
+            fromName: payerDisplay,
             toUid: tile.ownerUid,
             tileId: tile.id,
             tileName: tile.name,
@@ -1748,7 +1782,6 @@
         }
       },
 
-      // 唯有在玩家走完步數且「決定好要不要購買 / 付完過路費」後，才會呼叫此函式判斷是否終局
       advanceNextTurn() {
         const list = GameState.players;
         if (list.length === 0) return;
@@ -1757,7 +1790,6 @@
           if (!GameState.isSimulatedBotMode && this.roomRef) {
             this.roomRef.update({ status: 'finished' });
           }
-          // 稍微停頓 0.45 秒讓玩家看清最後購買的旗幟或金幣飄字，再彈出總結算視窗
           setTimeout(() => {
             HUD.openFinalSummaryModal();
           }, 450);
@@ -1810,15 +1842,15 @@
         PawnManager.enqueueSteps(bot.uid, steps, (finalTileIndex) => {
           bot.tileIndex = finalTileIndex;
           const tile = BOARD_TILES[finalTileIndex];
-          const botNpc = NPC_ROSTER.find(n => n.id === bot.npcId) || NPC_ROSTER[1];
+          const botLabel = bot.shortName || bot.name;
 
           if (tile.type === 'PROPERTY') {
             if (!tile.ownerUid && (bot.coins || 0) >= tile.price && Math.random() > 0.35) {
               bot.coins -= tile.price;
               tile.ownerUid = bot.uid;
-              tile.ownerName = botNpc.name;
-              tile.ownerNpcId = botNpc.id;
-              FloatingTexts.spawn(tile.gx, tile.gy, `${botNpc.name}買下${tile.name}`, '#81d4fa');
+              tile.ownerName = botLabel;
+              tile.ownerNpcId = bot.npcId;
+              FloatingTexts.spawn(tile.gx, tile.gy, `${botLabel}買下${tile.name}`, '#81d4fa');
             } else if (tile.ownerUid && tile.ownerUid !== bot.uid) {
               const fee = calcTollFee(tile.price);
               const paid = Math.min(bot.coins || 0, fee);
@@ -1826,7 +1858,7 @@
               if (tile.ownerUid === GameState.uid && paid > 0) {
                 GameState.coins += paid;
                 HUD.update();
-                FloatingTexts.spawn(tile.gx, tile.gy, `${botNpc.name}付過路費 +${paid} 🪙!`, '#ffd54f');
+                FloatingTexts.spawn(tile.gx, tile.gy, `${botLabel}付過路費 +${paid} 🪙!`, '#ffd54f');
               }
             }
           }
@@ -1984,12 +2016,16 @@
     const PawnManager = {
       pawns: {},
 
-      createOrUpdatePawn(uid, npcId, tileIndex) {
+      createOrUpdatePawn(uid, npcId, tileIndex, displayName = '') {
         const tile = BOARD_TILES[tileIndex] || BOARD_TILES[0];
+        const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
+        const label = displayName || npc.name;
+
         if (!this.pawns[uid]) {
           this.pawns[uid] = {
             uid,
             npcId,
+            displayName: label,
             tileIndex,
             gx: tile.gx,
             gy: tile.gy,
@@ -2005,12 +2041,13 @@
           };
         } else {
           this.pawns[uid].npcId = npcId;
+          if (displayName) this.pawns[uid].displayName = displayName;
         }
         return this.pawns[uid];
       },
 
-      syncRemotePawn(uid, npcId, targetTileIndex, onHopDone = null) {
-        const pawn = this.createOrUpdatePawn(uid, npcId, targetTileIndex);
+      syncRemotePawn(uid, npcId, targetTileIndex, displayName = '', onHopDone = null) {
+        const pawn = this.createOrUpdatePawn(uid, npcId, targetTileIndex, displayName);
         if (pawn.tileIndex !== targetTileIndex && !pawn.isHopping) {
           const steps = (targetTileIndex - pawn.tileIndex + BOARD_TILES.length) % BOARD_TILES.length;
           if (steps > 0 && steps <= 12) {
@@ -2220,7 +2257,7 @@
           }
         }
         document.getElementById('ui-tile-info').innerHTML =
-          `📍 你的位置：<strong>${tile.name}</strong>${statusTag}`;
+          `📍 <strong>${getMyShortName()}</strong> 的位置：<strong>${tile.name}</strong>${statusTag}`;
 
         const rollBtn = document.getElementById('btn-roll');
         const isMyTurn = GameState.currentTurnUid === GameState.uid;
@@ -2266,7 +2303,6 @@
             GameState.phase = 'MOVING';
             this.update();
 
-            // 玩家棋子一格一格跳到最終格子後，才執行抵達事件與交易判斷
             PawnManager.enqueueSteps(GameState.uid, finalSteps, (finalTileIndex) => {
               MultiplayerManager.syncMyPosition(finalTileIndex);
               this.handleTileArrival(finalTileIndex);
@@ -2280,14 +2316,12 @@
 
         if (tile.type === 'PROPERTY') {
           if (!tile.ownerUid) {
-            // 停在無主地：先讓玩家決定要不要購買，關閉彈窗後才會進入下一回合或結算
             this.openBuyModal(tile);
           } else if (tile.ownerUid === GameState.uid) {
             FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7');
             GameState.phase = 'IDLE';
             MultiplayerManager.advanceNextTurn();
           } else {
-            // 停在別人領地：先完成過路費交易彈窗，關閉彈窗後才會進入下一回合或結算
             this.openTollModal(tile);
           }
         } else {
@@ -2485,7 +2519,7 @@
         const finalPersonalEnergy = GameState.personalEnergy + refundedEnergy;
 
         document.getElementById('summary-energy-report').innerHTML = `
-          <strong>⚡ 個人能量結算明細：</strong><br>
+          <strong>⚡ 個人能量結算明細（${getMyShortName()}）：</strong><br>
           • 本局結束剩餘金幣：<strong>${GameState.coins} 🪙</strong> → 自動兌換回 <strong style="color:#7ee8fa;">+${refundedEnergy} ⚡ 個人能量</strong><br>
           • 結算後個人累積能量：<strong style="color:#ffd54f;">${finalPersonalEnergy} ⚡</strong>（僅更新個人能量，不影響全班累積能量）
         `;
@@ -2977,15 +3011,18 @@
           ctx.fillRect(-5, -33, 3, 3);
           ctx.fillRect(2, -33, 3, 3);
 
-          ctx.fillStyle = 'rgba(25, 15, 8, 0.8)';
+          // 頭頂玩家名牌（動態測量主網頁玩家名稱寬度）
+          const nameLabel = pawn.displayName || npc.name;
+          ctx.font = 'bold 8.5px sans-serif';
+          const tagW = Math.max(36, ctx.measureText(nameLabel).width + 10);
+          ctx.fillStyle = 'rgba(25, 15, 8, 0.85)';
           ctx.beginPath();
-          ctx.roundRect(-18, -56, 36, 12, 4);
+          ctx.roundRect(-tagW / 2, -56, tagW, 13, 4);
           ctx.fill();
           ctx.fillStyle = '#fff8e1';
-          ctx.font = 'bold 8.5px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(npc.name, 0, -50);
+          ctx.fillText(nameLabel, 0, -49.5);
 
           ctx.restore();
         });
