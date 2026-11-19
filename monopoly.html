@@ -52,18 +52,18 @@
     }
 
     .lobby-box {
-      width: min(760px, 95vw);
+      width: min(780px, 95vw);
       max-height: 92vh;
       overflow-y: auto;
-      background: rgba(44, 28, 18, 0.95);
+      background: rgba(44, 28, 18, 0.96);
       border: 2.5px solid #e6b46e;
       border-radius: 22px;
-      padding: 24px;
+      padding: 22px;
       color: #faebd7;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 16px;
     }
 
     .lobby-header {
@@ -72,18 +72,57 @@
       align-items: center;
       border-bottom: 1px solid rgba(235, 185, 115, 0.25);
       padding-bottom: 12px;
+      gap: 10px;
     }
 
     .lobby-header h1 {
-      font-size: 1.35rem;
+      font-size: 1.32rem;
       color: #ffd17a;
       letter-spacing: 0.04em;
     }
 
     .lobby-sub {
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       color: #d6bc9e;
       margin-top: 3px;
+    }
+
+    /* 今日任務兌換骰子橫幅 */
+    .quest-dice-banner {
+      background: rgba(25, 16, 10, 0.8);
+      border: 1.5px solid rgba(126, 232, 250, 0.35);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .quest-items {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      color: #e6d2bc;
+    }
+
+    .quest-chip {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(235, 185, 115, 0.25);
+    }
+
+    .quest-total-dice {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #ffd54f;
+      background: rgba(245, 188, 71, 0.15);
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(245, 188, 71, 0.45);
     }
 
     .npc-grid {
@@ -96,11 +135,11 @@
       background: rgba(28, 17, 11, 0.85);
       border: 2px solid rgba(235, 185, 115, 0.3);
       border-radius: 16px;
-      padding: 14px 10px;
+      padding: 12px 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       cursor: pointer;
       transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
     }
@@ -117,8 +156,8 @@
     }
 
     .npc-pixel-box {
-      width: 76px;
-      height: 76px;
+      width: 72px;
+      height: 72px;
       background: #1c130d;
       border: 2px solid #8c6239;
       border-radius: 12px;
@@ -128,19 +167,19 @@
     }
 
     .npc-pixel-box canvas {
-      width: 64px;
-      height: 64px;
+      width: 60px;
+      height: 60px;
       image-rendering: pixelated;
     }
 
     .npc-name {
-      font-size: 1rem;
+      font-size: 0.98rem;
       font-weight: 800;
       color: #ffebc7;
     }
 
     .npc-role {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       padding: 2px 8px;
       border-radius: 999px;
       font-weight: 700;
@@ -148,7 +187,7 @@
     }
 
     .npc-desc {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       color: #cbb094;
       text-align: center;
       line-height: 1.35;
@@ -158,7 +197,7 @@
       background: rgba(22, 14, 9, 0.75);
       border: 1.5px solid rgba(235, 185, 115, 0.35);
       border-radius: 16px;
-      padding: 16px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -182,7 +221,7 @@
       border-radius: 12px;
       padding: 10px 8px;
       text-align: center;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: #9e846a;
       display: flex;
       flex-direction: column;
@@ -340,7 +379,7 @@
       border: 1px solid rgba(255, 215, 180, 0.5);
     }
 
-    /* 右側回合順序玩家列表 */
+    /* 右側回合順序與剩餘骰子列表 */
     .turn-order-panel {
       position: fixed;
       right: 16px;
@@ -351,12 +390,12 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      background: rgba(38, 24, 15, 0.86);
+      background: rgba(38, 24, 15, 0.88);
       backdrop-filter: blur(8px);
       border: 1.5px solid rgba(235, 185, 115, 0.35);
       border-radius: 16px;
       padding: 10px;
-      min-width: 145px;
+      min-width: 162px;
     }
 
     .turn-player-card {
@@ -367,15 +406,19 @@
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.04);
       border: 1.5px solid transparent;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: #e6cfb5;
     }
 
     .turn-player-card.active-turn {
-      background: rgba(245, 188, 71, 0.2);
+      background: rgba(245, 188, 71, 0.22);
       border-color: #ffd54f;
       color: #fff;
       font-weight: 700;
+    }
+
+    .turn-player-card.out-of-dice {
+      opacity: 0.55;
     }
 
     .player-dot {
@@ -621,7 +664,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 9, 5, 0.68);
+      background: rgba(15, 9, 5, 0.72);
       backdrop-filter: blur(4px);
       z-index: 40;
       display: none;
@@ -636,7 +679,9 @@
     }
 
     .modal-card {
-      width: min(390px, 92vw);
+      width: min(410px, 94vw);
+      max-height: 90vh;
+      overflow-y: auto;
       background: linear-gradient(180deg, #3b2517 0%, #26160d 100%);
       border: 2px solid #e6b46e;
       border-radius: 20px;
@@ -653,6 +698,11 @@
     .modal-card.toll-alert {
       border-color: #ff8a65;
       background: linear-gradient(180deg, #452218 0%, #26120c 100%);
+    }
+
+    .modal-card.summary-card {
+      width: min(500px, 95vw);
+      border-color: #ffd54f;
     }
 
     .modal-card h3 {
@@ -714,6 +764,92 @@
       font-weight: 700;
       cursor: pointer;
     }
+
+    /* 總結算排行榜樣式 */
+    .ranking-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rank-row {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(235, 185, 115, 0.3);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .rank-row.rank-1 {
+      background: rgba(245, 188, 71, 0.2);
+      border-color: #ffd54f;
+    }
+
+    .rank-medal {
+      font-size: 1.4rem;
+      font-weight: 900;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    .rank-avatar {
+      width: 40px;
+      height: 40px;
+      background: #1c130d;
+      border: 1.5px solid #8c6239;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .rank-avatar canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .rank-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .rank-name {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #fff8e7;
+    }
+
+    .rank-detail {
+      font-size: 0.76rem;
+      color: #cbb094;
+      margin-top: 2px;
+    }
+
+    .rank-score {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .rank-score-num {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #ffd54f;
+    }
+
+    .energy-settlement-box {
+      width: 100%;
+      background: rgba(43, 158, 179, 0.16);
+      border: 1.5px solid rgba(126, 232, 250, 0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      color: #d4f7ff;
+      line-height: 1.55;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -724,9 +860,20 @@
       <div class="lobby-header">
         <div>
           <h1>⛏️ 龜山桂山 2.5D 探險大廳</h1>
-          <div class="lobby-sub">請先選擇一位麥塊像素探險角色，系統將依登入順序配對 2～4 位玩家同樂</div>
+          <div class="lobby-sub">選擇麥塊探險角色並配對 2～4 位玩家，全場骰子用盡時結算總積分！</div>
         </div>
         <button id="lobby-exit-btn" class="btn btn-exit">🏝️ 返回島嶼</button>
+      </div>
+
+      <!-- 每日任務兌換骰子明細 -->
+      <div class="quest-dice-banner">
+        <div class="quest-items">
+          <div class="quest-chip">📰 今日讀報挑戰：<strong id="quest-read-count" style="color:#7ee8fa;">0</strong> 次</div>
+          <div class="quest-chip">💪 增肌減脂任務：<strong id="quest-fit-count" style="color:#7ee8fa;">0</strong> 次</div>
+        </div>
+        <div class="quest-total-dice">
+          🎲 本局獲得骰子：<span id="quest-dice-total">4</span> 顆 <span style="font-size:0.75rem;font-weight:normal;">(每次換2顆，上限20顆)</span>
+        </div>
       </div>
 
       <div class="npc-grid" id="npc-grid"></div>
@@ -777,7 +924,7 @@
     </div>
   </aside>
 
-  <!-- 右側回合順序玩家列表 -->
+  <!-- 右側回合順序與剩餘骰子列表 -->
   <aside class="turn-order-panel" id="turn-order-panel"></aside>
 
   <div id="ui-layer">
@@ -804,7 +951,7 @@
           <span>🎲</span>
           <div>
             <div class="stat-label">剩餘骰子</div>
-            <div class="stat-value" id="ui-dice-left">15</div>
+            <div class="stat-value" id="ui-dice-left">4</div>
           </div>
         </div>
       </div>
@@ -832,7 +979,7 @@
   <div id="modal-exchange" class="modal-overlay">
     <div class="modal-card">
       <h3>⚡ 個人能量兌換金幣</h3>
-      <p class="modal-desc">1 點個人能量 = 10 探險金幣<br><span style="font-size:0.78rem;color:#a5d6a7;">※ 離開遊戲時，未用完的金幣會自動換回您的個人能量（不影響全班能量）</span></p>
+      <p class="modal-desc">1 點個人能量 = 10 探險金幣<br><span style="font-size:0.78rem;color:#a5d6a7;">※ 離開或結算時，未用完的金幣會自動換回您的個人能量（不影響全班能量）</span></p>
 
       <div class="exchange-control">
         <div class="exchange-row">
@@ -891,6 +1038,22 @@
     </div>
   </div>
 
+  <!-- 彈窗 4：方案一全場骰子耗盡總結算排行榜 -->
+  <div id="modal-summary" class="modal-overlay">
+    <div class="modal-card summary-card">
+      <h3>🏆 龜山桂山探險總結算</h3>
+      <p class="modal-desc">房間內所有在線玩家的骰子皆已用盡！<br>依「<strong>名下地產價值總和 + 剩餘金幣</strong>」計算最終總積分：</p>
+
+      <div class="ranking-list" id="summary-ranking-list"></div>
+
+      <div class="energy-settlement-box" id="summary-energy-report"></div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-summary-return">🏝️ 帶回個人能量並返回主網頁</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /**
      * ============================================================================
@@ -908,10 +1071,16 @@
     };
 
     const EXCHANGE_RATE = 10; // 1 點個人能量 = 10 遊戲金幣
-    const TOLL_RATIO = 0.3;   // 過路費為地點價值的 30%（無條件進位）
+    const TOLL_RATIO = 0.3;   // 過路費為地價的 30%
+    const MAX_DICE_CAP = 20;  // 每日任務兌換骰子上限為 20 顆
 
     function calcTollFee(price) {
       return Math.max(1, Math.ceil(price * TOLL_RATIO));
+    }
+
+    function calcQuestDice(readCount, fitCount) {
+      const totalTasks = Math.max(0, Number(readCount) || 0) + Math.max(0, Number(fitCount) || 0);
+      return Math.min(MAX_DICE_CAP, totalTasks * 2);
     }
 
     /**
@@ -926,28 +1095,15 @@
         role: '山林巡守員',
         tagColor: '#388e3c',
         flagColor: '#4caf50',
-        hairColor: '#4e342e',
         hatColor: '#2e7d32',
         shirtColor: '#43a047',
         pantsColor: '#1e88e5',
         desc: '熟悉林務局與古道生態的麥塊探險家',
         headPixels: [
-          '................',
-          '...GGGGGGGGGG...',
-          '..GGGGGGGGGGGG..',
-          '..GGGGGGGGGGGG..',
-          '..BBBBBBBBBBBB..',
-          '..BBFFFFFFFFBB..',
-          '..BFFFFFFFFFFB..',
-          '..BFFKKFFKKFFB..',
-          '..BFFWWFFWWFFB..',
-          '..BFFFFNNFFFFB..',
-          '...FFFFMMFFFF...',
-          '...FFFFFFFFFF...',
-          '....GGGGGGGG....',
-          '...GGGGGGGGGG...',
-          '...GGFFFFFFGG...',
-          '....BBBBBBBB....'
+          '................','...GGGGGGGGGG...','..GGGGGGGGGGGG..','..GGGGGGGGGGGG..',
+          '..BBBBBBBBBBBB..','..BBFFFFFFFFBB..','..BFFFFFFFFFFB..','..BFFKKFFKKFFB..',
+          '..BFFWWFFWWFFB..','..BFFFFNNFFFFB..','...FFFFMMFFFF...','...FFFFFFFFFF...',
+          '....GGGGGGGG....','...GGGGGGGGGG...','...GGFFFFFFGG...','....BBBBBBBB....'
         ]
       },
       {
@@ -956,28 +1112,15 @@
         role: '水庫小博士',
         tagColor: '#0288d1',
         flagColor: '#29b6f6',
-        hairColor: '#5d4037',
         hatColor: '#e53935',
         shirtColor: '#ef5350',
         pantsColor: '#3949ab',
         desc: '熱愛翡翠水庫與南勢溪水文的小研究員',
         headPixels: [
-          '................',
-          '....BBBBBBBB....',
-          '...BBBBBBBBBB...',
-          '..BBFFFFFFFFBB..',
-          '.BBBFFFFFFFFBBB.',
-          '.BBFFKKFFKKFFBB.',
-          '.BBFFWWFFWWFFBB.',
-          '.BBBFFFFFFFFBBB.',
-          '..BBFFFPPFFFBB..',
-          '...FFFFFFFFFF...',
-          '....RRRRRRRR....',
-          '...RRWWWWWWRR...',
-          '...RRRRRRRRRR...',
-          '...RRFFFFFFRR...',
-          '....BBBBBBBB....',
-          '................'
+          '................','....BBBBBBBB....','...BBBBBBBBBB...','..BBFFFFFFFFBB..',
+          '.BBBFFFFFFFFBBB.','.BBFFKKFFKKFFBB.','.BBFFWWFFWWFFBB.','.BBBFFFFFFFFBBB.',
+          '..BBFFFPPFFFBB..','...FFFFFFFFFF...','....RRRRRRRR....','...RRWWWWWWRR...',
+          '...RRRRRRRRRR...','...RRFFFFFFRR...','....BBBBBBBB....','................'
         ]
       },
       {
@@ -986,28 +1129,15 @@
         role: '電廠工程師',
         tagColor: '#f57c00',
         flagColor: '#ffa726',
-        hairColor: '#212121',
         hatColor: '#fbc02d',
         shirtColor: '#1565c0',
         pantsColor: '#37474f',
         desc: '戴著黃色工程帽，專精桂山發電廠歷史',
         headPixels: [
-          '................',
-          '....YYYYYYYY....',
-          '...YYYYYYYYYY...',
-          '..YYYYYYYYYYYY..',
-          '..KKKKKKKKKKKK..',
-          '..KKFFFFFFFFKK..',
-          '..KFFFFFFFFFFK..',
-          '..KFFKKFFKKFFK..',
-          '..KFFKKFFKKFFK..',
-          '..KFFFFNNFFFFK..',
-          '...FFFFMMFFFF...',
-          '....BBBBBBBB....',
-          '...BBBBYYBBBB...',
-          '...BBBBYYBBBB...',
-          '....CCCCCCCC....',
-          '................'
+          '................','....YYYYYYYY....','...YYYYYYYYYY...','..YYYYYYYYYYYY..',
+          '..KKKKKKKKKKKK..','..KKFFFFFFFFKK..','..KFFFFFFFFFFK..','..KFFKKFFKKFFK..',
+          '..KFFKKFFKKFFK..','..KFFFFNNFFFFK..','...FFFFMMFFFF...','....BBBBBBBB....',
+          '...BBBBYYBBBB...','...BBBBYYBBBB...','....CCCCCCCC....','................'
         ]
       },
       {
@@ -1016,28 +1146,15 @@
         role: '童軍小偵探',
         tagColor: '#8e24aa',
         flagColor: '#ab47bc',
-        hairColor: '#8d6e63',
         hatColor: '#d84315',
         shirtColor: '#fb8c00',
         pantsColor: '#5d4037',
         desc: '紮營在童軍龜山營地，最擅長尋找遺址',
         headPixels: [
-          '................',
-          '.....RRRRRR.....',
-          '....RRRRRRRR....',
-          '..RRRRRRRRRRRR..',
-          '...BBBBBBBBBB...',
-          '..BBFFFFFFFFBB..',
-          '..BFFKKFFKKFFB..',
-          '..BFFWWFFWWFFB..',
-          '..BFFFFNNFFFFB..',
-          '...FFFFPPFFFF...',
-          '....OOOOOOOO....',
-          '...OORRRRRROO...',
-          '...OOOOOOOOOO...',
-          '...OOFFFFFFOO...',
-          '....BBBBBBBB....',
-          '................'
+          '................','.....RRRRRR.....','....RRRRRRRR....','..RRRRRRRRRRRR..',
+          '...BBBBBBBBBB...','..BBFFFFFFFFBB..','..BFFKKFFKKFFB..','..BFFWWFFWWFFB..',
+          '..BFFFFNNFFFFB..','...FFFFPPFFFF...','....OOOOOOOO....','...OORRRRRROO...',
+          '...OOOOOOOOOO...','...OOFFFFFFOO...','....BBBBBBBB....','................'
         ]
       }
     ];
@@ -1066,24 +1183,29 @@
 
     /**
      * ============================================================================
-     * 2. 遊戲核心狀態與主網頁能量閉環結算
+     * 2. 遊戲核心狀態與主網頁任務/能量對接
      * ============================================================================
      */
     const GameState = {
       uid: 'player_' + Math.random().toString(36).slice(2, 7),
       playerName: '探險者',
       selectedNpcId: 'ranger',
-      personalEnergy: 50,   // 個人累積能量
-      coins: 0,             // 本局持有金幣
-      diceLeft: 15,
-      ownedTileIds: [],     // 自己買下的地產 ID
-      phase: 'LOBBY',       // 'LOBBY' | 'IDLE' | 'ROLLING' | 'MOVING' | 'MODAL'
+      personalEnergy: 50,
+      coins: 0,
+
+      // 今日任務次數（閱讀島讀報 + 健身運動島增肌減脂，每完成 1 次換 2 顆，上限 20 顆）
+      readChallengeCount: 1,
+      fitnessQuestCount: 1,
+      diceLeft: 4,
+
+      ownedTileIds: [],
+      phase: 'LOBBY', // 'LOBBY' | 'IDLE' | 'ROLLING' | 'MOVING' | 'MODAL' | 'FINISHED'
 
       roomId: null,
       isSimulatedBotMode: false,
-      players: [],          // 依 joinOrder 排序的玩家陣列
+      players: [],
       currentTurnUid: null,
-      processedTollIds: new Set() // 避免重複領取同一筆過路費通知
+      processedTollIds: new Set()
     };
 
     const GameBridge = {
@@ -1095,9 +1217,12 @@
           const val = Number(params.get('energy'));
           if (!Number.isNaN(val) && val >= 0) GameState.personalEnergy = val;
         }
+        if (params.has('readCount') || params.has('fitCount')) {
+          GameState.readChallengeCount = Math.max(0, Number(params.get('readCount')) || 0);
+          GameState.fitnessQuestCount = Math.max(0, Number(params.get('fitCount')) || 0);
+        }
 
-        document.getElementById('lobby-energy-val').textContent = GameState.personalEnergy;
-        HUD.update();
+        this.recalculateInitialDice();
 
         window.addEventListener('message', (event) => {
           if (event.origin !== window.location.origin) return;
@@ -1106,11 +1231,10 @@
           if (type === 'MONOPOLY_INIT' && payload) {
             if (payload.uid) GameState.uid = payload.uid;
             if (payload.name) GameState.playerName = payload.name;
-            if (typeof payload.energy === 'number') {
-              GameState.personalEnergy = payload.energy;
-              document.getElementById('lobby-energy-val').textContent = GameState.personalEnergy;
-            }
-            HUD.update();
+            if (typeof payload.energy === 'number') GameState.personalEnergy = payload.energy;
+            if (typeof payload.readCount === 'number') GameState.readChallengeCount = payload.readCount;
+            if (typeof payload.fitCount === 'number') GameState.fitnessQuestCount = payload.fitCount;
+            this.recalculateInitialDice();
           } else if (type === 'MONOPOLY_PAUSE') {
             Engine.stopLoop();
           } else if (type === 'MONOPOLY_RESUME') {
@@ -1119,9 +1243,28 @@
         });
       },
 
+      recalculateInitialDice() {
+        GameState.diceLeft = calcQuestDice(GameState.readChallengeCount, GameState.fitnessQuestCount);
+        document.getElementById('lobby-energy-val').textContent = GameState.personalEnergy;
+        document.getElementById('quest-read-count').textContent = GameState.readChallengeCount;
+        document.getElementById('quest-fit-count').textContent = GameState.fitnessQuestCount;
+        document.getElementById('quest-dice-total').textContent = GameState.diceLeft;
+
+        const joinBtn = document.getElementById('btn-join-match');
+        if (GameState.diceLeft <= 0) {
+          joinBtn.disabled = true;
+          joinBtn.textContent = '今日尚無可用骰子（請先完成島嶼任務）';
+        } else {
+          joinBtn.disabled = false;
+          joinBtn.textContent = '🔍 隨機配對加入';
+        }
+        HUD.update();
+      },
+
+      // 離開或總結算返回主網頁：剩餘金幣自動換回個人累積能量，不影響全班能量
       closeAndReturn() {
         Engine.stopLoop();
-        MultiplayerManager.leaveRoom();
+        MultiplayerManager.leaveRoomCleanly();
 
         const refundedEnergy = Math.floor(GameState.coins / EXCHANGE_RATE);
         const finalPersonalEnergy = GameState.personalEnergy + refundedEnergy;
@@ -1156,7 +1299,7 @@
 
     /**
      * ============================================================================
-     * 3. Firebase Realtime Database 多人配對、順序輪流與過路費交易同步
+     * 3. Firebase Realtime Database 多人配對、防呆離場與方案一結束判定
      * ============================================================================
      */
     const MultiplayerManager = {
@@ -1177,7 +1320,6 @@
             badge.textContent = '🟢 Firebase 即時連線已就緒';
             badge.style.color = '#81c784';
           } catch (e) {
-            console.warn('Firebase 初始化失敗，切換至模擬配對模式:', e);
             this.enableSimulatedMode(badge);
           }
         } else {
@@ -1192,6 +1334,8 @@
       },
 
       async joinRandomMatch() {
+        if (GameState.diceLeft <= 0) return;
+
         const joinBtn = document.getElementById('btn-join-match');
         joinBtn.disabled = true;
         joinBtn.textContent = '⏳ 正在尋找隊友...';
@@ -1210,6 +1354,7 @@
               joinOrder: 1,
               tileIndex: 0,
               coins: GameState.coins,
+              diceLeft: GameState.diceLeft,
               isBot: false
             },
             {
@@ -1218,7 +1363,8 @@
               npcId: botNpc.id,
               joinOrder: 2,
               tileIndex: 0,
-              coins: 300,
+              coins: 240,
+              diceLeft: GameState.diceLeft,
               isBot: true
             }
           ];
@@ -1265,11 +1411,13 @@
             joinedAt: firebase.database.ServerValue.TIMESTAMP,
             tileIndex: 0,
             coins: GameState.coins,
+            diceLeft: GameState.diceLeft,
             isBot: false
           });
+          // 斷線時自動移除該玩家節點
           myPlayerRef.onDisconnect().remove();
 
-          // 監聽過路費入帳事件（當別人踩到你的領地並支付過路費時）
+          // 監聽過路費入帳事件
           this.roomRef.child('tollEvents').on('child_added', (snap) => {
             const evt = snap.val();
             const evtId = snap.key;
@@ -1278,7 +1426,7 @@
 
             if (evt.toUid === GameState.uid && evt.amount > 0) {
               GameState.coins += evt.amount;
-              this.syncMyCoins();
+              this.syncMyPlayerStats();
               HUD.update();
               const myPawn = PawnManager.pawns[GameState.uid];
               if (myPawn) {
@@ -1292,7 +1440,7 @@
             }
           });
 
-          // 監聽房間即時狀態
+          // 監聽房間即時變化
           this.roomRef.on('value', (snap) => {
             const roomData = snap.val();
             if (!roomData || !roomData.players) return;
@@ -1302,20 +1450,42 @@
               .slice(0, 4)
               .map((p, idx) => ({ ...p, joinOrder: idx + 1 }));
 
+            const activeUids = new Set(sortedPlayers.map(p => p.uid));
+
+            // 1. 中途離場防呆：清理已離線玩家的棋子與名下地產（變回無主地）
+            Object.keys(PawnManager.pawns).forEach((pUid) => {
+              if (!activeUids.has(pUid)) {
+                delete PawnManager.pawns[pUid];
+              }
+            });
+
+            // 同步地塊所有權（若原持有者已離場，則自動恢復為無主地）
+            BOARD_TILES.forEach((tile) => {
+              const tInfo = roomData.tiles ? roomData.tiles[tile.id] : null;
+              if (tInfo && activeUids.has(tInfo.ownerUid)) {
+                tile.ownerUid = tInfo.ownerUid;
+                tile.ownerName = tInfo.ownerName;
+                tile.ownerNpcId = tInfo.ownerNpcId;
+              } else {
+                tile.ownerUid = null;
+                tile.ownerName = '';
+                tile.ownerNpcId = null;
+              }
+            });
+
             GameState.players = sortedPlayers;
-            GameState.currentTurnUid = roomData.currentTurnUid || sortedPlayers[0]?.uid;
 
-            if (roomData.tiles) {
-              Object.entries(roomData.tiles).forEach(([tid, tInfo]) => {
-                const tile = BOARD_TILES[Number(tid)];
-                if (tile && tInfo) {
-                  tile.ownerUid = tInfo.ownerUid;
-                  tile.ownerName = tInfo.ownerName;
-                  tile.ownerNpcId = tInfo.ownerNpcId;
-                }
-              });
+            // 2. 若當前輪到的玩家已中途離場，由第一位在線玩家接管並推進回合
+            let turnUid = roomData.currentTurnUid;
+            if (!activeUids.has(turnUid) && sortedPlayers.length > 0) {
+              turnUid = sortedPlayers[0].uid;
+              if (sortedPlayers[0].uid === GameState.uid && roomData.status === 'playing') {
+                this.roomRef.update({ currentTurnUid: turnUid });
+              }
             }
+            GameState.currentTurnUid = turnUid;
 
+            // 同步其他在線玩家棋子位置
             sortedPlayers.forEach((p) => {
               if (p.uid !== GameState.uid) {
                 PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0);
@@ -1352,9 +1522,14 @@
                 }
                 this.enterGameBoard();
               }
-            } else {
+            } else if (GameState.phase !== 'FINISHED') {
               HUD.updateTurnPanel();
               HUD.update();
+
+              // 3. 檢查是否所有在線玩家剩餘骰子皆歸零（方案一結束條件）
+              if (roomData.status === 'finished' || this.areAllPlayersOutOfDice()) {
+                HUD.openFinalSummaryModal();
+              }
             }
           });
         } catch (err) {
@@ -1362,6 +1537,12 @@
           joinBtn.disabled = false;
           joinBtn.textContent = '🔍 重新配對';
         }
+      },
+
+      // 檢查房間內所有在線玩家的剩餘骰子是否皆已歸零
+      areAllPlayersOutOfDice() {
+        if (GameState.players.length === 0) return false;
+        return GameState.players.every(p => (p.diceLeft ?? 0) <= 0);
       },
 
       renderLobbySlots() {
@@ -1376,7 +1557,7 @@
             div.innerHTML = `
               <strong style="color:#ffd54f;">第 ${i + 1} 順位</strong>
               <span>${p.name}</span>
-              <span style="font-size:0.72rem;color:#a5d6a7;">${npc.role}</span>
+              <span style="font-size:0.72rem;color:#a5d6a7;">${npc.role}｜🎲 ${p.diceLeft}顆</span>
             `;
           } else {
             div.innerHTML = `<strong>第 ${i + 1} 順位</strong><span>等待玩家加入...</span>`;
@@ -1421,12 +1602,18 @@
         }
       },
 
-      syncMyCoins() {
+      syncMyPlayerStats() {
         const me = GameState.players.find(p => p.uid === GameState.uid);
-        if (me) me.coins = GameState.coins;
+        if (me) {
+          me.coins = GameState.coins;
+          me.diceLeft = GameState.diceLeft;
+        }
 
         if (!GameState.isSimulatedBotMode && this.roomRef) {
-          this.roomRef.child(`players/${GameState.uid}`).update({ coins: GameState.coins });
+          this.roomRef.child(`players/${GameState.uid}`).update({
+            coins: GameState.coins,
+            diceLeft: GameState.diceLeft
+          });
         }
       },
 
@@ -1436,7 +1623,7 @@
         tile.ownerName = myNpc.name;
         tile.ownerNpcId = myNpc.id;
 
-        this.syncMyCoins();
+        this.syncMyPlayerStats();
 
         if (!GameState.isSimulatedBotMode && this.roomRef) {
           this.roomRef.child(`tiles/${tile.id}`).set({
@@ -1447,10 +1634,9 @@
         }
       },
 
-      // 支付過路費給其他玩家
       sendTollPayment(tile, amount) {
         const myNpc = NPC_ROSTER.find(n => n.id === GameState.selectedNpcId) || NPC_ROSTER[0];
-        this.syncMyCoins();
+        this.syncMyPlayerStats();
 
         if (GameState.isSimulatedBotMode) {
           const bot = GameState.players.find(p => p.uid === tile.ownerUid);
@@ -1468,13 +1654,36 @@
         }
       },
 
+      // 輪替到下一位「還有剩餘骰子」的玩家；若全場骰子皆歸零則自動進入總結算
       advanceNextTurn() {
         const list = GameState.players;
         if (list.length === 0) return;
 
+        // 檢查是否所有在線玩家剩餘骰子皆歸零
+        if (this.areAllPlayersOutOfDice()) {
+          if (!GameState.isSimulatedBotMode && this.roomRef) {
+            this.roomRef.update({ status: 'finished' });
+          }
+          HUD.openFinalSummaryModal();
+          return;
+        }
+
+        // 依登入順序尋找下一位還有骰子（diceLeft > 0）的玩家
         const currIdx = list.findIndex(p => p.uid === GameState.currentTurnUid);
-        const nextIdx = (currIdx + 1) % list.length;
-        const nextPlayer = list[nextIdx];
+        let nextPlayer = null;
+        for (let step = 1; step <= list.length; step++) {
+          const candidate = list[(currIdx + step) % list.length];
+          if ((candidate.diceLeft ?? 0) > 0) {
+            nextPlayer = candidate;
+            break;
+          }
+        }
+
+        if (!nextPlayer) {
+          HUD.openFinalSummaryModal();
+          return;
+        }
+
         GameState.currentTurnUid = nextPlayer.uid;
 
         if (!GameState.isSimulatedBotMode && this.roomRef) {
@@ -1490,6 +1699,13 @@
       },
 
       runSimulatedBotTurn(bot) {
+        if ((bot.diceLeft ?? 0) <= 0) {
+          this.advanceNextTurn();
+          return;
+        }
+        bot.diceLeft -= 1;
+        HUD.updateTurnPanel();
+
         const steps = Math.floor(Math.random() * 6) + 1;
         document.getElementById('ui-dice-face').textContent = steps;
         document.getElementById('ui-tile-info').innerHTML = `🎲 隊友 <strong>${bot.name}</strong> 擲出了 ${steps} 點！`;
@@ -1501,14 +1717,12 @@
 
           if (tile.type === 'PROPERTY') {
             if (!tile.ownerUid && (bot.coins || 0) >= tile.price && Math.random() > 0.35) {
-              // 隊友買地
               bot.coins -= tile.price;
               tile.ownerUid = bot.uid;
               tile.ownerName = botNpc.name;
               tile.ownerNpcId = botNpc.id;
               FloatingTexts.spawn(tile.gx, tile.gy, `${botNpc.name}買下${tile.name}`, '#81d4fa');
             } else if (tile.ownerUid && tile.ownerUid !== bot.uid) {
-              // 隊友踩到你的領地，支付過路費給你！
               const fee = calcTollFee(tile.price);
               const paid = Math.min(bot.coins || 0, fee);
               bot.coins = Math.max(0, (bot.coins || 0) - paid);
@@ -1524,8 +1738,22 @@
         });
       },
 
-      leaveRoom() {
+      // 中途離場防呆：移除自己並將名下地產變回無主地，讓其餘玩家繼續遊戲
+      leaveRoomCleanly() {
         if (!GameState.isSimulatedBotMode && this.roomRef) {
+          // 1. 將自己名下的地產節點從 Firebase 移除（變回無主地）
+          GameState.ownedTileIds.forEach((tid) => {
+            this.roomRef.child(`tiles/${tid}`).remove();
+          });
+
+          // 2. 若當下正好是自己的回合，先將回合交棒給下一位在線隊友
+          const others = GameState.players.filter(p => p.uid !== GameState.uid);
+          if (GameState.currentTurnUid === GameState.uid && others.length > 0) {
+            const nextAlive = others.find(p => (p.diceLeft ?? 0) > 0) || others[0];
+            this.roomRef.update({ currentTurnUid: nextAlive.uid });
+          }
+
+          // 3. 將自己移出房間玩家列表
           this.roomRef.child(`players/${GameState.uid}`).remove();
           this.roomRef.off();
         }
@@ -1793,7 +2021,7 @@
 
     /**
      * ============================================================================
-     * 7. HUD 介面、購買、過路費互動與左側地契抽屜
+     * 7. HUD 介面、購買、過路費與方案一總結算排行榜
      * ============================================================================
      */
     const HUD = {
@@ -1837,21 +2065,22 @@
 
       updateTurnPanel() {
         const panel = document.getElementById('turn-order-panel');
-        panel.innerHTML = '<div style="font-size:0.75rem;color:#cbb094;font-weight:700;margin-bottom:2px;">👥 探險順位</div>';
+        panel.innerHTML = '<div style="font-size:0.75rem;color:#cbb094;font-weight:700;margin-bottom:2px;">👥 探險順位與剩餘骰</div>';
 
         GameState.players.forEach((p) => {
           const npc = NPC_ROSTER.find(n => n.id === p.npcId) || NPC_ROSTER[0];
           const isTurn = p.uid === GameState.currentTurnUid;
           const isMe = p.uid === GameState.uid;
+          const dLeft = p.diceLeft ?? 0;
 
           const row = document.createElement('div');
-          row.className = 'turn-player-card' + (isTurn ? ' active-turn' : '');
+          row.className = 'turn-player-card' + (isTurn ? ' active-turn' : '') + (dLeft <= 0 ? ' out-of-dice' : '');
           row.innerHTML = `
             <span class="player-dot" style="background:${npc.flagColor};"></span>
             <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
               ${p.joinOrder}. ${p.name}${isMe ? ' (你)' : ''}
             </div>
-            ${isTurn ? '<span>🎲</span>' : ''}
+            <span style="font-size:0.74rem;color:${dLeft > 0 ? '#ffd54f' : '#9e9e9e'};">🎲${dLeft}</span>
           `;
           panel.appendChild(row);
         });
@@ -1882,7 +2111,7 @@
         const rollBtn = document.getElementById('btn-roll');
         const isMyTurn = GameState.currentTurnUid === GameState.uid;
 
-        if (GameState.phase === 'LOBBY') {
+        if (GameState.phase === 'LOBBY' || GameState.phase === 'FINISHED') {
           rollBtn.disabled = true;
         } else if (!isMyTurn) {
           rollBtn.disabled = true;
@@ -1890,7 +2119,7 @@
           rollBtn.textContent = `等待 ${activeP ? activeP.name : '隊友'} 行動`;
         } else if (GameState.diceLeft <= 0 && GameState.phase === 'IDLE') {
           rollBtn.disabled = true;
-          rollBtn.textContent = '骰子已用盡';
+          rollBtn.textContent = '你的骰子已用盡';
         } else {
           rollBtn.disabled = GameState.phase !== 'IDLE';
           rollBtn.textContent = GameState.phase === 'IDLE' ? '🎲 輪到你！擲骰前進' : '探險移動中...';
@@ -1902,6 +2131,8 @@
 
         GameState.phase = 'ROLLING';
         GameState.diceLeft -= 1;
+        MultiplayerManager.syncMyPlayerStats();
+        this.updateTurnPanel();
         this.update();
 
         const diceBox = document.getElementById('ui-dice-face');
@@ -1934,15 +2165,12 @@
 
         if (tile.type === 'PROPERTY') {
           if (!tile.ownerUid) {
-            // 無主地 -> 開啟購買視窗
             this.openBuyModal(tile);
           } else if (tile.ownerUid === GameState.uid) {
-            // 自己的領地
             FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7');
             GameState.phase = 'IDLE';
             MultiplayerManager.advanceNextTurn();
           } else {
-            // 踩到別人的領地 -> 開啟支付過路費彈窗
             this.openTollModal(tile);
           }
         } else {
@@ -1966,7 +2194,6 @@
         actionsDiv.innerHTML = '';
 
         if (GameState.coins >= tollFee) {
-          // 情境 A：持有金幣足夠支付
           document.getElementById('toll-desc').innerHTML =
             `地價 ${tile.price} 🪙，需支付 30% 過路費：<strong style="color:#ffab91;font-size:1.1rem;">${tollFee} 🪙</strong>`;
 
@@ -1981,7 +2208,6 @@
           };
           actionsDiv.appendChild(payBtn);
         } else {
-          // 情境 B：金幣不足，檢查是否能用個人能量自動兌換補足
           const deficit = tollFee - GameState.coins;
           const neededEnergy = Math.ceil(deficit / EXCHANGE_RATE);
 
@@ -2003,7 +2229,6 @@
             };
             actionsDiv.appendChild(exPayBtn);
           } else {
-            // 情境 C：金幣與個人能量皆不足以全額支付（清空身上所有資源交付地主）
             const maxGained = GameState.personalEnergy * EXCHANGE_RATE;
             const totalPayable = GameState.coins + maxGained;
 
@@ -2080,8 +2305,84 @@
         MultiplayerManager.advanceNextTurn();
       },
 
+      // --- 方案一：全場骰子耗盡總結算排行榜彈窗 ---
+      openFinalSummaryModal() {
+        if (GameState.phase === 'FINISHED') return;
+        GameState.phase = 'FINISHED';
+        this.update();
+
+        // 計算每位在線玩家的：總積分 = 名下所有地產價值總和 + 剩餘金幣
+        const scoreboard = GameState.players.map((p) => {
+          const isMe = p.uid === GameState.uid;
+          const currentCoins = isMe ? GameState.coins : (p.coins || 0);
+          const ownedTiles = BOARD_TILES.filter(t => t.ownerUid === p.uid);
+          const landValue = ownedTiles.reduce((sum, t) => sum + t.price, 0);
+          const totalScore = landValue + currentCoins;
+
+          return {
+            uid: p.uid,
+            name: p.name,
+            npcId: p.npcId,
+            isMe,
+            ownedCount: ownedTiles.length,
+            ownedNames: ownedTiles.map(t => t.name),
+            landValue,
+            coins: currentCoins,
+            totalScore
+          };
+        }).sort((a, b) => b.totalScore - a.totalScore);
+
+        const listEl = document.getElementById('summary-ranking-list');
+        listEl.innerHTML = '';
+        const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+
+        scoreboard.forEach((entry, idx) => {
+          const row = document.createElement('div');
+          row.className = 'rank-row' + (idx === 0 ? ' rank-1' : '');
+
+          const avatarBox = document.createElement('div');
+          avatarBox.className = 'rank-avatar';
+          const cvs = document.createElement('canvas');
+          cvs.width = 16;
+          cvs.height = 16;
+          drawNpcAvatarToCanvas(cvs, entry.npcId);
+          avatarBox.appendChild(cvs);
+
+          const landsText = entry.ownedNames.length > 0
+            ? `領地(${entry.ownedCount}處)：${entry.ownedNames.join('、')}`
+            : '尚未購得領地';
+
+          row.innerHTML = `
+            <div class="rank-medal">${medals[idx] || idx + 1}</div>
+            <div class="rank-info">
+              <div class="rank-name">${entry.name}${entry.isMe ? ' (你)' : ''}</div>
+              <div class="rank-detail">${landsText}</div>
+              <div class="rank-detail">地產價值 ${entry.landValue} 🪙 + 剩餘金幣 ${entry.coins} 🪙</div>
+            </div>
+            <div class="rank-score">
+              <div style="font-size:0.7rem;color:#cbb094;">總積分</div>
+              <div class="rank-score-num">${entry.totalScore}</div>
+            </div>
+          `;
+          row.insertBefore(avatarBox, row.children[1]);
+          listEl.appendChild(row);
+        });
+
+        // 個人能量結算報告（剩餘金幣自動兌換回個人累積能量，不影響全班能量）
+        const refundedEnergy = Math.floor(GameState.coins / EXCHANGE_RATE);
+        const finalPersonalEnergy = GameState.personalEnergy + refundedEnergy;
+
+        document.getElementById('summary-energy-report').innerHTML = `
+          <strong>⚡ 個人能量結算明細：</strong><br>
+          • 本局結束剩餘金幣：<strong>${GameState.coins} 🪙</strong> $\\rightarrow$ 自動兌換回 <strong style="color:#7ee8fa;">+${refundedEnergy} ⚡ 個人能量</strong><br>
+          • 結算後個人累積能量：<strong style="color:#ffd54f;">${finalPersonalEnergy} ⚡</strong>（僅更新個人能量，不影響全班累積能量）
+        `;
+
+        document.getElementById('modal-summary').classList.add('show');
+      },
+
       openExchangeModal() {
-        if (GameState.phase === 'ROLLING' || GameState.phase === 'MOVING') return;
+        if (GameState.phase === 'ROLLING' || GameState.phase === 'MOVING' || GameState.phase === 'FINISHED') return;
         this.exchangeSpend = Math.min(10, GameState.personalEnergy);
         this.refreshExchangeUI();
         document.getElementById('modal-exchange').classList.add('show');
@@ -2707,6 +3008,7 @@
         document.getElementById('btn-follow').addEventListener('click', () => this.setAutoFollow(!this.camera.autoFollow));
         document.getElementById('btn-reset-view').addEventListener('click', () => this.resetCamera());
         document.getElementById('btn-exit').addEventListener('click', () => GameBridge.closeAndReturn());
+        document.getElementById('btn-summary-return').addEventListener('click', () => GameBridge.closeAndReturn());
 
         document.getElementById('btn-open-deeds').addEventListener('click', () => HUD.toggleDeedDrawer(true));
         document.getElementById('btn-close-deeds').addEventListener('click', () => HUD.toggleDeedDrawer(false));
@@ -2729,7 +3031,7 @@
             const gained = HUD.exchangeSpend * EXCHANGE_RATE;
             GameState.personalEnergy -= HUD.exchangeSpend;
             GameState.coins += gained;
-            MultiplayerManager.syncMyCoins();
+            MultiplayerManager.syncMyPlayerStats();
             HUD.update();
             const myPawn = PawnManager.pawns[GameState.uid];
             if (myPawn) FloatingTexts.spawn(myPawn.gx, myPawn.gy, `兌換 +${gained} 🪙`, '#7ee8fa');
