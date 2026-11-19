@@ -1495,6 +1495,20 @@
     </div>
   </div>
 
+  <!-- 🐢 龜山探險島：2.5D 大富翁內視窗 -->
+  <div id="modal-monopoly" class="modal-overlay hidden" style="z-index: 300000; padding: 12px;">
+    <div class="modal-card" style="width: 96vw; max-width: 1280px; height: 92vh; max-height: 92vh; display: flex; flex-direction: column; padding: 12px; background: #241710; border: 3px solid #f5bc47; overflow: hidden;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1.5px solid rgba(235, 185, 115, 0.3);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.35rem;">🐢</span>
+          <h2 style="color: #ffd17a; font-size: 1.15rem; font-weight: 900;">龜山探險島・2.5D 大富翁</h2>
+        </div>
+        <button type="button" class="drawer-close" style="background: #b54822; color: #fff; font-weight: bold;" onclick="closeMonopolyModal()" title="強制關閉視窗">×</button>
+      </div>
+      <iframe id="monopoly-iframe" src="about:blank" style="flex: 1; width: 100%; height: 100%; border: none; border-radius: 12px; background: #1a100a;"></iframe>
+    </div>
+  </div>
+  
   <!-- 教師控制台彈窗 -->
   <div id="modal-teacher" class="modal-overlay hidden">
     <div class="modal-card">
@@ -1605,7 +1619,7 @@
       { id: 'reading',  title: '閱讀島',     subtitle: '每日閱讀分享（每天可打卡 3 次）', color: 0xE9D8F4, pos: [-7.8, 0, 4.5], radius: 4.8 },
       { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xE8B4B8, pos: [7.8, 0, 4.5], radius: 4.8 },
       { id: 'wasteland_n', title: '荒地', subtitle: '這片土地沉睡已久，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [0, 0, -9.0], radius: 4.8 },
-      { id: 'wasteland_s', title: '荒地', subtitle: '這片土地沉睡已久，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [0, 0, 9.0], radius: 4.8 }
+      { id: 'wasteland_s', title: '龜山探險島', subtitle: '龜山探險・擲骰子享受龜山秘境', color: 0x76A652, pos: [0, 0, 9.0], radius: 4.8 }
     ];
 
     // ==========================================
@@ -2329,12 +2343,11 @@ function applyRosterData(data) {
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
-      const islands = [
+const islands = [
         { id: 'nature', limit: 1 },
         { id: 'sport', limit: 1 },
         { id: 'reading', limit: 3 },
-        { id: 'civics', limit: 1 },
-        { id: 'wasteland_s', limit: 1 }
+        { id: 'civics', limit: 1 }
       ];
 
       islands.forEach(item => {
@@ -2367,6 +2380,11 @@ function applyRosterData(data) {
       const wnElem = document.getElementById('mini-wasteland_n');
       if (wnElem) {
         wnElem.setAttribute('class', 'minimap-island minimap-open');
+      }
+
+      const wsElem = document.getElementById('mini-wasteland_s');
+      if (wsElem) {
+        wsElem.setAttribute('class', 'minimap-island minimap-open');
       }
 
       updateSportTabStatus();
@@ -5108,6 +5126,101 @@ if (isCompleted) {
       return group;
     }
 
+    function createTurtleHillLandmark() {
+      const group = new THREE.Group();
+
+      const shellGreenMat = SharedPool.getMaterial('MeshStandardMaterial', {
+        color: 0x4D7C0F, roughness: 0.85, flatShading: true
+      });
+      const ridgeMat = SharedPool.getMaterial('MeshStandardMaterial', {
+        color: 0x65A30D, roughness: 0.8, flatShading: true
+      });
+      const rimMat = SharedPool.getMaterial('MeshStandardMaterial', {
+        color: 0xA3E635, roughness: 0.85, flatShading: true
+      });
+      const skinHillMat = SharedPool.getMaterial('MeshStandardMaterial', {
+        color: 0x577542, roughness: 0.88, flatShading: true
+      });
+      const eyeMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0x1E293B });
+
+      // 1. 烏龜背甲主山丘（扁圓半球體）
+      const shellGeo = new THREE.SphereGeometry(2.1, 10, 7, 0, Math.PI * 2, 0, Math.PI * 0.5);
+      const shell = new THREE.Mesh(shellGeo, shellGreenMat);
+      shell.scale.set(1.05, 0.72, 1.25);
+      shell.castShadow = true;
+      shell.receiveShadow = true;
+      group.add(shell);
+
+      // 2. 龜甲山脊隆起岩塊（增加山丘層次感）
+      const ridgeCoords = [
+        [0, 1.48, 0, 0.75],
+        [0, 1.32, 1.15, 0.55],
+        [0, 1.32, -1.15, 0.55],
+        [-0.95, 1.22, 0.55, 0.5],
+        [0.95, 1.22, 0.55, 0.5],
+        [-0.95, 1.22, -0.55, 0.5],
+        [0.95, 1.22, -0.55, 0.5]
+      ];
+      ridgeCoords.forEach(([rx, ry, rz, rSize]) => {
+        const plate = new THREE.Mesh(new THREE.CylinderGeometry(rSize * 0.75, rSize, 0.24, 6), ridgeMat);
+        plate.position.set(rx, ry, rz);
+        plate.castShadow = true;
+        group.add(plate);
+      });
+
+      // 3. 龜殼邊緣草坡環
+      const shellRim = new THREE.Mesh(new THREE.CylinderGeometry(2.18, 2.35, 0.28, 10), rimMat);
+      shellRim.scale.set(1.05, 1, 1.25);
+      shellRim.position.y = 0.14;
+      shellRim.receiveShadow = true;
+      group.add(shellRim);
+
+      // 4. 烏龜頭部山丘（朝向 +Z 正前方玩家視角）
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 0.45, 2.55);
+
+      const headHill = new THREE.Mesh(new THREE.DodecahedronGeometry(0.72, 1), skinHillMat);
+      headHill.scale.set(0.95, 0.75, 1.25);
+      headHill.castShadow = true;
+      headHill.receiveShadow = true;
+      headGroup.add(headHill);
+
+      // 烏龜雙眼
+      [-0.36, 0.36].forEach(ex => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), eyeMat);
+        eye.position.set(ex, 0.16, 0.58);
+        headGroup.add(eye);
+      });
+      group.add(headGroup);
+
+      // 5. 四肢小山丘（前肢與後肢）
+      const flippers = [
+        { x: -1.85, z:  1.45, rotY:  0.55, sx: 1.15, sz: 0.65 },
+        { x:  1.85, z:  1.45, rotY: -0.55, sx: 1.15, sz: 0.65 },
+        { x: -1.75, z: -1.45, rotY: -0.55, sx: 1.05, sz: 0.60 },
+        { x:  1.75, z: -1.45, rotY:  0.55, sx: 1.05, sz: 0.60 }
+      ];
+      flippers.forEach(f => {
+        const limb = new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.85, 6), skinHillMat);
+        limb.position.set(f.x, 0.28, f.z);
+        limb.rotation.y = f.rotY;
+        limb.scale.set(f.sx, 0.65, f.sz);
+        limb.castShadow = true;
+        limb.receiveShadow = true;
+        group.add(limb);
+      });
+
+      // 6. 烏龜尾巴小土丘（後方 -Z）
+      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.9, 5), skinHillMat);
+      tail.position.set(0, 0.24, -2.65);
+      tail.rotation.x = -Math.PI / 2.3;
+      tail.castShadow = true;
+      group.add(tail);
+
+      registerObstacle('wasteland_s', 0, 0, 2.5);
+      return group;
+    }
+
     function createReclaimLandmarkStages(parentGroup) {
       const grassMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x65A30D, roughness: 0.8, flatShading: true });
       const stoneMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94A3B8, roughness: 0.9, flatShading: true });
@@ -6485,6 +6598,8 @@ function revertToLocalWeather() {
     let oceanFrameCounter = 0; // 🌟 控制海浪每 2 幀更新一次
 
     let isFocusing = false;
+    let isMainLoopPaused = false;
+    let resumeMainLoopFn = null;
     let targetCameraPos = new THREE.Vector3(0, 22, 46);
     let targetLookAt = new THREE.Vector3(0, 0, 0);
     let isCartPaused = false;
@@ -7591,7 +7706,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         const underbelly = createIslandUnderbellyMesh(baseRadius, cfg.color);
         group.add(underbelly);
 
-        if (cfg.id !== 'wasteland_n' && cfg.id !== 'wasteland_s') {
+        if (cfg.id !== 'wasteland_n') {
           const vines = createHangingVines(sandRadius);
           group.add(vines);
         }
@@ -7620,11 +7735,11 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         } else if (cfg.id === 'civics') {
           landmark = createCivicsLandmark();
         }
-        else if (cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s') {
+        else if (cfg.id === 'wasteland_n') {
           landmark = createWastelandLandmark(cfg.id);
-          if (cfg.id === 'wasteland_n') {
-            northIslandRocks = landmark;
-          }
+          northIslandRocks = landmark;
+        } else if (cfg.id === 'wasteland_s') {
+          landmark = createTurtleHillLandmark();
         }
         group.add(landmark);
         if (cfg.id === 'wasteland_n') {
@@ -7651,7 +7766,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
 
         if (cfg.id === 'civics') group.add(createMascotSoapbox());
 
-        if (cfg.id !== 'wasteland_n' && cfg.id !== 'wasteland_s') {
+        if (cfg.id !== 'wasteland_n') {
           const labelSprite = createIslandTitleSprite(cfg.title);
           labelSprite.position.set(0, 5.6, 0);
           labelSprite.visible = areLabelsVisible;
@@ -7938,9 +8053,10 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       let clock = new THREE.Clock();
 
       function animate() {
-  requestAnimationFrame(animate);
-  const time = clock.getElapsedTime();
-  const currentHour = new Date().getHours(); // 🌟 每幀只取得一次時間
+        if (isMainLoopPaused) return; // ⏸️ 大富翁開啟時直接中斷排程，停止所有 3D 運算
+        requestAnimationFrame(animate);
+        const time = clock.getElapsedTime();
+        const currentHour = new Date().getHours(); // 🌟 每幀只取得一次時間
 
         if (isFocusing) {
           camera.position.lerp(targetCameraPos, 0.15);
@@ -8910,6 +9026,14 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
         }
         renderer.render(scene, camera);
       }
+
+      // 供 closeMonopolyModal() 關閉大富翁時重新啟動 3D 迴圈
+      resumeMainLoopFn = () => {
+        if (!isMainLoopPaused) return;
+        isMainLoopPaused = false;
+        animate();
+      };
+
       animate();
     }
 
@@ -8918,6 +9042,13 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
     // ==========================================
     function focusOnIsland(islandData) {
       if (!islandData || !islandData.pos) return;
+
+      // 🐢 點擊「龜山探險島」直接開啟大富翁內視窗，不移動鏡頭也不開側邊抽屜
+      if (islandData.id === 'wasteland_s') {
+        openMonopolyModal();
+        return;
+      }
+
       isFocusing = true;
 
       if (islandData.id === 'sport' || islandData.id === 'nature') {
@@ -8930,6 +9061,125 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
       }
       openDrawer(islandData);
     }
+
+    // 🐢 開啟 2.5D 大富翁內視窗，並傳遞玩家身分、個人能量與今日任務次數
+    function openMonopolyModal() {
+      if (!currentStudent || !currentStudent.seatNumber) {
+        alert('🎒 請先選擇你的座號身分登入後，再進入龜山探險島喔！');
+        return;
+      }
+
+      // 1. 暫停主網頁 3D 渲染迴圈與鏡頭控制
+      isMainLoopPaused = true;
+      if (controls) controls.enabled = false;
+      if (typeof closeDrawer === 'function') {
+        document.getElementById('side-drawer').classList.remove('open');
+      }
+
+      // 2. 讀取目前學生的姓名、個人能量，以及今日讀報／運動打卡次數
+      const uid = currentStudent.guestId || `seat_${currentStudent.seatNumber}`;
+      const name = currentStudent.name || '探險者';
+      const energy = currentStudent.myPoints || 0;
+      const readCount = getDailyCount('reading_daily');   // 今日讀報挑戰次數
+      const fitCount = getDailyCount('sport_exercise');   // 增肌減脂任務次數
+
+      const query = new URLSearchParams({
+        uid,
+        name,
+        energy: String(energy),
+        readCount: String(readCount),
+        fitCount: String(fitCount)
+      });
+
+      const iframe = document.getElementById('monopoly-iframe');
+      const modal = document.getElementById('modal-monopoly');
+
+      // 3. 雙重保險：除了網址參數外，載入完成後再透過 postMessage 傳送一次最新狀態
+      iframe.onload = () => {
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage({
+            type: 'MONOPOLY_INIT',
+            payload: { uid, name, energy, readCount, fitCount }
+          }, window.location.origin);
+        }
+      };
+
+      iframe.src = `./monopoly.html?${query.toString()}`;
+      modal.classList.remove('hidden');
+    }
+
+    // 🐢 關閉大富翁內視窗並恢復主島嶼運作
+    function closeMonopolyModal(forceClose = false) {
+      const modal = document.getElementById('modal-monopoly');
+      const iframe = document.getElementById('monopoly-iframe');
+
+      // 若玩家直接點擊外框右上角「×」，先觸發大富翁內部結算以退還剩餘金幣並退出連線房間
+      if (!forceClose && iframe && iframe.contentWindow && iframe.contentWindow.GameBridge) {
+        try {
+          iframe.contentWindow.GameBridge.closeAndReturn();
+          return;
+        } catch (e) {
+          // 若 iframe 尚未載入完成則直接執行下方關閉流程
+        }
+      }
+
+      if (modal) modal.classList.add('hidden');
+      if (iframe) iframe.src = 'about:blank'; // 釋放記憶體與 Firebase 連線
+
+      // 恢復鏡頭與 3D 主渲染迴圈
+      if (controls && !isRidingCart && !isRidingBoat && !isRidingBalloon) {
+        controls.enabled = true;
+      }
+      if (typeof resumeMainLoopFn === 'function') {
+        resumeMainLoopFn();
+      }
+    }
+
+    // 🐢 監聽來自 monopoly.html 的結算返回訊息（MONOPOLY_CLOSE）
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin && event.origin !== 'null') return;
+
+      const { type, payload } = event.data || {};
+      if (type === 'MONOPOLY_CLOSE' && payload) {
+        const oldEnergy = currentStudent.myPoints || 0;
+        const newEnergy = (typeof payload.personalEnergy === 'number') ? payload.personalEnergy : oldEnergy;
+        const energyDiff = newEnergy - oldEnergy;
+
+        // 1. 更新主網頁的個人累積能量與記憶體快取（不影響全班共創能量）
+        currentStudent.myPoints = newEnergy;
+        sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
+        if (currentStudent.seatNumber !== '訪客' && Array.isArray(rosterList)) {
+          const matched = rosterList.find(s => String(s.seatNumber) === String(currentStudent.seatNumber));
+          if (matched) matched.points = newEnergy;
+        }
+        updateHudProfile();
+
+        // 2. 若個人能量有變動且為正式座號學生，同步寫入 GAS 試算表紀錄
+        if (energyDiff !== 0 && currentStudent.seatNumber !== '訪客') {
+          sendToGAS({
+            type: 'task_complete',
+            seatNumber: currentStudent.seatNumber,
+            studentName: `${currentStudent.avatar} ${currentStudent.name}`,
+            islandTitle: '龜山探險島',
+            taskTitle: '2.5D大富翁探險結算',
+            points: energyDiff,
+            detail1: payload.ownedNames && payload.ownedNames.length > 0
+              ? `購得領地：${payload.ownedNames.join('、')}`
+              : '完成大富翁探險',
+            verifier: '大富翁自動結算'
+          });
+        }
+
+        // 3. 關閉內視窗並恢復主島嶼動畫
+        closeMonopolyModal(true);
+
+        if (payload.refundedEnergy > 0) {
+          showLiveBanner(`🐢 歡迎回到學習島！大富翁剩餘金幣已自動換回 +${payload.refundedEnergy} ⚡ 個人能量！`);
+        } else {
+          showLiveBanner(`🐢 歡迎回到 301 學習島！`);
+        }
+      }
+    });
 
     function openDrawer(islandData) {
       if (typeof playCustomAudio === 'function' && islandData.id !== 'cart' && islandData.id !== 'boat') {
