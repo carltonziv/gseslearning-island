@@ -156,7 +156,6 @@
       box-shadow: 0 0 0 3px rgba(255, 213, 79, 0.28);
     }
 
-    /* 已被其他玩家優先選走的角色鎖定樣式 */
     .npc-card.taken {
       opacity: 0.45;
       filter: grayscale(0.65);
@@ -881,7 +880,7 @@
 </head>
 <body>
 
-  <!-- ================= 階段一：麥塊像素風角色選擇與多人配對大廳 ================= -->
+  <!-- ================= 階段一：麥塊像素風角色選擇與配對大廳 ================= -->
   <section id="lobby-screen">
     <div class="lobby-box">
       <div class="lobby-header">
@@ -1220,7 +1219,6 @@
       personalEnergy: 50,
       coins: 0,
 
-      // 今日任務次數（閱讀島讀報 + 健身運動島增肌減脂，每完成 1 次換 2 顆，上限 20 顆）
       readChallengeCount: 1,
       fitnessQuestCount: 1,
       diceLeft: 4,
@@ -1231,8 +1229,9 @@
       roomId: null,
       isSimulatedBotMode: false,
       players: [],
-      takenNpcMap: {}, // npcId -> playerName（已被其他玩家優先選走的角色對照表）
+      takenNpcMap: {},
       currentTurnUid: null,
+      pendingSummaryAfterAction: false, // 標記房間已進入結算，等待本機最後步伐與交易彈窗結束後再顯示
       processedTollIds: new Set()
     };
 
@@ -1305,7 +1304,7 @@
             personalEnergy: finalPersonalEnergy,
             refundedEnergy: refundedEnergy,
             remainingCoins: leftoverCoins,
-            affectClassEnergy: false, // 明確標記：不影響全班累積能量
+            affectClassEnergy: false,
             ownedTileIds: GameState.ownedTileIds,
             ownedNames
           }
@@ -1326,7 +1325,7 @@
 
     /**
      * ============================================================================
-     * 3. Firebase Realtime Database 多人配對、角色唯一性鎖定與防呆離場
+     * 3. Firebase Realtime Database 多人配對、角色唯一性鎖定與延遲結算同步
      * ============================================================================
      */
     const MultiplayerManager = {
@@ -1365,9 +1364,8 @@
         return `${npc.name}(${GameState.uid.slice(-4)})`;
       },
 
-      // 在等待開局期間，若玩家切換了未被選走的其他角色，即時同步至 Firebase
       async changeMyNpcInLobby(newNpcId) {
-        if (GameState.takenNpcMap[newNpcId]) return; // 已被別人選走，禁止選取
+        if (GameState.takenNpcMap[newNpcId]) return;
 
         GameState.selectedNpcId = newNpcId;
         HUD.refreshLobbyNpcCards();
@@ -1455,7 +1453,6 @@
               currentTurnUid: GameState.uid
             });
           } else {
-            // 若自己原本選的角色已被房內先到的玩家選走，自動改選第一個剩餘可用角色
             const takenIds = new Set(existingPlayersInRoom.map(p => p.npcId));
             if (takenIds.has(GameState.selectedNpcId)) {
               const availableNpc = NPC_ROSTER.find(n => !takenIds.has(n.id));
@@ -1481,7 +1478,6 @@
           });
           myPlayerRef.onDisconnect().remove();
 
-          // 監聽過路費入帳事件
           this.roomRef.child('tollEvents').on('child_added', (snap) => {
             const evt = snap.val();
             const evtId = snap.key;
@@ -1504,7 +1500,6 @@
             }
           });
 
-          // 監聽房間即時變化
           this.roomRef.on('value', (snap) => {
             const roomData = snap.val();
             if (!roomData || !roomData.players) return;
@@ -1516,7 +1511,6 @@
 
             const activeUids = new Set(sortedPlayers.map(p => p.uid));
 
-            // 檢查是否有其他比自己早進房的玩家選走了相同角色（防同時點擊撞角）
             const newTakenMap = {};
             let conflictWithEarlierPlayer = false;
             const myIndex = sortedPlayers.findIndex(p => p.uid === GameState.uid);
@@ -1539,7 +1533,6 @@
               }
             }
 
-            // 清理已離線玩家棋子與地產
             Object.keys(PawnManager.pawns).forEach((pUid) => {
               if (!activeUids.has(pUid)) {
                 delete PawnManager.pawns[pUid];
@@ -1570,9 +1563,12 @@
             }
             GameState.currentTurnUid = turnUid;
 
+            // 同步遠端玩家最後一步跳躍，並在跳躍完成後檢查是否要顯示已收到的結算視窗
             sortedPlayers.forEach((p) => {
               if (p.uid !== GameState.uid) {
-                PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0);
+                PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0, () => {
+                  this.tryShowPendingSummary();
+                });
               }
             });
 
@@ -1611,8 +1607,10 @@
               HUD.updateTurnPanel();
               HUD.update();
 
-              if (roomData.status === 'finished' || this.areAllPlayersOutOfDice()) {
-                HUD.openFinalSummaryModal();
+              // 唯有當房間狀態正式標記為 'finished'（代表最後一位玩家的步伐與交易彈窗皆已完成）才準備結算
+              if (roomData.status === 'finished') {
+                GameState.pendingSummaryAfterAction = true;
+                this.tryShowPendingSummary();
               }
             }
           });
@@ -1620,6 +1618,19 @@
           console.error('配對發生錯誤:', err);
           joinBtn.disabled = false;
           joinBtn.textContent = '🔍 重新配對';
+        }
+      },
+
+      // 確保所有棋子都已完成跳躍動畫、且本機沒有正在進行的擲骰/移動/交易彈窗，才正式開啟結算視窗
+      tryShowPendingSummary() {
+        if (!GameState.pendingSummaryAfterAction || GameState.phase === 'FINISHED') return;
+
+        const isAnyPawnMoving = Object.values(PawnManager.pawns).some(p => p.isHopping);
+        const isLocalBusy = ['ROLLING', 'MOVING', 'MODAL'].includes(GameState.phase);
+
+        if (!isAnyPawnMoving && !isLocalBusy) {
+          GameState.pendingSummaryAfterAction = false;
+          HUD.openFinalSummaryModal();
         }
       },
 
@@ -1737,6 +1748,7 @@
         }
       },
 
+      // 唯有在玩家走完步數且「決定好要不要購買 / 付完過路費」後，才會呼叫此函式判斷是否終局
       advanceNextTurn() {
         const list = GameState.players;
         if (list.length === 0) return;
@@ -1745,7 +1757,10 @@
           if (!GameState.isSimulatedBotMode && this.roomRef) {
             this.roomRef.update({ status: 'finished' });
           }
-          HUD.openFinalSummaryModal();
+          // 稍微停頓 0.45 秒讓玩家看清最後購買的旗幟或金幣飄字，再彈出總結算視窗
+          setTimeout(() => {
+            HUD.openFinalSummaryModal();
+          }, 450);
           return;
         }
 
@@ -1760,7 +1775,9 @@
         }
 
         if (!nextPlayer) {
-          HUD.openFinalSummaryModal();
+          setTimeout(() => {
+            HUD.openFinalSummaryModal();
+          }, 450);
           return;
         }
 
@@ -1992,17 +2009,18 @@
         return this.pawns[uid];
       },
 
-      syncRemotePawn(uid, npcId, targetTileIndex) {
+      syncRemotePawn(uid, npcId, targetTileIndex, onHopDone = null) {
         const pawn = this.createOrUpdatePawn(uid, npcId, targetTileIndex);
         if (pawn.tileIndex !== targetTileIndex && !pawn.isHopping) {
           const steps = (targetTileIndex - pawn.tileIndex + BOARD_TILES.length) % BOARD_TILES.length;
           if (steps > 0 && steps <= 12) {
-            this.enqueueSteps(uid, steps, null);
+            this.enqueueSteps(uid, steps, onHopDone);
           } else {
             const t = BOARD_TILES[targetTileIndex];
             pawn.tileIndex = targetTileIndex;
             pawn.gx = t.gx;
             pawn.gy = t.gy;
+            if (onHopDone) onHopDone(targetTileIndex);
           }
         }
       },
@@ -2138,7 +2156,6 @@
         this.refreshLobbyNpcCards();
       },
 
-      // 即時更新角色卡片鎖定狀態（已被其他玩家優先選走的角色顯示鎖定徽章並禁止點擊）
       refreshLobbyNpcCards() {
         document.querySelectorAll('.npc-card').forEach((card) => {
           const id = card.dataset.npcId;
@@ -2249,6 +2266,7 @@
             GameState.phase = 'MOVING';
             this.update();
 
+            // 玩家棋子一格一格跳到最終格子後，才執行抵達事件與交易判斷
             PawnManager.enqueueSteps(GameState.uid, finalSteps, (finalTileIndex) => {
               MultiplayerManager.syncMyPosition(finalTileIndex);
               this.handleTileArrival(finalTileIndex);
@@ -2262,12 +2280,14 @@
 
         if (tile.type === 'PROPERTY') {
           if (!tile.ownerUid) {
+            // 停在無主地：先讓玩家決定要不要購買，關閉彈窗後才會進入下一回合或結算
             this.openBuyModal(tile);
           } else if (tile.ownerUid === GameState.uid) {
             FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7');
             GameState.phase = 'IDLE';
             MultiplayerManager.advanceNextTurn();
           } else {
+            // 停在別人領地：先完成過路費交易彈窗，關閉彈窗後才會進入下一回合或結算
             this.openTollModal(tile);
           }
         } else {
