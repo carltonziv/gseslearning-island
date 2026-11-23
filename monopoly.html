@@ -3233,6 +3233,38 @@ enqueueSteps(uid, steps, onComplete) {
         this.voxelCache[key] = result;
         return result;
       },
+      applyPixelOutline(canvas, outlineHex = '#231712') {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const src = new Uint8ClampedArray(imgData.data);
+        const dst = imgData.data;
+
+        const r = parseInt(outlineHex.slice(1, 3), 16);
+        const g = parseInt(outlineHex.slice(3, 5), 16);
+        const b = parseInt(outlineHex.slice(5, 7), 16);
+
+        for (let y = 1; y < h - 1; y++) {
+          for (let x = 1; x < w - 1; x++) {
+            const idx = (y * w + x) * 4;
+            if (src[idx + 3] === 0) {
+              const hasOpaqueNeighbor =
+                src[((y - 1) * w + x) * 4 + 3] > 200 ||
+                src[((y + 1) * w + x) * 4 + 3] > 200 ||
+                src[(y * w + (x - 1)) * 4 + 3] > 200 ||
+                src[(y * w + (x + 1)) * 4 + 3] > 200;
+              if (hasOpaqueNeighbor) {
+                dst[idx] = r;
+                dst[idx + 1] = g;
+                dst[idx + 2] = b;
+                dst[idx + 3] = 255;
+              }
+            }
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      },
 
       getStackedTerrainTile(terrainType) {
         const uw = ISO_CONFIG.TILE_W / 6; const uh = ISO_CONFIG.TILE_H / 6; 
@@ -3490,32 +3522,70 @@ getStackedPropSprite(propType) {
           return this.buildStackedSprite('prop_reflection_post', layers, pal, 4.4, 2.3, 2.8);
         }
 
-        // ==================== 新增：房子 3 幢（仿附圖 HOUSES） ====================
+// ==================== 新增：房子 3 幢（仿附圖像素斜頂小屋） ====================
         if (propType === 'decor_house_blue' || propType === 'decor_house_orange' || propType === 'decor_house_red') {
+          const cacheKey = `prop_cottage_${propType}`;
+          if (this.voxelCache[cacheKey]) return this.voxelCache[cacheKey];
+
           const roofSchemes = {
-            decor_house_blue:   { R: '#2563eb', H: '#60a5fa', D: '#1d4ed8' },
-            decor_house_orange: { R: '#ea580c', H: '#fbbf24', D: '#c2410c' },
-            decor_house_red:    { R: '#dc2626', H: '#f87171', D: '#991b1b' }
+            decor_house_blue:   { R: '#2563eb', H: '#60a5fa', D: '#1d4ed8', E: '#38bdf8' },
+            decor_house_orange: { R: '#f97316', H: '#fdba74', D: '#c2410c', E: '#fb923c' },
+            decor_house_red:    { R: '#dc2626', H: '#fca5a5', D: '#991b1b', E: '#f87171' }
           };
           const rf = roofSchemes[propType];
-          const pal = {
-            S: '#78716c', s: '#a8a29e', W: '#fef3c7', T: '#78350f',
-            B: '#38bdf8', G: '#4d7c0f', F: '#f43f5e',
-            R: rf.R, H: rf.H, D: rf.D
-          };
-          const layers = [
-            ['.SSSSSS.','SSSSSSSS','SSSSSSSS','SSSSSSSS','SSSSSSSS','SSSSSSSS','G.ssss.G','..ssss..'],
-            ['.TWWWWTS','.WBBBBWS','.WWWWWW.','.WWWWWW.','.WWWWWW.','.TWTTWT.','.GFTTFG.','........'],
-            ['.TWWWWTS','.WBBBBWS','.WWWWWW.','.WWWWWW.','.WWWWWW.','.TWTTWT.','........','........'],
-            ['.TTTTTTS','.WWWWWWs','.WWWWWW.','.WWWWWW.','.WWWWWW.','.TTTTTT.','........','........'],
-            ['RRRRRRRS','RHHHHHHS','RRRRRRRR','RRRRRRRR','RRRRRRRR','RRRRRRRR','DDDDDDDD','........'],
-            ['.RRRRRRS','.RHHHHHs','.RRRRRR.','.RRRRRR.','.RRRRRR.','.DDDDDD.','........','........'],
-            ['..RRRR.S','..RHHHRs','..RRRR..','..RRRR..','..DDDD..','........','........','........'],
-            ['...DD..s','...HH...','...HH...','...DD...','........','........','........','........']
-          ];
-          return this.buildStackedSprite(`prop_${propType}`, layers, pal, 10.5, 5.6, 2.7);
-        }
 
+          const pal = {
+            K: '#231712', // 底座深色陰影邊
+            S: '#64748b', // 石頭地基
+            W: '#f1f5f9', // 白色石牆
+            G: '#cbd5e1', // 屋簷下陰影灰牆
+            O: '#ea580c', // 橘色拱門框
+            A: '#c2410c', // 側門紅橘門框
+            T: '#451a03', // 深木色門板
+            P: '#f97316', // 藍屋右側橘色裝飾帶
+            B: '#38bdf8', // 小窗戶
+            R: rf.R,      // 屋頂主瓦片色
+            H: rf.H,      // 屋頂亮面瓦片
+            D: rf.D,      // 屋頂瓦片格線
+            E: rf.E       // 屋簷亮邊
+          };
+
+          // 左屋（藍頂）右側帶橘色腰線；右屋（橘頂）雙側皆有拱門；紅屋帶側窗
+          const sideL1 = propType === 'decor_house_blue'
+            ? '.WWWWWWP.'
+            : (propType === 'decor_house_orange' ? '.WWWAATW.' : '.WWWWWWW.');
+          const sideL2 = propType === 'decor_house_blue'
+            ? '.WWWWWWP.'
+            : (propType === 'decor_house_orange' ? '.WWWAATW.' : '.WWWBWWW.');
+          const sideL3 = propType === 'decor_house_orange' ? '.WWWAAAW.' : '.WWWWWWW.';
+
+          const layers = [
+            // Z=0: 底座陰影與石砌地基
+            ['.KKKKKKK.','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','.KKKKKKK.'],
+            // Z=1: 一樓石牆與正面橘框拱門
+            ['.........','.WWWWWWW.',sideL1,sideL1,sideL1,'.WWWWWWW.','.WWWWWWW.','.WWOTOWW.','.........'],
+            // Z=2: 二樓石牆與門身
+            ['.........','.WWWWWWW.',sideL2,sideL2,sideL2,'.WWWWWWW.','.WWWWWWW.','.WWOTOWW.','.........'],
+            // Z=3: 門楣拱頂
+            ['.........','.WWWWWWW.',sideL3,sideL3,sideL3,'.WWWWWWW.','.WWWWWWW.','.WWOOOWW.','.........'],
+            // Z=4: 屋簷下石牆收邊
+            ['.........','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.........'],
+            // Z=5: 人字屋頂第 1 層（前後外推屋簷 + 瓦片格紋）
+            ['EDDDDDDDE','DRRRRRRRE','DRHHRHHRE','DDDDDDDDE','DRHHRHHRE','DRRRRRRRE','DDDDDDDDE','DRHHRHHRE','EEEEEEEEE'],
+            // Z=6: 人字屋頂第 2 層（正面呈現白色三角形山牆）
+            ['.EDDDDDE.','.DRRRRRE.','.DRHRHRE.','.DDDDDDE.','.DRHRHRE.','.DRRRRRE.','.DDDDDDE.','.EWWWWWE.','.EEEEEEE.'],
+            // Z=7: 人字屋頂第 3 層
+            ['..EDDDE..','..DRRRE..','..DRHRE..','..DDDDE..','..DRHRE..','..DRRRE..','..DDDDE..','..EWWWE..','..EEEEE..'],
+            // Z=8: 人字屋頂第 4 層
+            ['...EDE...','...DRE...','...DHE...','...DDE...','...DHE...','...DRE...','...DDE...','...EWE...','...EEE...'],
+            // Z=9: 屋脊頂端
+            ['....E....','....H....','....H....','....D....','....H....','....H....','....D....','....H....','....E....']
+          ];
+
+          const sprite = this.buildStackedSprite(cacheKey, layers, pal, 6.8, 3.6, 2.6);
+          this.applyPixelOutline(sprite.canvas, '#231712');
+          return sprite;
+        }
         // ==================== 新增：菜園 5 畦（仿附圖 FARM PLOTS） ====================
         if (propType === 'farm_plot_veg') {
           const pal = {
