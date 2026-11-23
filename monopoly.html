@@ -2797,8 +2797,8 @@ function createWorldMapGrid() {
         } else {
           FloatingTexts.spawn(tile.gx, tile.gy, `抵達 ${tile.name}`, '#ffe082'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn();
         }
-        // 👆 覆蓋替換到這裡結束（下方緊接原本的 openChanceModal）👆
-      },
+        },
+      
       openChanceModal(tile) {
         GameState.phase = 'MODAL';
         this.update();
