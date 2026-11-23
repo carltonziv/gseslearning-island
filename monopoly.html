@@ -3194,41 +3194,116 @@ drawCentralWasteland(ctx) {
         ctx.drawImage(sprite.canvas, sx - sprite.anchorX, sy - sprite.anchorY);
       },
 
-      // 取得 17 層堆疊的立體麥塊探險家角色
+// 取得依四位角色造型量身打造的 16 層立體堆疊方塊人
       getStackedPawnSprite(npc) {
-        const key = `voxel_pawn_${npc.id}`;
+        const key = `voxel_pawn_custom_${npc.id}`;
         const pal = {
-          P: npc.pantsColor,
-          S: npc.shirtColor,
-          F: '#ffd7b5',
-          E: '#1c120b',
-          H: npc.hatColor,
-          B: '#4e342e',
-          G: '#ffd54f'
+          F: '#ffd7b5', // 膚色
+          K: '#1b120c', // 黑色（眼珠 / 阿凱黑髮）
+          W: '#ffffff', // 眼白 / 條紋白
+          B: '#4e342e', // 咖啡髮色 / 背包
+          N: '#e0a982', // 鼻影
+          M: '#a86449', // 棕色嘴唇
+          P: '#e57373', // 粉紅嘴唇
+          G: '#388e3c', // 阿岳綠帽與綠衣
+          g: '#2e7d32', // 阿岳帽簷深綠
+          R: '#d32f2f', // 紅色（小晴上衣 / 朵拉帽與領巾）
+          r: '#b71c1c', // 朵拉帽簷深紅
+          I: '#3949ab', // 小晴深藍褲
+          Y: '#fbc02d', // 阿凱黃工程帽與徽章
+          y: '#f57f17', // 阿凱帽簷深黃
+          E: '#1565c0', // 阿凱深藍工程服
+          C: '#37474f', // 阿凱深灰長褲
+          O: '#f57c00', // 朵拉橘色童軍服
+          D: '#5d4037'  // 朵拉咖啡長褲
         };
-        const layers = [
-          // 雙腳 (Z=0~3)
-          ['.PP..PP.','.PP..PP.','.PP..PP.','........'],
-          ['.PP..PP.','.PP..PP.','.PP..PP.','........'],
-          ['.PP..PP.','.PP..PP.','.PP..PP.','........'],
-          ['.PP..PP.','.PP..PP.','.PP..PP.','........'],
-          // 身體、雙手與背包 (Z=4~8)
-          ['FSSSSSSF','FSSSSSSF','.BBBBBB.','........'],
-          ['FSSSSSSF','FSSSSSSF','.BBBBBB.','........'],
-          ['SSSSSSSS','SSSSSSSS','.BBBBBB.','........'],
-          ['SSSSSSSS','SSSSSSSS','.BBBBBB.','........'],
-          ['.SSSSSS.','.SSSSSS.','........','........'],
-          // 立體方塊頭與五官 (Z=9~13)
-          ['.FFFFFF.','.FFFFFF.','.BBBBBB.','........'],
-          ['.FEFFEF.','.FFFFFF.','.BBBBBB.','........'],
-          ['.FFFFFF.','.FFFFFF.','.BBBBBB.','........'],
-          ['.FFFFFF.','.FFFFFF.','.BBBBBB.','........'],
-          // 探險帽簷與帽冠 (Z=14~16)
-          ['HHHHHHHH','HHHHHHHH','HHHHHHHH','HHHHHHHH'],
-          ['.HHHHHH.','.HHGGHH.','.HHHHHH.','........'],
-          ['..HHHH..','..HHHH..','..HHHH..','........']
-        ];
-        return this.buildStackedSprite(key, layers, pal, 4.0, 2.1, 2.3);
+
+        // 每個陣列為 1 層 (Z=0 由腳底往上堆至 Z=15 頭頂)
+        // 每層 4 列代表深度 (vy=0 為背面，vy=3 為正面朝向鏡頭)
+        const characterModels = {
+          // 1. 阿岳：綠帽 + 咖啡鬢角 + 綠衣
+          ranger: [
+            ['.BB..BB.','.BB..BB.','.BB..BB.','........'], // Z0 腳底
+            ['.BB..BB.','.BB..BB.','.BB..BB.','........'], // Z1 褲腳
+            ['.BB..BB.','.BB..BB.','.BB..BB.','........'], // Z2 褲子
+            ['.BBBBBB.','.BBBBBB.','.BBBBBB.','........'], // Z3 腰部
+            ['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'], // Z4 下衣與手
+            ['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'], // Z5 中衣與手
+            ['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGGGGG.'], // Z6 上衣
+            ['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGFFGG.'], // Z7 衣領
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFMMFF.'], // Z8 下巴與嘴巴
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'], // Z9 臉頰與鼻子
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'], // Z10 眼白(下層)
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'], // Z11 眼珠(上層)
+            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'], // Z12 額頭
+            ['.GGGGGG.','.GGGGGG.','.GGGGGG.','.gggggg.'], // Z13 綠帽簷
+            ['.GGGGGG.','.GGGGGG.','.GGGGGG.','.GGGGGG.'], // Z14 綠帽身
+            ['..GGGG..','..GGGG..','..GGGG..','........']  // Z15 帽頂
+          ],
+
+          // 2. 小晴：無帽 + 咖啡及肩長髮 + 紅白條紋衣 + 粉紅嘴
+          hydro: [
+            ['.II..II.','.II..II.','.II..II.','........'], // Z0 腳底
+            ['.II..II.','.II..II.','.II..II.','........'], // Z1 褲腳
+            ['.II..II.','.II..II.','.II..II.','........'], // Z2 褲子
+            ['.IIIIII.','.IIIIII.','.IIIIII.','........'], // Z3 腰部
+            ['FRRRRRRF','FRRRRRRF','FRRRRRRF','.RRRRRR.'], // Z4 紅衣下擺
+            ['FBBBBBBF','FRRRRRRF','FRRRRRRF','.WWWWWW.'], // Z5 胸前白橫條 + 後長髮
+            ['BBBBBBBB','BRRRRRRB','FRRRRRRF','.RRRRRR.'], // Z6 紅衣上身 + 及肩長髮
+            ['BBBBBBBB','BRRRRRRB','BRRRRRRB','.RRFFRR.'], // Z7 領口 + 長髮
+            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFPPFF.'], // Z8 下巴與粉紅嘴 + 長髮
+            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFFFFF.'], // Z9 臉頰 + 長髮
+            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FWFFWF.'], // Z10 眼白(下層) + 長髮
+            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FKFFKF.'], // Z11 眼珠(上層) + 長髮
+            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'], // Z12 額頭與瀏海
+            ['.BBBBBB.','.BBBBBB.','.BBBBBB.','.BBBBBB.'], // Z13 頭頂長髮
+            ['..BBBB..','..BBBB..','..BBBB..','..BBBB..'], // Z14 髮頂弧度
+            ['........','........','........','........']  // Z15 (無帽留空)
+          ],
+
+          // 3. 阿凱：黃色工程安全帽 + 黑髮 + 深藍衣與黃徽章 + 深灰褲
+          engineer: [
+            ['.CC..CC.','.CC..CC.','.CC..CC.','........'], // Z0 腳底
+            ['.CC..CC.','.CC..CC.','.CC..CC.','........'], // Z1 褲腳
+            ['.CC..CC.','.CC..CC.','.CC..CC.','........'], // Z2 褲子
+            ['.CCCCCC.','.CCCCCC.','.CCCCCC.','........'], // Z3 腰部
+            ['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEEEEE.'], // Z4 深藍衣下擺
+            ['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEYYEE.'], // Z5 胸前黃色徽章/領帶
+            ['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEYYEE.'], // Z6 上衣黃色徽章
+            ['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEEEEE.'], // Z7 衣領
+            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFMMFF.'], // Z8 下巴與嘴巴 + 黑髮
+            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFNNFF.'], // Z9 臉頰與鼻子 + 黑髮
+            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'], // Z10 黑色像素眼(下)
+            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'], // Z11 黑色像素眼(上)
+            ['.KKKKKK.','.KKKKKK.','.KKKKKK.','.KKKKKK.'], // Z12 黑色髮際線
+            ['YYYYYYYY','YYYYYYYY','YYYYYYYY','yyyyyyyy'], // Z13 黃色安全帽簷
+            ['.YYYYYY.','.YYYYYY.','.YYYYYY.','.YYYYYY.'], // Z14 黃色安全帽身
+            ['..YYYY..','..YYYY..','..YYYY..','........']  // Z15 安全帽頂脊
+          ],
+
+          // 4. 朵拉：紅帽 + 咖啡側髮 + 橘衣與紅領巾 + 咖啡褲
+          scout: [
+            ['.DD..DD.','.DD..DD.','.DD..DD.','........'], // Z0 腳底
+            ['.DD..DD.','.DD..DD.','.DD..DD.','........'], // Z1 褲腳
+            ['.DD..DD.','.DD..DD.','.DD..DD.','........'], // Z2 褲子
+            ['.DDDDDD.','.DDDDDD.','.DDDDDD.','........'], // Z3 腰部
+            ['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'], // Z4 橘色童軍服下擺
+            ['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'], // Z5 橘色童軍服中段
+            ['OOOOOOOO','OOOOOOOO','OOOOOOOO','.ORRRRO.'], // Z6 胸前紅色童軍領巾
+            ['OOOOOOOO','OOOOOOOO','OOOOOOOO','.OORROO.'], // Z7 領巾結
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFPPFF.'], // Z8 下巴與粉紅嘴
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'], // Z9 臉頰與鼻子
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'], // Z10 眼白(下層)
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'], // Z11 眼珠(上層)
+            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'], // Z12 額頭與咖啡側髮
+            ['.RRRRRR.','.RRRRRR.','.RRRRRR.','.rrrrrr.'], // Z13 紅帽簷
+            ['.RRRRRR.','.RRRRRR.','.RRRRRR.','.RRRRRR.'], // Z14 紅帽身
+            ['..RRRR..','..RRRR..','..RRRR..','........']  // Z15 紅帽頂
+          ]
+        };
+
+        const layers = characterModels[npc.id] || characterModels.ranger;
+        return this.buildStackedSprite(key, layers, pal, 3.8, 2.0, 2.2);
       },
 
       drawAllMinecraftPawns(ctx) {
