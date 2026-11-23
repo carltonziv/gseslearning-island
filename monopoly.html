@@ -1187,6 +1187,7 @@
     const TOLL_RATIO = 0.3;
     const BASE_DICE = 15;
     const QUEST_BONUS_DICE = 2;
+    const START_PASS_REWARD = 50;
 
     function calcTollFee(price) {
       return Math.max(1, Math.ceil(price * TOLL_RATIO));
@@ -2544,6 +2545,7 @@ function createWorldMapGrid() {
         pawn.stepQueue = [];
         const total = BOARD_TILES.length;
         const dir = steps >= 0 ? 1 : -1;
+        pawn.moveDir = dir; // 記錄移動方向（僅正向經過起點才給獎勵）
         const count = Math.abs(steps);
         pawn.hopDuration = 0.23;
         pawn.jumpPeak = count >= 5 ? 46 : (dir < 0 ? 38 : 34);
@@ -2563,11 +2565,37 @@ function createWorldMapGrid() {
           return;
         }
         const nextIdx = pawn.stepQueue.shift();
+
+        // 經過起點判定：正向移動踏上起點(0)，且後面還有剩餘步數（代表沒有剛好停在起點）
+        if (pawn.moveDir > 0 && nextIdx === 0 && pawn.stepQueue.length > 0) {
+          this.grantPassStartReward(pawn);
+        }
+
         const currT = BOARD_TILES[pawn.tileIndex];
         const nextT = BOARD_TILES[nextIdx];
         pawn.startPos = { gx: currT.gx, gy: currT.gy };
         pawn.targetPos = { gx: nextT.gx, gy: nextT.gy };
         pawn.hopProgress = 0; pawn.isHopping = true; pawn.tileIndex = nextIdx;
+      },
+      grantPassStartReward(pawn) {
+        const startTile = BOARD_TILES[0];
+        if (pawn.uid === GameState.uid) {
+          GameState.coins += START_PASS_REWARD;
+          MultiplayerManager.syncMyPlayerStats();
+          HUD.update();
+          HUD.updateTurnPanel();
+          FloatingTexts.spawn(startTile.gx, startTile.gy, `經過起點！探索新烏景點 +${START_PASS_REWARD} 🪙`, '#ffd54f');
+          document.getElementById('ui-tile-info').innerHTML =
+            `✨ <strong>${getMyShortName()}</strong> 經過起點【${startTile.name}】，獲得探索新烏景點獎勵 <strong style="color:#ffd54f;">+${START_PASS_REWARD} 🪙</strong>！`;
+        } else {
+          const p = GameState.players.find(pl => pl.uid === pawn.uid);
+          if (GameState.isSimulatedBotMode && p && p.isBot) {
+            p.coins = (p.coins || 0) + START_PASS_REWARD;
+            HUD.updateTurnPanel();
+          }
+          const label = (p && (p.shortName || p.name)) || pawn.displayName || '隊友';
+          FloatingTexts.spawn(startTile.gx, startTile.gy, `${label}經過起點 +${START_PASS_REWARD} 🪙`, '#ffd54f');
+        }
       },
       updateAll(dt) {
         Object.values(this.pawns).forEach((pawn) => {
@@ -2751,7 +2779,7 @@ function createWorldMapGrid() {
           }
         }, 55);
       },
-      handleTileArrival(tileIndex) {
+        handleTileArrival(tileIndex) {
         const tile = BOARD_TILES[tileIndex];
         if (tile.type === 'FATE') {
           this.openFateModal(tile);
@@ -2761,9 +2789,15 @@ function createWorldMapGrid() {
           if (!tile.ownerUid) this.openBuyModal(tile);
           else if (tile.ownerUid === GameState.uid) { FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn(); }
           else this.openTollModal(tile);
+        // 👇 從這裡開始覆蓋替換 👇
+        } else if (tile.type === 'START') {
+          FloatingTexts.spawn(tile.gx, tile.gy, `剛好抵達${tile.name}（無經過獎勵）`, '#ffe082');
+          GameState.phase = 'IDLE';
+          MultiplayerManager.advanceNextTurn();
         } else {
           FloatingTexts.spawn(tile.gx, tile.gy, `抵達 ${tile.name}`, '#ffe082'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn();
         }
+        // 👆 覆蓋替換到這裡結束（下方緊接原本的 openChanceModal）👆
       },
       openChanceModal(tile) {
         GameState.phase = 'MODAL';
