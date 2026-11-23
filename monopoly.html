@@ -1106,10 +1106,10 @@
       appId: "1:653484667317:web:0bf59888751518309729fc"
     };
 
-    const EXCHANGE_RATE = 10;   // 1 點個人能量 = 10 遊戲金幣
-    const TOLL_RATIO = 0.3;     // 過路費為地價的 30%
-    const BASE_DICE = 15;       // 基本骰子數：15 顆
-    const QUEST_BONUS_DICE = 2; // 當日完成閱讀島或運動島任務：再加 2 顆
+    const EXCHANGE_RATE = 10;
+    const TOLL_RATIO = 0.3;
+    const BASE_DICE = 15;
+    const QUEST_BONUS_DICE = 2;
 
     function calcTollFee(price) {
       return Math.max(1, Math.ceil(price * TOLL_RATIO));
@@ -1120,11 +1120,6 @@
       return BASE_DICE + (hasCompletedAny ? QUEST_BONUS_DICE : 0);
     }
 
-    /**
-     * ============================================================================
-     * 點點骰子（Pips）渲染器
-     * ============================================================================
-     */
     const DICE_PIP_LAYOUTS = {
       1: [4],
       2: [2, 6],
@@ -1153,11 +1148,6 @@
       }
     }
 
-    /**
-     * ============================================================================
-     * 1. 四種麥塊像素風 NPC 角色定義與 16x16 頭像繪製
-     * ============================================================================
-     */
     const NPC_ROSTER = [
       {
         id: 'ranger',
@@ -1248,7 +1238,6 @@
 
       for (let layer = 0; layer <= thickness; layer++) {
         const currentYOffset = startY - (layer * offsetY);
-
         for (let y = 0; y < 16; y++) {
           for (let x = 0; x < 16; x++) {
             const colorHex = NPC_PIXEL_COLORS[npc.headPixels[y][x]];
@@ -1268,25 +1257,17 @@
       }
     }
 
-    /**
-     * ============================================================================
-     * 2. 遊戲核心狀態與主網頁玩家名稱／任務／能量對接
-     * ============================================================================
-     */
     const GameState = {
       uid: 'player_' + Math.random().toString(36).slice(2, 7),
       playerName: '',
       selectedNpcId: 'ranger',
       personalEnergy: 50,
       coins: 0,
-
       readChallengeCount: 0,
       fitnessQuestCount: 0,
       diceLeft: BASE_DICE,
-
       ownedTileIds: [],
       phase: 'LOBBY',
-
       roomId: null,
       isSimulatedBotMode: false,
       players: [],
@@ -1316,7 +1297,6 @@
           GameState.readChallengeCount = Math.max(0, Number(params.get('readCount')) || 0);
           GameState.fitnessQuestCount = Math.max(0, Number(params.get('fitCount')) || 0);
         }
-
         renderDiceFace(5);
         this.updatePlayerNameDisplay();
         this.recalculateInitialDice();
@@ -1324,7 +1304,6 @@
         window.addEventListener('message', (event) => {
           if (event.origin !== window.location.origin) return;
           const { type, payload } = event.data || {};
-
           if (type === 'MONOPOLY_INIT' && payload) {
             if (payload.uid) GameState.uid = payload.uid;
             if (payload.name) GameState.playerName = String(payload.name).trim();
@@ -1340,14 +1319,10 @@
           }
         });
       },
-
       updatePlayerNameDisplay() {
         const nameEl = document.getElementById('lobby-player-name');
-        if (nameEl) {
-          nameEl.textContent = GameState.playerName || '探險者';
-        }
+        if (nameEl) nameEl.textContent = GameState.playerName || '探險者';
       },
-
       recalculateInitialDice() {
         const hasBonus = GameState.readChallengeCount > 0 || GameState.fitnessQuestCount > 0;
         GameState.diceLeft = calcQuestDice(GameState.readChallengeCount, GameState.fitnessQuestCount);
@@ -1365,7 +1340,6 @@
           bonusChip.innerHTML = `✨ 任務加碼：<strong>+0 顆</strong>（完成任一島任務可再 +2 顆）`;
           bonusChip.style.color = '#cbb094';
         }
-
         const joinBtn = document.getElementById('btn-join-match');
         if (!GameState.roomId) {
           joinBtn.disabled = false;
@@ -1373,11 +1347,9 @@
         }
         HUD.update();
       },
-
       closeAndReturn() {
         Engine.stopLoop();
         MultiplayerManager.leaveRoomCleanly();
-
         const refundedEnergy = Math.floor(GameState.coins / EXCHANGE_RATE);
         const finalPersonalEnergy = GameState.personalEnergy + refundedEnergy;
         const leftoverCoins = GameState.coins % EXCHANGE_RATE;
@@ -1396,39 +1368,23 @@
             ownedNames
           }
         };
-
         if (window.parent && window.parent !== window) {
           window.parent.postMessage(message, window.location.origin);
         } else {
-          alert(
-            `已結算並準備返回主島嶼！\n` +
-            `• 玩家：${getMyShortName()}\n` +
-            `• 剩餘金幣 ${GameState.coins} 🪙 已自動換回 ${refundedEnergy} ⚡ 個人能量\n` +
-            `• 最終個人累積能量：${finalPersonalEnergy} ⚡（不影響全班能量）\n` +
-            `• 購得地點：${ownedNames.length > 0 ? ownedNames.join('、') : '無'}`
-          );
+          alert(`已結算並準備返回主島嶼！\n• 玩家：${getMyShortName()}\n• 剩餘金幣 ${GameState.coins} 🪙 已自動換回 ${refundedEnergy} ⚡ 個人能量\n• 最終個人累積能量：${finalPersonalEnergy} ⚡（不影響全班能量）\n• 購得地點：${ownedNames.length > 0 ? ownedNames.join('、') : '無'}`);
         }
       }
     };
 
-    /**
-     * ============================================================================
-     * 3. Firebase Realtime Database 多人配對、角色唯一性鎖定與延遲結算同步
-     * ============================================================================
-     */
     const MultiplayerManager = {
       db: null,
       roomRef: null,
-
       init() {
         const hasValidConfig = FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.startsWith('http');
         const badge = document.getElementById('firebase-mode-badge');
-
         if (hasValidConfig && window.firebase) {
           try {
-            if (!firebase.apps.length) {
-              firebase.initializeApp(FIREBASE_CONFIG);
-            }
+            if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
             this.db = firebase.database();
             GameState.isSimulatedBotMode = false;
             badge.textContent = '🟢 Firebase 即時連線已就緒';
@@ -1440,51 +1396,34 @@
           this.enableSimulatedMode(badge);
         }
       },
-
       enableSimulatedMode(badge) {
         GameState.isSimulatedBotMode = true;
         badge.textContent = '🟡 單機模擬雙人模式（填入 Firebase Config 可全班連線）';
         badge.style.color = '#ffd54f';
       },
-
       buildDisplayName(npcId) {
         const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
         const custom = (GameState.playerName || '').trim();
-        if (custom) {
-          return `${custom} (${npc.name})`;
-        }
+        if (custom) return `${custom} (${npc.name})`;
         return `${npc.name}(${GameState.uid.slice(-4)})`;
       },
-
       async changeMyNpcInLobby(newNpcId) {
         if (GameState.takenNpcMap[newNpcId]) return;
-
         GameState.selectedNpcId = newNpcId;
         HUD.refreshLobbyNpcCards();
-
         const shortName = getMyShortName();
         const fullName = this.buildDisplayName(newNpcId);
 
         if (GameState.isSimulatedBotMode && GameState.roomId) {
           const me = GameState.players.find(p => p.uid === GameState.uid);
-          if (me) {
-            me.npcId = newNpcId;
-            me.name = fullName;
-            me.shortName = shortName;
-          }
+          if (me) { me.npcId = newNpcId; me.name = fullName; me.shortName = shortName; }
           this.renderLobbySlots();
         } else if (!GameState.isSimulatedBotMode && this.roomRef) {
-          await this.roomRef.child(`players/${GameState.uid}`).update({
-            npcId: newNpcId,
-            name: fullName,
-            shortName: shortName
-          });
+          await this.roomRef.child(`players/${GameState.uid}`).update({ npcId: newNpcId, name: fullName, shortName: shortName });
         }
       },
-
       async joinRandomMatch() {
         if (GameState.diceLeft <= 0) return;
-
         const joinBtn = document.getElementById('btn-join-match');
         joinBtn.disabled = true;
         joinBtn.textContent = '⏳ 正在尋找隊友...';
@@ -1494,28 +1433,8 @@
           const botNpc = NPC_ROSTER.find(n => n.id !== GameState.selectedNpcId) || NPC_ROSTER[1];
           const botName = `${botNpc.name}(隊友)`;
           GameState.players = [
-            {
-              uid: GameState.uid,
-              name: this.buildDisplayName(GameState.selectedNpcId),
-              shortName: getMyShortName(),
-              npcId: GameState.selectedNpcId,
-              joinOrder: 1,
-              tileIndex: 0,
-              coins: GameState.coins,
-              diceLeft: GameState.diceLeft,
-              isBot: false
-            },
-            {
-              uid: 'bot_partner',
-              name: botName,
-              shortName: botNpc.name,
-              npcId: botNpc.id,
-              joinOrder: 2,
-              tileIndex: 0,
-              coins: 240,
-              diceLeft: GameState.diceLeft,
-              isBot: true
-            }
+            { uid: GameState.uid, name: this.buildDisplayName(GameState.selectedNpcId), shortName: getMyShortName(), npcId: GameState.selectedNpcId, joinOrder: 1, tileIndex: 0, coins: GameState.coins, diceLeft: GameState.diceLeft, isBot: false },
+            { uid: 'bot_partner', name: botName, shortName: botNpc.name, npcId: botNpc.id, joinOrder: 2, tileIndex: 0, coins: 240, diceLeft: GameState.diceLeft, isBot: true }
           ];
           GameState.takenNpcMap = { [botNpc.id]: botName };
           HUD.refreshLobbyNpcCards();
@@ -1527,13 +1446,11 @@
           startBtn.textContent = '🚀 開始探險（2/4人）';
           return;
         }
-
         try {
           const roomsRef = this.db.ref('monopoly_rooms');
           const snapshot = await roomsRef.orderByChild('status').equalTo('waiting').once('value');
           let targetRoomId = null;
           let existingPlayersInRoom = [];
-
           snapshot.forEach((child) => {
             const room = child.val();
             const pList = room.players ? Object.values(room.players) : [];
@@ -1546,35 +1463,21 @@
           if (!targetRoomId) {
             const newRoomRef = roomsRef.push();
             targetRoomId = newRoomRef.key;
-            await newRoomRef.set({
-              status: 'waiting',
-              createdAt: firebase.database.ServerValue.TIMESTAMP,
-              currentTurnUid: GameState.uid
-            });
+            await newRoomRef.set({ status: 'waiting', createdAt: firebase.database.ServerValue.TIMESTAMP, currentTurnUid: GameState.uid });
           } else {
             const takenIds = new Set(existingPlayersInRoom.map(p => p.npcId));
             if (takenIds.has(GameState.selectedNpcId)) {
               const availableNpc = NPC_ROSTER.find(n => !takenIds.has(n.id));
-              if (availableNpc) {
-                GameState.selectedNpcId = availableNpc.id;
-              }
+              if (availableNpc) GameState.selectedNpcId = availableNpc.id;
             }
           }
-
           GameState.roomId = targetRoomId;
           this.roomRef = this.db.ref(`monopoly_rooms/${targetRoomId}`);
 
           const myPlayerRef = this.roomRef.child(`players/${GameState.uid}`);
           await myPlayerRef.set({
-            uid: GameState.uid,
-            name: this.buildDisplayName(GameState.selectedNpcId),
-            shortName: getMyShortName(),
-            npcId: GameState.selectedNpcId,
-            joinedAt: firebase.database.ServerValue.TIMESTAMP,
-            tileIndex: 0,
-            coins: GameState.coins,
-            diceLeft: GameState.diceLeft,
-            isBot: false
+            uid: GameState.uid, name: this.buildDisplayName(GameState.selectedNpcId), shortName: getMyShortName(),
+            npcId: GameState.selectedNpcId, joinedAt: firebase.database.ServerValue.TIMESTAMP, tileIndex: 0, coins: GameState.coins, diceLeft: GameState.diceLeft, isBot: false
           });
           myPlayerRef.onDisconnect().remove();
 
@@ -1583,34 +1486,20 @@
             const evtId = snap.key;
             if (!evt || GameState.processedTollIds.has(evtId)) return;
             GameState.processedTollIds.add(evtId);
-
             if (evt.toUid === GameState.uid && evt.amount > 0) {
               GameState.coins += evt.amount;
               this.syncMyPlayerStats();
               HUD.update();
               const myPawn = PawnManager.pawns[GameState.uid];
-              if (myPawn) {
-                FloatingTexts.spawn(
-                  myPawn.gx,
-                  myPawn.gy,
-                  `收到 ${evt.fromName} 過路費 +${evt.amount} 🪙!`,
-                  '#81c784'
-                );
-              }
+              if (myPawn) FloatingTexts.spawn(myPawn.gx, myPawn.gy, `收到 ${evt.fromName} 過路費 +${evt.amount} 🪙!`, '#81c784');
             }
           });
 
           this.roomRef.on('value', (snap) => {
             const roomData = snap.val();
             if (!roomData || !roomData.players) return;
-
-            const sortedPlayers = Object.values(roomData.players)
-              .sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0))
-              .slice(0, 4)
-              .map((p, idx) => ({ ...p, joinOrder: idx + 1 }));
-
+            const sortedPlayers = Object.values(roomData.players).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0)).slice(0, 4).map((p, idx) => ({ ...p, joinOrder: idx + 1 }));
             const activeUids = new Set(sortedPlayers.map(p => p.uid));
-
             const newTakenMap = {};
             let conflictWithEarlierPlayer = false;
             const myIndex = sortedPlayers.findIndex(p => p.uid === GameState.uid);
@@ -1618,57 +1507,37 @@
             sortedPlayers.forEach((p, idx) => {
               if (p.uid !== GameState.uid) {
                 newTakenMap[p.npcId] = p.shortName || p.name;
-                if (p.npcId === GameState.selectedNpcId && idx < myIndex) {
-                  conflictWithEarlierPlayer = true;
-                }
+                if (p.npcId === GameState.selectedNpcId && idx < myIndex) conflictWithEarlierPlayer = true;
               }
             });
-
             GameState.takenNpcMap = newTakenMap;
-
             if (conflictWithEarlierPlayer) {
               const fallbackNpc = NPC_ROSTER.find(n => !newTakenMap[n.id]);
-              if (fallbackNpc) {
-                this.changeMyNpcInLobby(fallbackNpc.id);
-              }
+              if (fallbackNpc) this.changeMyNpcInLobby(fallbackNpc.id);
             }
 
-            Object.keys(PawnManager.pawns).forEach((pUid) => {
-              if (!activeUids.has(pUid)) {
-                delete PawnManager.pawns[pUid];
-              }
-            });
-
+            Object.keys(PawnManager.pawns).forEach((pUid) => { if (!activeUids.has(pUid)) delete PawnManager.pawns[pUid]; });
             BOARD_TILES.forEach((tile) => {
               const tInfo = roomData.tiles ? roomData.tiles[tile.id] : null;
               if (tInfo && activeUids.has(tInfo.ownerUid)) {
-                tile.ownerUid = tInfo.ownerUid;
-                tile.ownerName = tInfo.ownerName;
-                tile.ownerNpcId = tInfo.ownerNpcId;
+                tile.ownerUid = tInfo.ownerUid; tile.ownerName = tInfo.ownerName; tile.ownerNpcId = tInfo.ownerNpcId;
               } else {
-                tile.ownerUid = null;
-                tile.ownerName = '';
-                tile.ownerNpcId = null;
+                tile.ownerUid = null; tile.ownerName = ''; tile.ownerNpcId = null;
               }
             });
-
             GameState.players = sortedPlayers;
 
             let turnUid = roomData.currentTurnUid;
             if (!activeUids.has(turnUid) && sortedPlayers.length > 0) {
               turnUid = sortedPlayers[0].uid;
-              if (sortedPlayers[0].uid === GameState.uid && roomData.status === 'playing') {
-                this.roomRef.update({ currentTurnUid: turnUid });
-              }
+              if (sortedPlayers[0].uid === GameState.uid && roomData.status === 'playing') this.roomRef.update({ currentTurnUid: turnUid });
             }
             GameState.currentTurnUid = turnUid;
 
             sortedPlayers.forEach((p) => {
               const displayLabel = p.shortName || p.name;
               if (p.uid !== GameState.uid) {
-                PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel, () => {
-                  this.tryShowPendingSummary();
-                });
+                PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel, () => this.tryShowPendingSummary());
               } else if (PawnManager.pawns[p.uid]) {
                 PawnManager.pawns[p.uid].displayName = displayLabel;
               }
@@ -1680,12 +1549,7 @@
               const count = sortedPlayers.length;
               const isHost = sortedPlayers[0]?.uid === GameState.uid;
               const startBtn = document.getElementById('btn-start-game');
-
-              document.getElementById('match-status-title').textContent =
-                count < 2
-                  ? `⏳ 等待其他玩家加入...（目前 ${count}/4 人，至少需 2 人）`
-                  : `✅ 已達開局人數！（目前 ${count}/4 人）`;
-
+              document.getElementById('match-status-title').textContent = count < 2 ? `⏳ 等待其他玩家加入...（目前 ${count}/4 人，至少需 2 人）` : `✅ 已達開局人數！（目前 ${count}/4 人）`;
               if (isHost) {
                 startBtn.style.display = 'inline-flex';
                 startBtn.disabled = count < 2;
@@ -1695,24 +1559,13 @@
                 startBtn.disabled = true;
                 startBtn.textContent = '等待 1 號房主開始...';
               }
-
               if (roomData.status === 'playing' || count >= 4) {
-                if (isHost && roomData.status !== 'playing') {
-                  this.roomRef.update({
-                    status: 'playing',
-                    currentTurnUid: sortedPlayers[0].uid
-                  });
-                }
+                if (isHost && roomData.status !== 'playing') this.roomRef.update({ status: 'playing', currentTurnUid: sortedPlayers[0].uid });
                 this.enterGameBoard();
               }
             } else if (GameState.phase !== 'FINISHED') {
-              HUD.updateTurnPanel();
-              HUD.update();
-
-              if (roomData.status === 'finished') {
-                GameState.pendingSummaryAfterAction = true;
-                this.tryShowPendingSummary();
-              }
+              HUD.updateTurnPanel(); HUD.update();
+              if (roomData.status === 'finished') { GameState.pendingSummaryAfterAction = true; this.tryShowPendingSummary(); }
             }
           });
         } catch (err) {
@@ -1721,24 +1574,16 @@
           joinBtn.textContent = '🔍 重新配對';
         }
       },
-
       tryShowPendingSummary() {
         if (!GameState.pendingSummaryAfterAction || GameState.phase === 'FINISHED') return;
-
         const isAnyPawnMoving = Object.values(PawnManager.pawns).some(p => p.isHopping);
         const isLocalBusy = ['ROLLING', 'MOVING', 'MODAL'].includes(GameState.phase);
-
-        if (!isAnyPawnMoving && !isLocalBusy) {
-          GameState.pendingSummaryAfterAction = false;
-          HUD.openFinalSummaryModal();
-        }
+        if (!isAnyPawnMoving && !isLocalBusy) { GameState.pendingSummaryAfterAction = false; HUD.openFinalSummaryModal(); }
       },
-
       areAllPlayersOutOfDice() {
         if (GameState.players.length === 0) return false;
         return GameState.players.every(p => (p.diceLeft ?? 0) <= 0);
       },
-
       renderLobbySlots() {
         const container = document.getElementById('room-slots');
         container.innerHTML = '';
@@ -1748,183 +1593,101 @@
           div.className = 'slot-item' + (p ? ' filled' : '');
           if (p) {
             const npc = NPC_ROSTER.find(n => n.id === p.npcId) || NPC_ROSTER[0];
-            div.innerHTML = `
-              <strong style="color:#ffd54f;">第 ${i + 1} 順位</strong>
-              <span>${p.name}</span>
-              <span style="font-size:0.72rem;color:#a5d6a7;">${npc.role}｜🎲 ${p.diceLeft}顆</span>
-            `;
+            div.innerHTML = `<strong style="color:#ffd54f;">第 ${i + 1} 順位</strong><span>${p.name}</span><span style="font-size:0.72rem;color:#a5d6a7;">${npc.role}｜🎲 ${p.diceLeft}顆</span>`;
           } else {
             div.innerHTML = `<strong>第 ${i + 1} 順位</strong><span>等待玩家加入...</span>`;
           }
           container.appendChild(div);
         }
       },
-
       startGameHost() {
         if (GameState.players.length < 2) return;
         if (GameState.isSimulatedBotMode) {
           GameState.currentTurnUid = GameState.uid;
           this.enterGameBoard();
         } else if (this.roomRef) {
-          this.roomRef.update({
-            status: 'playing',
-            currentTurnUid: GameState.players[0].uid
-          });
+          this.roomRef.update({ status: 'playing', currentTurnUid: GameState.players[0].uid });
         }
       },
-
       enterGameBoard() {
         if (GameState.phase !== 'LOBBY') return;
         GameState.phase = 'IDLE';
         document.getElementById('lobby-screen').classList.add('hidden');
-
         GameState.players.forEach((p) => {
           const displayLabel = p.shortName || p.name;
           PawnManager.createOrUpdatePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel);
         });
-
         Engine.resetCamera();
         HUD.updateTurnPanel();
         HUD.update();
       },
-
       syncMyPosition(tileIndex) {
         const me = GameState.players.find(p => p.uid === GameState.uid);
         if (me) me.tileIndex = tileIndex;
-
-        if (!GameState.isSimulatedBotMode && this.roomRef) {
-          this.roomRef.child(`players/${GameState.uid}`).update({ tileIndex });
-        }
+        if (!GameState.isSimulatedBotMode && this.roomRef) this.roomRef.child(`players/${GameState.uid}`).update({ tileIndex });
       },
-
       syncMyPlayerStats() {
         const me = GameState.players.find(p => p.uid === GameState.uid);
-        if (me) {
-          me.coins = GameState.coins;
-          me.diceLeft = GameState.diceLeft;
-        }
-
-        if (!GameState.isSimulatedBotMode && this.roomRef) {
-          this.roomRef.child(`players/${GameState.uid}`).update({
-            coins: GameState.coins,
-            diceLeft: GameState.diceLeft
-          });
-        }
+        if (me) { me.coins = GameState.coins; me.diceLeft = GameState.diceLeft; }
+        if (!GameState.isSimulatedBotMode && this.roomRef) this.roomRef.child(`players/${GameState.uid}`).update({ coins: GameState.coins, diceLeft: GameState.diceLeft });
       },
-
       syncTilePurchase(tile) {
         const ownerDisplay = getMyShortName();
-        tile.ownerUid = GameState.uid;
-        tile.ownerName = ownerDisplay;
-        tile.ownerNpcId = GameState.selectedNpcId;
-
+        tile.ownerUid = GameState.uid; tile.ownerName = ownerDisplay; tile.ownerNpcId = GameState.selectedNpcId;
         this.syncMyPlayerStats();
-
-        if (!GameState.isSimulatedBotMode && this.roomRef) {
-          this.roomRef.child(`tiles/${tile.id}`).set({
-            ownerUid: GameState.uid,
-            ownerName: ownerDisplay,
-            ownerNpcId: GameState.selectedNpcId
-          });
-        }
+        if (!GameState.isSimulatedBotMode && this.roomRef) this.roomRef.child(`tiles/${tile.id}`).set({ ownerUid: GameState.uid, ownerName: ownerDisplay, ownerNpcId: GameState.selectedNpcId });
       },
-
       sendTollPayment(tile, amount) {
         const payerDisplay = getMyShortName();
         this.syncMyPlayerStats();
-
         if (GameState.isSimulatedBotMode) {
           const bot = GameState.players.find(p => p.uid === tile.ownerUid);
           if (bot) bot.coins = (bot.coins || 0) + amount;
         } else if (this.roomRef) {
-          this.roomRef.child('tollEvents').push({
-            fromUid: GameState.uid,
-            fromName: payerDisplay,
-            toUid: tile.ownerUid,
-            tileId: tile.id,
-            tileName: tile.name,
-            amount,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-          });
+          this.roomRef.child('tollEvents').push({ fromUid: GameState.uid, fromName: payerDisplay, toUid: tile.ownerUid, tileId: tile.id, tileName: tile.name, amount, timestamp: firebase.database.ServerValue.TIMESTAMP });
         }
       },
-
       advanceNextTurn() {
         const list = GameState.players;
         if (list.length === 0) return;
-
         if (this.areAllPlayersOutOfDice()) {
-          if (!GameState.isSimulatedBotMode && this.roomRef) {
-            this.roomRef.update({ status: 'finished' });
-          }
-          setTimeout(() => {
-            HUD.openFinalSummaryModal();
-          }, 450);
+          if (!GameState.isSimulatedBotMode && this.roomRef) this.roomRef.update({ status: 'finished' });
+          setTimeout(() => HUD.openFinalSummaryModal(), 450);
           return;
         }
-
         const currIdx = list.findIndex(p => p.uid === GameState.currentTurnUid);
         let nextPlayer = null;
         for (let step = 1; step <= list.length; step++) {
           const candidate = list[(currIdx + step) % list.length];
-          if ((candidate.diceLeft ?? 0) > 0) {
-            nextPlayer = candidate;
-            break;
-          }
+          if ((candidate.diceLeft ?? 0) > 0) { nextPlayer = candidate; break; }
         }
-
-        if (!nextPlayer) {
-          setTimeout(() => {
-            HUD.openFinalSummaryModal();
-          }, 450);
-          return;
-        }
-
+        if (!nextPlayer) { setTimeout(() => HUD.openFinalSummaryModal(), 450); return; }
         GameState.currentTurnUid = nextPlayer.uid;
-
-        if (!GameState.isSimulatedBotMode && this.roomRef) {
-          this.roomRef.update({ currentTurnUid: nextPlayer.uid });
-        }
-
-        HUD.updateTurnPanel();
-        HUD.update();
-
-        if (GameState.isSimulatedBotMode && nextPlayer.isBot) {
-          setTimeout(() => this.runSimulatedBotTurn(nextPlayer), 900);
-        }
+        if (!GameState.isSimulatedBotMode && this.roomRef) this.roomRef.update({ currentTurnUid: nextPlayer.uid });
+        HUD.updateTurnPanel(); HUD.update();
+        if (GameState.isSimulatedBotMode && nextPlayer.isBot) setTimeout(() => this.runSimulatedBotTurn(nextPlayer), 900);
       },
-
       runSimulatedBotTurn(bot) {
-        if ((bot.diceLeft ?? 0) <= 0) {
-          this.advanceNextTurn();
-          return;
-        }
+        if ((bot.diceLeft ?? 0) <= 0) { this.advanceNextTurn(); return; }
         bot.diceLeft -= 1;
         HUD.updateTurnPanel();
-
         const steps = Math.floor(Math.random() * 6) + 1;
         renderDiceFace(steps);
         document.getElementById('ui-tile-info').innerHTML = `🎲 隊友 <strong>${bot.name}</strong> 擲出了 ${steps} 點！`;
-
         PawnManager.enqueueSteps(bot.uid, steps, (finalTileIndex) => {
           bot.tileIndex = finalTileIndex;
           const tile = BOARD_TILES[finalTileIndex];
           const botLabel = bot.shortName || bot.name;
-
           if (tile.type === 'PROPERTY') {
             if (!tile.ownerUid && (bot.coins || 0) >= tile.price && Math.random() > 0.35) {
-              bot.coins -= tile.price;
-              tile.ownerUid = bot.uid;
-              tile.ownerName = botLabel;
-              tile.ownerNpcId = bot.npcId;
+              bot.coins -= tile.price; tile.ownerUid = bot.uid; tile.ownerName = botLabel; tile.ownerNpcId = bot.npcId;
               FloatingTexts.spawn(tile.gx, tile.gy, `${botLabel}買下${tile.name}`, '#81d4fa');
             } else if (tile.ownerUid && tile.ownerUid !== bot.uid) {
               const fee = calcTollFee(tile.price);
               const paid = Math.min(bot.coins || 0, fee);
               bot.coins = Math.max(0, (bot.coins || 0) - paid);
               if (tile.ownerUid === GameState.uid && paid > 0) {
-                GameState.coins += paid;
-                HUD.update();
+                GameState.coins += paid; HUD.update();
                 FloatingTexts.spawn(tile.gx, tile.gy, `${botLabel}付過路費 +${paid} 🪙!`, '#ffd54f');
               }
             }
@@ -1933,19 +1696,14 @@
           this.advanceNextTurn();
         });
       },
-
       leaveRoomCleanly() {
         if (!GameState.isSimulatedBotMode && this.roomRef) {
-          GameState.ownedTileIds.forEach((tid) => {
-            this.roomRef.child(`tiles/${tid}`).remove();
-          });
-
+          GameState.ownedTileIds.forEach((tid) => this.roomRef.child(`tiles/${tid}`).remove());
           const others = GameState.players.filter(p => p.uid !== GameState.uid);
           if (GameState.currentTurnUid === GameState.uid && others.length > 0) {
             const nextAlive = others.find(p => (p.diceLeft ?? 0) > 0) || others[0];
             this.roomRef.update({ currentTurnUid: nextAlive.uid });
           }
-
           this.roomRef.child(`players/${GameState.uid}`).remove();
           this.roomRef.off();
         }
@@ -1954,162 +1712,82 @@
 
     /**
      * ============================================================================
-     * 4. 8x8 蜿蜒探險地圖與 34 格在地配置（外框 8x8，路徑往框內左右轉折）
+     * 4. 8x8 蜿蜒探險地圖與 34 格在地配置
      * ============================================================================
      */
-    const ISO_CONFIG = {
-      GRID_SIZE: 8,
-      TILE_W: 112,
-      TILE_H: 60,
-      BASE_Z: 24
-    };
+    const ISO_CONFIG = { GRID_SIZE: 8, TILE_W: 112, TILE_H: 60, BASE_Z: 24 };
 
-    const PALETTE = {
-      bgTop: '#2e2418',
-      bgBottom: '#140e08',
-      start:  { top: '#f5bc47', left: '#cc9023', right: '#9e6b11', stroke: '#6e4706' },
-      bridge: { top: '#78b8a8', left: '#539182', right: '#396b5f', stroke: '#224a40' },
-      river:  { top: '#5ea9d6', left: '#3e84b0', right: '#296085', stroke: '#18405c' },
-      side1:  { top: '#edd2a1', left: '#c7a56d', right: '#9e7d49', stroke: '#7a5c30' },
-      side2:  { top: '#e3a878', left: '#bd8153', right: '#945d34', stroke: '#6e401e' },
-      side3:  { top: '#d98c68', left: '#b36644', right: '#8a4629', stroke: '#632d16' },
-      side4:  { top: '#cfa074', left: '#a87a50', right: '#825833', stroke: '#5c3a1d' }
-    };
-
-    // 34 格蜿蜒路線座標（嚴格落於 0..7 x 0..7 外框內，包含多次左轉與右轉切入內圈）
     const WINDING_PATH_COORDS = [
-      { gx: 7, gy: 7 }, // 0  起點（最下方）
-      { gx: 6, gy: 7 }, // 1
-      { gx: 5, gy: 7 }, // 2
-      { gx: 5, gy: 6 }, // 3  [右轉往框內]
-      { gx: 4, gy: 6 }, // 4  [左轉]
-      { gx: 3, gy: 6 }, // 5
-      { gx: 3, gy: 7 }, // 6  [左轉往外框]
-      { gx: 2, gy: 7 }, // 7  [右轉]
-      { gx: 1, gy: 7 }, // 8
-      { gx: 0, gy: 7 }, // 9  最左外框
-      { gx: 0, gy: 6 }, // 10 [右轉]
-      { gx: 0, gy: 5 }, // 11
-      { gx: 1, gy: 5 }, // 12 [右轉往框內]
-      { gx: 2, gy: 5 }, // 13
-      { gx: 2, gy: 4 }, // 14 [左轉]
-      { gx: 2, gy: 3 }, // 15
-      { gx: 1, gy: 3 }, // 16 [左轉往外框]
-      { gx: 0, gy: 3 }, // 17
-      { gx: 0, gy: 2 }, // 18 [右轉]
-      { gx: 0, gy: 1 }, // 19
-      { gx: 0, gy: 0 }, // 20 最頂外框
-      { gx: 1, gy: 0 }, // 21 [右轉]
-      { gx: 2, gy: 0 }, // 22
-      { gx: 3, gy: 0 }, // 23
-      { gx: 4, gy: 0 }, // 24
-      { gx: 4, gy: 1 }, // 25 [右轉往框內]
-      { gx: 5, gy: 1 }, // 26 [左轉]
-      { gx: 6, gy: 1 }, // 27
-      { gx: 7, gy: 1 }, // 28 最右外框
-      { gx: 7, gy: 2 }, // 29 [右轉]
-      { gx: 7, gy: 3 }, // 30
-      { gx: 7, gy: 4 }, // 31
-      { gx: 7, gy: 5 }, // 32
-      { gx: 7, gy: 6 }  // 33 -> 接回 (7, 7)
+      { gx: 7, gy: 7 }, { gx: 6, gy: 7 }, { gx: 5, gy: 7 }, { gx: 5, gy: 6 },
+      { gx: 4, gy: 6 }, { gx: 3, gy: 6 }, { gx: 3, gy: 7 }, { gx: 2, gy: 7 },
+      { gx: 1, gy: 7 }, { gx: 0, gy: 7 }, { gx: 0, gy: 6 }, { gx: 0, gy: 5 },
+      { gx: 1, gy: 5 }, { gx: 2, gy: 5 }, { gx: 2, gy: 4 }, { gx: 2, gy: 3 },
+      { gx: 1, gy: 3 }, { gx: 0, gy: 3 }, { gx: 0, gy: 2 }, { gx: 0, gy: 1 },
+      { gx: 0, gy: 0 }, { gx: 1, gy: 0 }, { gx: 2, gy: 0 }, { gx: 3, gy: 0 },
+      { gx: 4, gy: 0 }, { gx: 4, gy: 1 }, { gx: 5, gy: 1 }, { gx: 6, gy: 1 },
+      { gx: 7, gy: 1 }, { gx: 7, gy: 2 }, { gx: 7, gy: 3 }, { gx: 7, gy: 4 },
+      { gx: 7, gy: 5 }, { gx: 7, gy: 6 }
     ];
 
     const TILE_BLUEPRINTS = [
-      { type: 'START',    name: '探險營地',           price: 0,   pixelType: 'camp',      zoneLabel: '起點',     style: PALETTE.start },
-      { type: 'PROPERTY', name: '龜山國小',           price: 20,  pixelType: 'school',    zoneLabel: '龜山文教', style: PALETTE.side1 },
-      { type: 'PROPERTY', name: '台灣銀行倉庫',       price: 30,  pixelType: 'warehouse', zoneLabel: '龜山文教', style: PALETTE.side1 },
-      { type: 'PROPERTY', name: '文山茶廠',           price: 40,  pixelType: 'tea',       zoneLabel: '龜山文教', style: PALETTE.side1 },
-      { type: 'PROPERTY', name: '桂山發電廠',         price: 50,  pixelType: 'power',     zoneLabel: '龜山文教', style: PALETTE.side1 },
-      { type: 'LANDMARK', name: '上龜山橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標',     style: PALETTE.bridge },
-      { type: 'PROPERTY', name: '桂山冰廠',           price: 70,  pixelType: 'ice',       zoneLabel: '水庫風光', style: PALETTE.side2 },
-      { type: 'PROPERTY', name: '翡翠水庫',           price: 100, pixelType: 'dam',       zoneLabel: '水庫風光', style: PALETTE.side2 },
-      { type: 'PROPERTY', name: '龜山水力發電廠遺址', price: 110, pixelType: 'ruin',      zoneLabel: '水庫風光', style: PALETTE.side2 },
-      { type: 'PROPERTY', name: '龜山天主堂',         price: 80,  pixelType: 'church',    zoneLabel: '水庫風光', style: PALETTE.side2 },
-      { type: 'LANDMARK', name: '下龜山橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標',     style: PALETTE.bridge },
-      { type: 'PROPERTY', name: '龜山教會',           price: 90,  pixelType: 'chapel',    zoneLabel: '山林聚落', style: PALETTE.side3 },
-      { type: 'PROPERTY', name: '全家便利店',         price: 40,  pixelType: 'store',     zoneLabel: '山林聚落', style: PALETTE.side3 },
-      { type: 'PROPERTY', name: '林務局',             price: 50,  pixelType: 'forest',    zoneLabel: '山林聚落', style: PALETTE.side3 },
-      { type: 'PROPERTY', name: '童軍龜山營地',       price: 80,  pixelType: 'scout',     zoneLabel: '山林聚落', style: PALETTE.side3 },
-      { type: 'LANDMARK', name: '南勢溪',             price: 0,   pixelType: 'river',     zoneLabel: '地標',     style: PALETTE.river },
-      { type: 'PROPERTY', name: '龜山土地公廟',       price: 110, pixelType: 'temple',    zoneLabel: '古道人文', style: PALETTE.side4 },
-      { type: 'PROPERTY', name: '舊茶寮遺址',         price: 80,  pixelType: 'teahut',    zoneLabel: '古道人文', style: PALETTE.side4 },
-      { type: 'PROPERTY', name: '台電訓練所',         price: 120, pixelType: 'training',  zoneLabel: '古道人文', style: PALETTE.side4 },
-      { type: 'PROPERTY', name: '籃球場',             price: 50,  pixelType: 'court',     zoneLabel: '古道人文', style: PALETTE.side4 },
-      { type: 'LANDMARK', name: '燕子湖畔',           price: 0,   pixelType: 'river',     zoneLabel: '地標',     style: PALETTE.river },
-      { type: 'PROPERTY', name: '龜山老街',           price: 60,  pixelType: 'store',     zoneLabel: '溪畔風情', style: PALETTE.side1 },
-      { type: 'PROPERTY', name: '梅花湖步道',         price: 75,  pixelType: 'forest',    zoneLabel: '溪畔風情', style: PALETTE.side1 },
-      { type: 'PROPERTY', name: '烏來台車驛站',       price: 95,  pixelType: 'warehouse', zoneLabel: '溪畔風情', style: PALETTE.side2 },
-      { type: 'PROPERTY', name: '桂山冰棒小舖',       price: 65,  pixelType: 'ice',       zoneLabel: '溪畔風情', style: PALETTE.side2 },
-      { type: 'PROPERTY', name: '新店溪畔公園',       price: 85,  pixelType: 'scout',     zoneLabel: '山野秘境', style: PALETTE.side3 },
-      { type: 'PROPERTY', name: '翡翠觀景台',         price: 115, pixelType: 'dam',       zoneLabel: '山野秘境', style: PALETTE.side3 },
-      { type: 'PROPERTY', name: '龜山古道入口',       price: 70,  pixelType: 'teahut',    zoneLabel: '山野秘境', style: PALETTE.side3 },
-      { type: 'LANDMARK', name: '溪谷吊橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標',     style: PALETTE.bridge },
-      { type: 'PROPERTY', name: '生態賞鳥亭',         price: 80,  pixelType: 'forest',    zoneLabel: '生態綠廊', style: PALETTE.side4 },
-      { type: 'PROPERTY', name: '櫻花林秘境',         price: 90,  pixelType: 'tea',       zoneLabel: '生態綠廊', style: PALETTE.side4 },
-      { type: 'PROPERTY', name: '森林教室',           price: 60,  pixelType: 'school',    zoneLabel: '生態綠廊', style: PALETTE.side4 },
-      { type: 'PROPERTY', name: '百年水圳遺址',       price: 105, pixelType: 'ruin',      zoneLabel: '生態綠廊', style: PALETTE.side4 },
-      { type: 'PROPERTY', name: '探險補給站',         price: 45,  pixelType: 'training',  zoneLabel: '生態綠廊', style: PALETTE.side1 }
+      { type: 'START',    name: '探險營地',           price: 0,   pixelType: 'camp',      zoneLabel: '起點' },
+      { type: 'PROPERTY', name: '龜山國小',           price: 20,  pixelType: 'school',    zoneLabel: '龜山文教' },
+      { type: 'PROPERTY', name: '台灣銀行倉庫',       price: 30,  pixelType: 'warehouse', zoneLabel: '龜山文教' },
+      { type: 'PROPERTY', name: '文山茶廠',           price: 40,  pixelType: 'tea',       zoneLabel: '龜山文教' },
+      { type: 'PROPERTY', name: '桂山發電廠',         price: 50,  pixelType: 'power',     zoneLabel: '龜山文教' },
+      { type: 'LANDMARK', name: '上龜山橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標' },
+      { type: 'PROPERTY', name: '桂山冰廠',           price: 70,  pixelType: 'ice',       zoneLabel: '水庫風光' },
+      { type: 'PROPERTY', name: '翡翠水庫',           price: 100, pixelType: 'dam',       zoneLabel: '水庫風光' },
+      { type: 'PROPERTY', name: '龜山水力發電廠遺址', price: 110, pixelType: 'ruin',      zoneLabel: '水庫風光' },
+      { type: 'PROPERTY', name: '龜山天主堂',         price: 80,  pixelType: 'church',    zoneLabel: '水庫風光' },
+      { type: 'LANDMARK', name: '下龜山橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標' },
+      { type: 'PROPERTY', name: '龜山教會',           price: 90,  pixelType: 'chapel',    zoneLabel: '山林聚落' },
+      { type: 'PROPERTY', name: '全家便利店',         price: 40,  pixelType: 'store',     zoneLabel: '山林聚落' },
+      { type: 'PROPERTY', name: '林務局',             price: 50,  pixelType: 'forest',    zoneLabel: '山林聚落' },
+      { type: 'PROPERTY', name: '童軍龜山營地',       price: 80,  pixelType: 'scout',     zoneLabel: '山林聚落' },
+      { type: 'LANDMARK', name: '南勢溪',             price: 0,   pixelType: 'river',     zoneLabel: '地標' },
+      { type: 'PROPERTY', name: '龜山土地公廟',       price: 110, pixelType: 'temple',    zoneLabel: '古道人文' },
+      { type: 'PROPERTY', name: '舊茶寮遺址',         price: 80,  pixelType: 'teahut',    zoneLabel: '古道人文' },
+      { type: 'PROPERTY', name: '台電訓練所',         price: 120, pixelType: 'training',  zoneLabel: '古道人文' },
+      { type: 'PROPERTY', name: '籃球場',             price: 50,  pixelType: 'court',     zoneLabel: '古道人文' },
+      { type: 'LANDMARK', name: '燕子湖畔',           price: 0,   pixelType: 'river',     zoneLabel: '地標' },
+      { type: 'PROPERTY', name: '龜山老街',           price: 60,  pixelType: 'store',     zoneLabel: '溪畔風情' },
+      { type: 'PROPERTY', name: '梅花湖步道',         price: 75,  pixelType: 'forest',    zoneLabel: '溪畔風情' },
+      { type: 'PROPERTY', name: '烏來台車驛站',       price: 95,  pixelType: 'warehouse', zoneLabel: '溪畔風情' },
+      { type: 'PROPERTY', name: '桂山冰棒小舖',       price: 65,  pixelType: 'ice',       zoneLabel: '溪畔風情' },
+      { type: 'PROPERTY', name: '新店溪畔公園',       price: 85,  pixelType: 'scout',     zoneLabel: '山野秘境' },
+      { type: 'PROPERTY', name: '翡翠觀景台',         price: 115, pixelType: 'dam',       zoneLabel: '山野秘境' },
+      { type: 'PROPERTY', name: '龜山古道入口',       price: 70,  pixelType: 'teahut',    zoneLabel: '山野秘境' },
+      { type: 'LANDMARK', name: '溪谷吊橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標' },
+      { type: 'PROPERTY', name: '生態賞鳥亭',         price: 80,  pixelType: 'forest',    zoneLabel: '生態綠廊' },
+      { type: 'PROPERTY', name: '櫻花林秘境',         price: 90,  pixelType: 'tea',       zoneLabel: '生態綠廊' },
+      { type: 'PROPERTY', name: '森林教室',           price: 60,  pixelType: 'school',    zoneLabel: '生態綠廊' },
+      { type: 'PROPERTY', name: '百年水圳遺址',       price: 105, pixelType: 'ruin',      zoneLabel: '生態綠廊' },
+      { type: 'PROPERTY', name: '探險補給站',         price: 45,  pixelType: 'training',  zoneLabel: '生態綠廊' }
     ];
 
     const BOARD_TILES = WINDING_PATH_COORDS.map((pos, index) => {
       const bp = TILE_BLUEPRINTS[index];
-      return {
-        id: index,
-        gx: pos.gx,
-        gy: pos.gy,
-        ...bp,
-        ownerUid: null,
-        ownerName: '',
-        ownerNpcId: null
-      };
+      return { id: index, gx: pos.gx, gy: pos.gy, ...bp, ownerUid: null, ownerName: '', ownerNpcId: null };
     });
 
-    // 更新抽屜總可購領地數顯示
     const totalPurchasableCount = BOARD_TILES.filter(t => t.type === 'PROPERTY').length;
     const drawerTotalEl = document.getElementById('drawer-total-count');
     if (drawerTotalEl) drawerTotalEl.textContent = totalPurchasableCount;
 
-    // ============================================================================
-    // 建立 8x8 地形與裝飾佈局（草地、土地、小水塘、小石塊、路徑旁小樹）
-    // ============================================================================
     function createWorldMapGrid() {
       const N = ISO_CONFIG.GRID_SIZE;
       const pathLookup = new Map();
       BOARD_TILES.forEach(t => pathLookup.set(`${t.gx},${t.gy}`, t));
 
-      // 指定小水塘位置（中央水塘 + 左上角小水塘）
-      const pondCoords = new Set([
-        '4,3', '4,4', '5,3', '5,4',
-        '1,1'
-      ]);
-
-      // 指定土地（沙土/泥土）區塊位置
-      const dirtCoords = new Set([
-        '3,3', '3,4', '6,3', '6,4', '3,2', '6,5',
-        '4,7', '0,4', '5,0', '6,0', '7,0', '6,6'
-      ]);
-
-      // 路徑旁小樹與小石塊裝飾配置（確保不擋路、不種在水塘中）
+      const pondCoords = new Set(['4,3', '4,4', '5,3', '5,4', '1,1']);
+      const dirtCoords = new Set(['3,3', '3,4', '6,3', '6,4', '3,2', '6,5', '4,7', '0,4', '5,0', '6,0', '7,0', '6,6']);
       const propMap = new Map([
-        ['1,6', 'tree_oak'],
-        ['2,6', 'pebbles'],
-        ['6,6', 'tree_bush'],
-        ['4,7', 'tree_bush'],
-        ['1,4', 'tree_oak'],
-        ['0,4', 'pebbles'],
-        ['3,4', 'tree_bush'],
-        ['3,3', 'pebbles'],
-        ['3,2', 'tree_oak'],
-        ['3,1', 'tree_bush'],
-        ['4,2', 'pebbles'],
-        ['5,2', 'tree_oak'],
-        ['6,2', 'tree_bush'],
-        ['5,0', 'tree_oak'],
-        ['6,0', 'pebbles'],
-        ['7,0', 'tree_bush'],
-        ['6,3', 'tree_oak'],
-        ['6,4', 'pebbles'],
-        ['6,5', 'tree_bush']
+        ['1,6', 'tree_oak'], ['2,6', 'pebbles'], ['6,6', 'tree_bush'], ['4,7', 'tree_bush'],
+        ['1,4', 'tree_oak'], ['0,4', 'pebbles'], ['3,4', 'tree_bush'], ['3,3', 'pebbles'],
+        ['3,2', 'tree_oak'], ['3,1', 'tree_bush'], ['4,2', 'pebbles'], ['5,2', 'tree_oak'],
+        ['6,2', 'tree_bush'], ['5,0', 'tree_oak'], ['6,0', 'pebbles'], ['7,0', 'tree_bush'],
+        ['6,3', 'tree_oak'], ['6,4', 'pebbles'], ['6,5', 'tree_bush']
       ]);
 
       const grid = [];
@@ -2123,25 +1801,13 @@
           else if (pondCoords.has(key)) terrain = 'water';
           else if (dirtCoords.has(key)) terrain = 'dirt';
 
-          grid[gx][gy] = {
-            gx,
-            gy,
-            terrain,
-            roadTile,
-            prop: roadTile ? null : (propMap.get(key) || null)
-          };
+          grid[gx][gy] = { gx, gy, terrain, roadTile, prop: roadTile ? null : (propMap.get(key) || null) };
         }
       }
       return grid;
     }
-
     const WORLD_MAP = createWorldMapGrid();
 
-    /**
-     * ============================================================================
-     * 5. 16x16 地點像素繪圖引擎 (彈窗與地契卡片用)
-     * ============================================================================
-     */
     const PixelArtRenderer = {
       colors: {
         '.': null, 'K': '#1c140e', 'W': '#fffdf7', 'S': '#87ceeb', 'B': '#2b7bb9',
@@ -2170,11 +1836,9 @@
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         const matrix = this.sprites[type] || this.sprites.school;
         const scale = Math.floor(canvas.width / 16);
         const startY = thickness * offsetY;
-
         for (let layer = 0; layer <= thickness; layer++) {
           const currentYOffset = startY - (layer * offsetY);
           for (let y = 0; y < 16; y++) {
@@ -2196,44 +1860,20 @@
       }
     };
 
-    /**
-     * ============================================================================
-     * 6. 多人 2.5D 麥塊方塊人棋子管理器
-     * ============================================================================
-     */
     const PawnManager = {
       pawns: {},
-
       createOrUpdatePawn(uid, npcId, tileIndex, displayName = '') {
         const tile = BOARD_TILES[tileIndex] || BOARD_TILES[0];
         const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
         const label = displayName || npc.name;
-
         if (!this.pawns[uid]) {
-          this.pawns[uid] = {
-            uid,
-            npcId,
-            displayName: label,
-            tileIndex,
-            gx: tile.gx,
-            gy: tile.gy,
-            jumpHeight: 0,
-            scaleSquash: 1,
-            stepQueue: [],
-            isHopping: false,
-            hopProgress: 0,
-            hopDuration: 0.24,
-            startPos: { gx: tile.gx, gy: tile.gy },
-            targetPos: { gx: tile.gx, gy: tile.gy },
-            onComplete: null
-          };
+          this.pawns[uid] = { uid, npcId, displayName: label, tileIndex, gx: tile.gx, gy: tile.gy, jumpHeight: 0, scaleSquash: 1, stepQueue: [], isHopping: false, hopProgress: 0, hopDuration: 0.24, startPos: { gx: tile.gx, gy: tile.gy }, targetPos: { gx: tile.gx, gy: tile.gy }, onComplete: null };
         } else {
           this.pawns[uid].npcId = npcId;
           if (displayName) this.pawns[uid].displayName = displayName;
         }
         return this.pawns[uid];
       },
-
       syncRemotePawn(uid, npcId, targetTileIndex, displayName = '', onHopDone = null) {
         const pawn = this.createOrUpdatePawn(uid, npcId, targetTileIndex, displayName);
         if (pawn.tileIndex !== targetTileIndex && !pawn.isHopping) {
@@ -2242,14 +1882,11 @@
             this.enqueueSteps(uid, steps, onHopDone);
           } else {
             const t = BOARD_TILES[targetTileIndex];
-            pawn.tileIndex = targetTileIndex;
-            pawn.gx = t.gx;
-            pawn.gy = t.gy;
+            pawn.tileIndex = targetTileIndex; pawn.gx = t.gx; pawn.gy = t.gy;
             if (onHopDone) onHopDone(targetTileIndex);
           }
         }
       },
-
       enqueueSteps(uid, steps, onComplete) {
         const pawn = this.pawns[uid];
         if (!pawn) return;
@@ -2262,16 +1899,10 @@
         pawn.onComplete = onComplete;
         this.startNextHop(pawn);
       },
-
       startNextHop(pawn) {
         if (pawn.stepQueue.length === 0) {
-          pawn.isHopping = false;
-          pawn.jumpHeight = 0;
-          if (pawn.onComplete) {
-            const cb = pawn.onComplete;
-            pawn.onComplete = null;
-            cb(pawn.tileIndex);
-          }
+          pawn.isHopping = false; pawn.jumpHeight = 0;
+          if (pawn.onComplete) { const cb = pawn.onComplete; pawn.onComplete = null; cb(pawn.tileIndex); }
           return;
         }
         const nextIdx = pawn.stepQueue.shift();
@@ -2279,11 +1910,8 @@
         const nextT = BOARD_TILES[nextIdx];
         pawn.startPos = { gx: currT.gx, gy: currT.gy };
         pawn.targetPos = { gx: nextT.gx, gy: nextT.gy };
-        pawn.hopProgress = 0;
-        pawn.isHopping = true;
-        pawn.tileIndex = nextIdx;
+        pawn.hopProgress = 0; pawn.isHopping = true; pawn.tileIndex = nextIdx;
       },
-
       updateAll(dt) {
         Object.values(this.pawns).forEach((pawn) => {
           if (!pawn.isHopping) {
@@ -2292,10 +1920,8 @@
           }
           pawn.hopProgress += dt / pawn.hopDuration;
           if (pawn.hopProgress >= 1) {
-            pawn.gx = pawn.targetPos.gx;
-            pawn.gy = pawn.targetPos.gy;
-            pawn.jumpHeight = 0;
-            pawn.scaleSquash = 0.88;
+            pawn.gx = pawn.targetPos.gx; pawn.gy = pawn.targetPos.gy;
+            pawn.jumpHeight = 0; pawn.scaleSquash = 0.88;
             this.startNextHop(pawn);
             return;
           }
@@ -2312,13 +1938,13 @@
       list: [],
       spawn(gx, gy, text, color = '#ffe082') {
         const { sx, sy } = Engine.gridToIso(gx, gy);
-        this.list.push({ sx, sy: sy - 46, text, color, age: 0, life: 1.6 });
+        // 路徑方塊高度為 24，所以文字要再飄高一點
+        this.list.push({ sx, sy: sy - 70, text, color, age: 0, life: 1.6 });
       },
       update(dt) {
         for (let i = this.list.length - 1; i >= 0; i--) {
           const item = this.list[i];
-          item.age += dt;
-          item.sy -= 26 * dt;
+          item.age += dt; item.sy -= 26 * dt;
           if (item.age >= item.life) this.list.splice(i, 1);
         }
       },
@@ -2326,171 +1952,113 @@
         for (const item of this.list) {
           const alpha = Math.max(0, 1 - item.age / item.life);
           ctx.save();
-          ctx.globalAlpha = alpha;
-          ctx.font = 'bold 14px sans-serif';
+          ctx.globalAlpha = alpha; ctx.font = 'bold 14px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillStyle = '#2b1506';
-          ctx.fillText(item.text, item.sx + 1, item.sy + 1);
-          ctx.fillStyle = item.color;
-          ctx.fillText(item.text, item.sx, item.sy);
+          ctx.fillStyle = '#2b1506'; ctx.fillText(item.text, item.sx + 1, item.sy + 1);
+          ctx.fillStyle = item.color; ctx.fillText(item.text, item.sx, item.sy);
           ctx.restore();
         }
       }
     };
 
-    /**
-     * ============================================================================
-     * 7. HUD 介面、角色鎖定刷新、購買、過路費與總結算排行榜
-     * ============================================================================
-     */
     const HUD = {
       exchangeSpend: 10,
-
       initLobby() {
         const grid = document.getElementById('npc-grid');
         grid.innerHTML = '';
-
         NPC_ROSTER.forEach((npc) => {
           const card = document.createElement('div');
-          card.className = 'npc-card';
-          card.dataset.npcId = npc.id;
-
+          card.className = 'npc-card'; card.dataset.npcId = npc.id;
           const pBox = document.createElement('div');
           pBox.className = 'npc-pixel-box';
           const cvs = document.createElement('canvas');
-          cvs.width = 60;
-          cvs.height = 60;
+          cvs.width = 60; cvs.height = 60;
           drawNpcAvatarToCanvas(cvs, npc.id);
           pBox.appendChild(cvs);
-
-          card.innerHTML = `
-            <div class="npc-name">${npc.name}</div>
-            <div class="npc-role" style="background:${npc.tagColor};">${npc.role}</div>
-            <div class="npc-desc">${npc.desc}</div>
-          `;
+          card.innerHTML = `<div class="npc-name">${npc.name}</div><div class="npc-role" style="background:${npc.tagColor};">${npc.role}</div><div class="npc-desc">${npc.desc}</div>`;
           card.insertBefore(pBox, card.firstChild);
-
           card.addEventListener('click', () => {
             if (GameState.takenNpcMap[npc.id]) return;
             MultiplayerManager.changeMyNpcInLobby(npc.id);
           });
-
           grid.appendChild(card);
         });
-
         this.refreshLobbyNpcCards();
       },
-
       refreshLobbyNpcCards() {
         document.querySelectorAll('.npc-card').forEach((card) => {
           const id = card.dataset.npcId;
           const takenBy = GameState.takenNpcMap[id];
           const existingBadge = card.querySelector('.npc-taken-badge');
           if (existingBadge) existingBadge.remove();
-
           if (takenBy) {
-            card.classList.add('taken');
-            card.classList.remove('selected');
+            card.classList.add('taken'); card.classList.remove('selected');
             const badge = document.createElement('div');
-            badge.className = 'npc-taken-badge';
-            badge.textContent = `🔒 已被 ${takenBy} 選走`;
+            badge.className = 'npc-taken-badge'; badge.textContent = `🔒 已被 ${takenBy} 選走`;
             card.appendChild(badge);
           } else {
-            card.classList.remove('taken');
-            card.classList.toggle('selected', id === GameState.selectedNpcId);
+            card.classList.remove('taken'); card.classList.toggle('selected', id === GameState.selectedNpcId);
           }
         });
       },
-
       updateTurnPanel() {
         const panel = document.getElementById('turn-order-panel');
         panel.innerHTML = '<div style="font-size:0.75rem;color:#cbb094;font-weight:700;margin-bottom:2px;">👥 探險順位與剩餘骰</div>';
-
         GameState.players.forEach((p) => {
           const npc = NPC_ROSTER.find(n => n.id === p.npcId) || NPC_ROSTER[0];
           const isTurn = p.uid === GameState.currentTurnUid;
           const isMe = p.uid === GameState.uid;
           const dLeft = p.diceLeft ?? 0;
-
           const row = document.createElement('div');
           row.className = 'turn-player-card' + (isTurn ? ' active-turn' : '') + (dLeft <= 0 ? ' out-of-dice' : '');
-          row.innerHTML = `
-            <span class="player-dot" style="background:${npc.flagColor};"></span>
-            <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-              ${p.joinOrder}. ${p.name}${isMe ? ' (你)' : ''}
-            </div>
-            <span style="font-size:0.74rem;color:${dLeft > 0 ? '#ffd54f' : '#9e9e9e'};">🎲${dLeft}</span>
-          `;
+          row.innerHTML = `<span class="player-dot" style="background:${npc.flagColor};"></span><div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.joinOrder}. ${p.name}${isMe ? ' (你)' : ''}</div><span style="font-size:0.74rem;color:${dLeft > 0 ? '#ffd54f' : '#9e9e9e'};">🎲${dLeft}</span>`;
           panel.appendChild(row);
         });
       },
-
       update() {
         document.getElementById('ui-energy').textContent = GameState.personalEnergy;
         document.getElementById('ui-coins').textContent = GameState.coins;
         document.getElementById('ui-dice-left').textContent = GameState.diceLeft;
         document.getElementById('ui-deed-count').textContent = GameState.ownedTileIds.length;
         document.getElementById('drawer-count').textContent = GameState.ownedTileIds.length;
-
         const myPawn = PawnManager.pawns[GameState.uid];
         const tile = BOARD_TILES[myPawn ? myPawn.tileIndex : 0];
         let statusTag = '';
         if (tile.type === 'PROPERTY') {
-          if (tile.ownerUid === GameState.uid) {
-            statusTag = '（✅ 你的領地）';
-          } else if (tile.ownerUid) {
-            statusTag = `（🚩 ${tile.ownerName} 的領地｜過路費 ${calcTollFee(tile.price)} 🪙）`;
-          } else {
-            statusTag = `（價值 ${tile.price} 🪙）`;
-          }
+          if (tile.ownerUid === GameState.uid) statusTag = '（✅ 你的領地）';
+          else if (tile.ownerUid) statusTag = `（🚩 ${tile.ownerName} 的領地｜過路費 ${calcTollFee(tile.price)} 🪙）`;
+          else statusTag = `（價值 ${tile.price} 🪙）`;
         }
-        document.getElementById('ui-tile-info').innerHTML =
-          `📍 <strong>${getMyShortName()}</strong> 的位置：<strong>${tile.name}</strong>${statusTag}`;
-
+        document.getElementById('ui-tile-info').innerHTML = `📍 <strong>${getMyShortName()}</strong> 的位置：<strong>${tile.name}</strong>${statusTag}`;
         const rollBtn = document.getElementById('btn-roll');
         const isMyTurn = GameState.currentTurnUid === GameState.uid;
-
-        if (GameState.phase === 'LOBBY' || GameState.phase === 'FINISHED') {
-          rollBtn.disabled = true;
-        } else if (!isMyTurn) {
+        if (GameState.phase === 'LOBBY' || GameState.phase === 'FINISHED') rollBtn.disabled = true;
+        else if (!isMyTurn) {
           rollBtn.disabled = true;
           const activeP = GameState.players.find(p => p.uid === GameState.currentTurnUid);
           rollBtn.textContent = `等待 ${activeP ? activeP.name : '隊友'} 行動`;
         } else if (GameState.diceLeft <= 0 && GameState.phase === 'IDLE') {
-          rollBtn.disabled = true;
-          rollBtn.textContent = '你的骰子已用盡';
+          rollBtn.disabled = true; rollBtn.textContent = '你的骰子已用盡';
         } else {
           rollBtn.disabled = GameState.phase !== 'IDLE';
           rollBtn.textContent = GameState.phase === 'IDLE' ? '🎲 輪到你！擲骰前進' : '探險移動中...';
         }
       },
-
       triggerRoll() {
         if (GameState.phase !== 'IDLE' || GameState.currentTurnUid !== GameState.uid || GameState.diceLeft <= 0) return;
-
-        GameState.phase = 'ROLLING';
-        GameState.diceLeft -= 1;
+        GameState.phase = 'ROLLING'; GameState.diceLeft -= 1;
         MultiplayerManager.syncMyPlayerStats();
-        this.updateTurnPanel();
-        this.update();
-
+        this.updateTurnPanel(); this.update();
         const diceBox = document.getElementById('ui-dice-face');
         diceBox.classList.add('rolling');
-
         const finalSteps = Math.floor(Math.random() * 6) + 1;
         let ticks = 0;
-
         const rollInterval = setInterval(() => {
           renderDiceFace(Math.floor(Math.random() * 6) + 1);
           ticks++;
           if (ticks >= 10) {
-            clearInterval(rollInterval);
-            diceBox.classList.remove('rolling');
-            renderDiceFace(finalSteps);
-
-            GameState.phase = 'MOVING';
-            this.update();
-
+            clearInterval(rollInterval); diceBox.classList.remove('rolling'); renderDiceFace(finalSteps);
+            GameState.phase = 'MOVING'; this.update();
             PawnManager.enqueueSteps(GameState.uid, finalSteps, (finalTileIndex) => {
               MultiplayerManager.syncMyPosition(finalTileIndex);
               this.handleTileArrival(finalTileIndex);
@@ -2498,373 +2066,160 @@
           }
         }, 55);
       },
-
       handleTileArrival(tileIndex) {
         const tile = BOARD_TILES[tileIndex];
-
         if (tile.type === 'PROPERTY') {
-          if (!tile.ownerUid) {
-            this.openBuyModal(tile);
-          } else if (tile.ownerUid === GameState.uid) {
-            FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7');
-            GameState.phase = 'IDLE';
-            MultiplayerManager.advanceNextTurn();
-          } else {
-            this.openTollModal(tile);
-          }
+          if (!tile.ownerUid) this.openBuyModal(tile);
+          else if (tile.ownerUid === GameState.uid) { FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn(); }
+          else this.openTollModal(tile);
         } else {
-          FloatingTexts.spawn(tile.gx, tile.gy, `抵達 ${tile.name}`, '#ffe082');
-          GameState.phase = 'IDLE';
-          MultiplayerManager.advanceNextTurn();
+          FloatingTexts.spawn(tile.gx, tile.gy, `抵達 ${tile.name}`, '#ffe082'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn();
         }
       },
-
       openTollModal(tile) {
-        GameState.phase = 'MODAL';
-        this.update();
-
+        GameState.phase = 'MODAL'; this.update();
         const modal = document.getElementById('modal-toll');
         const tollFee = calcTollFee(tile.price);
         drawNpcAvatarToCanvas(document.getElementById('toll-owner-preview'), tile.ownerNpcId || 'ranger');
-
         document.getElementById('toll-title').textContent = `💸 進入 ${tile.ownerName} 的【${tile.name}】`;
         const actionsDiv = document.getElementById('toll-actions');
         actionsDiv.innerHTML = '';
 
         if (GameState.coins >= tollFee) {
-          document.getElementById('toll-desc').innerHTML =
-            `地價 ${tile.price} 🪙，需支付 30% 過路費：<strong style="color:#ffab91;font-size:1.1rem;">${tollFee} 🪙</strong>`;
-
-          const payBtn = document.createElement('button');
-          payBtn.className = 'btn btn-warning';
-          payBtn.textContent = `💸 支付 ${tollFee} 🪙 過路費`;
-          payBtn.onclick = () => {
-            GameState.coins -= tollFee;
-            MultiplayerManager.sendTollPayment(tile, tollFee);
-            FloatingTexts.spawn(tile.gx, tile.gy, `支付過路費 -${tollFee} 🪙`, '#ff8a65');
-            this.closeTollModal();
-          };
+          document.getElementById('toll-desc').innerHTML = `地價 ${tile.price} 🪙，需支付 30% 過路費：<strong style="color:#ffab91;font-size:1.1rem;">${tollFee} 🪙</strong>`;
+          const payBtn = document.createElement('button'); payBtn.className = 'btn btn-warning'; payBtn.textContent = `💸 支付 ${tollFee} 🪙 過路費`;
+          payBtn.onclick = () => { GameState.coins -= tollFee; MultiplayerManager.sendTollPayment(tile, tollFee); FloatingTexts.spawn(tile.gx, tile.gy, `支付過路費 -${tollFee} 🪙`, '#ff8a65'); this.closeTollModal(); };
           actionsDiv.appendChild(payBtn);
         } else {
           const deficit = tollFee - GameState.coins;
           const neededEnergy = Math.ceil(deficit / EXCHANGE_RATE);
-
           if (GameState.personalEnergy >= neededEnergy) {
-            document.getElementById('toll-desc').innerHTML =
-              `需支付過路費 <strong style="color:#ffab91;">${tollFee} 🪙</strong>（目前僅有 ${GameState.coins} 🪙）。<br>` +
-              `可使用 <strong style="color:#7ee8fa;">${neededEnergy} ⚡ 個人能量</strong> 自動兌換並支付！`;
-
-            const exPayBtn = document.createElement('button');
-            exPayBtn.className = 'btn btn-primary';
-            exPayBtn.textContent = `⚡ 兌換 ${neededEnergy} 能量並支付`;
-            exPayBtn.onclick = () => {
-              GameState.personalEnergy -= neededEnergy;
-              GameState.coins += neededEnergy * EXCHANGE_RATE;
-              GameState.coins -= tollFee;
-              MultiplayerManager.sendTollPayment(tile, tollFee);
-              FloatingTexts.spawn(tile.gx, tile.gy, `兌換並支付 -${tollFee} 🪙`, '#ffab91');
-              this.closeTollModal();
-            };
+            document.getElementById('toll-desc').innerHTML = `需支付過路費 <strong style="color:#ffab91;">${tollFee} 🪙</strong>（目前僅有 ${GameState.coins} 🪙）。<br>可使用 <strong style="color:#7ee8fa;">${neededEnergy} ⚡ 個人能量</strong> 自動兌換並支付！`;
+            const exPayBtn = document.createElement('button'); exPayBtn.className = 'btn btn-primary'; exPayBtn.textContent = `⚡ 兌換 ${neededEnergy} 能量並支付`;
+            exPayBtn.onclick = () => { GameState.personalEnergy -= neededEnergy; GameState.coins += neededEnergy * EXCHANGE_RATE; GameState.coins -= tollFee; MultiplayerManager.sendTollPayment(tile, tollFee); FloatingTexts.spawn(tile.gx, tile.gy, `兌換並支付 -${tollFee} 🪙`, '#ffab91'); this.closeTollModal(); };
             actionsDiv.appendChild(exPayBtn);
           } else {
             const maxGained = GameState.personalEnergy * EXCHANGE_RATE;
             const totalPayable = GameState.coins + maxGained;
-
-            document.getElementById('toll-desc').innerHTML =
-              `需支付過路費 <strong style="color:#ffab91;">${tollFee} 🪙</strong>，但您的金幣與能量皆不足！<br>` +
-              `將盡力交付身上所有資源（共 <strong style="color:#ffd17a;">${totalPayable} 🪙</strong>）給地主。`;
-
-            const bankruptBtn = document.createElement('button');
-            bankruptBtn.className = 'btn btn-warning';
-            bankruptBtn.textContent = `交付所有資源 (${totalPayable} 🪙)`;
-            bankruptBtn.onclick = () => {
-              GameState.personalEnergy = 0;
-              GameState.coins = 0;
-              if (totalPayable > 0) {
-                MultiplayerManager.sendTollPayment(tile, totalPayable);
-              }
-              FloatingTexts.spawn(tile.gx, tile.gy, `傾囊支付 -${totalPayable} 🪙`, '#ef5350');
-              this.closeTollModal();
-            };
+            document.getElementById('toll-desc').innerHTML = `需支付過路費 <strong style="color:#ffab91;">${tollFee} 🪙</strong>，但您的金幣與能量皆不足！<br>將盡力交付身上所有資源（共 <strong style="color:#ffd17a;">${totalPayable} 🪙</strong>）給地主。`;
+            const bankruptBtn = document.createElement('button'); bankruptBtn.className = 'btn btn-warning'; bankruptBtn.textContent = `交付所有資源 (${totalPayable} 🪙)`;
+            bankruptBtn.onclick = () => { GameState.personalEnergy = 0; GameState.coins = 0; if (totalPayable > 0) MultiplayerManager.sendTollPayment(tile, totalPayable); FloatingTexts.spawn(tile.gx, tile.gy, `傾囊支付 -${totalPayable} 🪙`, '#ef5350'); this.closeTollModal(); };
             actionsDiv.appendChild(bankruptBtn);
           }
         }
-
         modal.classList.add('show');
       },
-
-      closeTollModal() {
-        document.getElementById('modal-toll').classList.remove('show');
-        GameState.phase = 'IDLE';
-        MultiplayerManager.advanceNextTurn();
-      },
-
+      closeTollModal() { document.getElementById('modal-toll').classList.remove('show'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn(); },
       openBuyModal(tile) {
-        GameState.phase = 'MODAL';
-        this.update();
-
+        GameState.phase = 'MODAL'; this.update();
         const modal = document.getElementById('modal-buy');
         PixelArtRenderer.drawToCanvas(document.getElementById('buy-pixel-preview'), tile.pixelType);
-
         document.getElementById('buy-title').textContent = tile.name;
         const canAfford = GameState.coins >= tile.price;
         const tollFee = calcTollFee(tile.price);
-
-        document.getElementById('buy-desc').innerHTML = canAfford
-          ? `價值 <strong>${tile.price} 🪙</strong>（過路費 ${tollFee} 🪙），是否購買所有權？`
-          : `需要 <strong>${tile.price} 🪙</strong>（目前持有 ${GameState.coins} 🪙），金幣不足！可先點上方「⚡ 兌換金幣」。`;
-
+        document.getElementById('buy-desc').innerHTML = canAfford ? `價值 <strong>${tile.price} 🪙</strong>（過路費 ${tollFee} 🪙），是否購買所有權？` : `需要 <strong>${tile.price} 🪙</strong>（目前持有 ${GameState.coins} 🪙），金幣不足！可先點上方「⚡ 兌換金幣」。`;
         const confirmBtn = document.getElementById('buy-confirm');
-        confirmBtn.disabled = !canAfford;
-        confirmBtn.textContent = canAfford ? `🪙 花費 ${tile.price} 購買` : '金幣不足';
-
+        confirmBtn.disabled = !canAfford; confirmBtn.textContent = canAfford ? `🪙 花費 ${tile.price} 購買` : '金幣不足';
         confirmBtn.onclick = () => {
-          if (GameState.coins >= tile.price && !tile.ownerUid) {
-            GameState.coins -= tile.price;
-            GameState.ownedTileIds.push(tile.id);
-            MultiplayerManager.syncTilePurchase(tile);
-            FloatingTexts.spawn(tile.gx, tile.gy, `購得 ${tile.name}!`, '#ffd54f');
-            this.renderDeedCards();
-          }
+          if (GameState.coins >= tile.price && !tile.ownerUid) { GameState.coins -= tile.price; GameState.ownedTileIds.push(tile.id); MultiplayerManager.syncTilePurchase(tile); FloatingTexts.spawn(tile.gx, tile.gy, `購得 ${tile.name}!`, '#ffd54f'); this.renderDeedCards(); }
           this.closeBuyModal();
         };
-
-        document.getElementById('buy-skip').onclick = () => {
-          this.closeBuyModal();
-        };
-
+        document.getElementById('buy-skip').onclick = () => this.closeBuyModal();
         modal.classList.add('show');
       },
-
-      closeBuyModal() {
-        document.getElementById('modal-buy').classList.remove('show');
-        GameState.phase = 'IDLE';
-        MultiplayerManager.advanceNextTurn();
-      },
-
+      closeBuyModal() { document.getElementById('modal-buy').classList.remove('show'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn(); },
       openFinalSummaryModal() {
         if (GameState.phase === 'FINISHED') return;
-        GameState.phase = 'FINISHED';
-        this.update();
-
+        GameState.phase = 'FINISHED'; this.update();
         const scoreboard = GameState.players.map((p) => {
           const isMe = p.uid === GameState.uid;
           const currentCoins = isMe ? GameState.coins : (p.coins || 0);
           const ownedTiles = BOARD_TILES.filter(t => t.ownerUid === p.uid);
           const landValue = ownedTiles.reduce((sum, t) => sum + t.price, 0);
           const totalScore = landValue + currentCoins;
-
-          return {
-            uid: p.uid,
-            name: p.name,
-            npcId: p.npcId,
-            isMe,
-            ownedCount: ownedTiles.length,
-            ownedNames: ownedTiles.map(t => t.name),
-            landValue,
-            coins: currentCoins,
-            totalScore
-          };
+          return { uid: p.uid, name: p.name, npcId: p.npcId, isMe, ownedCount: ownedTiles.length, ownedNames: ownedTiles.map(t => t.name), landValue, coins: currentCoins, totalScore };
         }).sort((a, b) => b.totalScore - a.totalScore);
-
         const listEl = document.getElementById('summary-ranking-list');
         listEl.innerHTML = '';
         const medals = ['🥇', '🥈', '🥉', '4️⃣'];
-
         scoreboard.forEach((entry, idx) => {
-          const row = document.createElement('div');
-          row.className = 'rank-row' + (idx === 0 ? ' rank-1' : '');
-
-          const avatarBox = document.createElement('div');
-          avatarBox.className = 'rank-avatar';
-          const cvs = document.createElement('canvas');
-          cvs.width = 40;
-          cvs.height = 40;
-          drawNpcAvatarToCanvas(cvs, entry.npcId);
-          avatarBox.appendChild(cvs);
-
-          const landsText = entry.ownedNames.length > 0
-            ? `領地(${entry.ownedCount}處)：${entry.ownedNames.join('、')}`
-            : '尚未購得領地';
-
-          row.innerHTML = `
-            <div class="rank-medal">${medals[idx] || idx + 1}</div>
-            <div class="rank-info">
-              <div class="rank-name">${entry.name}${entry.isMe ? ' (你)' : ''}</div>
-              <div class="rank-detail">${landsText}</div>
-              <div class="rank-detail">地產價值 ${entry.landValue} 🪙 + 剩餘金幣 ${entry.coins} 🪙</div>
-            </div>
-            <div class="rank-score">
-              <div style="font-size:0.7rem;color:#cbb094;">總積分</div>
-              <div class="rank-score-num">${entry.totalScore}</div>
-            </div>
-          `;
-          row.insertBefore(avatarBox, row.children[1]);
-          listEl.appendChild(row);
+          const row = document.createElement('div'); row.className = 'rank-row' + (idx === 0 ? ' rank-1' : '');
+          const avatarBox = document.createElement('div'); avatarBox.className = 'rank-avatar';
+          const cvs = document.createElement('canvas'); cvs.width = 40; cvs.height = 40; drawNpcAvatarToCanvas(cvs, entry.npcId); avatarBox.appendChild(cvs);
+          const landsText = entry.ownedNames.length > 0 ? `領地(${entry.ownedCount}處)：${entry.ownedNames.join('、')}` : '尚未購得領地';
+          row.innerHTML = `<div class="rank-medal">${medals[idx] || idx + 1}</div><div class="rank-info"><div class="rank-name">${entry.name}${entry.isMe ? ' (你)' : ''}</div><div class="rank-detail">${landsText}</div><div class="rank-detail">地產價值 ${entry.landValue} 🪙 + 剩餘金幣 ${entry.coins} 🪙</div></div><div class="rank-score"><div style="font-size:0.7rem;color:#cbb094;">總積分</div><div class="rank-score-num">${entry.totalScore}</div></div>`;
+          row.insertBefore(avatarBox, row.children[1]); listEl.appendChild(row);
         });
-
         const refundedEnergy = Math.floor(GameState.coins / EXCHANGE_RATE);
         const finalPersonalEnergy = GameState.personalEnergy + refundedEnergy;
-
-        document.getElementById('summary-energy-report').innerHTML = `
-          <strong>⚡ 個人能量結算明細（${getMyShortName()}）：</strong><br>
-          • 本局結束剩餘金幣：<strong>${GameState.coins} 🪙</strong> → 自動兌換回 <strong style="color:#7ee8fa;">+${refundedEnergy} ⚡ 個人能量</strong><br>
-          • 結算後個人累積能量：<strong style="color:#ffd54f;">${finalPersonalEnergy} ⚡</strong>（僅更新個人能量，不影響全班累積能量）
-        `;
-
+        document.getElementById('summary-energy-report').innerHTML = `<strong>⚡ 個人能量結算明細（${getMyShortName()}）：</strong><br>• 本局結束剩餘金幣：<strong>${GameState.coins} 🪙</strong> → 自動兌換回 <strong style="color:#7ee8fa;">+${refundedEnergy} ⚡ 個人能量</strong><br>• 結算後個人累積能量：<strong style="color:#ffd54f;">${finalPersonalEnergy} ⚡</strong>（僅更新個人能量，不影響全班累積能量）`;
         document.getElementById('modal-summary').classList.add('show');
       },
-
       openExchangeModal() {
         if (GameState.phase === 'ROLLING' || GameState.phase === 'MOVING' || GameState.phase === 'FINISHED') return;
         this.exchangeSpend = Math.min(10, GameState.personalEnergy);
-        this.refreshExchangeUI();
-        document.getElementById('modal-exchange').classList.add('show');
+        this.refreshExchangeUI(); document.getElementById('modal-exchange').classList.add('show');
       },
-
       refreshExchangeUI() {
         document.getElementById('ex-avail-energy').textContent = GameState.personalEnergy;
         document.getElementById('ex-spend-amount').textContent = this.exchangeSpend;
         document.getElementById('ex-gain-coins').textContent = `+${this.exchangeSpend * EXCHANGE_RATE} 🪙`;
         document.getElementById('ex-confirm').disabled = this.exchangeSpend <= 0 || GameState.personalEnergy < this.exchangeSpend;
       },
-
       renderDeedCards() {
-        const container = document.getElementById('deed-card-list');
-        container.innerHTML = '';
-
-        if (GameState.ownedTileIds.length === 0) {
-          container.innerHTML = '<div class="empty-deeds">尚未購買任何地點。<br>兌換金幣並移動到地點上即可買下所有權！</div>';
-          return;
-        }
-
+        const container = document.getElementById('deed-card-list'); container.innerHTML = '';
+        if (GameState.ownedTileIds.length === 0) { container.innerHTML = '<div class="empty-deeds">尚未購買任何地點。<br>兌換金幣並移動到地點上即可買下所有權！</div>'; return; }
         for (const id of GameState.ownedTileIds) {
           const tile = BOARD_TILES[id];
-          const card = document.createElement('div');
-          card.className = 'deed-card';
-
-          const tag = document.createElement('div');
-          tag.className = 'deed-card-tag';
-          tag.textContent = tile.zoneLabel;
-
-          const frame = document.createElement('div');
-          frame.className = 'pixel-art-frame';
-          const pCanvas = document.createElement('canvas');
-          pCanvas.width = 68;
-          pCanvas.height = 68;
-          PixelArtRenderer.drawToCanvas(pCanvas, tile.pixelType, 4, 1.5);
-          frame.appendChild(pCanvas);
-
-          const title = document.createElement('div');
-          title.className = 'deed-card-title';
-          title.textContent = tile.name;
-
-          const val = document.createElement('div');
-          val.className = 'deed-card-val';
-          val.textContent = `價值 ${tile.price} ｜ 過路費 ${calcTollFee(tile.price)} 🪙`;
-
-          card.appendChild(tag);
-          card.appendChild(frame);
-          card.appendChild(title);
-          card.appendChild(val);
-          container.appendChild(card);
+          const card = document.createElement('div'); card.className = 'deed-card';
+          const tag = document.createElement('div'); tag.className = 'deed-card-tag'; tag.textContent = tile.zoneLabel;
+          const frame = document.createElement('div'); frame.className = 'pixel-art-frame';
+          const pCanvas = document.createElement('canvas'); pCanvas.width = 68; pCanvas.height = 68;
+          PixelArtRenderer.drawToCanvas(pCanvas, tile.pixelType, 4, 1.5); frame.appendChild(pCanvas);
+          const title = document.createElement('div'); title.className = 'deed-card-title'; title.textContent = tile.name;
+          const val = document.createElement('div'); val.className = 'deed-card-val'; val.textContent = `價值 ${tile.price} ｜ 過路費 ${calcTollFee(tile.price)} 🪙`;
+          card.appendChild(tag); card.appendChild(frame); card.appendChild(title); card.appendChild(val); container.appendChild(card);
         }
       },
-
       toggleDeedDrawer(open) {
-        const drawer = document.getElementById('deed-drawer');
-        const backdrop = document.getElementById('deed-backdrop');
-        if (open) {
-          this.renderDeedCards();
-          drawer.classList.add('open');
-          backdrop.classList.add('open');
-        } else {
-          drawer.classList.remove('open');
-          backdrop.classList.remove('open');
-        }
+        const drawer = document.getElementById('deed-drawer'); const backdrop = document.getElementById('deed-backdrop');
+        if (open) { this.renderDeedCards(); drawer.classList.add('open'); backdrop.classList.add('open'); }
+        else { drawer.classList.remove('open'); backdrop.classList.remove('open'); }
       }
     };
 
     /**
      * ============================================================================
-     * 8. 2.5D Sprite-Stacking 體素地形、小樹、水塘與人物渲染引擎
+     * 8. 2.5D Sprite-Stacking 體素地形、路徑、小樹、水塘與人物渲染引擎
      * ============================================================================
      */
     const Engine = {
-      canvas: document.getElementById('game-canvas'),
-      ctx: null,
-      rafId: null,
-      isRunning: false,
-      lastTime: 0,
-      width: 0,
-      height: 0,
-      dpr: 1,
-      hasInitializedView: false,
-
-      camera: {
-        x: 0,
-        y: 0,
-        scale: 1,
-        minScale: 0.4,
-        maxScale: 2.2,
-        autoFollow: true
-      },
-
-      pointer: {
-        isDragging: false,
-        lastX: 0,
-        lastY: 0,
-        pinchDist: 0
-      },
-
+      canvas: document.getElementById('game-canvas'), ctx: null, rafId: null,
+      isRunning: false, lastTime: 0, width: 0, height: 0, dpr: 1, hasInitializedView: false,
+      camera: { x: 0, y: 0, scale: 1, minScale: 0.4, maxScale: 2.2, autoFollow: true },
+      pointer: { isDragging: false, lastX: 0, lastY: 0, pinchDist: 0 },
       voxelCache: {},
 
-      init() {
-        this.ctx = this.canvas.getContext('2d');
-        this.bindEvents();
-        this.observeResize();
-        this.startLoop();
-      },
+      init() { this.ctx = this.canvas.getContext('2d'); this.bindEvents(); this.observeResize(); this.startLoop(); },
 
       observeResize() {
         const updateSize = (w, h) => {
           if (w <= 0 || h <= 0) return;
-          this.width = w;
-          this.height = h;
-          this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-          this.canvas.width = Math.floor(this.width * this.dpr);
-          this.canvas.height = Math.floor(this.height * this.dpr);
-
-          if (!this.hasInitializedView) {
-            this.resetCamera();
-            this.hasInitializedView = true;
-          }
+          this.width = w; this.height = h; this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+          this.canvas.width = Math.floor(this.width * this.dpr); this.canvas.height = Math.floor(this.height * this.dpr);
+          if (!this.hasInitializedView) { this.resetCamera(); this.hasInitializedView = true; }
         };
-
         updateSize(window.innerWidth, window.innerHeight);
-
-        const resizeObserver = new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            updateSize(entry.contentRect.width, entry.contentRect.height);
-          }
-        });
+        const resizeObserver = new ResizeObserver((entries) => { for (const entry of entries) updateSize(entry.contentRect.width, entry.contentRect.height); });
         resizeObserver.observe(document.body);
       },
 
       resetCamera() {
-        const w = this.width || window.innerWidth;
-        const h = this.height || window.innerHeight;
+        const w = this.width || window.innerWidth; const h = this.height || window.innerHeight;
         if (w <= 0 || h <= 0) return;
-
         const boardPixelW = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_W;
         const boardPixelH = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_H + 110;
-
-        const fitScale = Math.min(
-          (w * 0.84) / boardPixelW,
-          (h * 0.74) / boardPixelH,
-          1.1
-        );
-
+        const fitScale = Math.min((w * 0.84) / boardPixelW, (h * 0.74) / boardPixelH, 1.1);
         this.camera.scale = Math.max(this.camera.minScale, fitScale || 1);
         this.camera.x = w / 2;
         const centerGridY = (ISO_CONFIG.GRID_SIZE - 1) * (ISO_CONFIG.TILE_H / 2);
@@ -2874,19 +2229,16 @@
       setAutoFollow(enabled) {
         this.camera.autoFollow = enabled;
         const btn = document.getElementById('btn-follow');
-        btn.classList.toggle('active', enabled);
-        btn.textContent = enabled ? '🎥 跟隨：開' : '🎥 跟隨：關';
+        btn.classList.toggle('active', enabled); btn.textContent = enabled ? '🎥 跟隨：開' : '🎥 跟隨：關';
       },
 
       updateCameraFollow(dt) {
         if (!this.camera.autoFollow || this.pointer.isDragging) return;
         const activePawn = PawnManager.pawns[GameState.currentTurnUid];
         if (!activePawn || !activePawn.isHopping) return;
-
         const { sx, sy } = this.gridToIso(activePawn.gx, activePawn.gy);
         const targetX = this.width / 2 - sx * this.camera.scale;
         const targetY = this.height / 2 - sy * this.camera.scale;
-
         const lerp = 1 - Math.exp(-6 * dt);
         this.camera.x += (targetX - this.camera.x) * lerp;
         this.camera.y += (targetY - this.camera.y) * lerp;
@@ -2905,366 +2257,182 @@
         return `rgb(${r},${g},${b})`;
       },
 
-      // ============================================================================
       // 🧱 Sprite-Stacking 核心堆疊烘焙器
-      // ============================================================================
       buildStackedSprite(key, layers, palette, unitW = 4, unitH = 2.2, layerStep = 2.4) {
         if (this.voxelCache[key]) return this.voxelCache[key];
 
-        const depthZ = layers.length;
-        const sizeY = layers[0].length;
-        const sizeX = layers[0][0].length;
-
+        const depthZ = layers.length; const sizeY = layers[0].length; const sizeX = layers[0][0].length;
         const padX = Math.ceil((sizeX + sizeY) * (unitW / 2)) + 14;
         const padTop = Math.ceil(depthZ * layerStep + unitH) + 14;
         const padBot = Math.ceil((sizeX + sizeY) * (unitH / 2)) + 14;
 
-        const cvs = document.createElement('canvas');
-        cvs.width = padX * 2;
-        cvs.height = padTop + padBot;
+        const cvs = document.createElement('canvas'); cvs.width = padX * 2; cvs.height = padTop + padBot;
         const ctx = cvs.getContext('2d');
-
-        const originX = padX;
-        const originY = padTop;
-        const hw = unitW / 2;
-        const hh = unitH / 2;
+        const originX = padX; const originY = padTop; const hw = unitW / 2; const hh = unitH / 2;
 
         for (let z = 0; z < depthZ; z++) {
-          const grid = layers[z];
-          const liftY = z * layerStep;
-
+          const grid = layers[z]; const liftY = z * layerStep;
           for (let sum = 0; sum <= sizeX + sizeY - 2; sum++) {
             for (let vx = 0; vx < sizeX; vx++) {
               const vy = sum - vx;
               if (vy < 0 || vy >= sizeY) continue;
-              const code = grid[vy][vx];
-              const baseColor = palette[code];
+              const code = grid[vy][vx]; const baseColor = palette[code];
               if (!baseColor) continue;
-
-              const cx = originX + (vx - vy) * hw;
-              const cy = originY + (vx + vy) * hh - liftY;
-
-              // 頂面
+              const cx = originX + (vx - vy) * hw; const cy = originY + (vx + vy) * hh - liftY;
+              
               ctx.fillStyle = baseColor;
-              ctx.beginPath();
-              ctx.moveTo(cx, cy - hh);
-              ctx.lineTo(cx + hw, cy);
-              ctx.lineTo(cx, cy + hh);
-              ctx.lineTo(cx - hw, cy);
-              ctx.closePath();
-              ctx.fill();
-
-              // 左側面（次受光陰影）
+              ctx.beginPath(); ctx.moveTo(cx, cy - hh); ctx.lineTo(cx + hw, cy); ctx.lineTo(cx, cy + hh); ctx.lineTo(cx - hw, cy); ctx.closePath(); ctx.fill();
+              
               ctx.fillStyle = this.darkenHex(baseColor, 0.22);
-              ctx.beginPath();
-              ctx.moveTo(cx - hw, cy);
-              ctx.lineTo(cx, cy + hh);
-              ctx.lineTo(cx, cy + hh + layerStep);
-              ctx.lineTo(cx - hw, cy + layerStep);
-              ctx.closePath();
-              ctx.fill();
-
-              // 右側面（深陰影）
+              ctx.beginPath(); ctx.moveTo(cx - hw, cy); ctx.lineTo(cx, cy + hh); ctx.lineTo(cx, cy + hh + layerStep); ctx.lineTo(cx - hw, cy + layerStep); ctx.closePath(); ctx.fill();
+              
               ctx.fillStyle = this.darkenHex(baseColor, 0.40);
-              ctx.beginPath();
-              ctx.moveTo(cx, cy + hh);
-              ctx.lineTo(cx + hw, cy);
-              ctx.lineTo(cx + hw, cy + layerStep);
-              ctx.lineTo(cx, cy + hh + layerStep);
-              ctx.closePath();
-              ctx.fill();
+              ctx.beginPath(); ctx.moveTo(cx, cy + hh); ctx.lineTo(cx + hw, cy); ctx.lineTo(cx + hw, cy + layerStep); ctx.lineTo(cx, cy + hh + layerStep); ctx.closePath(); ctx.fill();
             }
           }
         }
-
-        // 精準錨點設於底層網格的幾何中心，確保貼合等角座標 (sx, sy)
         const centerAnchorY = originY + ((sizeX - 1 + sizeY - 1) / 2) * hh;
         const result = { canvas: cvs, anchorX: originX, anchorY: centerAnchorY };
         this.voxelCache[key] = result;
         return result;
       },
 
-      // ============================================================================
-      // 🌿 參考附圖的 Sprite-Stacking 地形磚（草地、土地、小水塘）
-      // ============================================================================
       getStackedTerrainTile(terrainType) {
-        const uw = ISO_CONFIG.TILE_W / 6; // 112 / 6 = 18.6667
-        const uh = ISO_CONFIG.TILE_H / 6; // 60 / 6  = 10.0
-
-        // 1. 翠綠草地積木（參考附圖左上草地磚）
+        const uw = ISO_CONFIG.TILE_W / 6; const uh = ISO_CONFIG.TILE_H / 6; 
         if (terrainType === 'grass') {
-          const pal = {
-            D: '#4a2e16', // 深土底座
-            S: '#6b4222', // 土層
-            E: '#3e7a22', // 草皮側垂邊深綠
-            G: '#5ca332', // 草地中綠
-            L: '#76c442', // 草地亮綠
-            Y: '#95db58'  // 草尖高光
-          };
+          const pal = { D: '#4a2e16', S: '#6b4222', E: '#3e7a22', G: '#5ca332', L: '#76c442', Y: '#95db58' };
           const soil = ['DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD'];
           const mid  = ['SSSSSS','SSSSSS','SSSSSS','SSSSSS','SSSSSS','SSSSSS'];
           const rim  = ['EEEEEE','EGGGGE','EGLLGE','EGLLGE','EGGGGE','EEEEEE'];
           const top  = ['GLGLYG','LGLGLL','GLYLGL','LGLGGL','YGLGLG','GLGLGL'];
           return this.buildStackedSprite('terrain_grass', [soil, mid, mid, rim, top], pal, uw, uh, 4.4);
         }
-
-        // 2. 土地積木（參考附圖中上土地磚，含細碎砂礫）
         if (terrainType === 'dirt') {
-          const pal = {
-            D: '#422611', // 深褐岩土底
-            B: '#6e4220', // 邊框深土
-            M: '#9c6638', // 土地主色
-            L: '#b57c4a', // 淺沙土
-            P: '#a3a8ad'  // 嵌入式小碎石
-          };
+          const pal = { D: '#422611', B: '#6e4220', M: '#9c6638', L: '#b57c4a', P: '#a3a8ad' };
           const base = ['DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD'];
           const body = ['BBBBBB','BMMMMB','BMMMMB','BMMMMB','BMMMMB','BBBBBB'];
           const top  = ['BMLLMB','MLPLLM','LLMMLL','LMMPLM','MLMLLM','BMLMMB'];
           return this.buildStackedSprite('terrain_dirt', [base, base, body, body, top], pal, uw, uh, 4.4);
         }
-
-        // 3. 小水塘積木（參考附圖右上水波磚，高度較低形成凹陷水池）
         if (terrainType === 'water') {
-          const pal = {
-            D: '#134e75', // 深水底
-            B: '#1e7cb8', // 池水藍
-            C: '#38a3db', // 亮水藍
-            W: '#bceeff'  // 白色水波紋
-          };
+          const pal = { D: '#134e75', B: '#1e7cb8', C: '#38a3db', W: '#bceeff' };
           const base = ['DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD'];
           const mid  = ['BBBBBB','BCCCCB','BCCCCB','BCCCCB','BCCCCB','BBBBBB'];
           const top  = ['BCWWCB','CCBCCW','WCCBCC','CCBWWC','BCCBCC','CBBCCB'];
           return this.buildStackedSprite('terrain_water', [base, mid, top], pal, uw, uh, 4.4);
         }
-
         return null;
       },
 
-      // ============================================================================
-      // 🌲 參考附圖的 Sprite-Stacking 路徑旁小樹與小石塊裝飾
-      // ============================================================================
+      // 🛤️ 全新 Sprite-Stacking 路徑體素生成器
+      getStackedPathSprite(tile) {
+        const uw = ISO_CONFIG.TILE_W / 6; const uh = ISO_CONFIG.TILE_H / 6;
+        const pathType = tile.id % 4; 
+        
+        const pal = {
+            D: '#4a2e16', // 深泥土底座
+            S: '#6b4222', // 泥土側邊
+            G: '#5ca332', // 草地角落
+            L: '#76c442', // 亮草地角落
+            R: '#d2a679', // 淺泥土路面
+            r: '#b38255', // 深泥土路面
+            P: '#a3a8ad', // 灰色碎石
+            W: '#38a3db', // 淺藍水漬
+            w: '#1e7cb8', // 深藍水漬
+            M: '#8c5932'  // 泥巴
+        };
+
+        const base = ['DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD'];
+        const mid  = ['SSSSSS','SSSSSS','SSSSSS','SSSSSS','SSSSSS','SSSSSS'];
+
+        let top = [];
+        if (pathType === 1) { // 碎石路
+            top = ['LGRRGL','GRPRRG','RRRRPR','RPRRrR','GRRRRG','LGRRGL'];
+        } else if (pathType === 2) { // 水漬/泥巴路
+            top = ['LGRRGL','GRMRRG','RRwWMR','RMWWrR','GRRMRG','LGRRGL'];
+        } else if (pathType === 3) { // 純泥巴路
+            top = ['LGRRGL','GMRMRG','RRMMRR','RMMrMR','GRMRRG','LGRRGL'];
+        } else { // 基礎泥土路
+            top = ['LGRRGL','GLRRRG','RRrRRR','RRRRrR','GLRRRG','LGRRGL'];
+        }
+
+        // 6 層高度 * 4.8 步長 = 28.8px，視覺上厚實有如立體方塊
+        const layers = [base, base, mid, mid, mid, top];
+        const key = 'path_tile_' + pathType;
+        return this.buildStackedSprite(key, layers, pal, uw, uh, 4.8);
+      },
+
       getStackedPropSprite(propType) {
-        // 1. 經典大樹（參考附圖中右：草皮底座 + 棕色樹幹 + 圓潤分層綠樹冠）
         if (propType === 'tree_oak') {
-          const pal = {
-            G: '#4a962c',
-            T: '#6e3f1d',
-            t: '#8f5429',
-            D: '#357320',
-            M: '#56ab35',
-            L: '#7ed14b',
-            Y: '#a3e868'
-          };
+          const pal = { G: '#4a962c', T: '#6e3f1d', t: '#8f5429', D: '#357320', M: '#56ab35', L: '#7ed14b', Y: '#a3e868' };
           const layers = [
-            ['.GGGG.','GGGGGG','GGGGGG','GGGGGG','GGGGGG','.GGGG.'], // Z0 草皮底座
-            ['......','..Tt..','..tT..','..Tt..','......','......'], // Z1 樹幹
-            ['......','..tT..','..Tt..','..tT..','......','......'], // Z2 樹幹
-            ['......','..Tt..','..tT..','..Tt..','......','......'], // Z3 樹幹
-            ['.DDDD.','DMMMMD','DMMMMD','DMMMMD','DMMMMD','.DDDD.'], // Z4 樹冠下層
-            ['.MLLM.','MLLLLL','MLYYLM','MLLLLM','MLLLLL','.MLLM.'], // Z5 樹冠中層
-            ['..LL..','.LYYL.','.LYYL.','.LLLL.','..LL..','......'], // Z6 樹冠上層
-            ['......','..YY..','..YY..','......','......','......']  // Z7 樹頂高光
+            ['.GGGG.','GGGGGG','GGGGGG','GGGGGG','GGGGGG','.GGGG.'],
+            ['......','..Tt..','..tT..','..Tt..','......','......'],
+            ['......','..tT..','..Tt..','..tT..','......','......'],
+            ['......','..Tt..','..tT..','..Tt..','......','......'],
+            ['.DDDD.','DMMMMD','DMMMMD','DMMMMD','DMMMMD','.DDDD.'],
+            ['.MLLM.','MLLLLL','MLYYLM','MLLLLM','MLLLLL','.MLLM.'],
+            ['..LL..','.LYYL.','.LYYL.','.LLLL.','..LL..','......'],
+            ['......','..YY..','..YY..','......','......','......']
           ];
           return this.buildStackedSprite('prop_tree_oak', layers, pal, 5.2, 2.8, 3.3);
         }
-
-        // 2. 圓滾灌木小樹（參考附圖中正中：飽滿多層葉叢）
         if (propType === 'tree_bush') {
-          const pal = {
-            D: '#2f6b1c',
-            G: '#49992e',
-            L: '#71c744',
-            Y: '#96e35f'
-          };
+          const pal = { D: '#2f6b1c', G: '#49992e', L: '#71c744', Y: '#96e35f' };
           const layers = [
-            ['.DDDD.','DDDDDD','DDDDDD','DDDDDD','DDDDDD','.DDDD.'], // Z0
-            ['.GGGG.','GGGGGG','GLLLLG','GLLLLG','GGGGGG','.GGGG.'], // Z1
-            ['.GLLG.','GLLLLG','LLYYLL','LLYYLL','GLLLLG','.GLLG.'], // Z2
-            ['..LL..','.LYYL.','.LYYL.','.LLLL.','..LL..','......'], // Z3
-            ['......','..YY..','..YY..','......','......','......']  // Z4
+            ['.DDDD.','DDDDDD','DDDDDD','DDDDDD','DDDDDD','.DDDD.'],
+            ['.GGGG.','GGGGGG','GLLLLG','GLLLLG','GGGGGG','.GGGG.'],
+            ['.GLLG.','GLLLLG','LLYYLL','LLYYLL','GLLLLG','.GLLG.'],
+            ['..LL..','.LYYL.','.LYYL.','.LLLL.','..LL..','......'],
+            ['......','..YY..','..YY..','......','......','......']
           ];
           return this.buildStackedSprite('prop_tree_bush', layers, pal, 5.4, 2.9, 3.2);
         }
-
-        // 3. 小石塊群（參考附圖中左與下方：圓潤灰白鵝卵石堆疊）
         if (propType === 'pebbles') {
-          const pal = {
-            G: '#5ca332',
-            D: '#5b6269',
-            M: '#7a828a',
-            L: '#a2aab3'
-          };
+          const pal = { G: '#5ca332', D: '#5b6269', M: '#7a828a', L: '#a2aab3' };
           const layers = [
-            ['.GG...','DD.MM.','DD.MMG','...GG.'], // Z0 嵌在草地上的石底
-            ['......','MM.LL.','MM....','......'], // Z1 石塊中層
-            ['......','L.....','......','......']  // Z2 石塊頂部高光
+            ['.GG...','DD.MM.','DD.MMG','...GG.'],
+            ['......','MM.LL.','MM....','......'],
+            ['......','L.....','......','......']
           ];
           return this.buildStackedSprite('prop_pebbles', layers, pal, 5.6, 3.0, 2.8);
         }
-
         return null;
       },
 
       drawBoardGroundShadow(ctx) {
-        const N = ISO_CONFIG.GRID_SIZE;
-        const hw = ISO_CONFIG.TILE_W / 2;
-        const hh = ISO_CONFIG.TILE_H / 2;
-        const z = ISO_CONFIG.BASE_Z;
-
-        const topCorner = this.gridToIso(0, 0);
-        const rightCorner = this.gridToIso(N - 1, 0);
-        const bottomCorner = this.gridToIso(N - 1, N - 1);
-        const leftCorner = this.gridToIso(0, N - 1);
-
+        const N = ISO_CONFIG.GRID_SIZE; const hw = ISO_CONFIG.TILE_W / 2; const hh = ISO_CONFIG.TILE_H / 2; const z = ISO_CONFIG.BASE_Z;
+        const topCorner = this.gridToIso(0, 0); const rightCorner = this.gridToIso(N - 1, 0);
+        const bottomCorner = this.gridToIso(N - 1, N - 1); const leftCorner = this.gridToIso(0, N - 1);
         ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(topCorner.sx, topCorner.sy - hh + z + 10);
-        ctx.lineTo(rightCorner.sx + hw + 16, rightCorner.sy + z + 14);
-        ctx.lineTo(bottomCorner.sx, bottomCorner.sy + hh + z + 20);
-        ctx.lineTo(leftCorner.sx - hw - 16, leftCorner.sy + z + 14);
-        ctx.closePath();
-
-        ctx.fillStyle = 'rgba(8, 4, 2, 0.58)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.78)';
-        ctx.shadowBlur = 30;
-        ctx.shadowOffsetY = 14;
-        ctx.fill();
+        ctx.beginPath(); ctx.moveTo(topCorner.sx, topCorner.sy - hh + z + 10); ctx.lineTo(rightCorner.sx + hw + 16, rightCorner.sy + z + 14);
+        ctx.lineTo(bottomCorner.sx, bottomCorner.sy + hh + z + 20); ctx.lineTo(leftCorner.sx - hw - 16, leftCorner.sy + z + 14); ctx.closePath();
+        ctx.fillStyle = 'rgba(8, 4, 2, 0.58)'; ctx.shadowColor = 'rgba(0, 0, 0, 0.78)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14; ctx.fill();
         ctx.restore();
-      },
-
-      // 繪製路徑方塊（含泥土小徑邊框細節，呼應附圖下方小徑）
-      drawRoadBlock(ctx, tile) {
-        const { sx, sy } = this.gridToIso(tile.gx, tile.gy);
-        const hw = ISO_CONFIG.TILE_W / 2;
-        const hh = ISO_CONFIG.TILE_H / 2;
-        const zHeight = ISO_CONFIG.BASE_Z;
-        const style = tile.style;
-
-        const pTop = { x: sx, y: sy - hh };
-        const pRight = { x: sx + hw, y: sy };
-        const pBottom = { x: sx, y: sy + hh };
-        const pLeft = { x: sx - hw, y: sy };
-
-        // 左側面
-        ctx.beginPath();
-        ctx.moveTo(pLeft.x, pLeft.y);
-        ctx.lineTo(pBottom.x, pBottom.y);
-        ctx.lineTo(pBottom.x, pBottom.y + zHeight);
-        ctx.lineTo(pLeft.x, pLeft.y + zHeight);
-        ctx.closePath();
-        ctx.fillStyle = style.left;
-        ctx.fill();
-        ctx.strokeStyle = style.stroke;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // 右側面
-        ctx.beginPath();
-        ctx.moveTo(pBottom.x, pBottom.y);
-        ctx.lineTo(pRight.x, pRight.y);
-        ctx.lineTo(pRight.x, pRight.y + zHeight);
-        ctx.lineTo(pBottom.x, pBottom.y + zHeight);
-        ctx.closePath();
-        ctx.fillStyle = style.right;
-        ctx.fill();
-        ctx.strokeStyle = style.stroke;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // 頂面
-        ctx.beginPath();
-        ctx.moveTo(pTop.x, pTop.y);
-        ctx.lineTo(pRight.x, pRight.y);
-        ctx.lineTo(pBottom.x, pBottom.y);
-        ctx.lineTo(pLeft.x, pLeft.y);
-        ctx.closePath();
-        ctx.fillStyle = style.top;
-        ctx.fill();
-        ctx.strokeStyle = style.stroke;
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-
-        // 當前玩家腳下高光框
-        const myPawn = PawnManager.pawns[GameState.uid];
-        if (myPawn && tile.id === myPawn.tileIndex) {
-          ctx.beginPath();
-          ctx.moveTo(pTop.x, pTop.y + 3);
-          ctx.lineTo(pRight.x - 5, pRight.y);
-          ctx.lineTo(pBottom.x, pBottom.y - 3);
-          ctx.lineTo(pLeft.x + 5, pLeft.y);
-          ctx.closePath();
-          ctx.strokeStyle = '#fff59d';
-          ctx.lineWidth = 2.2;
-          ctx.stroke();
-        } else {
-          // 泥土小徑內框線條感
-          const inset = 0.84;
-          ctx.beginPath();
-          ctx.moveTo(sx, sy - hh * inset);
-          ctx.lineTo(sx + hw * inset, sy);
-          ctx.lineTo(sx, sy + hh * inset);
-          ctx.lineTo(sx - hw * inset, sy);
-          ctx.closePath();
-          ctx.strokeStyle = 'rgba(110, 65, 20, 0.28)';
-          ctx.lineWidth = 1.1;
-          ctx.stroke();
-        }
-
-        this.drawTileContent(ctx, sx, sy, tile);
       },
 
       getTileVoxelSprite(tile) {
         if (tile.type === 'START') {
           const pal = { T: '#f59e0b', R: '#d97706', W: '#fef3c7', F: '#ef4444', Y: '#fde047', L: '#78350f' };
-          const layers = [
-            ['TTTT..','TTTT..','TTTT..','TTTT..','....LL','....FY'],
-            ['TTTT..','.TT...','.TT...','TTTT..','......','....Y.'],
-            ['.TT...','.TT...','.TT...','.TT...','......','......'],
-            ['.WW...','.WW...','.WW...','.WW...','......','......']
-          ];
+          const layers = [['TTTT..','TTTT..','TTTT..','TTTT..','....LL','....FY'],['TTTT..','.TT...','.TT...','TTTT..','......','....Y.'],['.TT...','.TT...','.TT...','.TT...','......','......'],['.WW...','.WW...','.WW...','.WW...','......','......']];
           return this.buildStackedSprite('tile_start', layers, pal, 4.0, 2.1, 2.5);
         }
-
         if (tile.pixelType === 'bridge') {
           const pal = { W: '#b45309', D: '#78350f', P: '#fde68a' };
-          const layers = [
-            ['P....P','WWWWWW','WWWWWW','P....P'],
-            ['.WWWW.','DDDDDD','DDDDDD','.WWWW.'],
-            ['..WW..','..WW..','..WW..','..WW..']
-          ];
+          const layers = [['P....P','WWWWWW','WWWWWW','P....P'],['.WWWW.','DDDDDD','DDDDDD','.WWWW.'],['..WW..','..WW..','..WW..','..WW..']];
           return this.buildStackedSprite('tile_bridge', layers, pal, 4.2, 2.2, 2.4);
         }
-
         if (tile.pixelType === 'river') {
           const pal = { B: '#0284c7', L: '#7dd3fc', W: '#e0f2fe', R: '#64748b' };
-          const layers = [
-            ['RBBBB.','BBBBBL','LBBBBW','BBBBBR'],
-            ['R.....','..LW..','..WL..','.....R']
-          ];
+          const layers = [['RBBBB.','BBBBBL','LBBBBW','BBBBBR'],['R.....','..LW..','..WL..','.....R']];
           return this.buildStackedSprite('tile_river', layers, pal, 4.2, 2.2, 2.3);
         }
-
         if (tile.ownerUid) {
           const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
-          const key = `house_${ownerNpc.id}`;
-          const pal = {
-            S: '#78716c',
-            W: '#fef3c7',
-            D: '#451a03',
-            R: ownerNpc.flagColor,
-            C: '#cbd5e1'
-          };
-          const layers = [
-            ['SSSSS','SSSSS','SSSSS','SSSSS','SSSSS'],
-            ['WWWWW','W...W','W...W','W...W','WWDWW'],
-            ['WWWWW','W...W','W...W','W...W','WWDWW'],
-            ['RRRRR','RRRRR','RRRRR','RRRRR','RRRRR'],
-            ['.RRR.','.RRR.','.RRR.','.RRR.','.RRR.'],
-            ['..R..','..R..','..C..','..R..','..R..']
-          ];
-          return this.buildStackedSprite(key, layers, pal, 3.8, 2.0, 2.5);
+          const pal = { S: '#78716c', W: '#fef3c7', D: '#451a03', R: ownerNpc.flagColor, C: '#cbd5e1' };
+          const layers = [['SSSSS','SSSSS','SSSSS','SSSSS','SSSSS'],['WWWWW','W...W','W...W','W...W','WWDWW'],['WWWWW','W...W','W...W','W...W','WWDWW'],['RRRRR','RRRRR','RRRRR','RRRRR','RRRRR'],['.RRR.','.RRR.','.RRR.','.RRR.','.RRR.'],['..R..','..R..','..C..','..R..','..R..']];
+          return this.buildStackedSprite(`house_${ownerNpc.id}`, layers, pal, 3.8, 2.0, 2.5);
         }
-
         return null;
       },
 
@@ -3276,43 +2444,33 @@
           ctx.drawImage(
             voxelObj.canvas,
             sx - voxelObj.anchorX,
-            sy - 8 - voxelObj.anchorY
+            // 修正建築物 Y 軸讓它完美站立在新路徑上
+            sy - 12 - voxelObj.anchorY
           );
         }
 
         ctx.save();
-        ctx.translate(sx, sy + (hasBuilding ? 7 : 0));
+        // 修正地名與價格文字的高度
+        ctx.translate(sx, sy + (hasBuilding ? 1 : -8));
 
-        ctx.fillStyle = '#2e1808';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
+        ctx.fillStyle = '#2e1808'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         if (tile.name.length > 5) {
-          ctx.font = 'bold 9px sans-serif';
-          const mid = Math.ceil(tile.name.length / 2);
-          ctx.fillText(tile.name.slice(0, mid), 0, -8);
-          ctx.fillText(tile.name.slice(mid), 0, 2);
+          ctx.font = 'bold 9px sans-serif'; const mid = Math.ceil(tile.name.length / 2);
+          ctx.fillText(tile.name.slice(0, mid), 0, -8); ctx.fillText(tile.name.slice(mid), 0, 2);
         } else {
-          ctx.font = 'bold 10px sans-serif';
-          ctx.fillText(tile.name, 0, tile.price > 0 ? -4 : 0);
+          ctx.font = 'bold 10px sans-serif'; ctx.fillText(tile.name, 0, tile.price > 0 ? -4 : 0);
         }
-
         if (tile.price > 0) {
           if (tile.ownerUid) {
             ctx.fillStyle = tile.ownerUid === GameState.uid ? '#1b5e20' : '#b71c1c';
-            ctx.font = 'bold 8.5px sans-serif';
-            ctx.fillText(`★${tile.ownerName} ($${calcTollFee(tile.price)})`, 0, 13);
+            ctx.font = 'bold 8.5px sans-serif'; ctx.fillText(`★${tile.ownerName} ($${calcTollFee(tile.price)})`, 0, 13);
           } else {
-            ctx.fillStyle = 'rgba(65, 35, 12, 0.85)';
-            ctx.font = 'bold 9px sans-serif';
-            ctx.fillText(`$${tile.price}`, 0, 13);
+            ctx.fillStyle = 'rgba(65, 35, 12, 0.85)'; ctx.font = 'bold 9px sans-serif'; ctx.fillText(`$${tile.price}`, 0, 13);
           }
         }
-
         ctx.restore();
       },
 
-      // 依等角深度 (gx + gy) 由後往前統一繪製整座 8x8 堆疊地圖與裝飾
       drawWorldMap(ctx) {
         const N = ISO_CONFIG.GRID_SIZE;
         for (let sum = 0; sum <= (N - 1) * 2; sum++) {
@@ -3324,28 +2482,37 @@
             const { sx, sy } = this.gridToIso(gx, gy);
 
             if (cell.terrain === 'road' && cell.roadTile) {
-              this.drawRoadBlock(ctx, cell.roadTile);
-            } else {
-              // 繪製 Sprite-Stacking 草地 / 土地 / 小水塘積木
-              const terrainSprite = this.getStackedTerrainTile(cell.terrain);
-              if (terrainSprite) {
+              // 繪製新的堆疊立體路徑方塊
+              const pathSprite = this.getStackedPathSprite(cell.roadTile);
+              if (pathSprite) {
                 ctx.drawImage(
-                  terrainSprite.canvas,
-                  sx - terrainSprite.anchorX,
-                  sy - terrainSprite.anchorY
+                  pathSprite.canvas,
+                  sx - pathSprite.anchorX,
+                  sy - pathSprite.anchorY
                 );
               }
 
-              // 若該格有路徑旁小樹或小石塊，緊接著疊加在地形上
+              // 玩家腳下的發光提示圈（繪製於路徑方塊頂部）
+              const myPawn = PawnManager.pawns[GameState.uid];
+              if (myPawn && cell.roadTile.id === myPawn.tileIndex) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.ellipse(sx, sy - 24, ISO_CONFIG.TILE_W / 2 - 12, ISO_CONFIG.TILE_H / 2 - 8, 0, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 245, 157, 0.8)';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                ctx.restore();
+              }
+
+              // 繪製建築物與文字 (傳入 Y 軸 -24 以匹配路徑高度)
+              this.drawTileContent(ctx, sx, sy - 24, cell.roadTile);
+            } else {
+              const terrainSprite = this.getStackedTerrainTile(cell.terrain);
+              if (terrainSprite) ctx.drawImage(terrainSprite.canvas, sx - terrainSprite.anchorX, sy - terrainSprite.anchorY);
+
               if (cell.prop) {
                 const propSprite = this.getStackedPropSprite(cell.prop);
-                if (propSprite) {
-                  ctx.drawImage(
-                    propSprite.canvas,
-                    sx - propSprite.anchorX,
-                    sy - 4 - propSprite.anchorY
-                  );
-                }
+                if (propSprite) ctx.drawImage(propSprite.canvas, sx - propSprite.anchorX, sy - 4 - propSprite.anchorY);
               }
             }
           }
@@ -3354,123 +2521,30 @@
 
       getStackedPawnSprite(npc) {
         const key = `voxel_pawn_custom_${npc.id}`;
-        const pal = {
-          F: '#ffd7b5',
-          K: '#1b120c',
-          W: '#ffffff',
-          B: '#4e342e',
-          N: '#e0a982',
-          M: '#a86449',
-          P: '#e57373',
-          G: '#388e3c',
-          g: '#2e7d32',
-          R: '#d32f2f',
-          r: '#b71c1c',
-          I: '#3949ab',
-          Y: '#fbc02d',
-          y: '#f57f17',
-          E: '#1565c0',
-          C: '#37474f',
-          O: '#f57c00',
-          D: '#5d4037'
-        };
-
+        const pal = { F: '#ffd7b5', K: '#1b120c', W: '#ffffff', B: '#4e342e', N: '#e0a982', M: '#a86449', P: '#e57373', G: '#388e3c', g: '#2e7d32', R: '#d32f2f', r: '#b71c1c', I: '#3949ab', Y: '#fbc02d', y: '#f57f17', E: '#1565c0', C: '#37474f', O: '#f57c00', D: '#5d4037' };
         const characterModels = {
-          ranger: [
-            ['.BB..BB.','.BB..BB.','.BB..BB.','........'],
-            ['.BB..BB.','.BB..BB.','.BB..BB.','........'],
-            ['.BB..BB.','.BB..BB.','.BB..BB.','........'],
-            ['.BBBBBB.','.BBBBBB.','.BBBBBB.','........'],
-            ['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'],
-            ['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'],
-            ['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGGGGG.'],
-            ['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGFFGG.'],
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFMMFF.'],
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'],
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'],
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'],
-            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],
-            ['.GGGGGG.','.GGGGGG.','.GGGGGG.','.gggggg.'],
-            ['.GGGGGG.','.GGGGGG.','.GGGGGG.','.GGGGGG.'],
-            ['..GGGG..','..GGGG..','..GGGG..','........']
-          ],
-          hydro: [
-            ['.II..II.','.II..II.','.II..II.','........'],
-            ['.II..II.','.II..II.','.II..II.','........'],
-            ['.II..II.','.II..II.','.II..II.','........'],
-            ['.IIIIII.','.IIIIII.','.IIIIII.','........'],
-            ['FRRRRRRF','FRRRRRRF','FRRRRRRF','.RRRRRR.'],
-            ['FBBBBBBF','FRRRRRRF','FRRRRRRF','.WWWWWW.'],
-            ['BBBBBBBB','BRRRRRRB','FRRRRRRF','.RRRRRR.'],
-            ['BBBBBBBB','BRRRRRRB','BRRRRRRB','.RRFFRR.'],
-            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFPPFF.'],
-            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFFFFF.'],
-            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FWFFWF.'],
-            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FKFFKF.'],
-            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],
-            ['.BBBBBB.','.BBBBBB.','.BBBBBB.','.BBBBBB.'],
-            ['..BBBB..','..BBBB..','..BBBB..','..BBBB..'],
-            ['........','........','........','........']
-          ],
-          engineer: [
-            ['.CC..CC.','.CC..CC.','.CC..CC.','........'],
-            ['.CC..CC.','.CC..CC.','.CC..CC.','........'],
-            ['.CC..CC.','.CC..CC.','.CC..CC.','........'],
-            ['.CCCCCC.','.CCCCCC.','.CCCCCC.','........'],
-            ['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEEEEE.'],
-            ['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEYYEE.'],
-            ['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEYYEE.'],
-            ['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEEEEE.'],
-            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFMMFF.'],
-            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFNNFF.'],
-            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'],
-            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'],
-            ['.KKKKKK.','.KKKKKK.','.KKKKKK.','.KKKKKK.'],
-            ['YYYYYYYY','YYYYYYYY','YYYYYYYY','yyyyyyyy'],
-            ['.YYYYYY.','.YYYYYY.','.YYYYYY.','.YYYYYY.'],
-            ['..YYYY..','..YYYY..','..YYYY..','........']
-          ],
-          scout: [
-            ['.DD..DD.','.DD..DD.','.DD..DD.','........'],
-            ['.DD..DD.','.DD..DD.','.DD..DD.','........'],
-            ['.DD..DD.','.DD..DD.','.DD..DD.','........'],
-            ['.DDDDDD.','.DDDDDD.','.DDDDDD.','........'],
-            ['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'],
-            ['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'],
-            ['OOOOOOOO','OOOOOOOO','OOOOOOOO','.ORRRRO.'],
-            ['OOOOOOOO','OOOOOOOO','OOOOOOOO','.OORROO.'],
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFPPFF.'],
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'],
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'],
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'],
-            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],
-            ['.RRRRRR.','.RRRRRR.','.RRRRRR.','.rrrrrr.'],
-            ['.RRRRRR.','.RRRRRR.','.RRRRRR.','.RRRRRR.'],
-            ['..RRRR..','..RRRR..','..RRRR..','........']
-          ]
+          ranger: [['.BB..BB.','.BB..BB.','.BB..BB.','........'],['.BB..BB.','.BB..BB.','.BB..BB.','........'],['.BB..BB.','.BB..BB.','.BB..BB.','........'],['.BBBBBB.','.BBBBBB.','.BBBBBB.','........'],['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'],['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'],['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGGGGG.'],['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGFFGG.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFMMFF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'],['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],['.GGGGGG.','.GGGGGG.','.GGGGGG.','.gggggg.'],['.GGGGGG.','.GGGGGG.','.GGGGGG.','.GGGGGG.'],['..GGGG..','..GGGG..','..GGGG..','........']],
+          hydro: [['.II..II.','.II..II.','.II..II.','........'],['.II..II.','.II..II.','.II..II.','........'],['.II..II.','.II..II.','.II..II.','........'],['.IIIIII.','.IIIIII.','.IIIIII.','........'],['FRRRRRRF','FRRRRRRF','FRRRRRRF','.RRRRRR.'],['FBBBBBBF','FRRRRRRF','FRRRRRRF','.WWWWWW.'],['BBBBBBBB','BRRRRRRB','FRRRRRRF','.RRRRRR.'],['BBBBBBBB','BRRRRRRB','BRRRRRRB','.RRFFRR.'],['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFPPFF.'],['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFFFFF.'],['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FWFFWF.'],['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FKFFKF.'],['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],['.BBBBBB.','.BBBBBB.','.BBBBBB.','.BBBBBB.'],['..BBBB..','..BBBB..','..BBBB..','..BBBB..'],['........','........','........','........']],
+          engineer: [['.CC..CC.','.CC..CC.','.CC..CC.','........'],['.CC..CC.','.CC..CC.','.CC..CC.','........'],['.CC..CC.','.CC..CC.','.CC..CC.','........'],['.CCCCCC.','.CCCCCC.','.CCCCCC.','........'],['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEEEEE.'],['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEYYEE.'],['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEYYEE.'],['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEEEEE.'],['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFMMFF.'],['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFNNFF.'],['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'],['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'],['.KKKKKK.','.KKKKKK.','.KKKKKK.','.KKKKKK.'],['YYYYYYYY','YYYYYYYY','YYYYYYYY','yyyyyyyy'],['.YYYYYY.','.YYYYYY.','.YYYYYY.','.YYYYYY.'],['..YYYY..','..YYYY..','..YYYY..','........']],
+          scout: [['.DD..DD.','.DD..DD.','.DD..DD.','........'],['.DD..DD.','.DD..DD.','.DD..DD.','........'],['.DD..DD.','.DD..DD.','.DD..DD.','........'],['.DDDDDD.','.DDDDDD.','.DDDDDD.','........'],['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'],['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'],['OOOOOOOO','OOOOOOOO','OOOOOOOO','.ORRRRO.'],['OOOOOOOO','OOOOOOOO','OOOOOOOO','.OORROO.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFPPFF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'],['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],['.RRRRRR.','.RRRRRR.','.RRRRRR.','.rrrrrr.'],['.RRRRRR.','.RRRRRR.','.RRRRRR.','.RRRRRR.'],['..RRRR..','..RRRR..','..RRRR..','........']]
         };
-
         const layers = characterModels[npc.id] || characterModels.ranger;
         return this.buildStackedSprite(key, layers, pal, 3.6, 1.9, 2.1);
       },
 
       drawAllMinecraftPawns(ctx) {
-        const pawnList = Object.values(PawnManager.pawns)
-          .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
-
-        const offsets = [
-          { dx: -10, dy: 4 },
-          { dx: 10,  dy: -3 },
-          { dx: -10, dy: -5 },
-          { dx: 10,  dy: 6 }
-        ];
+        const pawnList = Object.values(PawnManager.pawns).sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
+        const offsets = [{ dx: -10, dy: 4 }, { dx: 10, dy: -3 }, { dx: -10, dy: -5 }, { dx: 10, dy: 6 }];
 
         pawnList.forEach((pawn, index) => {
           const npc = NPC_ROSTER.find(n => n.id === pawn.npcId) || NPC_ROSTER[0];
           const base = this.gridToIso(pawn.gx, pawn.gy);
           const off = pawnList.length > 1 ? offsets[index % 4] : { dx: 0, dy: 0 };
           const sx = base.sx + off.dx;
-          const sy = base.sy + off.dy;
+          
+          // Z_OFFSET = 24 確保棋子踩在新的路徑方塊正上方
+          const sy = base.sy + off.dy - 24; 
+          
           const jumpY = pawn.jumpHeight;
           const shadowScale = Math.max(0.45, 1 - jumpY / 65);
 
@@ -3482,27 +2556,13 @@
 
           const pawnSprite = this.getStackedPawnSprite(npc);
           ctx.translate(sx, sy - jumpY);
-          const sq = pawn.scaleSquash;
-          ctx.scale(2 - sq, sq);
-
-          ctx.drawImage(
-            pawnSprite.canvas,
-            -pawnSprite.anchorX,
-            -pawnSprite.anchorY
-          );
+          const sq = pawn.scaleSquash; ctx.scale(2 - sq, sq);
+          ctx.drawImage(pawnSprite.canvas, -pawnSprite.anchorX, -pawnSprite.anchorY);
 
           const nameLabel = pawn.displayName || npc.name;
-          ctx.font = 'bold 8.5px sans-serif';
-          const tagW = Math.max(36, ctx.measureText(nameLabel).width + 10);
-          ctx.fillStyle = 'rgba(25, 15, 8, 0.85)';
-          ctx.beginPath();
-          ctx.roundRect(-tagW / 2, -54, tagW, 13, 4);
-          ctx.fill();
-          ctx.fillStyle = '#fff8e1';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(nameLabel, 0, -47.5);
-
+          ctx.font = 'bold 8.5px sans-serif'; const tagW = Math.max(36, ctx.measureText(nameLabel).width + 10);
+          ctx.fillStyle = 'rgba(25, 15, 8, 0.85)'; ctx.beginPath(); ctx.roundRect(-tagW / 2, -54, tagW, 13, 4); ctx.fill();
+          ctx.fillStyle = '#fff8e1'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(nameLabel, 0, -47.5);
           ctx.restore();
         });
       },
@@ -3510,45 +2570,28 @@
       render() {
         const ctx = this.ctx;
         if (!ctx || this.width <= 0 || this.height <= 0) return;
-
-        ctx.save();
-        ctx.scale(this.dpr, this.dpr);
-
-        const bgGrad = ctx.createRadialGradient(
-          this.width / 2, this.height / 2, 40,
-          this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.75
-        );
-        bgGrad.addColorStop(0, PALETTE.bgTop);
-        bgGrad.addColorStop(1, PALETTE.bgBottom);
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, this.width, this.height);
-
-        ctx.translate(this.camera.x, this.camera.y);
-        ctx.scale(this.camera.scale, this.camera.scale);
-
+        ctx.save(); ctx.scale(this.dpr, this.dpr);
+        const bgGrad = ctx.createRadialGradient(this.width / 2, this.height / 2, 40, this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.75);
+        bgGrad.addColorStop(0, '#2e2418'); bgGrad.addColorStop(1, '#140e08');
+        ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, this.width, this.height);
+        ctx.translate(this.camera.x, this.camera.y); ctx.scale(this.camera.scale, this.camera.scale);
+        
         this.drawBoardGroundShadow(ctx);
         this.drawWorldMap(ctx);
         this.drawAllMinecraftPawns(ctx);
         FloatingTexts.draw(ctx);
-
+        
         ctx.restore();
       },
 
       startLoop() {
         if (this.isRunning) return;
-        this.isRunning = true;
-        this.lastTime = performance.now();
-
+        this.isRunning = true; this.lastTime = performance.now();
         const tick = (now) => {
           if (!this.isRunning) return;
           const dt = Math.min((now - this.lastTime) / 1000, 0.05);
           this.lastTime = now;
-
-          PawnManager.updateAll(dt);
-          FloatingTexts.update(dt);
-          this.updateCameraFollow(dt);
-          this.render();
-
+          PawnManager.updateAll(dt); FloatingTexts.update(dt); this.updateCameraFollow(dt); this.render();
           this.rafId = requestAnimationFrame(tick);
         };
         this.rafId = requestAnimationFrame(tick);
@@ -3556,130 +2599,75 @@
 
       stopLoop() {
         this.isRunning = false;
-        if (this.rafId !== null) {
-          cancelAnimationFrame(this.rafId);
-          this.rafId = null;
-        }
+        if (this.rafId !== null) { cancelAnimationFrame(this.rafId); this.rafId = null; }
       },
 
       bindEvents() {
         const canvas = this.canvas;
-
-        canvas.addEventListener('mousedown', (e) => {
-          this.pointer.isDragging = true;
-          this.pointer.lastX = e.clientX;
-          this.pointer.lastY = e.clientY;
-        });
+        canvas.addEventListener('mousedown', (e) => { this.pointer.isDragging = true; this.pointer.lastX = e.clientX; this.pointer.lastY = e.clientY; });
         window.addEventListener('mousemove', (e) => {
           if (!this.pointer.isDragging) return;
-          this.camera.x += e.clientX - this.pointer.lastX;
-          this.camera.y += e.clientY - this.pointer.lastY;
-          this.pointer.lastX = e.clientX;
-          this.pointer.lastY = e.clientY;
+          this.camera.x += e.clientX - this.pointer.lastX; this.camera.y += e.clientY - this.pointer.lastY;
+          this.pointer.lastX = e.clientX; this.pointer.lastY = e.clientY;
         });
         window.addEventListener('mouseup', () => { this.pointer.isDragging = false; });
-
-        canvas.addEventListener('wheel', (e) => {
-          e.preventDefault();
-          this.zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.1 : 0.9);
-        }, { passive: false });
-
+        canvas.addEventListener('wheel', (e) => { e.preventDefault(); this.zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.1 : 0.9); }, { passive: false });
         canvas.addEventListener('touchstart', (e) => {
-          if (e.touches.length === 1) {
-            this.pointer.isDragging = true;
-            this.pointer.lastX = e.touches[0].clientX;
-            this.pointer.lastY = e.touches[0].clientY;
-          } else if (e.touches.length === 2) {
-            this.pointer.isDragging = false;
-            this.pointer.pinchDist = this.getTouchDistance(e.touches);
-          }
+          if (e.touches.length === 1) { this.pointer.isDragging = true; this.pointer.lastX = e.touches[0].clientX; this.pointer.lastY = e.touches[0].clientY; }
+          else if (e.touches.length === 2) { this.pointer.isDragging = false; this.pointer.pinchDist = this.getTouchDistance(e.touches); }
         }, { passive: false });
-
         canvas.addEventListener('touchmove', (e) => {
           e.preventDefault();
           if (e.touches.length === 1 && this.pointer.isDragging) {
-            this.camera.x += e.touches[0].clientX - this.pointer.lastX;
-            this.camera.y += e.touches[0].clientY - this.pointer.lastY;
-            this.pointer.lastX = e.touches[0].clientX;
-            this.pointer.lastY = e.touches[0].clientY;
+            this.camera.x += e.touches[0].clientX - this.pointer.lastX; this.camera.y += e.touches[0].clientY - this.pointer.lastY;
+            this.pointer.lastX = e.touches[0].clientX; this.pointer.lastY = e.touches[0].clientY;
           } else if (e.touches.length === 2) {
             const newDist = this.getTouchDistance(e.touches);
             if (this.pointer.pinchDist > 0) {
-              const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-              const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+              const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2; const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
               this.zoomAt(midX, midY, newDist / this.pointer.pinchDist);
             }
             this.pointer.pinchDist = newDist;
           }
         }, { passive: false });
-
-        canvas.addEventListener('touchend', () => {
-          this.pointer.isDragging = false;
-          this.pointer.pinchDist = 0;
-        });
-
+        canvas.addEventListener('touchend', () => { this.pointer.isDragging = false; this.pointer.pinchDist = 0; });
+        
         document.getElementById('btn-join-match').addEventListener('click', () => MultiplayerManager.joinRandomMatch());
         document.getElementById('btn-start-game').addEventListener('click', () => MultiplayerManager.startGameHost());
         document.getElementById('lobby-exit-btn').addEventListener('click', () => GameBridge.closeAndReturn());
-
         document.getElementById('btn-roll').addEventListener('click', () => HUD.triggerRoll());
         document.getElementById('btn-follow').addEventListener('click', () => this.setAutoFollow(!this.camera.autoFollow));
         document.getElementById('btn-reset-view').addEventListener('click', () => this.resetCamera());
         document.getElementById('btn-exit').addEventListener('click', () => GameBridge.closeAndReturn());
         document.getElementById('btn-summary-return').addEventListener('click', () => GameBridge.closeAndReturn());
-
         document.getElementById('btn-open-deeds').addEventListener('click', () => HUD.toggleDeedDrawer(true));
         document.getElementById('btn-close-deeds').addEventListener('click', () => HUD.toggleDeedDrawer(false));
         document.getElementById('deed-backdrop').addEventListener('click', () => HUD.toggleDeedDrawer(false));
-
         document.getElementById('btn-open-exchange').addEventListener('click', () => HUD.openExchangeModal());
-        document.getElementById('ex-cancel').addEventListener('click', () => {
-          document.getElementById('modal-exchange').classList.remove('show');
-        });
-        document.getElementById('ex-minus').addEventListener('click', () => {
-          HUD.exchangeSpend = Math.max(1, HUD.exchangeSpend - 5);
-          HUD.refreshExchangeUI();
-        });
-        document.getElementById('ex-plus').addEventListener('click', () => {
-          HUD.exchangeSpend = Math.min(GameState.personalEnergy, HUD.exchangeSpend + 5);
-          HUD.refreshExchangeUI();
-        });
+        document.getElementById('ex-cancel').addEventListener('click', () => document.getElementById('modal-exchange').classList.remove('show'));
+        document.getElementById('ex-minus').addEventListener('click', () => { HUD.exchangeSpend = Math.max(1, HUD.exchangeSpend - 5); HUD.refreshExchangeUI(); });
+        document.getElementById('ex-plus').addEventListener('click', () => { HUD.exchangeSpend = Math.min(GameState.personalEnergy, HUD.exchangeSpend + 5); HUD.refreshExchangeUI(); });
         document.getElementById('ex-confirm').addEventListener('click', () => {
           if (HUD.exchangeSpend > 0 && GameState.personalEnergy >= HUD.exchangeSpend) {
             const gained = HUD.exchangeSpend * EXCHANGE_RATE;
-            GameState.personalEnergy -= HUD.exchangeSpend;
-            GameState.coins += gained;
-            MultiplayerManager.syncMyPlayerStats();
-            HUD.update();
+            GameState.personalEnergy -= HUD.exchangeSpend; GameState.coins += gained;
+            MultiplayerManager.syncMyPlayerStats(); HUD.update();
             const myPawn = PawnManager.pawns[GameState.uid];
             if (myPawn) FloatingTexts.spawn(myPawn.gx, myPawn.gy, `兌換 +${gained} 🪙`, '#7ee8fa');
           }
           document.getElementById('modal-exchange').classList.remove('show');
         });
       },
-
-      getTouchDistance(touches) {
-        return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-      },
-
+      getTouchDistance(touches) { return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY); },
       zoomAt(screenX, screenY, factor) {
-        const oldScale = this.camera.scale;
-        const newScale = Math.min(this.camera.maxScale, Math.max(this.camera.minScale, oldScale * factor));
+        const oldScale = this.camera.scale; const newScale = Math.min(this.camera.maxScale, Math.max(this.camera.minScale, oldScale * factor));
         if (newScale === oldScale) return;
-
-        const worldX = (screenX - this.camera.x) / oldScale;
-        const worldY = (screenY - this.camera.y) / oldScale;
-
-        this.camera.scale = newScale;
-        this.camera.x = screenX - worldX * newScale;
-        this.camera.y = screenY - worldY * newScale;
+        const worldX = (screenX - this.camera.x) / oldScale; const worldY = (screenY - this.camera.y) / oldScale;
+        this.camera.scale = newScale; this.camera.x = screenX - worldX * newScale; this.camera.y = screenY - worldY * newScale;
       }
     };
 
-    GameBridge.init();
-    HUD.initLobby();
-    MultiplayerManager.init();
-    Engine.init();
+    GameBridge.init(); HUD.initLobby(); MultiplayerManager.init(); Engine.init();
   </script>
 </body>
 </html>
