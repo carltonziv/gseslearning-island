@@ -87,7 +87,6 @@
       margin-top: 3px;
     }
 
-    /* 骰子計算橫幅 */
     .quest-dice-banner {
       background: rgba(25, 16, 10, 0.8);
       border: 1.5px solid rgba(126, 232, 250, 0.35);
@@ -193,7 +192,6 @@
     }
 
     .npc-pixel-box canvas {
-
       image-rendering: pixelated;
     }
 
@@ -404,7 +402,6 @@
       border: 1px solid rgba(255, 215, 180, 0.5);
     }
 
-    /* 右側回合順序與剩餘骰子列表 */
     .turn-order-panel {
       position: fixed;
       right: 16px;
@@ -453,7 +450,6 @@
       flex-shrink: 0;
     }
 
-    /* 左側「已購買地契」按鈕 */
     .left-deed-trigger {
       position: fixed;
       left: 16px;
@@ -491,7 +487,6 @@
       border: 1px solid #ffd5b8;
     }
 
-    /* 左側滑出地契卡片抽屜 */
     .deed-drawer-backdrop {
       position: fixed;
       inset: 0;
@@ -604,7 +599,6 @@
     }
 
     .pixel-art-frame canvas {
-
       image-rendering: pixelated;
     }
 
@@ -620,7 +614,6 @@
       color: #7d491c;
     }
 
-    /* 底部操作控制台與立體點點骰子 */
     .bottom-dock {
       display: flex;
       flex-direction: column;
@@ -651,7 +644,6 @@
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
     }
 
-    /* 3x3 網格點點骰子面 */
     .dice-box {
       width: 52px;
       height: 52px;
@@ -678,12 +670,10 @@
       box-shadow: 0 1px 1px rgba(255, 255, 255, 0.65);
     }
 
-    /* 1 點與 4 點經典紅點 */
     .dice-pip.red {
       background: radial-gradient(circle at 35% 35%, #ff5252 0%, #b71c1c 100%);
     }
 
-    /* 1 點稍微放大更醒目 */
     .dice-pip.ace {
       width: 13px;
       height: 13px;
@@ -708,7 +698,6 @@
       border: 1.5px solid #ffe0a3;
     }
 
-    /* 通用互動彈窗 */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -813,7 +802,6 @@
       cursor: pointer;
     }
 
-    /* 總結算排行榜樣式 */
     .ranking-list {
       width: 100%;
       display: flex;
@@ -913,7 +901,6 @@
         <button id="lobby-exit-btn" class="btn btn-exit">🏝️ 返回島嶼</button>
       </div>
 
-      <!-- 骰子數量計算明細（基本 15 顆 + 當日完成閱讀島或運動島任務再加 2 顆） -->
       <div class="quest-dice-banner">
         <div class="quest-items">
           <div class="quest-chip">🎲 基本骰子：<strong style="color:#ffd54f;">15</strong> 顆</div>
@@ -966,7 +953,7 @@
   <div id="deed-backdrop" class="deed-drawer-backdrop"></div>
   <aside id="deed-drawer" class="deed-drawer">
     <div class="drawer-header">
-      <h2>📜 我的領地卡片（<span id="drawer-count">0</span>/16）</h2>
+      <h2>📜 我的領地卡片（<span id="drawer-count">0</span>/<span id="drawer-total-count">28</span>）</h2>
       <button id="btn-close-deeds" class="btn-close-drawer">✕</button>
     </div>
     <div class="drawer-body" id="deed-card-list">
@@ -974,7 +961,6 @@
     </div>
   </aside>
 
-  <!-- 右側回合順序與剩餘骰子列表 -->
   <aside class="turn-order-panel" id="turn-order-panel"></aside>
 
   <div id="ui-layer">
@@ -1088,7 +1074,7 @@
     </div>
   </div>
 
-  <!-- 彈窗 4：方案一全場骰子耗盡總結算排行榜 -->
+  <!-- 彈窗 4：全場骰子耗盡總結算排行榜 -->
   <div id="modal-summary" class="modal-overlay">
     <div class="modal-card summary-card">
       <h3>🏆 龜山探險總結算</h3>
@@ -1136,8 +1122,7 @@
 
     /**
      * ============================================================================
-     * 點點骰子（Pips）渲染器（3x3 格子點位對應表）
-     * 位置索引：0:左上, 1:中上, 2:右上, 3:左中, 4:正中, 5:右中, 6:左下, 7:中下, 8:右下
+     * 點點骰子（Pips）渲染器
      * ============================================================================
      */
     const DICE_PIP_LAYOUTS = {
@@ -1250,39 +1235,33 @@
       'R': '#d32f2f', 'Y': '#fbc02d', 'O': '#f57c00', 'C': '#37474f'
     };
 
-function drawNpcAvatarToCanvas(canvas, npcId) {
+    function drawNpcAvatarToCanvas(canvas, npcId) {
       if (!canvas) return;
       const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       const thickness = 6;
       const offsetY = 1.5;
       const scale = Math.floor(canvas.width / 16);
       const startY = Math.floor(thickness * offsetY);
 
-      // Sprite-stacking 迴圈
       for (let layer = 0; layer <= thickness; layer++) {
         const currentYOffset = startY - (layer * offsetY);
-        
+
         for (let y = 0; y < 16; y++) {
           for (let x = 0; x < 16; x++) {
             const colorHex = NPC_PIXEL_COLORS[npc.headPixels[y][x]];
             if (colorHex) {
-               // 判斷是否為頂層，底層加暗
-               if (layer < thickness) {
-                 // 將 16進位顏色調暗
-                 let r = parseInt(colorHex.slice(1, 3), 16);
-                 let g = parseInt(colorHex.slice(3, 5), 16);
-                 let b = parseInt(colorHex.slice(5, 7), 16);
-                 r = Math.floor(r * 0.6);
-                 g = Math.floor(g * 0.6);
-                 b = Math.floor(b * 0.6);
-                 ctx.fillStyle = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-               } else {
-                 ctx.fillStyle = colorHex;
-               }
-               ctx.fillRect(x * scale, (y * scale) + currentYOffset, scale, scale);
+              if (layer < thickness) {
+                let r = Math.floor(parseInt(colorHex.slice(1, 3), 16) * 0.6);
+                let g = Math.floor(parseInt(colorHex.slice(3, 5), 16) * 0.6);
+                let b = Math.floor(parseInt(colorHex.slice(5, 7), 16) * 0.6);
+                ctx.fillStyle = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+              } else {
+                ctx.fillStyle = colorHex;
+              }
+              ctx.fillRect(x * scale, (y * scale) + currentYOffset, scale, scale);
             }
           }
         }
@@ -1306,7 +1285,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
       diceLeft: BASE_DICE,
 
       ownedTileIds: [],
-      phase: 'LOBBY', // 'LOBBY' | 'IDLE' | 'ROLLING' | 'MOVING' | 'MODAL' | 'FINISHED'
+      phase: 'LOBBY',
 
       roomId: null,
       isSimulatedBotMode: false,
@@ -1338,7 +1317,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
           GameState.fitnessQuestCount = Math.max(0, Number(params.get('fitCount')) || 0);
         }
 
-        renderDiceFace(5); // 初始顯示立體 5 點骰面
+        renderDiceFace(5);
         this.updatePlayerNameDisplay();
         this.recalculateInitialDice();
 
@@ -1975,22 +1954,19 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
 
     /**
      * ============================================================================
-     * 4. 龜山與桂山 20 格在地配置（起點置底）
+     * 4. 8x8 蜿蜒探險地圖與 34 格在地配置（外框 8x8，路徑往框內左右轉折）
      * ============================================================================
      */
     const ISO_CONFIG = {
-      GRID_SIZE: 6,
-      TILE_W: 124,
-      TILE_H: 66,
-      BASE_Z: 28
+      GRID_SIZE: 8,
+      TILE_W: 112,
+      TILE_H: 60,
+      BASE_Z: 24
     };
 
     const PALETTE = {
-      bgTop: '#3d281b',
-      bgBottom: '#1a100a',
-      innerSandTop: '#d4b07d',
-      innerSandLeft: '#b38d5b',
-      innerSandRight: '#916d40',
+      bgTop: '#2e2418',
+      bgBottom: '#140e08',
       start:  { top: '#f5bc47', left: '#cc9023', right: '#9e6b11', stroke: '#6e4706' },
       bridge: { top: '#78b8a8', left: '#539182', right: '#396b5f', stroke: '#224a40' },
       river:  { top: '#5ea9d6', left: '#3e84b0', right: '#296085', stroke: '#18405c' },
@@ -1999,6 +1975,44 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
       side3:  { top: '#d98c68', left: '#b36644', right: '#8a4629', stroke: '#632d16' },
       side4:  { top: '#cfa074', left: '#a87a50', right: '#825833', stroke: '#5c3a1d' }
     };
+
+    // 34 格蜿蜒路線座標（嚴格落於 0..7 x 0..7 外框內，包含多次左轉與右轉切入內圈）
+    const WINDING_PATH_COORDS = [
+      { gx: 7, gy: 7 }, // 0  起點（最下方）
+      { gx: 6, gy: 7 }, // 1
+      { gx: 5, gy: 7 }, // 2
+      { gx: 5, gy: 6 }, // 3  [右轉往框內]
+      { gx: 4, gy: 6 }, // 4  [左轉]
+      { gx: 3, gy: 6 }, // 5
+      { gx: 3, gy: 7 }, // 6  [左轉往外框]
+      { gx: 2, gy: 7 }, // 7  [右轉]
+      { gx: 1, gy: 7 }, // 8
+      { gx: 0, gy: 7 }, // 9  最左外框
+      { gx: 0, gy: 6 }, // 10 [右轉]
+      { gx: 0, gy: 5 }, // 11
+      { gx: 1, gy: 5 }, // 12 [右轉往框內]
+      { gx: 2, gy: 5 }, // 13
+      { gx: 2, gy: 4 }, // 14 [左轉]
+      { gx: 2, gy: 3 }, // 15
+      { gx: 1, gy: 3 }, // 16 [左轉往外框]
+      { gx: 0, gy: 3 }, // 17
+      { gx: 0, gy: 2 }, // 18 [右轉]
+      { gx: 0, gy: 1 }, // 19
+      { gx: 0, gy: 0 }, // 20 最頂外框
+      { gx: 1, gy: 0 }, // 21 [右轉]
+      { gx: 2, gy: 0 }, // 22
+      { gx: 3, gy: 0 }, // 23
+      { gx: 4, gy: 0 }, // 24
+      { gx: 4, gy: 1 }, // 25 [右轉往框內]
+      { gx: 5, gy: 1 }, // 26 [左轉]
+      { gx: 6, gy: 1 }, // 27
+      { gx: 7, gy: 1 }, // 28 最右外框
+      { gx: 7, gy: 2 }, // 29 [右轉]
+      { gx: 7, gy: 3 }, // 30
+      { gx: 7, gy: 4 }, // 31
+      { gx: 7, gy: 5 }, // 32
+      { gx: 7, gy: 6 }  // 33 -> 接回 (7, 7)
+    ];
 
     const TILE_BLUEPRINTS = [
       { type: 'START',    name: '探險營地',           price: 0,   pixelType: 'camp',      zoneLabel: '起點',     style: PALETTE.start },
@@ -2020,39 +2034,112 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
       { type: 'PROPERTY', name: '龜山土地公廟',       price: 110, pixelType: 'temple',    zoneLabel: '古道人文', style: PALETTE.side4 },
       { type: 'PROPERTY', name: '舊茶寮遺址',         price: 80,  pixelType: 'teahut',    zoneLabel: '古道人文', style: PALETTE.side4 },
       { type: 'PROPERTY', name: '台電訓練所',         price: 120, pixelType: 'training',  zoneLabel: '古道人文', style: PALETTE.side4 },
-      { type: 'PROPERTY', name: '籃球場',             price: 50,  pixelType: 'court',     zoneLabel: '古道人文', style: PALETTE.side4 }
+      { type: 'PROPERTY', name: '籃球場',             price: 50,  pixelType: 'court',     zoneLabel: '古道人文', style: PALETTE.side4 },
+      { type: 'LANDMARK', name: '燕子湖畔',           price: 0,   pixelType: 'river',     zoneLabel: '地標',     style: PALETTE.river },
+      { type: 'PROPERTY', name: '龜山老街',           price: 60,  pixelType: 'store',     zoneLabel: '溪畔風情', style: PALETTE.side1 },
+      { type: 'PROPERTY', name: '梅花湖步道',         price: 75,  pixelType: 'forest',    zoneLabel: '溪畔風情', style: PALETTE.side1 },
+      { type: 'PROPERTY', name: '烏來台車驛站',       price: 95,  pixelType: 'warehouse', zoneLabel: '溪畔風情', style: PALETTE.side2 },
+      { type: 'PROPERTY', name: '桂山冰棒小舖',       price: 65,  pixelType: 'ice',       zoneLabel: '溪畔風情', style: PALETTE.side2 },
+      { type: 'PROPERTY', name: '新店溪畔公園',       price: 85,  pixelType: 'scout',     zoneLabel: '山野秘境', style: PALETTE.side3 },
+      { type: 'PROPERTY', name: '翡翠觀景台',         price: 115, pixelType: 'dam',       zoneLabel: '山野秘境', style: PALETTE.side3 },
+      { type: 'PROPERTY', name: '龜山古道入口',       price: 70,  pixelType: 'teahut',    zoneLabel: '山野秘境', style: PALETTE.side3 },
+      { type: 'LANDMARK', name: '溪谷吊橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標',     style: PALETTE.bridge },
+      { type: 'PROPERTY', name: '生態賞鳥亭',         price: 80,  pixelType: 'forest',    zoneLabel: '生態綠廊', style: PALETTE.side4 },
+      { type: 'PROPERTY', name: '櫻花林秘境',         price: 90,  pixelType: 'tea',       zoneLabel: '生態綠廊', style: PALETTE.side4 },
+      { type: 'PROPERTY', name: '森林教室',           price: 60,  pixelType: 'school',    zoneLabel: '生態綠廊', style: PALETTE.side4 },
+      { type: 'PROPERTY', name: '百年水圳遺址',       price: 105, pixelType: 'ruin',      zoneLabel: '生態綠廊', style: PALETTE.side4 },
+      { type: 'PROPERTY', name: '探險補給站',         price: 45,  pixelType: 'training',  zoneLabel: '生態綠廊', style: PALETTE.side1 }
     ];
 
-    function createBoardTiles() {
+    const BOARD_TILES = WINDING_PATH_COORDS.map((pos, index) => {
+      const bp = TILE_BLUEPRINTS[index];
+      return {
+        id: index,
+        gx: pos.gx,
+        gy: pos.gy,
+        ...bp,
+        ownerUid: null,
+        ownerName: '',
+        ownerNpcId: null
+      };
+    });
+
+    // 更新抽屜總可購領地數顯示
+    const totalPurchasableCount = BOARD_TILES.filter(t => t.type === 'PROPERTY').length;
+    const drawerTotalEl = document.getElementById('drawer-total-count');
+    if (drawerTotalEl) drawerTotalEl.textContent = totalPurchasableCount;
+
+    // ============================================================================
+    // 建立 8x8 地形與裝飾佈局（草地、土地、小水塘、小石塊、路徑旁小樹）
+    // ============================================================================
+    function createWorldMapGrid() {
       const N = ISO_CONFIG.GRID_SIZE;
-      const coords = [];
+      const pathLookup = new Map();
+      BOARD_TILES.forEach(t => pathLookup.set(`${t.gx},${t.gy}`, t));
 
-      for (let x = N - 1; x > 0; x--) coords.push({ gx: x, gy: N - 1 });
-      for (let y = N - 1; y > 0; y--) coords.push({ gx: 0, gy: y });
-      for (let x = 0; x < N - 1; x++) coords.push({ gx: x, gy: 0 });
-      for (let y = 0; y < N - 1; y++) coords.push({ gx: N - 1, gy: y });
+      // 指定小水塘位置（中央水塘 + 左上角小水塘）
+      const pondCoords = new Set([
+        '4,3', '4,4', '5,3', '5,4',
+        '1,1'
+      ]);
 
-      return coords.map((pos, index) => {
-        const bp = TILE_BLUEPRINTS[index];
-        const isCorner = (pos.gx === 0 || pos.gx === N - 1) && (pos.gy === 0 || pos.gy === N - 1);
-        return {
-          id: index,
-          gx: pos.gx,
-          gy: pos.gy,
-          isCorner,
-          ...bp,
-          ownerUid: null,
-          ownerName: '',
-          ownerNpcId: null
-        };
-      });
+      // 指定土地（沙土/泥土）區塊位置
+      const dirtCoords = new Set([
+        '3,3', '3,4', '6,3', '6,4', '3,2', '6,5',
+        '4,7', '0,4', '5,0', '6,0', '7,0', '6,6'
+      ]);
+
+      // 路徑旁小樹與小石塊裝飾配置（確保不擋路、不種在水塘中）
+      const propMap = new Map([
+        ['1,6', 'tree_oak'],
+        ['2,6', 'pebbles'],
+        ['6,6', 'tree_bush'],
+        ['4,7', 'tree_bush'],
+        ['1,4', 'tree_oak'],
+        ['0,4', 'pebbles'],
+        ['3,4', 'tree_bush'],
+        ['3,3', 'pebbles'],
+        ['3,2', 'tree_oak'],
+        ['3,1', 'tree_bush'],
+        ['4,2', 'pebbles'],
+        ['5,2', 'tree_oak'],
+        ['6,2', 'tree_bush'],
+        ['5,0', 'tree_oak'],
+        ['6,0', 'pebbles'],
+        ['7,0', 'tree_bush'],
+        ['6,3', 'tree_oak'],
+        ['6,4', 'pebbles'],
+        ['6,5', 'tree_bush']
+      ]);
+
+      const grid = [];
+      for (let gx = 0; gx < N; gx++) {
+        grid[gx] = [];
+        for (let gy = 0; gy < N; gy++) {
+          const key = `${gx},${gy}`;
+          const roadTile = pathLookup.get(key) || null;
+          let terrain = 'grass';
+          if (roadTile) terrain = 'road';
+          else if (pondCoords.has(key)) terrain = 'water';
+          else if (dirtCoords.has(key)) terrain = 'dirt';
+
+          grid[gx][gy] = {
+            gx,
+            gy,
+            terrain,
+            roadTile,
+            prop: roadTile ? null : (propMap.get(key) || null)
+          };
+        }
+      }
+      return grid;
     }
 
-    const BOARD_TILES = createBoardTiles();
+    const WORLD_MAP = createWorldMapGrid();
 
-   /**
+    /**
      * ============================================================================
-     * 5. 16x16 地點像素繪圖引擎 (Sprite-Stacking 立體版)
+     * 5. 16x16 地點像素繪圖引擎 (彈窗與地契卡片用)
      * ============================================================================
      */
     const PixelArtRenderer = {
@@ -2062,7 +2149,6 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         'T': '#a66e38', 'L': '#d9b382', 'M': '#8c969e', 'C': '#545d66'
       },
       sprites: {
-        // ... (原有的 sprites 資料陣列保持不變) ...
         school: ['SSSSSSSSSSSSSSSS','SSSSSSSRRSSSSSSS','SSSSSSRRRRSSSSSS','SSSSSRRRRRRSSSSS','SSWWWWWWWWWWWWSS','SSWBBWWYYWWBBWSS','SSWBBWWYYWWBBWSS','SSWWWWWWWWWWWWSS','SSWBBWWRRWBBBWSS','SSWBBWWRRWBBBWSS','GGGGGGGGGGGGGGGG','GGGGGGGGGGGGGGGG','LLLLLLLLLLLLLLLL','LLLLLLLLLLLLLLLL','GGGGGGGGGGGGGGGG','GGGGGGGGGGGGGGGG'],
         warehouse: ['SSSSSSSSSSSSSSSS','SSSSSSSSSSSSSSSS','SSCCCCCCCCCCCCSS','SMMMMMMMMMMMMMMS','SMMMMMMMMMMMMMMS','SMMTTTTTTTTTTMMS','SMMTLLLLLLLLTMMS','SMMTLYYYYYYLTMMS','SMMTLYYYYYYLTMMS','SMMTLLLLLLLLTMMS','SMMTTTTTTTTTTMMS','MMMMMMMMMMMMMMMM','CCCCCCCCCCCCCCCC','LLLLLLLLLLLLLLLL','LLLLLLLLLLLLLLLL','CCCCCCCCCCCCCCCC'],
         tea: ['SSSSSSSSSSSSSSSS','SSSSSSGGGGSSSSSS','SSSSGGGGGGGGSSSS','SSGGGGGGGGGGGGSS','GGGGGGGGGGGGGGGG','DDDDGGGGGGGGDDDD','GGGGGGGGGGGGGGGG','SSGGGGGGGGGGGGSS','SSTTTTTTTTTTTTSS','SSTLLTTTTTTLLTSS','SSTLLTTTTTTLLTSS','SSTTTTTTTTTTTTSS','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD'],
@@ -2080,51 +2166,32 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         training: ['SSSSSSSSSSSSSSSS','SSSSSSSSSSSSSSSS','SSMMMMMMMMMMMMSS','SMMMMMMMMMMMMMMS','SMBBMMBBMMBBMMBS','SMMMMMMMMMMMMMMS','SMBBMMBBMMBBMMBS','SMMMMMMMMMMMMMMS','SMMMMMYYYYMMMMMS','SMMMMMYBBYMMMMMS','GGGGGGGGGGGGGGGG','LLLLLLLLLLLLLLLL','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD'],
         court: ['SSSSSSSSSSSSSSSS','SSSSSSSSSSSSSSSS','SSSTTTTTTTTTTSSS','SSSTWWWWWWWWTSGG','SSSTWWRRRRWWTSGG','SSSTWWWWWWWWTSGG','SSSSSSSMMSSSSSSS','SSSSSSSMMSSSSSSS','OOOOOOOMMOOOOOOO','OWWWWWWWWWWWWWWO','OWWWWRRRRRRWWWWO','OWWWWWWWWWWWWWWO','OOOOOOOOOOOOOOOO','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD','GGGGGGGGGGGGGGGG']
       },
-      // 繪製函數：新增厚度堆疊參數
       drawToCanvas(canvas, type, thickness = 6, offsetY = 1) {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // 確保清除畫布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const matrix = this.sprites[type] || this.sprites.school;
-
-        // 計算縮放比例：讓 16x16 的像素圖自適應畫布大小 (留出上方堆疊空間)
         const scale = Math.floor(canvas.width / 16);
-        const startY = thickness * offsetY; // 最底層的起始 Y 座標，預留空間給上層堆疊
+        const startY = thickness * offsetY;
 
-        // Sprite-stacking 迴圈：從底層 (0) 畫到頂層 (thickness)
         for (let layer = 0; layer <= thickness; layer++) {
           const currentYOffset = startY - (layer * offsetY);
-          
           for (let y = 0; y < 16; y++) {
             for (let x = 0; x < 16; x++) {
               const colorHex = this.colors[matrix[y][x]];
               if (colorHex) {
-                // 為底層增加暗色調 (Fake Shading)，頂層保持原色
-                if (layer < thickness) {
-                  ctx.fillStyle = this.darkenColor(colorHex, 0.4); // 底層較暗
-                } else {
-                  ctx.fillStyle = colorHex; // 最頂層原色
-                }
-                
-                // 畫出像素方塊 (x * scale, (y * scale) + currentYOffset)
+                ctx.fillStyle = layer < thickness ? this.darkenColor(colorHex, 0.4) : colorHex;
                 ctx.fillRect(x * scale, (y * scale) + currentYOffset, scale, scale);
               }
             }
           }
         }
       },
-      
-// 輔助函數：調暗顏色以製作假陰影
       darkenColor(hex, factor) {
-        let r = parseInt(hex.slice(1, 3), 16);
-        let g = parseInt(hex.slice(3, 5), 16);
-        let b = parseInt(hex.slice(5, 7), 16);
-        
-        r = Math.floor(r * (1 - factor));
-        g = Math.floor(g * (1 - factor));
-        b = Math.floor(b * (1 - factor));
-        
+        let r = Math.floor(parseInt(hex.slice(1, 3), 16) * (1 - factor));
+        let g = Math.floor(parseInt(hex.slice(3, 5), 16) * (1 - factor));
+        let b = Math.floor(parseInt(hex.slice(5, 7), 16) * (1 - factor));
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
       }
     };
@@ -2273,7 +2340,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
 
     /**
      * ============================================================================
-     * 7. HUD 介面、角色鎖定刷新、購買、過路費與方案一總結算排行榜
+     * 7. HUD 介面、角色鎖定刷新、購買、過路費與總結算排行榜
      * ============================================================================
      */
     const HUD = {
@@ -2720,7 +2787,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
 
     /**
      * ============================================================================
-     * 8. 2.5D Canvas 渲染與麥塊方塊人繪製引擎
+     * 8. 2.5D Sprite-Stacking 體素地形、小樹、水塘與人物渲染引擎
      * ============================================================================
      */
     const Engine = {
@@ -2738,7 +2805,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         x: 0,
         y: 0,
         scale: 1,
-        minScale: 0.45,
+        minScale: 0.4,
         maxScale: 2.2,
         autoFollow: true
       },
@@ -2749,6 +2816,8 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         lastY: 0,
         pinchDist: 0
       },
+
+      voxelCache: {},
 
       init() {
         this.ctx = this.canvas.getContext('2d');
@@ -2788,18 +2857,18 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         if (w <= 0 || h <= 0) return;
 
         const boardPixelW = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_W;
-        const boardPixelH = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_H + 100;
+        const boardPixelH = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_H + 110;
 
         const fitScale = Math.min(
-          (w * 0.82) / boardPixelW,
-          (h * 0.72) / boardPixelH,
-          1.15
+          (w * 0.84) / boardPixelW,
+          (h * 0.74) / boardPixelH,
+          1.1
         );
 
         this.camera.scale = Math.max(this.camera.minScale, fitScale || 1);
         this.camera.x = w / 2;
         const centerGridY = (ISO_CONFIG.GRID_SIZE - 1) * (ISO_CONFIG.TILE_H / 2);
-        this.camera.y = h / 2 - centerGridY * this.camera.scale - 8;
+        this.camera.y = h / 2 - centerGridY * this.camera.scale - 6;
       },
 
       setAutoFollow(enabled) {
@@ -2829,115 +2898,6 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         return { sx, sy };
       },
 
-      drawBoardGroundShadow(ctx) {
-        const N = ISO_CONFIG.GRID_SIZE;
-        const hw = ISO_CONFIG.TILE_W / 2;
-        const hh = ISO_CONFIG.TILE_H / 2;
-        const z = ISO_CONFIG.BASE_Z;
-
-        const topCorner = this.gridToIso(0, 0);
-        const rightCorner = this.gridToIso(N - 1, 0);
-        const bottomCorner = this.gridToIso(N - 1, N - 1);
-        const leftCorner = this.gridToIso(0, N - 1);
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(topCorner.sx, topCorner.sy - hh + z + 10);
-        ctx.lineTo(rightCorner.sx + hw + 14, rightCorner.sy + z + 12);
-        ctx.lineTo(bottomCorner.sx, bottomCorner.sy + hh + z + 18);
-        ctx.lineTo(leftCorner.sx - hw - 14, leftCorner.sy + z + 12);
-        ctx.closePath();
-
-        ctx.fillStyle = 'rgba(10, 5, 2, 0.55)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-        ctx.shadowBlur = 28;
-        ctx.shadowOffsetY = 12;
-        ctx.fill();
-        ctx.restore();
-      },
-
-      drawIsoBlock(ctx, tile) {
-        const { sx, sy } = this.gridToIso(tile.gx, tile.gy);
-        const hw = ISO_CONFIG.TILE_W / 2;
-        const hh = ISO_CONFIG.TILE_H / 2;
-        const zHeight = ISO_CONFIG.BASE_Z;
-        const style = tile.style;
-
-        const pTop = { x: sx, y: sy - hh };
-        const pRight = { x: sx + hw, y: sy };
-        const pBottom = { x: sx, y: sy + hh };
-        const pLeft = { x: sx - hw, y: sy };
-
-        ctx.beginPath();
-        ctx.moveTo(pLeft.x, pLeft.y);
-        ctx.lineTo(pBottom.x, pBottom.y);
-        ctx.lineTo(pBottom.x, pBottom.y + zHeight);
-        ctx.lineTo(pLeft.x, pLeft.y + zHeight);
-        ctx.closePath();
-        ctx.fillStyle = style.left;
-        ctx.fill();
-        ctx.strokeStyle = style.stroke;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(pBottom.x, pBottom.y);
-        ctx.lineTo(pRight.x, pRight.y);
-        ctx.lineTo(pRight.x, pRight.y + zHeight);
-        ctx.lineTo(pBottom.x, pBottom.y + zHeight);
-        ctx.closePath();
-        ctx.fillStyle = style.right;
-        ctx.fill();
-        ctx.strokeStyle = style.stroke;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(pTop.x, pTop.y);
-        ctx.lineTo(pRight.x, pRight.y);
-        ctx.lineTo(pBottom.x, pBottom.y);
-        ctx.lineTo(pLeft.x, pLeft.y);
-        ctx.closePath();
-        ctx.fillStyle = style.top;
-        ctx.fill();
-        ctx.strokeStyle = style.stroke;
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-
-        const myPawn = PawnManager.pawns[GameState.uid];
-        if (myPawn && tile.id === myPawn.tileIndex) {
-          ctx.beginPath();
-          ctx.moveTo(pTop.x, pTop.y + 3);
-          ctx.lineTo(pRight.x - 5, pRight.y);
-          ctx.lineTo(pBottom.x, pBottom.y - 3);
-          ctx.lineTo(pLeft.x + 5, pLeft.y);
-          ctx.closePath();
-          ctx.strokeStyle = '#fff59d';
-          ctx.lineWidth = 2.2;
-          ctx.stroke();
-        } else if (tile.isCorner) {
-          const inset = 0.78;
-          ctx.beginPath();
-          ctx.moveTo(sx, sy - hh * inset);
-          ctx.lineTo(sx + hw * inset, sy);
-          ctx.lineTo(sx, sy + hh * inset);
-          ctx.lineTo(sx - hw * inset, sy);
-          ctx.closePath();
-          ctx.strokeStyle = 'rgba(110, 65, 20, 0.4)';
-          ctx.lineWidth = 1.3;
-          ctx.stroke();
-        }
-
-        if (tile.id >= 0) {
-          this.drawTileContent(ctx, sx, sy, tile);
-        }
-      },
-
-
-
-      // ✅ 從這裡開始貼上 ✅
-      voxelCache: {},
-
       darkenHex(hex, factor) {
         const r = Math.max(0, Math.floor(parseInt(hex.slice(1, 3), 16) * (1 - factor)));
         const g = Math.max(0, Math.floor(parseInt(hex.slice(3, 5), 16) * (1 - factor)));
@@ -2945,6 +2905,9 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         return `rgb(${r},${g},${b})`;
       },
 
+      // ============================================================================
+      // 🧱 Sprite-Stacking 核心堆疊烘焙器
+      // ============================================================================
       buildStackedSprite(key, layers, palette, unitW = 4, unitH = 2.2, layerStep = 2.4) {
         if (this.voxelCache[key]) return this.voxelCache[key];
 
@@ -2952,9 +2915,9 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         const sizeY = layers[0].length;
         const sizeX = layers[0][0].length;
 
-        const padX = Math.ceil((sizeX + sizeY) * (unitW / 2)) + 12;
-        const padTop = Math.ceil(depthZ * layerStep + unitH) + 12;
-        const padBot = Math.ceil((sizeX + sizeY) * (unitH / 2)) + 12;
+        const padX = Math.ceil((sizeX + sizeY) * (unitW / 2)) + 14;
+        const padTop = Math.ceil(depthZ * layerStep + unitH) + 14;
+        const padBot = Math.ceil((sizeX + sizeY) * (unitH / 2)) + 14;
 
         const cvs = document.createElement('canvas');
         cvs.width = padX * 2;
@@ -2991,7 +2954,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
               ctx.closePath();
               ctx.fill();
 
-              // 左側面（次陰影）
+              // 左側面（次受光陰影）
               ctx.fillStyle = this.darkenHex(baseColor, 0.22);
               ctx.beginPath();
               ctx.moveTo(cx - hw, cy);
@@ -3014,9 +2977,240 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
           }
         }
 
-        const result = { canvas: cvs, anchorX: originX, anchorY: originY };
+        // 精準錨點設於底層網格的幾何中心，確保貼合等角座標 (sx, sy)
+        const centerAnchorY = originY + ((sizeX - 1 + sizeY - 1) / 2) * hh;
+        const result = { canvas: cvs, anchorX: originX, anchorY: centerAnchorY };
         this.voxelCache[key] = result;
         return result;
+      },
+
+      // ============================================================================
+      // 🌿 參考附圖的 Sprite-Stacking 地形磚（草地、土地、小水塘）
+      // ============================================================================
+      getStackedTerrainTile(terrainType) {
+        const uw = ISO_CONFIG.TILE_W / 6; // 112 / 6 = 18.6667
+        const uh = ISO_CONFIG.TILE_H / 6; // 60 / 6  = 10.0
+
+        // 1. 翠綠草地積木（參考附圖左上草地磚）
+        if (terrainType === 'grass') {
+          const pal = {
+            D: '#4a2e16', // 深土底座
+            S: '#6b4222', // 土層
+            E: '#3e7a22', // 草皮側垂邊深綠
+            G: '#5ca332', // 草地中綠
+            L: '#76c442', // 草地亮綠
+            Y: '#95db58'  // 草尖高光
+          };
+          const soil = ['DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD'];
+          const mid  = ['SSSSSS','SSSSSS','SSSSSS','SSSSSS','SSSSSS','SSSSSS'];
+          const rim  = ['EEEEEE','EGGGGE','EGLLGE','EGLLGE','EGGGGE','EEEEEE'];
+          const top  = ['GLGLYG','LGLGLL','GLYLGL','LGLGGL','YGLGLG','GLGLGL'];
+          return this.buildStackedSprite('terrain_grass', [soil, mid, mid, rim, top], pal, uw, uh, 4.4);
+        }
+
+        // 2. 土地積木（參考附圖中上土地磚，含細碎砂礫）
+        if (terrainType === 'dirt') {
+          const pal = {
+            D: '#422611', // 深褐岩土底
+            B: '#6e4220', // 邊框深土
+            M: '#9c6638', // 土地主色
+            L: '#b57c4a', // 淺沙土
+            P: '#a3a8ad'  // 嵌入式小碎石
+          };
+          const base = ['DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD'];
+          const body = ['BBBBBB','BMMMMB','BMMMMB','BMMMMB','BMMMMB','BBBBBB'];
+          const top  = ['BMLLMB','MLPLLM','LLMMLL','LMMPLM','MLMLLM','BMLMMB'];
+          return this.buildStackedSprite('terrain_dirt', [base, base, body, body, top], pal, uw, uh, 4.4);
+        }
+
+        // 3. 小水塘積木（參考附圖右上水波磚，高度較低形成凹陷水池）
+        if (terrainType === 'water') {
+          const pal = {
+            D: '#134e75', // 深水底
+            B: '#1e7cb8', // 池水藍
+            C: '#38a3db', // 亮水藍
+            W: '#bceeff'  // 白色水波紋
+          };
+          const base = ['DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD'];
+          const mid  = ['BBBBBB','BCCCCB','BCCCCB','BCCCCB','BCCCCB','BBBBBB'];
+          const top  = ['BCWWCB','CCBCCW','WCCBCC','CCBWWC','BCCBCC','CBBCCB'];
+          return this.buildStackedSprite('terrain_water', [base, mid, top], pal, uw, uh, 4.4);
+        }
+
+        return null;
+      },
+
+      // ============================================================================
+      // 🌲 參考附圖的 Sprite-Stacking 路徑旁小樹與小石塊裝飾
+      // ============================================================================
+      getStackedPropSprite(propType) {
+        // 1. 經典大樹（參考附圖中右：草皮底座 + 棕色樹幹 + 圓潤分層綠樹冠）
+        if (propType === 'tree_oak') {
+          const pal = {
+            G: '#4a962c',
+            T: '#6e3f1d',
+            t: '#8f5429',
+            D: '#357320',
+            M: '#56ab35',
+            L: '#7ed14b',
+            Y: '#a3e868'
+          };
+          const layers = [
+            ['.GGGG.','GGGGGG','GGGGGG','GGGGGG','GGGGGG','.GGGG.'], // Z0 草皮底座
+            ['......','..Tt..','..tT..','..Tt..','......','......'], // Z1 樹幹
+            ['......','..tT..','..Tt..','..tT..','......','......'], // Z2 樹幹
+            ['......','..Tt..','..tT..','..Tt..','......','......'], // Z3 樹幹
+            ['.DDDD.','DMMMMD','DMMMMD','DMMMMD','DMMMMD','.DDDD.'], // Z4 樹冠下層
+            ['.MLLM.','MLLLLL','MLYYLM','MLLLLM','MLLLLL','.MLLM.'], // Z5 樹冠中層
+            ['..LL..','.LYYL.','.LYYL.','.LLLL.','..LL..','......'], // Z6 樹冠上層
+            ['......','..YY..','..YY..','......','......','......']  // Z7 樹頂高光
+          ];
+          return this.buildStackedSprite('prop_tree_oak', layers, pal, 5.2, 2.8, 3.3);
+        }
+
+        // 2. 圓滾灌木小樹（參考附圖中正中：飽滿多層葉叢）
+        if (propType === 'tree_bush') {
+          const pal = {
+            D: '#2f6b1c',
+            G: '#49992e',
+            L: '#71c744',
+            Y: '#96e35f'
+          };
+          const layers = [
+            ['.DDDD.','DDDDDD','DDDDDD','DDDDDD','DDDDDD','.DDDD.'], // Z0
+            ['.GGGG.','GGGGGG','GLLLLG','GLLLLG','GGGGGG','.GGGG.'], // Z1
+            ['.GLLG.','GLLLLG','LLYYLL','LLYYLL','GLLLLG','.GLLG.'], // Z2
+            ['..LL..','.LYYL.','.LYYL.','.LLLL.','..LL..','......'], // Z3
+            ['......','..YY..','..YY..','......','......','......']  // Z4
+          ];
+          return this.buildStackedSprite('prop_tree_bush', layers, pal, 5.4, 2.9, 3.2);
+        }
+
+        // 3. 小石塊群（參考附圖中左與下方：圓潤灰白鵝卵石堆疊）
+        if (propType === 'pebbles') {
+          const pal = {
+            G: '#5ca332',
+            D: '#5b6269',
+            M: '#7a828a',
+            L: '#a2aab3'
+          };
+          const layers = [
+            ['.GG...','DD.MM.','DD.MMG','...GG.'], // Z0 嵌在草地上的石底
+            ['......','MM.LL.','MM....','......'], // Z1 石塊中層
+            ['......','L.....','......','......']  // Z2 石塊頂部高光
+          ];
+          return this.buildStackedSprite('prop_pebbles', layers, pal, 5.6, 3.0, 2.8);
+        }
+
+        return null;
+      },
+
+      drawBoardGroundShadow(ctx) {
+        const N = ISO_CONFIG.GRID_SIZE;
+        const hw = ISO_CONFIG.TILE_W / 2;
+        const hh = ISO_CONFIG.TILE_H / 2;
+        const z = ISO_CONFIG.BASE_Z;
+
+        const topCorner = this.gridToIso(0, 0);
+        const rightCorner = this.gridToIso(N - 1, 0);
+        const bottomCorner = this.gridToIso(N - 1, N - 1);
+        const leftCorner = this.gridToIso(0, N - 1);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(topCorner.sx, topCorner.sy - hh + z + 10);
+        ctx.lineTo(rightCorner.sx + hw + 16, rightCorner.sy + z + 14);
+        ctx.lineTo(bottomCorner.sx, bottomCorner.sy + hh + z + 20);
+        ctx.lineTo(leftCorner.sx - hw - 16, leftCorner.sy + z + 14);
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(8, 4, 2, 0.58)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.78)';
+        ctx.shadowBlur = 30;
+        ctx.shadowOffsetY = 14;
+        ctx.fill();
+        ctx.restore();
+      },
+
+      // 繪製路徑方塊（含泥土小徑邊框細節，呼應附圖下方小徑）
+      drawRoadBlock(ctx, tile) {
+        const { sx, sy } = this.gridToIso(tile.gx, tile.gy);
+        const hw = ISO_CONFIG.TILE_W / 2;
+        const hh = ISO_CONFIG.TILE_H / 2;
+        const zHeight = ISO_CONFIG.BASE_Z;
+        const style = tile.style;
+
+        const pTop = { x: sx, y: sy - hh };
+        const pRight = { x: sx + hw, y: sy };
+        const pBottom = { x: sx, y: sy + hh };
+        const pLeft = { x: sx - hw, y: sy };
+
+        // 左側面
+        ctx.beginPath();
+        ctx.moveTo(pLeft.x, pLeft.y);
+        ctx.lineTo(pBottom.x, pBottom.y);
+        ctx.lineTo(pBottom.x, pBottom.y + zHeight);
+        ctx.lineTo(pLeft.x, pLeft.y + zHeight);
+        ctx.closePath();
+        ctx.fillStyle = style.left;
+        ctx.fill();
+        ctx.strokeStyle = style.stroke;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 右側面
+        ctx.beginPath();
+        ctx.moveTo(pBottom.x, pBottom.y);
+        ctx.lineTo(pRight.x, pRight.y);
+        ctx.lineTo(pRight.x, pRight.y + zHeight);
+        ctx.lineTo(pBottom.x, pBottom.y + zHeight);
+        ctx.closePath();
+        ctx.fillStyle = style.right;
+        ctx.fill();
+        ctx.strokeStyle = style.stroke;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 頂面
+        ctx.beginPath();
+        ctx.moveTo(pTop.x, pTop.y);
+        ctx.lineTo(pRight.x, pRight.y);
+        ctx.lineTo(pBottom.x, pBottom.y);
+        ctx.lineTo(pLeft.x, pLeft.y);
+        ctx.closePath();
+        ctx.fillStyle = style.top;
+        ctx.fill();
+        ctx.strokeStyle = style.stroke;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // 當前玩家腳下高光框
+        const myPawn = PawnManager.pawns[GameState.uid];
+        if (myPawn && tile.id === myPawn.tileIndex) {
+          ctx.beginPath();
+          ctx.moveTo(pTop.x, pTop.y + 3);
+          ctx.lineTo(pRight.x - 5, pRight.y);
+          ctx.lineTo(pBottom.x, pBottom.y - 3);
+          ctx.lineTo(pLeft.x + 5, pLeft.y);
+          ctx.closePath();
+          ctx.strokeStyle = '#fff59d';
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+        } else {
+          // 泥土小徑內框線條感
+          const inset = 0.84;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy - hh * inset);
+          ctx.lineTo(sx + hw * inset, sy);
+          ctx.lineTo(sx, sy + hh * inset);
+          ctx.lineTo(sx - hw * inset, sy);
+          ctx.closePath();
+          ctx.strokeStyle = 'rgba(110, 65, 20, 0.28)';
+          ctx.lineWidth = 1.1;
+          ctx.stroke();
+        }
+
+        this.drawTileContent(ctx, sx, sy, tile);
       },
 
       getTileVoxelSprite(tile) {
@@ -3028,7 +3222,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
             ['.TT...','.TT...','.TT...','.TT...','......','......'],
             ['.WW...','.WW...','.WW...','.WW...','......','......']
           ];
-          return this.buildStackedSprite('tile_start', layers, pal, 4.4, 2.3, 2.8);
+          return this.buildStackedSprite('tile_start', layers, pal, 4.0, 2.1, 2.5);
         }
 
         if (tile.pixelType === 'bridge') {
@@ -3038,7 +3232,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
             ['.WWWW.','DDDDDD','DDDDDD','.WWWW.'],
             ['..WW..','..WW..','..WW..','..WW..']
           ];
-          return this.buildStackedSprite('tile_bridge', layers, pal, 4.6, 2.4, 2.6);
+          return this.buildStackedSprite('tile_bridge', layers, pal, 4.2, 2.2, 2.4);
         }
 
         if (tile.pixelType === 'river') {
@@ -3047,7 +3241,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
             ['RBBBB.','BBBBBL','LBBBBW','BBBBBR'],
             ['R.....','..LW..','..WL..','.....R']
           ];
-          return this.buildStackedSprite('tile_river', layers, pal, 4.6, 2.4, 2.5);
+          return this.buildStackedSprite('tile_river', layers, pal, 4.2, 2.2, 2.3);
         }
 
         if (tile.ownerUid) {
@@ -3068,7 +3262,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
             ['.RRR.','.RRR.','.RRR.','.RRR.','.RRR.'],
             ['..R..','..R..','..C..','..R..','..R..']
           ];
-          return this.buildStackedSprite(key, layers, pal, 4.2, 2.2, 2.7);
+          return this.buildStackedSprite(key, layers, pal, 3.8, 2.0, 2.5);
         }
 
         return null;
@@ -3082,228 +3276,182 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
           ctx.drawImage(
             voxelObj.canvas,
             sx - voxelObj.anchorX,
-            sy - 13 - voxelObj.anchorY
+            sy - 8 - voxelObj.anchorY
           );
         }
 
         ctx.save();
-        ctx.translate(sx, sy + (hasBuilding ? 6 : 0));
+        ctx.translate(sx, sy + (hasBuilding ? 7 : 0));
 
         ctx.fillStyle = '#2e1808';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
         if (tile.name.length > 5) {
-          ctx.font = 'bold 9.5px sans-serif';
+          ctx.font = 'bold 9px sans-serif';
           const mid = Math.ceil(tile.name.length / 2);
-          ctx.fillText(tile.name.slice(0, mid), 0, -9);
+          ctx.fillText(tile.name.slice(0, mid), 0, -8);
           ctx.fillText(tile.name.slice(mid), 0, 2);
         } else {
-          ctx.font = 'bold 10.5px sans-serif';
+          ctx.font = 'bold 10px sans-serif';
           ctx.fillText(tile.name, 0, tile.price > 0 ? -4 : 0);
         }
 
         if (tile.price > 0) {
           if (tile.ownerUid) {
             ctx.fillStyle = tile.ownerUid === GameState.uid ? '#1b5e20' : '#b71c1c';
-            ctx.font = 'bold 9px sans-serif';
-            ctx.fillText(`★${tile.ownerName} (過路$${calcTollFee(tile.price)})`, 0, 14);
+            ctx.font = 'bold 8.5px sans-serif';
+            ctx.fillText(`★${tile.ownerName} ($${calcTollFee(tile.price)})`, 0, 13);
           } else {
             ctx.fillStyle = 'rgba(65, 35, 12, 0.85)';
-            ctx.font = 'bold 9.5px sans-serif';
-            ctx.fillText(`$${tile.price}`, 0, 14);
+            ctx.font = 'bold 9px sans-serif';
+            ctx.fillText(`$${tile.price}`, 0, 13);
           }
         }
 
         ctx.restore();
       },
 
-
-drawCentralWasteland(ctx) {
+      // 依等角深度 (gx + gy) 由後往前統一繪製整座 8x8 堆疊地圖與裝飾
+      drawWorldMap(ctx) {
         const N = ISO_CONFIG.GRID_SIZE;
-        for (let sum = 2; sum <= (N - 2) * 2; sum++) {
-          for (let gx = 1; gx <= N - 2; gx++) {
+        for (let sum = 0; sum <= (N - 1) * 2; sum++) {
+          for (let gx = 0; gx < N; gx++) {
             const gy = sum - gx;
-            if (gy >= 1 && gy <= N - 2) {
-              this.drawIsoBlock(ctx, {
-                gx, gy, id: -1, name: '', price: 0, ownerUid: null,
-                style: {
-                  top: PALETTE.innerSandTop,
-                  left: PALETTE.innerSandLeft,
-                  right: PALETTE.innerSandRight,
-                  stroke: 'rgba(130, 99, 54, 0.25)'
+            if (gy < 0 || gy >= N) continue;
+
+            const cell = WORLD_MAP[gx][gy];
+            const { sx, sy } = this.gridToIso(gx, gy);
+
+            if (cell.terrain === 'road' && cell.roadTile) {
+              this.drawRoadBlock(ctx, cell.roadTile);
+            } else {
+              // 繪製 Sprite-Stacking 草地 / 土地 / 小水塘積木
+              const terrainSprite = this.getStackedTerrainTile(cell.terrain);
+              if (terrainSprite) {
+                ctx.drawImage(
+                  terrainSprite.canvas,
+                  sx - terrainSprite.anchorX,
+                  sy - terrainSprite.anchorY
+                );
+              }
+
+              // 若該格有路徑旁小樹或小石塊，緊接著疊加在地形上
+              if (cell.prop) {
+                const propSprite = this.getStackedPropSprite(cell.prop);
+                if (propSprite) {
+                  ctx.drawImage(
+                    propSprite.canvas,
+                    sx - propSprite.anchorX,
+                    sy - 4 - propSprite.anchorY
+                  );
                 }
-              });
+              }
             }
           }
         }
-
-        // 中央綠洲水池
-        const oasisPos = this.gridToIso(2.75, 2.75);
-        ctx.save();
-        ctx.translate(oasisPos.sx, oasisPos.sy);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 74, 39, 0, 0, Math.PI * 2);
-        ctx.fillStyle = '#7ba85b';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(0, 2, 62, 32, 0, 0, Math.PI * 2);
-        ctx.fillStyle = '#3898a8';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(-4, 1, 44, 21, 0, 0, Math.PI * 2);
-        ctx.fillStyle = '#5bc2cf';
-        ctx.fill();
-        ctx.restore();
-
-        // 1. 多層堆疊紅岩山丘
-        this.drawStackedProp(ctx, 1.65, 1.75, 'central_mesa_rock', [
-          ['.RRRRRR.','RRRRRRRR','RRRRRRRR','RRRRRRRR','RRRRRRRR','.RRRRRR.'],
-          ['.RRRRRR.','RRRRRRRR','RRRRRRRR','RRRRRRRR','.RRRRRR.','........'],
-          ['..RRRR..','.RRRRRR.','.RRRRRR.','.RRRRRR.','..RRRR..','........'],
-          ['..OOOO..','.OOOOOO.','.OOOOOO.','..OOOO..','........','........'],
-          ['...OO...','..OOOO..','..OOOO..','...OO...','........','........'],
-          ['........','...YY...','...YY...','........','........','........']
-        ], { R: '#b45309', O: '#d97706', Y: '#f59e0b' }, 5.5, 2.9, 3.6);
-
-        // 2. 多層堆疊立體仙人掌（兩株）
-        const cactusLayers = [
-          ['..GG..','..GG..','..GG..'],
-          ['..GG..','..GG..','..GG..'],
-          ['GGGGGG','GGGGGG','..GG..'],
-          ['G.GG.G','G.GG.G','..GG..'],
-          ['..GG..','..GG..','..GG..'],
-          ['..LL..','..LL..','......']
-        ];
-        const cactusPal = { G: '#2e7d32', L: '#66bb6a' };
-        this.drawStackedProp(ctx, 3.45, 2.05, 'central_cactus', cactusLayers, cactusPal, 4.2, 2.2, 3.2);
-        this.drawStackedProp(ctx, 2.05, 3.35, 'central_cactus', cactusLayers, cactusPal, 3.5, 1.8, 2.6);
-
-        // 3. 綠洲岸邊立體黃金寶藏箱
-        this.drawStackedProp(ctx, 3.25, 3.15, 'central_chest', [
-          ['WWWW','WWWW','WWWW'],
-          ['WWWW','WGGW','WWWW'],
-          ['RRRR','RYYR','RRRR'],
-          ['.RR.','.RR.','.RR.']
-        ], { W: '#78350f', R: '#b45309', Y: '#fbbf24', G: '#fde047' }, 4.2, 2.2, 2.6);
       },
 
-      drawStackedProp(ctx, gx, gy, key, layers, pal, uw, uh, step) {
-        const sprite = this.buildStackedSprite(key, layers, pal, uw, uh, step);
-        const { sx, sy } = this.gridToIso(gx, gy);
-        ctx.drawImage(sprite.canvas, sx - sprite.anchorX, sy - sprite.anchorY);
-      },
-
-// 取得依四位角色造型量身打造的 16 層立體堆疊方塊人
       getStackedPawnSprite(npc) {
         const key = `voxel_pawn_custom_${npc.id}`;
         const pal = {
-          F: '#ffd7b5', // 膚色
-          K: '#1b120c', // 黑色（眼珠 / 阿凱黑髮）
-          W: '#ffffff', // 眼白 / 條紋白
-          B: '#4e342e', // 咖啡髮色 / 背包
-          N: '#e0a982', // 鼻影
-          M: '#a86449', // 棕色嘴唇
-          P: '#e57373', // 粉紅嘴唇
-          G: '#388e3c', // 阿岳綠帽與綠衣
-          g: '#2e7d32', // 阿岳帽簷深綠
-          R: '#d32f2f', // 紅色（小晴上衣 / 朵拉帽與領巾）
-          r: '#b71c1c', // 朵拉帽簷深紅
-          I: '#3949ab', // 小晴深藍褲
-          Y: '#fbc02d', // 阿凱黃工程帽與徽章
-          y: '#f57f17', // 阿凱帽簷深黃
-          E: '#1565c0', // 阿凱深藍工程服
-          C: '#37474f', // 阿凱深灰長褲
-          O: '#f57c00', // 朵拉橘色童軍服
-          D: '#5d4037'  // 朵拉咖啡長褲
+          F: '#ffd7b5',
+          K: '#1b120c',
+          W: '#ffffff',
+          B: '#4e342e',
+          N: '#e0a982',
+          M: '#a86449',
+          P: '#e57373',
+          G: '#388e3c',
+          g: '#2e7d32',
+          R: '#d32f2f',
+          r: '#b71c1c',
+          I: '#3949ab',
+          Y: '#fbc02d',
+          y: '#f57f17',
+          E: '#1565c0',
+          C: '#37474f',
+          O: '#f57c00',
+          D: '#5d4037'
         };
 
-        // 每個陣列為 1 層 (Z=0 由腳底往上堆至 Z=15 頭頂)
-        // 每層 4 列代表深度 (vy=0 為背面，vy=3 為正面朝向鏡頭)
         const characterModels = {
-          // 1. 阿岳：綠帽 + 咖啡鬢角 + 綠衣
           ranger: [
-            ['.BB..BB.','.BB..BB.','.BB..BB.','........'], // Z0 腳底
-            ['.BB..BB.','.BB..BB.','.BB..BB.','........'], // Z1 褲腳
-            ['.BB..BB.','.BB..BB.','.BB..BB.','........'], // Z2 褲子
-            ['.BBBBBB.','.BBBBBB.','.BBBBBB.','........'], // Z3 腰部
-            ['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'], // Z4 下衣與手
-            ['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'], // Z5 中衣與手
-            ['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGGGGG.'], // Z6 上衣
-            ['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGFFGG.'], // Z7 衣領
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFMMFF.'], // Z8 下巴與嘴巴
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'], // Z9 臉頰與鼻子
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'], // Z10 眼白(下層)
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'], // Z11 眼珠(上層)
-            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'], // Z12 額頭
-            ['.GGGGGG.','.GGGGGG.','.GGGGGG.','.gggggg.'], // Z13 綠帽簷
-            ['.GGGGGG.','.GGGGGG.','.GGGGGG.','.GGGGGG.'], // Z14 綠帽身
-            ['..GGGG..','..GGGG..','..GGGG..','........']  // Z15 帽頂
+            ['.BB..BB.','.BB..BB.','.BB..BB.','........'],
+            ['.BB..BB.','.BB..BB.','.BB..BB.','........'],
+            ['.BB..BB.','.BB..BB.','.BB..BB.','........'],
+            ['.BBBBBB.','.BBBBBB.','.BBBBBB.','........'],
+            ['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'],
+            ['FGGGGGGF','FGGGGGGF','FGGGGGGF','.GGGGGG.'],
+            ['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGGGGG.'],
+            ['GGGGGGGG','GGGGGGGG','GGGGGGGG','.GGFFGG.'],
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFMMFF.'],
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'],
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'],
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'],
+            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],
+            ['.GGGGGG.','.GGGGGG.','.GGGGGG.','.gggggg.'],
+            ['.GGGGGG.','.GGGGGG.','.GGGGGG.','.GGGGGG.'],
+            ['..GGGG..','..GGGG..','..GGGG..','........']
           ],
-
-          // 2. 小晴：無帽 + 咖啡及肩長髮 + 紅白條紋衣 + 粉紅嘴
           hydro: [
-            ['.II..II.','.II..II.','.II..II.','........'], // Z0 腳底
-            ['.II..II.','.II..II.','.II..II.','........'], // Z1 褲腳
-            ['.II..II.','.II..II.','.II..II.','........'], // Z2 褲子
-            ['.IIIIII.','.IIIIII.','.IIIIII.','........'], // Z3 腰部
-            ['FRRRRRRF','FRRRRRRF','FRRRRRRF','.RRRRRR.'], // Z4 紅衣下擺
-            ['FBBBBBBF','FRRRRRRF','FRRRRRRF','.WWWWWW.'], // Z5 胸前白橫條 + 後長髮
-            ['BBBBBBBB','BRRRRRRB','FRRRRRRF','.RRRRRR.'], // Z6 紅衣上身 + 及肩長髮
-            ['BBBBBBBB','BRRRRRRB','BRRRRRRB','.RRFFRR.'], // Z7 領口 + 長髮
-            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFPPFF.'], // Z8 下巴與粉紅嘴 + 長髮
-            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFFFFF.'], // Z9 臉頰 + 長髮
-            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FWFFWF.'], // Z10 眼白(下層) + 長髮
-            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FKFFKF.'], // Z11 眼珠(上層) + 長髮
-            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'], // Z12 額頭與瀏海
-            ['.BBBBBB.','.BBBBBB.','.BBBBBB.','.BBBBBB.'], // Z13 頭頂長髮
-            ['..BBBB..','..BBBB..','..BBBB..','..BBBB..'], // Z14 髮頂弧度
-            ['........','........','........','........']  // Z15 (無帽留空)
+            ['.II..II.','.II..II.','.II..II.','........'],
+            ['.II..II.','.II..II.','.II..II.','........'],
+            ['.II..II.','.II..II.','.II..II.','........'],
+            ['.IIIIII.','.IIIIII.','.IIIIII.','........'],
+            ['FRRRRRRF','FRRRRRRF','FRRRRRRF','.RRRRRR.'],
+            ['FBBBBBBF','FRRRRRRF','FRRRRRRF','.WWWWWW.'],
+            ['BBBBBBBB','BRRRRRRB','FRRRRRRF','.RRRRRR.'],
+            ['BBBBBBBB','BRRRRRRB','BRRRRRRB','.RRFFRR.'],
+            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFPPFF.'],
+            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FFFFFF.'],
+            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FWFFWF.'],
+            ['BBBBBBBB','BFFFFFFB','BFFFFFFB','.FKFFKF.'],
+            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],
+            ['.BBBBBB.','.BBBBBB.','.BBBBBB.','.BBBBBB.'],
+            ['..BBBB..','..BBBB..','..BBBB..','..BBBB..'],
+            ['........','........','........','........']
           ],
-
-          // 3. 阿凱：黃色工程安全帽 + 黑髮 + 深藍衣與黃徽章 + 深灰褲
           engineer: [
-            ['.CC..CC.','.CC..CC.','.CC..CC.','........'], // Z0 腳底
-            ['.CC..CC.','.CC..CC.','.CC..CC.','........'], // Z1 褲腳
-            ['.CC..CC.','.CC..CC.','.CC..CC.','........'], // Z2 褲子
-            ['.CCCCCC.','.CCCCCC.','.CCCCCC.','........'], // Z3 腰部
-            ['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEEEEE.'], // Z4 深藍衣下擺
-            ['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEYYEE.'], // Z5 胸前黃色徽章/領帶
-            ['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEYYEE.'], // Z6 上衣黃色徽章
-            ['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEEEEE.'], // Z7 衣領
-            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFMMFF.'], // Z8 下巴與嘴巴 + 黑髮
-            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFNNFF.'], // Z9 臉頰與鼻子 + 黑髮
-            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'], // Z10 黑色像素眼(下)
-            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'], // Z11 黑色像素眼(上)
-            ['.KKKKKK.','.KKKKKK.','.KKKKKK.','.KKKKKK.'], // Z12 黑色髮際線
-            ['YYYYYYYY','YYYYYYYY','YYYYYYYY','yyyyyyyy'], // Z13 黃色安全帽簷
-            ['.YYYYYY.','.YYYYYY.','.YYYYYY.','.YYYYYY.'], // Z14 黃色安全帽身
-            ['..YYYY..','..YYYY..','..YYYY..','........']  // Z15 安全帽頂脊
+            ['.CC..CC.','.CC..CC.','.CC..CC.','........'],
+            ['.CC..CC.','.CC..CC.','.CC..CC.','........'],
+            ['.CC..CC.','.CC..CC.','.CC..CC.','........'],
+            ['.CCCCCC.','.CCCCCC.','.CCCCCC.','........'],
+            ['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEEEEE.'],
+            ['FEEEEEEF','FEEEEEEF','FEEEEEEF','.EEYYEE.'],
+            ['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEYYEE.'],
+            ['EEEEEEEE','EEEEEEEE','EEEEEEEE','.EEEEEE.'],
+            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFMMFF.'],
+            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FFNNFF.'],
+            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'],
+            ['.KKKKKK.','.KFFFFK.','.KFFFFK.','.FKFFKF.'],
+            ['.KKKKKK.','.KKKKKK.','.KKKKKK.','.KKKKKK.'],
+            ['YYYYYYYY','YYYYYYYY','YYYYYYYY','yyyyyyyy'],
+            ['.YYYYYY.','.YYYYYY.','.YYYYYY.','.YYYYYY.'],
+            ['..YYYY..','..YYYY..','..YYYY..','........']
           ],
-
-          // 4. 朵拉：紅帽 + 咖啡側髮 + 橘衣與紅領巾 + 咖啡褲
           scout: [
-            ['.DD..DD.','.DD..DD.','.DD..DD.','........'], // Z0 腳底
-            ['.DD..DD.','.DD..DD.','.DD..DD.','........'], // Z1 褲腳
-            ['.DD..DD.','.DD..DD.','.DD..DD.','........'], // Z2 褲子
-            ['.DDDDDD.','.DDDDDD.','.DDDDDD.','........'], // Z3 腰部
-            ['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'], // Z4 橘色童軍服下擺
-            ['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'], // Z5 橘色童軍服中段
-            ['OOOOOOOO','OOOOOOOO','OOOOOOOO','.ORRRRO.'], // Z6 胸前紅色童軍領巾
-            ['OOOOOOOO','OOOOOOOO','OOOOOOOO','.OORROO.'], // Z7 領巾結
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFPPFF.'], // Z8 下巴與粉紅嘴
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'], // Z9 臉頰與鼻子
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'], // Z10 眼白(下層)
-            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'], // Z11 眼珠(上層)
-            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'], // Z12 額頭與咖啡側髮
-            ['.RRRRRR.','.RRRRRR.','.RRRRRR.','.rrrrrr.'], // Z13 紅帽簷
-            ['.RRRRRR.','.RRRRRR.','.RRRRRR.','.RRRRRR.'], // Z14 紅帽身
-            ['..RRRR..','..RRRR..','..RRRR..','........']  // Z15 紅帽頂
+            ['.DD..DD.','.DD..DD.','.DD..DD.','........'],
+            ['.DD..DD.','.DD..DD.','.DD..DD.','........'],
+            ['.DD..DD.','.DD..DD.','.DD..DD.','........'],
+            ['.DDDDDD.','.DDDDDD.','.DDDDDD.','........'],
+            ['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'],
+            ['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'],
+            ['OOOOOOOO','OOOOOOOO','OOOOOOOO','.ORRRRO.'],
+            ['OOOOOOOO','OOOOOOOO','OOOOOOOO','.OORROO.'],
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFPPFF.'],
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'],
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'],
+            ['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'],
+            ['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],
+            ['.RRRRRR.','.RRRRRR.','.RRRRRR.','.rrrrrr.'],
+            ['.RRRRRR.','.RRRRRR.','.RRRRRR.','.RRRRRR.'],
+            ['..RRRR..','..RRRR..','..RRRR..','........']
           ]
         };
 
         const layers = characterModels[npc.id] || characterModels.ranger;
-        return this.buildStackedSprite(key, layers, pal, 3.8, 2.0, 2.2);
+        return this.buildStackedSprite(key, layers, pal, 3.6, 1.9, 2.1);
       },
 
       drawAllMinecraftPawns(ctx) {
@@ -3311,10 +3459,10 @@ drawCentralWasteland(ctx) {
           .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
 
         const offsets = [
-          { dx: -11, dy: 5 },
-          { dx: 11,  dy: -3 },
-          { dx: -11, dy: -5 },
-          { dx: 11,  dy: 7 }
+          { dx: -10, dy: 4 },
+          { dx: 10,  dy: -3 },
+          { dx: -10, dy: -5 },
+          { dx: 10,  dy: 6 }
         ];
 
         pawnList.forEach((pawn, index) => {
@@ -3327,13 +3475,11 @@ drawCentralWasteland(ctx) {
           const shadowScale = Math.max(0.45, 1 - jumpY / 65);
 
           ctx.save();
-          // 地面橢圓投影
           ctx.beginPath();
-          ctx.ellipse(sx, sy + 2, 13 * shadowScale, 7 * shadowScale, 0, 0, Math.PI * 2);
+          ctx.ellipse(sx, sy + 2, 12 * shadowScale, 6.5 * shadowScale, 0, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(30, 15, 5, ${0.45 * shadowScale})`;
           ctx.fill();
 
-          // 繪製多層堆疊立體棋子
           const pawnSprite = this.getStackedPawnSprite(npc);
           ctx.translate(sx, sy - jumpY);
           const sq = pawn.scaleSquash;
@@ -3345,18 +3491,17 @@ drawCentralWasteland(ctx) {
             -pawnSprite.anchorY
           );
 
-          // 頭頂玩家名牌
           const nameLabel = pawn.displayName || npc.name;
           ctx.font = 'bold 8.5px sans-serif';
           const tagW = Math.max(36, ctx.measureText(nameLabel).width + 10);
           ctx.fillStyle = 'rgba(25, 15, 8, 0.85)';
           ctx.beginPath();
-          ctx.roundRect(-tagW / 2, -58, tagW, 13, 4);
+          ctx.roundRect(-tagW / 2, -54, tagW, 13, 4);
           ctx.fill();
           ctx.fillStyle = '#fff8e1';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(nameLabel, 0, -51.5);
+          ctx.fillText(nameLabel, 0, -47.5);
 
           ctx.restore();
         });
@@ -3382,17 +3527,7 @@ drawCentralWasteland(ctx) {
         ctx.scale(this.camera.scale, this.camera.scale);
 
         this.drawBoardGroundShadow(ctx);
-
-        const backTiles = BOARD_TILES.filter(t => (t.gx + t.gy) < ISO_CONFIG.GRID_SIZE - 1)
-          .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
-        for (const tile of backTiles) this.drawIsoBlock(ctx, tile);
-
-        this.drawCentralWasteland(ctx);
-
-        const frontTiles = BOARD_TILES.filter(t => (t.gx + t.gy) >= ISO_CONFIG.GRID_SIZE - 1)
-          .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
-        for (const tile of frontTiles) this.drawIsoBlock(ctx, tile);
-
+        this.drawWorldMap(ctx);
         this.drawAllMinecraftPawns(ctx);
         FloatingTexts.draw(ctx);
 
