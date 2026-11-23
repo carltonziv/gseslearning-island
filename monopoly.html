@@ -2933,9 +2933,164 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         }
       },
 
+if (tile.id >= 0) {
+          this.drawTileContent(ctx, sx, sy, tile);
+        }
+      },
+
+      // ✅ 從這裡開始貼上 ✅
+      voxelCache: {},
+
+      darkenHex(hex, factor) {
+        const r = Math.max(0, Math.floor(parseInt(hex.slice(1, 3), 16) * (1 - factor)));
+        const g = Math.max(0, Math.floor(parseInt(hex.slice(3, 5), 16) * (1 - factor)));
+        const b = Math.max(0, Math.floor(parseInt(hex.slice(5, 7), 16) * (1 - factor)));
+        return `rgb(${r},${g},${b})`;
+      },
+
+      buildStackedSprite(key, layers, palette, unitW = 4, unitH = 2.2, layerStep = 2.4) {
+        if (this.voxelCache[key]) return this.voxelCache[key];
+
+        const depthZ = layers.length;
+        const sizeY = layers[0].length;
+        const sizeX = layers[0][0].length;
+
+        const padX = Math.ceil((sizeX + sizeY) * (unitW / 2)) + 12;
+        const padTop = Math.ceil(depthZ * layerStep + unitH) + 12;
+        const padBot = Math.ceil((sizeX + sizeY) * (unitH / 2)) + 12;
+
+        const cvs = document.createElement('canvas');
+        cvs.width = padX * 2;
+        cvs.height = padTop + padBot;
+        const ctx = cvs.getContext('2d');
+
+        const originX = padX;
+        const originY = padTop;
+        const hw = unitW / 2;
+        const hh = unitH / 2;
+
+        for (let z = 0; z < depthZ; z++) {
+          const grid = layers[z];
+          const liftY = z * layerStep;
+
+          for (let sum = 0; sum <= sizeX + sizeY - 2; sum++) {
+            for (let vx = 0; vx < sizeX; vx++) {
+              const vy = sum - vx;
+              if (vy < 0 || vy >= sizeY) continue;
+              const code = grid[vy][vx];
+              const baseColor = palette[code];
+              if (!baseColor) continue;
+
+              const cx = originX + (vx - vy) * hw;
+              const cy = originY + (vx + vy) * hh - liftY;
+
+              // 頂面
+              ctx.fillStyle = baseColor;
+              ctx.beginPath();
+              ctx.moveTo(cx, cy - hh);
+              ctx.lineTo(cx + hw, cy);
+              ctx.lineTo(cx, cy + hh);
+              ctx.lineTo(cx - hw, cy);
+              ctx.closePath();
+              ctx.fill();
+
+              // 左側面（次陰影）
+              ctx.fillStyle = this.darkenHex(baseColor, 0.22);
+              ctx.beginPath();
+              ctx.moveTo(cx - hw, cy);
+              ctx.lineTo(cx, cy + hh);
+              ctx.lineTo(cx, cy + hh + layerStep);
+              ctx.lineTo(cx - hw, cy + layerStep);
+              ctx.closePath();
+              ctx.fill();
+
+              // 右側面（深陰影）
+              ctx.fillStyle = this.darkenHex(baseColor, 0.40);
+              ctx.beginPath();
+              ctx.moveTo(cx, cy + hh);
+              ctx.lineTo(cx + hw, cy);
+              ctx.lineTo(cx + hw, cy + layerStep);
+              ctx.lineTo(cx, cy + hh + layerStep);
+              ctx.closePath();
+              ctx.fill();
+            }
+          }
+        }
+
+        const result = { canvas: cvs, anchorX: originX, anchorY: originY };
+        this.voxelCache[key] = result;
+        return result;
+      },
+
+      getTileVoxelSprite(tile) {
+        if (tile.type === 'START') {
+          const pal = { T: '#f59e0b', R: '#d97706', W: '#fef3c7', F: '#ef4444', Y: '#fde047', L: '#78350f' };
+          const layers = [
+            ['TTTT..','TTTT..','TTTT..','TTTT..','....LL','....FY'],
+            ['TTTT..','.TT...','.TT...','TTTT..','......','....Y.'],
+            ['.TT...','.TT...','.TT...','.TT...','......','......'],
+            ['.WW...','.WW...','.WW...','.WW...','......','......']
+          ];
+          return this.buildStackedSprite('tile_start', layers, pal, 4.4, 2.3, 2.8);
+        }
+
+        if (tile.pixelType === 'bridge') {
+          const pal = { W: '#b45309', D: '#78350f', P: '#fde68a' };
+          const layers = [
+            ['P....P','WWWWWW','WWWWWW','P....P'],
+            ['.WWWW.','DDDDDD','DDDDDD','.WWWW.'],
+            ['..WW..','..WW..','..WW..','..WW..']
+          ];
+          return this.buildStackedSprite('tile_bridge', layers, pal, 4.6, 2.4, 2.6);
+        }
+
+        if (tile.pixelType === 'river') {
+          const pal = { B: '#0284c7', L: '#7dd3fc', W: '#e0f2fe', R: '#64748b' };
+          const layers = [
+            ['RBBBB.','BBBBBL','LBBBBW','BBBBBR'],
+            ['R.....','..LW..','..WL..','.....R']
+          ];
+          return this.buildStackedSprite('tile_river', layers, pal, 4.6, 2.4, 2.5);
+        }
+
+        if (tile.ownerUid) {
+          const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
+          const key = `house_${ownerNpc.id}`;
+          const pal = {
+            S: '#78716c',
+            W: '#fef3c7',
+            D: '#451a03',
+            R: ownerNpc.flagColor,
+            C: '#cbd5e1'
+          };
+          const layers = [
+            ['SSSSS','SSSSS','SSSSS','SSSSS','SSSSS'],
+            ['WWWWW','W...W','W...W','W...W','WWDWW'],
+            ['WWWWW','W...W','W...W','W...W','WWDWW'],
+            ['RRRRR','RRRRR','RRRRR','RRRRR','RRRRR'],
+            ['.RRR.','.RRR.','.RRR.','.RRR.','.RRR.'],
+            ['..R..','..R..','..C..','..R..','..R..']
+          ];
+          return this.buildStackedSprite(key, layers, pal, 4.2, 2.2, 2.7);
+        }
+
+        return null;
+      },
+
       drawTileContent(ctx, sx, sy, tile) {
+        const voxelObj = this.getTileVoxelSprite(tile);
+        const hasBuilding = Boolean(voxelObj);
+
+        if (voxelObj) {
+          ctx.drawImage(
+            voxelObj.canvas,
+            sx - voxelObj.anchorX,
+            sy - 13 - voxelObj.anchorY
+          );
+        }
+
         ctx.save();
-        ctx.translate(sx, sy);
+        ctx.translate(sx, sy + (hasBuilding ? 6 : 0));
 
         ctx.fillStyle = '#2e1808';
         ctx.textAlign = 'center';
@@ -2964,34 +3119,10 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         }
 
         ctx.restore();
-
-        if (tile.ownerUid) {
-          const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
-          this.drawOwnerFlag(ctx, sx + 26, sy - 4, ownerNpc.flagColor);
-        }
       },
 
-      drawOwnerFlag(ctx, fx, fy, flagColor) {
-        ctx.save();
-        ctx.translate(fx, fy);
-        ctx.strokeStyle = '#3d230e';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(0, -18);
-        ctx.stroke();
 
-        ctx.fillStyle = flagColor;
-        ctx.beginPath();
-        ctx.moveTo(0, -18);
-        ctx.lineTo(12, -14);
-        ctx.lineTo(0, -10);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      },
-
-      drawCentralWasteland(ctx) {
+drawCentralWasteland(ctx) {
         const N = ISO_CONFIG.GRID_SIZE;
         for (let sum = 2; sum <= (N - 2) * 2; sum++) {
           for (let gx = 1; gx <= N - 2; gx++) {
@@ -3010,6 +3141,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
           }
         }
 
+        // 中央綠洲水池
         const oasisPos = this.gridToIso(2.75, 2.75);
         ctx.save();
         ctx.translate(oasisPos.sx, oasisPos.sy);
@@ -3027,49 +3159,79 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         ctx.fill();
         ctx.restore();
 
-        this.drawRockCluster(ctx, 1.75, 1.85);
-        this.drawCactus(ctx, 3.4, 2.1, 0.9);
-        this.drawCactus(ctx, 2.1, 3.3, 0.75);
+        // 1. 多層堆疊紅岩山丘
+        this.drawStackedProp(ctx, 1.65, 1.75, 'central_mesa_rock', [
+          ['.RRRRRR.','RRRRRRRR','RRRRRRRR','RRRRRRRR','RRRRRRRR','.RRRRRR.'],
+          ['.RRRRRR.','RRRRRRRR','RRRRRRRR','RRRRRRRR','.RRRRRR.','........'],
+          ['..RRRR..','.RRRRRR.','.RRRRRR.','.RRRRRR.','..RRRR..','........'],
+          ['..OOOO..','.OOOOOO.','.OOOOOO.','..OOOO..','........','........'],
+          ['...OO...','..OOOO..','..OOOO..','...OO...','........','........'],
+          ['........','...YY...','...YY...','........','........','........']
+        ], { R: '#b45309', O: '#d97706', Y: '#f59e0b' }, 5.5, 2.9, 3.6);
+
+        // 2. 多層堆疊立體仙人掌（兩株）
+        const cactusLayers = [
+          ['..GG..','..GG..','..GG..'],
+          ['..GG..','..GG..','..GG..'],
+          ['GGGGGG','GGGGGG','..GG..'],
+          ['G.GG.G','G.GG.G','..GG..'],
+          ['..GG..','..GG..','..GG..'],
+          ['..LL..','..LL..','......']
+        ];
+        const cactusPal = { G: '#2e7d32', L: '#66bb6a' };
+        this.drawStackedProp(ctx, 3.45, 2.05, 'central_cactus', cactusLayers, cactusPal, 4.2, 2.2, 3.2);
+        this.drawStackedProp(ctx, 2.05, 3.35, 'central_cactus', cactusLayers, cactusPal, 3.5, 1.8, 2.6);
+
+        // 3. 綠洲岸邊立體黃金寶藏箱
+        this.drawStackedProp(ctx, 3.25, 3.15, 'central_chest', [
+          ['WWWW','WWWW','WWWW'],
+          ['WWWW','WGGW','WWWW'],
+          ['RRRR','RYYR','RRRR'],
+          ['.RR.','.RR.','.RR.']
+        ], { W: '#78350f', R: '#b45309', Y: '#fbbf24', G: '#fde047' }, 4.2, 2.2, 2.6);
       },
 
-      drawRockCluster(ctx, gx, gy) {
+      drawStackedProp(ctx, gx, gy, key, layers, pal, uw, uh, step) {
+        const sprite = this.buildStackedSprite(key, layers, pal, uw, uh, step);
         const { sx, sy } = this.gridToIso(gx, gy);
-        ctx.save();
-        ctx.translate(sx, sy);
-        ctx.beginPath();
-        ctx.ellipse(4, 6, 46, 23, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(70, 42, 22, 0.35)';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-28, 4); ctx.lineTo(-10, -34); ctx.lineTo(4, -26); ctx.lineTo(-4, 10);
-        ctx.closePath();
-        ctx.fillStyle = '#c46d45';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-10, -34); ctx.lineTo(14, -22); ctx.lineTo(24, 6); ctx.lineTo(-4, 10); ctx.lineTo(4, -26);
-        ctx.closePath();
-        ctx.fillStyle = '#8f4729';
-        ctx.fill();
-        ctx.restore();
+        ctx.drawImage(sprite.canvas, sx - sprite.anchorX, sy - sprite.anchorY);
       },
 
-      drawCactus(ctx, gx, gy, scale = 1) {
-        const { sx, sy } = this.gridToIso(gx, gy);
-        ctx.save();
-        ctx.translate(sx, sy);
-        ctx.scale(scale, scale);
-        ctx.strokeStyle = '#3b7a43';
-        ctx.lineCap = 'round';
-        ctx.lineWidth = 7;
-        ctx.beginPath();
-        ctx.moveTo(0, 0); ctx.lineTo(0, -24);
-        ctx.stroke();
-        ctx.lineWidth = 4.5;
-        ctx.beginPath();
-        ctx.moveTo(0, -10); ctx.lineTo(-8, -10); ctx.lineTo(-8, -17);
-        ctx.moveTo(0, -14); ctx.lineTo(8, -14); ctx.lineTo(8, -20);
-        ctx.stroke();
-        ctx.restore();
+      // 取得 17 層堆疊的立體麥塊探險家角色
+      getStackedPawnSprite(npc) {
+        const key = `voxel_pawn_${npc.id}`;
+        const pal = {
+          P: npc.pantsColor,
+          S: npc.shirtColor,
+          F: '#ffd7b5',
+          E: '#1c120b',
+          H: npc.hatColor,
+          B: '#4e342e',
+          G: '#ffd54f'
+        };
+        const layers = [
+          // 雙腳 (Z=0~3)
+          ['.PP..PP.','.PP..PP.','.PP..PP.','........'],
+          ['.PP..PP.','.PP..PP.','.PP..PP.','........'],
+          ['.PP..PP.','.PP..PP.','.PP..PP.','........'],
+          ['.PP..PP.','.PP..PP.','.PP..PP.','........'],
+          // 身體、雙手與背包 (Z=4~8)
+          ['FSSSSSSF','FSSSSSSF','.BBBBBB.','........'],
+          ['FSSSSSSF','FSSSSSSF','.BBBBBB.','........'],
+          ['SSSSSSSS','SSSSSSSS','.BBBBBB.','........'],
+          ['SSSSSSSS','SSSSSSSS','.BBBBBB.','........'],
+          ['.SSSSSS.','.SSSSSS.','........','........'],
+          // 立體方塊頭與五官 (Z=9~13)
+          ['.FFFFFF.','.FFFFFF.','.BBBBBB.','........'],
+          ['.FEFFEF.','.FFFFFF.','.BBBBBB.','........'],
+          ['.FFFFFF.','.FFFFFF.','.BBBBBB.','........'],
+          ['.FFFFFF.','.FFFFFF.','.BBBBBB.','........'],
+          // 探險帽簷與帽冠 (Z=14~16)
+          ['HHHHHHHH','HHHHHHHH','HHHHHHHH','HHHHHHHH'],
+          ['.HHHHHH.','.HHGGHH.','.HHHHHH.','........'],
+          ['..HHHH..','..HHHH..','..HHHH..','........']
+        ];
+        return this.buildStackedSprite(key, layers, pal, 4.0, 2.1, 2.3);
       },
 
       drawAllMinecraftPawns(ctx) {
@@ -3077,10 +3239,10 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
           .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
 
         const offsets = [
-          { dx: -10, dy: 4 },
-          { dx: 10,  dy: -4 },
-          { dx: -10, dy: -6 },
-          { dx: 10,  dy: 6 }
+          { dx: -11, dy: 5 },
+          { dx: 11,  dy: -3 },
+          { dx: -11, dy: -5 },
+          { dx: 11,  dy: 7 }
         ];
 
         pawnList.forEach((pawn, index) => {
@@ -3093,56 +3255,36 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
           const shadowScale = Math.max(0.45, 1 - jumpY / 65);
 
           ctx.save();
+          // 地面橢圓投影
           ctx.beginPath();
           ctx.ellipse(sx, sy + 2, 13 * shadowScale, 7 * shadowScale, 0, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(30, 15, 5, ${0.42 * shadowScale})`;
+          ctx.fillStyle = `rgba(30, 15, 5, ${0.45 * shadowScale})`;
           ctx.fill();
 
+          // 繪製多層堆疊立體棋子
+          const pawnSprite = this.getStackedPawnSprite(npc);
           ctx.translate(sx, sy - jumpY);
           const sq = pawn.scaleSquash;
           ctx.scale(2 - sq, sq);
 
-          ctx.fillStyle = npc.pantsColor;
-          ctx.fillRect(-7, -12, 6, 11);
-          ctx.fillRect(1, -12, 6, 11);
-          ctx.strokeStyle = '#1c120b';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(-7, -12, 6, 11);
-          ctx.strokeRect(1, -12, 6, 11);
+          ctx.drawImage(
+            pawnSprite.canvas,
+            -pawnSprite.anchorX,
+            -pawnSprite.anchorY
+          );
 
-          ctx.fillStyle = npc.shirtColor;
-          ctx.fillRect(-8, -24, 16, 12);
-          ctx.strokeRect(-8, -24, 16, 12);
-
-          ctx.fillStyle = '#ffd7b5';
-          ctx.fillRect(-12, -23, 4, 10);
-          ctx.fillRect(8, -23, 4, 10);
-          ctx.strokeRect(-12, -23, 4, 10);
-          ctx.strokeRect(8, -23, 4, 10);
-
-          ctx.fillStyle = '#ffd7b5';
-          ctx.fillRect(-9, -40, 18, 16);
-          ctx.strokeRect(-9, -40, 18, 16);
-
-          ctx.fillStyle = npc.hatColor;
-          ctx.fillRect(-10, -43, 20, 6);
-          ctx.strokeRect(-10, -43, 20, 6);
-
-          ctx.fillStyle = '#1b120c';
-          ctx.fillRect(-5, -33, 3, 3);
-          ctx.fillRect(2, -33, 3, 3);
-
+          // 頭頂玩家名牌
           const nameLabel = pawn.displayName || npc.name;
           ctx.font = 'bold 8.5px sans-serif';
           const tagW = Math.max(36, ctx.measureText(nameLabel).width + 10);
           ctx.fillStyle = 'rgba(25, 15, 8, 0.85)';
           ctx.beginPath();
-          ctx.roundRect(-tagW / 2, -56, tagW, 13, 4);
+          ctx.roundRect(-tagW / 2, -58, tagW, 13, 4);
           ctx.fill();
           ctx.fillStyle = '#fff8e1';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(nameLabel, 0, -49.5);
+          ctx.fillText(nameLabel, 0, -51.5);
 
           ctx.restore();
         });
