@@ -3326,25 +3326,27 @@
           const layers = [['TTTT..','TTTT..','TTTT..','TTTT..','....LL','....FY'],['TTTT..','.TT...','.TT...','TTTT..','......','....Y.'],['.TT...','.TT...','.TT...','.TT...','......','......'],['.WW...','.WW...','.WW...','.WW...','......','......']];
           return this.buildStackedSprite('tile_start', layers, pal, 4.0, 2.1, 2.5);
         }
-        if (tile.type === 'FATE') {
-          const pal = { P: '#7b1fa2', L: '#ce93d8', Y: '#ffd54f', W: '#fff9c4' };
+if (tile.type === 'FATE') {
+          const pal = { T: '#8D6E63', D: '#5D4037', S: '#3E2723', W: '#F5F5DC' };
           const layers = [
-            ['.PP.','PPPP','PPPP','.PP.'],
-            ['.LL.','LYYL','LYYL','.LL.'],
-            ['....','.YW.','.WY.','....'],
-            ['....','.WW.','.WW.','....']
+            ['......','......','..DD..','..DD..','......','......'],
+            ['......','......','..DD..','..DD..','......','......'],
+            ['......','.TTTTT','.TWWWT','.TTTTT','......','......'],
+            ['......','......','..DD..','..DD..','......','......'],
+            ['......','TTTTT.','TWWWT.','TTTTT.','......','......'],
+            ['......','......','..DD..','..DD..','......','......']
           ];
-          return this.buildStackedSprite('tile_fate_crystal', layers, pal, 4.0, 2.1, 2.6);
+          return this.buildStackedSprite('tile_fate_signpost', layers, pal, 3.8, 2.0, 2.5);
         }
         if (tile.type === 'CHANCE') {
-          const pal = { B: '#8d5524', O: '#ff9800', Y: '#ffd54f', W: '#fffde7' };
+          const pal = { D: '#3e2723', B: '#5d4037', W: '#8d6e63', L: '#a1887f' };
           const layers = [
-            ['BBBB','BBBB','BBBB','BBBB'],
-            ['OOOO','OYYO','OYYO','OOOO'],
-            ['.YY.','YWWY','YWWY','.YY.'],
-            ['....','.WW.','.WW.','....']
+            ['.DDDD.','DBBBBD','DBBBBD','DBBBBD','DBBBBD','.DDDD.'],
+            ['.DDDD.','DWBBWD','BWDWWB','BWDWWB','DWBBWD','.DDDD.'],
+            ['.DDDD.','DWWWWD','DWWWWD','DWWWWD','DWWWWD','.DDDD.'],
+            ['.DDDD.','DDDDDD','DDDDDD','DDDDDD','DDDDDD','.DDDD.']
           ];
-          return this.buildStackedSprite('tile_chance_box', layers, pal, 4.0, 2.1, 2.5);
+          return this.buildStackedSprite('tile_chance_crate', layers, pal, 3.8, 2.0, 2.5);
         }
         if (tile.pixelType === 'bridge') {
           const pal = { W: '#b45309', D: '#78350f', P: '#fde68a' };
@@ -3365,17 +3367,16 @@
         return null;
       },
 
-      drawTileContent(ctx, sx, sy, tile) {
+drawTileContent(ctx, sx, sy, tile) {
         const voxelObj = this.getTileVoxelSprite(tile);
         const hasBuilding = Boolean(voxelObj);
 
         if (voxelObj) {
-          const isFloatingIcon = tile.type === 'FATE' || tile.type === 'CHANCE';
-          const floatOffset = isFloatingIcon ? Math.sin(performance.now() * 0.004) * 2.5 : 0;
+          // 移除命運、機會的漂浮動畫，讓告示牌與木箱穩固在地面
           ctx.drawImage(
             voxelObj.canvas,
             sx - voxelObj.anchorX,
-            sy - 13 - voxelObj.anchorY - floatOffset
+            sy - 13 - voxelObj.anchorY
           );
         }
 
@@ -3385,42 +3386,53 @@
         const isFate = tile.type === 'FATE';
         const isChance = tile.type === 'CHANCE';
 
+        // 判斷是否有玩家(且不含正在跳躍移動中的狀態)確實停留在該格
+        const pawnsOnTile = Object.values(PawnManager.pawns).filter(p => p.tileIndex === tile.id && !p.isHopping);
+        const hasPlayer = pawnsOnTile.length > 0;
+
         if (isFate) {
-          const subText = tile.fateType === 'SKIP_TURN' ? '暫停一次' : (tile.fateType === 'BACK_3' ? '後退3格' : '前進5格');
-          ctx.fillStyle = 'rgba(74, 20, 140, 0.9)';
-          ctx.beginPath();
-          ctx.roundRect(-25, -9, 50, 22, 5);
-          ctx.fill();
-          ctx.strokeStyle = '#e1bee7';
-          ctx.lineWidth = 1;
-          ctx.stroke();
+          // 只有當玩家走到該格時，才渲染面板標籤
+          if (hasPlayer) {
+            const subText = tile.fateType === 'SKIP_TURN' ? '暫停一次' : (tile.fateType === 'BACK_3' ? '後退3格' : '前進5格');
+            ctx.fillStyle = 'rgba(74, 20, 140, 0.9)';
+            ctx.beginPath();
+            ctx.roundRect(-25, -36, 50, 22, 5); // 稍微上移避免擋住人物
+            ctx.fill();
+            ctx.strokeStyle = '#e1bee7';
+            ctx.lineWidth = 1;
+            ctx.stroke();
 
-          ctx.fillStyle = '#ffd54f';
-          ctx.font = 'bold 9.5px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('🔮命運', 0, -2);
-          ctx.fillStyle = '#f3e5f5';
-          ctx.font = 'bold 8px sans-serif';
-          ctx.fillText(subText, 0, 7.5);
+            ctx.fillStyle = '#ffd54f';
+            ctx.font = 'bold 9.5px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🔮命運', 0, -29);
+            ctx.fillStyle = '#f3e5f5';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.fillText(subText, 0, -19.5);
+          }
         } else if (isChance) {
-          ctx.fillStyle = 'rgba(180, 75, 10, 0.92)';
-          ctx.beginPath();
-          ctx.roundRect(-26, -9, 52, 22, 5);
-          ctx.fill();
-          ctx.strokeStyle = '#ffe082';
-          ctx.lineWidth = 1;
-          ctx.stroke();
+          // 只有當玩家走到該格時，才渲染面板標籤
+          if (hasPlayer) {
+            ctx.fillStyle = 'rgba(180, 75, 10, 0.92)';
+            ctx.beginPath();
+            ctx.roundRect(-26, -36, 52, 22, 5); // 稍微上移避免擋住人物
+            ctx.fill();
+            ctx.strokeStyle = '#ffe082';
+            ctx.lineWidth = 1;
+            ctx.stroke();
 
-          ctx.fillStyle = '#fff59d';
-          ctx.font = 'bold 9.5px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('❓機會', 0, -2);
-          ctx.fillStyle = '#ffe0b2';
-          ctx.font = 'bold 8px sans-serif';
-          ctx.fillText(tile.shortBadge || '機會事件', 0, 7.5);
+            ctx.fillStyle = '#fff59d';
+            ctx.font = 'bold 9.5px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('❓機會', 0, -29);
+            ctx.fillStyle = '#ffe0b2';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.fillText(tile.shortBadge || '機會事件', 0, -19.5);
+          }
         } else {
+          // 原本地產與地標的繪製邏輯保持不變
           ctx.fillStyle = '#2e1808';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
