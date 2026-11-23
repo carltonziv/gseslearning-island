@@ -1725,7 +1725,7 @@
           });
           myPlayerRef.onDisconnect().remove();
 
-          this.roomRef.child('tollEvents').on('child_added', (snap) => {
+          this.roomRef.child('tollEvents').limitToLast(10).on('child_added', (snap) => {
             const evt = snap.val();
             const evtId = snap.key;
             if (!evt || GameState.processedTollIds.has(evtId)) return;
@@ -1917,18 +1917,19 @@
           this.roomRef.update({ status: 'playing', currentTurnUid: GameState.players[0].uid });
         }
       },
-      enterGameBoard() {
-        if (GameState.phase !== 'LOBBY') return;
-        GameState.phase = 'IDLE';
-        document.getElementById('lobby-screen').classList.add('hidden');
-        GameState.players.forEach((p) => {
-          const displayLabel = p.shortName || p.name;
-          PawnManager.createOrUpdatePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel);
-        });
-        Engine.resetCamera();
-        HUD.updateTurnPanel();
-        HUD.update();
-      },
+enterGameBoard() {
+  if (GameState.phase !== 'LOBBY') return;
+  GameState.phase = 'IDLE';
+  document.getElementById('lobby-screen').classList.add('hidden');
+  GameState.players.forEach((p) => {
+    const displayLabel = p.shortName || p.name;
+    PawnManager.createOrUpdatePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel);
+  });
+  Engine.resetCamera();
+  Engine.startLoop(); // <-- 改在這裡啟動
+  HUD.updateTurnPanel();
+  HUD.update();
+},
       syncMyPosition(tileIndex) {
         const me = GameState.players.find(p => p.uid === GameState.uid);
         if (me) me.tileIndex = tileIndex;
@@ -2067,6 +2068,7 @@
         this.advanceNextTurn();
       },
       runSimulatedBotTurn(bot) {
+        if (GameState.isClosed || GameState.phase === 'FINISHED') return;
         if ((bot.diceLeft ?? 0) <= 0) { this.advanceNextTurn(); return; }
 
         if ((bot.reflectionTurns ?? 0) > 0) {
@@ -2114,7 +2116,8 @@
           this.resolveBotLanding(bot, finalTileIndex);
         });
       },
-      leaveRoomCleanly() {
+        leaveRoomCleanly() {
+        GameState.isClosed = true;
         if (!GameState.isSimulatedBotMode && this.roomRef) {
           GameState.ownedTileIds.forEach((tid) => this.roomRef.child(`tiles/${tid}`).remove());
           const others = GameState.players.filter(p => p.uid !== GameState.uid);
@@ -2123,6 +2126,7 @@
             this.roomRef.update({ currentTurnUid: nextAlive.uid });
           }
           this.roomRef.child(`players/${GameState.uid}`).remove();
+          this.roomRef.child('tollEvents').off();
           this.roomRef.off();
         }
       }
@@ -2718,6 +2722,15 @@ enqueueSteps(uid, steps, onComplete) {
         });
       },
       updateTurnPanel() {
+        const signature = GameState.players.map(p => {
+          const isMe = p.uid === GameState.uid;
+          const refl = isMe ? GameState.reflectionTurns : (p.reflectionTurns ?? 0);
+          const skip = isMe ? GameState.skipTurns : (p.skipTurns ?? 0);
+          return `${p.uid}:${p.name}:${p.npcId}:${p.diceLeft ?? 0}:${refl}:${skip}:${p.uid === GameState.currentTurnUid}`;
+        }).join('|');
+
+        if (this._lastTurnSig === signature) return;
+        this._lastTurnSig = signature;
         const panel = document.getElementById('turn-order-panel');
         panel.innerHTML = '<div style="font-size:0.75rem;color:#cbb094;font-weight:700;margin-bottom:2px;">👥 探險順位與剩餘骰</div>';
         GameState.players.forEach((p) => {
@@ -3101,20 +3114,37 @@ enqueueSteps(uid, steps, onComplete) {
      * 8. 2.5D Sprite-Stacking 體素地形、格線領地道路、反省孤島與人物渲染引擎
      * ============================================================================
      */
-    const Engine = {
+      const Engine = {
       canvas: document.getElementById('game-canvas'), ctx: null, rafId: null,
       isRunning: false, lastTime: 0, width: 0, height: 0, dpr: 1, hasInitializedView: false,
       camera: { x: 0, y: 0, scale: 1, minScale: 0.36, maxScale: 2.2, autoFollow: true },
       pointer: { isDragging: false, lastX: 0, lastY: 0, pinchDist: 0 },
       voxelCache: {},
+      staticTerrainCache: null,
+      cachedBgGrad: null,
+      tilePawnsMap: null,
+      stationaryTileSet: null,
 
-      init() { this.ctx = this.canvas.getContext('2d'); this.bindEvents(); this.observeResize(); this.startLoop(); },
+      init() {
+        this.ctx = this.canvas.getContext('2d');
+        this.bindEvents();
+        this.observeResize();
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) this.stopLoop();
+          else if (GameState.phase !== 'LOBBY' && !GameState.isClosed) this.startLoop();
+        });
+      },
 
       observeResize() {
         const updateSize = (w, h) => {
           if (w <= 0 || h <= 0) return;
           this.width = w; this.height = h; this.dpr = Math.min(window.devicePixelRatio || 1, 2);
           this.canvas.width = Math.floor(this.width * this.dpr); this.canvas.height = Math.floor(this.height * this.dpr);
+          if (this.ctx) {
+            this.cachedBgGrad = this.ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, Math.max(w, h) * 0.75);
+            this.cachedBgGrad.addColorStop(0, '#2e2418');
+            this.cachedBgGrad.addColorStop(1, '#140e08');
+          }
           if (!this.hasInitializedView) { this.resetCamera(); this.hasInitializedView = true; }
         };
         updateSize(window.innerWidth, window.innerHeight);
@@ -3666,6 +3696,52 @@ getStackedPropSprite(propType) {
         ctx.fillStyle = 'rgba(8, 4, 2, 0.58)'; ctx.shadowColor = 'rgba(0, 0, 0, 0.78)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14; ctx.fill();
         ctx.restore();
       },
+        getStaticTerrainCanvas() {
+        if (this.staticTerrainCache) return this.staticTerrainCache;
+        const offCvs = document.createElement('canvas');
+        offCvs.width = 1160;
+        offCvs.height = 680;
+        const octx = offCvs.getContext('2d');
+        const offsetX = 580;
+        const offsetY = 80;
+
+        octx.save();
+        octx.translate(offsetX, offsetY);
+        this.drawBoardGroundShadow(octx);
+
+        const N = ISO_CONFIG.GRID_SIZE;
+        for (let sum = 0; sum <= (N - 1) * 2; sum++) {
+          for (let gx = 0; gx < N; gx++) {
+            const gy = sum - gx;
+            if (gy < 0 || gy >= N) continue;
+            const cell = WORLD_MAP[gx][gy];
+            const { sx, sy } = this.gridToIso(gx, gy);
+            if (cell.terrain === 'road' && cell.roadTile) {
+              const pathSprite = this.getStackedPathSprite(cell.roadTile);
+              if (pathSprite) octx.drawImage(pathSprite.canvas, sx - pathSprite.anchorX, sy - pathSprite.anchorY);
+            } else {
+              const terrainSprite = this.getStackedTerrainTile(cell.terrain);
+              if (terrainSprite) octx.drawImage(terrainSprite.canvas, sx - terrainSprite.anchorX, sy - terrainSprite.anchorY);
+            }
+          }
+        }
+        octx.restore();
+        this.staticTerrainCache = { canvas: offCvs, offsetX, offsetY };
+        return this.staticTerrainCache;
+      },
+
+      rebuildPawnTileIndex() {
+        this.tilePawnsMap = new Map();
+        this.stationaryTileSet = new Set();
+        for (const p of Object.values(PawnManager.pawns)) {
+          const onIsland = Math.abs(p.gx - REFLECTION_ISLAND.gx) < 0.25 && Math.abs(p.gy - REFLECTION_ISLAND.gy) < 0.25;
+          if (!onIsland) {
+            if (!this.tilePawnsMap.has(p.tileIndex)) this.tilePawnsMap.set(p.tileIndex, []);
+            this.tilePawnsMap.get(p.tileIndex).push(p);
+            if (!p.isHopping) this.stationaryTileSet.add(p.tileIndex);
+          }
+        }
+      },
 
       getTileVoxelSprite(tile) {
         if (tile.type === 'START') {
@@ -3748,8 +3824,7 @@ drawTileContent(ctx, sx, sy, tile) {
         const isChance = tile.type === 'CHANCE';
 
         // 判斷是否有玩家（且不含正在跳躍移動中的狀態）確實停留在該格
-        const pawnsOnTile = Object.values(PawnManager.pawns).filter(p => p.tileIndex === tile.id && !p.isHopping);
-        const hasPlayer = pawnsOnTile.length > 0;
+        const hasPlayer = this.stationaryTileSet?.has(tile.id) || false;
 
         if (isFate) {
           // 只有當玩家走到該格時，才渲染面板標籤
@@ -3851,10 +3926,7 @@ drawTileContent(ctx, sx, sy, tile) {
         }
 
         // 3. 玩家 NPC 所在位置方框（取代原本的圓圈標示，改為貼合路面的等角菱形方框）
-        const pawnsOnTile = Object.values(PawnManager.pawns).filter((p) => {
-          const onIsland = Math.abs(p.gx - REFLECTION_ISLAND.gx) < 0.25 && Math.abs(p.gy - REFLECTION_ISLAND.gy) < 0.25;
-          return !onIsland && p.tileIndex === tile.id;
-        });
+        const pawnsOnTile = this.tilePawnsMap?.get(tile.id) || [];
 
         pawnsOnTile.forEach((p, idx) => {
           const npc = NPC_ROSTER.find(n => n.id === p.npcId) || NPC_ROSTER[0];
@@ -3882,8 +3954,8 @@ drawTileContent(ctx, sx, sy, tile) {
 
 
 
-      // ✅ 新貼上的 drawWorldMap(ctx) 從這裡開始
-      drawWorldMap(ctx) {
+      
+drawWorldMap(ctx) {
         const N = ISO_CONFIG.GRID_SIZE;
         const groundDecorSet = new Set([
           'decor_house_blue', 'decor_house_orange', 'decor_house_red',
@@ -3900,35 +3972,18 @@ drawTileContent(ctx, sx, sy, tile) {
             const { sx, sy } = this.gridToIso(gx, gy);
 
             if (cell.terrain === 'road' && cell.roadTile) {
-              const pathSprite = this.getStackedPathSprite(cell.roadTile);
-              if (pathSprite) {
-                ctx.drawImage(
-                  pathSprite.canvas,
-                  sx - pathSprite.anchorX,
-                  sy - pathSprite.anchorY
-                );
-              }
-
-              // 繪製清晰格線框、領地歸屬框與玩家等角菱形位置方框
               this.drawRoadFrameAndTerritory(ctx, sx, sy - 24, cell.roadTile);
-
               this.drawTileContent(ctx, sx, sy - 24, cell.roadTile);
-            } else {
-              const terrainSprite = this.getStackedTerrainTile(cell.terrain);
-              if (terrainSprite) ctx.drawImage(terrainSprite.canvas, sx - terrainSprite.anchorX, sy - terrainSprite.anchorY);
-
-              if (cell.prop) {
-                const propSprite = this.getStackedPropSprite(cell.prop);
-                // 新增的房子、菜園與石塊植物直接貼合地形頂面（sy - 18），樹木則維持原有高度
-                const liftOffset = groundDecorSet.has(cell.prop) ? 18 : 4;
-                if (propSprite) {
-                  ctx.drawImage(propSprite.canvas, sx - propSprite.anchorX, sy - liftOffset - propSprite.anchorY);
-                }
+            } else if (cell.prop) {
+              const propSprite = this.getStackedPropSprite(cell.prop);
+              const liftOffset = groundDecorSet.has(cell.prop) ? 18 : 4;
+              if (propSprite) {
+                ctx.drawImage(propSprite.canvas, sx - propSprite.anchorX, sy - liftOffset - propSprite.anchorY);
               }
             }
           }
         }
-      }, // ✅ 新貼上的區塊到這裡結束（保留逗號）
+      },
 
 
 
@@ -4069,21 +4124,26 @@ drawTileContent(ctx, sx, sy, tile) {
         });
       },
 
-      render() {
+        render() {
         const ctx = this.ctx;
         if (!ctx || this.width <= 0 || this.height <= 0) return;
+        this.rebuildPawnTileIndex();
+
         ctx.save(); ctx.scale(this.dpr, this.dpr);
-        const bgGrad = ctx.createRadialGradient(this.width / 2, this.height / 2, 40, this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.75);
-        bgGrad.addColorStop(0, '#2e2418'); bgGrad.addColorStop(1, '#140e08');
-        ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, this.width, this.height);
+        if (!this.cachedBgGrad) {
+          this.cachedBgGrad = ctx.createRadialGradient(this.width / 2, this.height / 2, 40, this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.75);
+          this.cachedBgGrad.addColorStop(0, '#2e2418'); this.cachedBgGrad.addColorStop(1, '#140e08');
+        }
+        ctx.fillStyle = this.cachedBgGrad; ctx.fillRect(0, 0, this.width, this.height);
         ctx.translate(this.camera.x, this.camera.y); ctx.scale(this.camera.scale, this.camera.scale);
-        
-        this.drawBoardGroundShadow(ctx);
+
+        const terrainCache = this.getStaticTerrainCanvas();
+        ctx.drawImage(terrainCache.canvas, -terrainCache.offsetX, -terrainCache.offsetY);
         this.drawWorldMap(ctx);
         this.drawReflectionIsland(ctx);
         this.drawAllMinecraftPawns(ctx);
         FloatingTexts.draw(ctx);
-        
+
         ctx.restore();
       },
 
