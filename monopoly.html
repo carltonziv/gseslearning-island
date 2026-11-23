@@ -1225,6 +1225,34 @@
       }
     }
 
+    function getSmartDiceRoll(currentTileIndex) {
+      const weights = [];
+      let totalWeight = 0;
+      const totalTiles = BOARD_TILES.length;
+
+      for (let steps = 1; steps <= 6; steps++) {
+        const targetIndex = (currentTileIndex + steps) % totalTiles;
+        const targetTile = BOARD_TILES[targetIndex];
+        
+        let weight = 10;
+        if (targetTile.type === 'FATE' || targetTile.type === 'CHANCE') {
+          weight = 3; 
+        }
+        
+        weights.push({ steps, weight });
+        totalWeight += weight;
+      }
+
+      let randomVal = Math.random() * totalWeight;
+      for (const item of weights) {
+        randomVal -= item.weight;
+        if (randomVal <= 0) {
+          return item.steps;
+        }
+      }
+      return Math.floor(Math.random() * 6) + 1;
+    }
+
     /**
      * ============================================================================
      * 1. 四位 NPC 角色定義（棋哥、嘉麗、查理、小瑜）
@@ -2064,7 +2092,7 @@
 
         bot.diceLeft -= 1;
         HUD.updateTurnPanel();
-        const steps = Math.floor(Math.random() * 6) + 1;
+        const steps = getSmartDiceRoll(bot.tileIndex || 0);
         renderDiceFace(steps);
         document.getElementById('ui-tile-info').innerHTML = `🎲 隊友 <strong>${bot.name}</strong> 擲出了 ${steps} 點！`;
         PawnManager.enqueueSteps(bot.uid, steps, (finalTileIndex) => {
@@ -2706,7 +2734,9 @@ function createWorldMapGrid() {
         this.updateTurnPanel(); this.update();
         const diceBox = document.getElementById('ui-dice-face');
         diceBox.classList.add('rolling');
-        const finalSteps = Math.floor(Math.random() * 6) + 1;
+        const myPawn = PawnManager.pawns[GameState.uid];
+        const currentIdx = myPawn ? myPawn.tileIndex : 0;
+        const finalSteps = getSmartDiceRoll(currentIdx);
         let ticks = 0;
         const rollInterval = setInterval(() => {
           renderDiceFace(Math.floor(Math.random() * 6) + 1);
