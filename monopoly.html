@@ -3372,11 +3372,25 @@ drawTileContent(ctx, sx, sy, tile) {
         const hasBuilding = Boolean(voxelObj);
 
         if (voxelObj) {
-          // 移除命運、機會的漂浮動畫，讓告示牌與木箱穩固在地面
+          const isFloatingIcon = tile.type === 'FATE' || tile.type === 'CHANCE';
+          // 讓物件在地面上方約 1px～5.4px 之間上下微微漂浮（避免往下沉入地板）
+          const floatOffset = isFloatingIcon ? (Math.sin(performance.now() * 0.004) * 2.2 + 3.2) : 0;
+
+          // 漂浮時在地面加上會隨高度微調的小陰影，增加懸浮立體感
+          if (isFloatingIcon) {
+            const shadowScale = 1 - (floatOffset / 28);
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(sx, sy - 11, 11 * shadowScale, 5.5 * shadowScale, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(30, 15, 5, 0.35)';
+            ctx.fill();
+            ctx.restore();
+          }
+
           ctx.drawImage(
             voxelObj.canvas,
             sx - voxelObj.anchorX,
-            sy - 13 - voxelObj.anchorY
+            sy - 13 - voxelObj.anchorY - floatOffset
           );
         }
 
@@ -3386,7 +3400,7 @@ drawTileContent(ctx, sx, sy, tile) {
         const isFate = tile.type === 'FATE';
         const isChance = tile.type === 'CHANCE';
 
-        // 判斷是否有玩家(且不含正在跳躍移動中的狀態)確實停留在該格
+        // 判斷是否有玩家（且不含正在跳躍移動中的狀態）確實停留在該格
         const pawnsOnTile = Object.values(PawnManager.pawns).filter(p => p.tileIndex === tile.id && !p.isHopping);
         const hasPlayer = pawnsOnTile.length > 0;
 
@@ -3396,7 +3410,7 @@ drawTileContent(ctx, sx, sy, tile) {
             const subText = tile.fateType === 'SKIP_TURN' ? '暫停一次' : (tile.fateType === 'BACK_3' ? '後退3格' : '前進5格');
             ctx.fillStyle = 'rgba(74, 20, 140, 0.9)';
             ctx.beginPath();
-            ctx.roundRect(-25, -36, 50, 22, 5); // 稍微上移避免擋住人物
+            ctx.roundRect(-25, -36, 50, 22, 5);
             ctx.fill();
             ctx.strokeStyle = '#e1bee7';
             ctx.lineWidth = 1;
@@ -3416,7 +3430,7 @@ drawTileContent(ctx, sx, sy, tile) {
           if (hasPlayer) {
             ctx.fillStyle = 'rgba(180, 75, 10, 0.92)';
             ctx.beginPath();
-            ctx.roundRect(-26, -36, 52, 22, 5); // 稍微上移避免擋住人物
+            ctx.roundRect(-26, -36, 52, 22, 5);
             ctx.fill();
             ctx.strokeStyle = '#ffe082';
             ctx.lineWidth = 1;
@@ -3432,7 +3446,6 @@ drawTileContent(ctx, sx, sy, tile) {
             ctx.fillText(tile.shortBadge || '機會事件', 0, -19.5);
           }
         } else {
-          // 原本地產與地標的繪製邏輯保持不變
           ctx.fillStyle = '#2e1808';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
