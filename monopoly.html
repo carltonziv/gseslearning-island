@@ -2115,7 +2115,7 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         }
       },
       
-      // 輔助函數：調暗顏色以製作假陰影
+// 輔助函數：調暗顏色以製作假陰影
       darkenColor(hex, factor) {
         let r = parseInt(hex.slice(1, 3), 16);
         let g = parseInt(hex.slice(3, 5), 16);
@@ -2128,6 +2128,44 @@ function drawNpcAvatarToCanvas(canvas, npcId) {
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
       }
     };
+
+    /**
+     * ============================================================================
+     * 6. 多人 2.5D 麥塊方塊人棋子管理器
+     * ============================================================================
+     */
+    const PawnManager = {
+      pawns: {},
+
+      createOrUpdatePawn(uid, npcId, tileIndex, displayName = '') {
+        const tile = BOARD_TILES[tileIndex] || BOARD_TILES[0];
+        const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
+        const label = displayName || npc.name;
+
+        if (!this.pawns[uid]) {
+          this.pawns[uid] = {
+            uid,
+            npcId,
+            displayName: label,
+            tileIndex,
+            gx: tile.gx,
+            gy: tile.gy,
+            jumpHeight: 0,
+            scaleSquash: 1,
+            stepQueue: [],
+            isHopping: false,
+            hopProgress: 0,
+            hopDuration: 0.24,
+            startPos: { gx: tile.gx, gy: tile.gy },
+            targetPos: { gx: tile.gx, gy: tile.gy },
+            onComplete: null
+          };
+        } else {
+          this.pawns[uid].npcId = npcId;
+          if (displayName) this.pawns[uid].displayName = displayName;
+        }
+        return this.pawns[uid];
+      },
 
       syncRemotePawn(uid, npcId, targetTileIndex, displayName = '', onHopDone = null) {
         const pawn = this.createOrUpdatePawn(uid, npcId, targetTileIndex, displayName);
