@@ -2532,13 +2532,13 @@ function createWorldMapGrid() {
           this.flyToReflectionIsland(uid);
         }
       },
-      syncRemotePawn(uid, npcId, targetTileIndex, displayName = '', onHopDone = null) {
+        syncRemotePawn(uid, npcId, targetTileIndex, displayName = '', onHopDone = null) {
         const pawn = this.createOrUpdatePawn(uid, npcId, targetTileIndex, displayName);
         if (Math.abs(pawn.gx - REFLECTION_ISLAND.gx) < 0.2 && Math.abs(pawn.gy - REFLECTION_ISLAND.gy) < 0.2) {
           this.flyToTile(uid, targetTileIndex, onHopDone);
           return;
         }
-        if (pawn.tileIndex !== targetTileIndex && !pawn.isHopping) {
+        if (pawn.tileIndex !== targetTileIndex && !pawn.isHopping && !pawn.isPausedForModal) {
           const total = BOARD_TILES.length;
           const forwardSteps = (targetTileIndex - pawn.tileIndex + total) % total;
           const backwardSteps = (pawn.tileIndex - targetTileIndex + total) % total;
@@ -2574,28 +2574,32 @@ enqueueSteps(uid, steps, onComplete) {
         pawn.onComplete = onComplete;
         this.startNextHop(pawn);
       },
-      startNextHop(pawn) {
+        startNextHop(pawn) {
         if (pawn.stepQueue.length === 0) {
-          pawn.isHopping = false; pawn.jumpHeight = 0; pawn.jumpPeak = 34;
+          pawn.isHopping = false;
+          pawn.isPausedForModal = false;
+          pawn.jumpHeight = 0;
+          pawn.jumpPeak = 34;
           if (pawn.onComplete) { const cb = pawn.onComplete; pawn.onComplete = null; cb(pawn.tileIndex); }
           return;
         }
 
-        // 經過起點觸發彈窗判定：
-        // 1. 正向移動 (moveDir > 0)
-        // 2. 目前剛落在起點 (tileIndex === 0)
-        // 3. 還有剩餘步數，表示只是「經過」 (stepQueue.length > 0)
-        // 4. 不是剛從起點出發 (stepQueue.length < initialStepCount)
-        // 5. 這回合還沒彈出過 (!hasPassedStartThisTurn)
         if (pawn.moveDir > 0 && pawn.tileIndex === 0 && pawn.stepQueue.length > 0 && pawn.stepQueue.length < pawn.initialStepCount && !pawn.hasPassedStartThisTurn) {
           pawn.hasPassedStartThisTurn = true;
-          pawn.isHopping = false; // 暫停跳躍動畫
-          
-          HUD.openPassStartModal(pawn, () => {
+
+          // 只有「自己」經過起點時才跳出彈窗並鎖定操作；隊友經過起點僅顯示飄字並繼續移動
+          if (pawn.uid === GameState.uid) {
+            pawn.isHopping = false;
+            pawn.isPausedForModal = true;
+            HUD.openPassStartModal(pawn, () => {
+              pawn.isPausedForModal = false;
+              this.grantPassStartReward(pawn);
+              this.startNextHop(pawn);
+            });
+            return;
+          } else {
             this.grantPassStartReward(pawn);
-            this.startNextHop(pawn); // 玩家點擊確認後，繼續剩下的跳躍
-          });
-          return;
+          }
         }
 
         const nextIdx = pawn.stepQueue.shift();
@@ -2995,14 +2999,18 @@ enqueueSteps(uid, steps, onComplete) {
       },
       closeBuyModal() { document.getElementById('modal-buy').classList.remove('show'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn(); },
       openPassStartModal(pawn, onConfirm) {
-        const prevPhase = GameState.phase;
-        GameState.phase = 'MODAL'; // 進入彈窗狀態，鎖定其他操作
+        if (pawn.uid !== GameState.uid) {
+          if (onConfirm) onConfirm();
+          return;
+        }
+
+        const prevPhase = GameState.phase === 'MODAL' ? 'MOVING' : GameState.phase;
+        GameState.phase = 'MODAL';
         this.update();
 
         const modal = document.getElementById('modal-pass-start');
         const npc = NPC_ROSTER.find(n => n.id === pawn.npcId) || NPC_ROSTER[0];
         
-        // 畫出角色並疊加「黑白相間的終點線帶」
         const canvas = document.getElementById('pass-start-preview');
         drawNpcAvatarToCanvas(canvas, npc.id);
         const ctx = canvas.getContext('2d');
@@ -3010,23 +3018,20 @@ enqueueSteps(uid, steps, onComplete) {
         ctx.fillRect(0, canvas.height - 24, canvas.width, 14);
         ctx.fillStyle = '#000000';
         for (let i = 0; i < canvas.width; i += 12) {
-            ctx.fillRect(i, canvas.height - 24, 6, 7);
-            ctx.fillRect(i + 6, canvas.height - 17, 6, 7);
+          ctx.fillRect(i, canvas.height - 24, 6, 7);
+          ctx.fillRect(i + 6, canvas.height - 17, 6, 7);
         }
 
-        const isMe = pawn.uid === GameState.uid;
-        const nameLabel = isMe ? '你' : (pawn.displayName || npc.name);
-        
-        document.getElementById('pass-start-title').textContent = isMe ? '🎉 完成一圈！' : `🎉 ${nameLabel} 完成一圈！`;
+        document.getElementById('pass-start-title').textContent = '🎉 完成一圈！';
         document.getElementById('pass-start-desc').innerHTML = 
-          `${nameLabel} 經過了起點，獲得探索新烏景點獎勵：<br><strong style="color:#ffd54f;font-size:1.3rem;">+${START_PASS_REWARD} 🪙</strong>`;
+          `你經過了起點，獲得探索新烏景點獎勵：<br><strong style="color:#ffd54f;font-size:1.3rem;">+${START_PASS_REWARD} 🪙</strong>`;
 
         const btn = document.getElementById('pass-start-confirm-btn');
         btn.onclick = () => {
           modal.classList.remove('show');
-          GameState.phase = prevPhase; // 還原為原本的狀態
+          GameState.phase = prevPhase;
           this.update();
-          if (onConfirm) onConfirm(); // 執行確認後的回呼 (發獎勵並繼續走)
+          if (onConfirm) onConfirm();
         };
 
         modal.classList.add('show');
