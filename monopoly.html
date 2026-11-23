@@ -135,11 +135,11 @@
       background: rgba(28, 17, 11, 0.85);
       border: 2px solid rgba(235, 185, 115, 0.3);
       border-radius: 16px;
-      padding: 12px 10px;
+      padding: 14px 10px 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
       cursor: pointer;
       transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
     }
@@ -181,29 +181,31 @@
     }
 
     .npc-pixel-box {
-      width: 72px;
-      height: 72px;
+      width: 78px;
+      height: 78px;
       background: #1c130d;
       border: 2px solid #8c6239;
-      border-radius: 12px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
 
     .npc-pixel-box canvas {
+      display: block;
       image-rendering: pixelated;
     }
 
     .npc-name {
-      font-size: 0.98rem;
+      font-size: 1.02rem;
       font-weight: 800;
       color: #ffebc7;
     }
 
     .npc-role {
       font-size: 0.74rem;
-      padding: 2px 8px;
+      padding: 2px 9px;
       border-radius: 999px;
       font-weight: 700;
       color: #fff;
@@ -402,6 +404,12 @@
       border: 1px solid #e1bee7;
     }
 
+    .btn-chance {
+      background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+      color: #fff;
+      border: 1px solid #ffe0b2;
+    }
+
     .btn-exit {
       background: linear-gradient(135deg, #d96b38 0%, #b54822 100%);
       color: #fff8f0;
@@ -423,7 +431,7 @@
       border: 1.5px solid rgba(235, 185, 115, 0.35);
       border-radius: 16px;
       padding: 10px;
-      min-width: 182px;
+      min-width: 192px;
     }
 
     .turn-player-card {
@@ -456,6 +464,16 @@
       padding: 1px 5px;
       border-radius: 6px;
       border: 1px solid #ce93d8;
+      margin-left: 3px;
+    }
+
+    .reflect-tag {
+      background: rgba(198, 40, 40, 0.88);
+      color: #ffebee;
+      font-size: 0.66rem;
+      padding: 1px 5px;
+      border-radius: 6px;
+      border: 1px solid #ef9a9a;
       margin-left: 3px;
     }
 
@@ -604,17 +622,19 @@
     }
 
     .pixel-art-frame {
-      width: 80px;
-      height: 80px;
+      width: 82px;
+      height: 82px;
       background: #2b211a;
       border: 2px solid #6e4823;
-      border-radius: 8px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
 
     .pixel-art-frame canvas {
+      display: block;
       image-rendering: pixelated;
     }
 
@@ -758,6 +778,11 @@
       background: linear-gradient(180deg, #3a1f47 0%, #1f1029 100%);
     }
 
+    .modal-card.chance-alert {
+      border-color: #ffb74d;
+      background: linear-gradient(180deg, #472e14 0%, #261608 100%);
+    }
+
     .modal-card.summary-card {
       width: min(500px, 95vw);
       border-color: #ffd54f;
@@ -771,7 +796,7 @@
     .modal-desc {
       font-size: 0.88rem;
       color: #dfc6ab;
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     .modal-actions {
@@ -854,12 +879,13 @@
     }
 
     .rank-avatar {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       background: #1c130d;
       border: 1.5px solid #8c6239;
       border-radius: 8px;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     .rank-avatar canvas {
@@ -974,7 +1000,7 @@
   <div id="deed-backdrop" class="deed-drawer-backdrop"></div>
   <aside id="deed-drawer" class="deed-drawer">
     <div class="drawer-header">
-      <h2>📜 我的領地卡片（<span id="drawer-count">0</span>/<span id="drawer-total-count">35</span>）</h2>
+      <h2>📜 我的領地卡片（<span id="drawer-count">0</span>/<span id="drawer-total-count">30</span>）</h2>
       <button id="btn-close-deeds" class="btn-close-drawer">✕</button>
     </div>
     <div class="drawer-body" id="deed-card-list">
@@ -1110,7 +1136,22 @@
     </div>
   </div>
 
-  <!-- 彈窗 5：全場骰子耗盡總結算排行榜 -->
+  <!-- 彈窗 5：機會格觸發彈窗 -->
+  <div id="modal-chance" class="modal-overlay">
+    <div class="modal-card chance-alert">
+      <div class="pixel-art-frame" style="border-color:#ffb74d;">
+        <canvas id="chance-npc-preview" width="68" height="68"></canvas>
+      </div>
+      <h3 id="chance-title" style="color:#ffd54f;">❓ 機會時刻</h3>
+      <p class="modal-desc" id="chance-desc">觸發了新烏路生活挑戰！</p>
+
+      <div class="modal-actions">
+        <button class="btn btn-chance" id="chance-confirm-btn">🌟 確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 6：全場骰子耗盡總結算排行榜 -->
   <div id="modal-summary" class="modal-overlay">
     <div class="modal-card summary-card">
       <h3>🏆 龜山探險總結算</h3>
@@ -1184,10 +1225,15 @@
       }
     }
 
+    /**
+     * ============================================================================
+     * 1. 四位 NPC 角色定義（棋哥、嘉麗、查理、小瑜）
+     * ============================================================================
+     */
     const NPC_ROSTER = [
       {
         id: 'ranger',
-        name: '阿岳',
+        name: '棋哥',
         role: '山林巡守員',
         tagColor: '#388e3c',
         flagColor: '#4caf50',
@@ -1196,9 +1242,16 @@
         pantsColor: '#1e88e5',
         desc: '熟悉林務局與古道生態的麥塊探險家',
         fateQuotes: {
-          SKIP_TURN: '阿岳拿出指北針觀察山嵐：「霧氣太濃了，我們先紮營生火休息一回合吧！」',
-          BACK_3: '阿岳踩到濕滑的青苔石塊：「哎呀！山坡太滑，往後退了 3 格！」',
-          FORWARD_5: '阿岳發現一條林務局捷徑小道：「跟緊我！沿著古道順風前進 5 格！」'
+          SKIP_TURN: '棋哥拿出指北針觀察山嵐：「霧氣太濃了，我們先紮營生火休息一回合吧！」',
+          BACK_3: '棋哥踩到濕滑的青苔石塊：「哎呀！山坡太滑，往後退了 3 格！」',
+          FORWARD_5: '棋哥發現一條林務局捷徑小道：「跟緊我！沿著古道順風前進 5 格！」'
+        },
+        chanceQuotes: {
+          CHANCE_RUN: '棋哥調整呼吸大步向前衝：「山林路跑難不倒我，輕鬆拿下獎金！」',
+          CHANCE_TRAFFIC: '棋哥在路口停看聽：「安全過馬路是探險家的基本守則！」',
+          CHANCE_SWIM: '棋哥掌握了換氣節奏：「學會游泳後，渡溪探險更安心了！」',
+          CHANCE_SLOW: '棋哥整理裝備太久落隊了：「抱歉讓大家久等了，趕緊跟上！」',
+          CHANCE_NOISE: '棋哥在山谷大喊回音吵到野生動物：「我去反省孤島冷靜思考 3 回合⋯⋯」'
         },
         headPixels: [
           '................','...GGGGGGGGGG...','..GGGGGGGGGGGG..','..GGGGGGGGGGGG..',
@@ -1209,7 +1262,7 @@
       },
       {
         id: 'hydro',
-        name: '小晴',
+        name: '嘉麗',
         role: '水庫小博士',
         tagColor: '#0288d1',
         flagColor: '#29b6f6',
@@ -1218,9 +1271,16 @@
         pantsColor: '#3949ab',
         desc: '熱愛翡翠水庫與南勢溪水文的小研究員',
         fateQuotes: {
-          SKIP_TURN: '小晴停下來記錄南勢溪水文數據：「水氣匯聚起霧了，原地觀測暫停一次！」',
-          BACK_3: '小晴踩進路邊的大水漬：「哇啊～水花濺起來了，趕緊往後退 3 格避開！」',
-          FORWARD_5: '小晴順著溪谷涼風加快腳步：「水庫微風吹來真舒服，一口氣前進 5 格！」'
+          SKIP_TURN: '嘉麗停下來記錄南勢溪水文數據：「水氣匯聚起霧了，原地觀測暫停一次！」',
+          BACK_3: '嘉麗踩進路邊的大水漬：「哇啊～水花濺起來了，趕緊往後退 3 格避開！」',
+          FORWARD_5: '嘉麗順著溪谷涼風加快腳步：「水庫微風吹來真舒服，一口氣前進 5 格！」'
+        },
+        chanceQuotes: {
+          CHANCE_RUN: '嘉麗沿著新烏路河岸奔跑：「吹著溪風參加路跑太棒啦！」',
+          CHANCE_TRAFFIC: '嘉麗舉手禮讓車輛後走斑馬線：「居民都誇獎我們很有禮貌呢！」',
+          CHANCE_SWIM: '嘉麗在水庫安全水域學會了自由式：「水文小博士也會游泳囉！」',
+          CHANCE_SLOW: '嘉麗蹲在溪邊觀察水草忘記時間：「哎呀！拖到大家集合時間了！」',
+          CHANCE_NOISE: '嘉麗興奮過度大叫吵到大家：「對不起，我去反省孤島反省 3 回合⋯⋯」'
         },
         headPixels: [
           '................','....BBBBBBBB....','...BBBBBBBBBB...','..BBFFFFFFFFBB..',
@@ -1231,7 +1291,7 @@
       },
       {
         id: 'engineer',
-        name: '阿凱',
+        name: '查理',
         role: '電廠工程師',
         tagColor: '#f57c00',
         flagColor: '#ffa726',
@@ -1240,9 +1300,16 @@
         pantsColor: '#37474f',
         desc: '戴著黃色工程帽，專精桂山發電廠歷史',
         fateQuotes: {
-          SKIP_TURN: '阿凱扶了扶黃色工程帽：「前方路段維護中，安全第一，原地暫停一次！」',
-          BACK_3: '阿凱低頭檢查水圳圖紙沒看路：「糟糕走過頭了，倒退 3 格重新定位！」',
-          FORWARD_5: '阿凱啟動工程台車加速裝置：「動力滿格！沿軌道向前衝刺 5 格！」'
+          SKIP_TURN: '查理扶了扶黃色工程帽：「前方路段維護中，安全第一，原地暫停一次！」',
+          BACK_3: '查理低頭檢查水圳圖紙沒看路：「糟糕走過頭了，倒退 3 格重新定位！」',
+          FORWARD_5: '查理啟動工程台車加速裝置：「動力滿格！沿軌道向前衝刺 5 格！」'
+        },
+        chanceQuotes: {
+          CHANCE_RUN: '查理戴著工程帽衝過路跑終點線：「耐力測試滿分通過！」',
+          CHANCE_TRAFFIC: '查理嚴格遵守交通號誌過馬路：「工安與交安一樣重要！」',
+          CHANCE_SWIM: '查理通過了水電廠水域安全游泳考核：「水下檢修難不倒我！」',
+          CHANCE_SLOW: '查理反覆校準儀器動作太慢：「耽誤到團隊進度，真不好意思！」',
+          CHANCE_NOISE: '查理測試擴音器太大聲擾亂秩序：「乖乖去反省孤島面壁 3 回合⋯⋯」'
         },
         headPixels: [
           '................','....YYYYYYYY....','...YYYYYYYYYY...','..YYYYYYYYYYYY..',
@@ -1253,7 +1320,7 @@
       },
       {
         id: 'scout',
-        name: '朵拉',
+        name: '小瑜',
         role: '童軍小偵探',
         tagColor: '#8e24aa',
         flagColor: '#ab47bc',
@@ -1262,9 +1329,16 @@
         pantsColor: '#5d4037',
         desc: '紮營在童軍龜山營地，最擅長尋找遺址',
         fateQuotes: {
-          SKIP_TURN: '朵拉吹響童軍哨子：「發現神秘古道記號，大家原地紮營觀察，暫停一次！」',
-          BACK_3: '朵拉不小心踩進泥巴坑：「鞋子沾滿泥巴啦！先往後退 3 格清理一下！」',
-          FORWARD_5: '朵拉解開了獵人路標謎題：「找到秘密通道了，全速前進 5 格！」'
+          SKIP_TURN: '小瑜吹響童軍哨子：「發現神秘古道記號，大家原地紮營觀察，暫停一次！」',
+          BACK_3: '小瑜不小心踩進泥巴坑：「鞋子沾滿泥巴啦！先往後退 3 格清理一下！」',
+          FORWARD_5: '小瑜解開了獵人路標謎題：「找到秘密通道了，全速前進 5 格！」'
+        },
+        chanceQuotes: {
+          CHANCE_RUN: '小瑜背著童軍背包參加社區路跑：「體力訓練大成功！」',
+          CHANCE_TRAFFIC: '小瑜帶領隊伍整齊過馬路：「獲得龜山居民的熱情表揚！」',
+          CHANCE_SWIM: '小瑜拿到童軍游泳技能徽章：「又解鎖一項野外求生技能！」',
+          CHANCE_SLOW: '小瑜綁營繩打結解不開拖到大家時間：「下次我會動作快一點！」',
+          CHANCE_NOISE: '小瑜在集合時大叫亂說話擾亂秩序：「接受紀律處分，去反省孤島反省 3 回合⋯⋯」'
         },
         headPixels: [
           '................','.....RRRRRR.....','....RRRRRRRR....','..RRRRRRRRRRRR..',
@@ -1281,32 +1355,60 @@
       'R': '#d32f2f', 'Y': '#fbc02d', 'O': '#f57c00', 'C': '#37474f'
     };
 
+    // 精準計算非空白像素邊界，讓角色頭像在框內放大並完美水平／垂直置中
     function drawNpcAvatarToCanvas(canvas, npcId) {
       if (!canvas) return;
       const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const thickness = 6;
-      const offsetY = 1.5;
-      const scale = Math.floor(canvas.width / 16);
-      const startY = Math.floor(thickness * offsetY);
+      let minX = 16, maxX = -1, minY = 16, maxY = -1;
+      for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+          if (NPC_PIXEL_COLORS[npc.headPixels[y][x]]) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < minX) return;
+
+      const spriteW = maxX - minX + 1;
+      const spriteH = maxY - minY + 1;
+      const thickness = 5;
+      const offsetY = 1;
+
+      const scaleX = Math.floor((canvas.width - 8) / spriteW);
+      const scaleY = Math.floor((canvas.height - 8 - thickness * offsetY) / spriteH);
+      const scale = Math.max(2, Math.min(scaleX, scaleY));
+
+      const totalW = spriteW * scale;
+      const totalH = spriteH * scale + thickness * offsetY;
+      const startX = Math.floor((canvas.width - totalW) / 2);
+      const baseStartY = Math.floor((canvas.height - totalH) / 2) + thickness * offsetY;
 
       for (let layer = 0; layer <= thickness; layer++) {
-        const currentYOffset = startY - (layer * offsetY);
-        for (let y = 0; y < 16; y++) {
-          for (let x = 0; x < 16; x++) {
+        const currentYOffset = baseStartY - layer * offsetY;
+        for (let y = minY; y <= maxY; y++) {
+          for (let x = minX; x <= maxX; x++) {
             const colorHex = NPC_PIXEL_COLORS[npc.headPixels[y][x]];
             if (colorHex) {
               if (layer < thickness) {
-                let r = Math.floor(parseInt(colorHex.slice(1, 3), 16) * 0.6);
-                let g = Math.floor(parseInt(colorHex.slice(3, 5), 16) * 0.6);
-                let b = Math.floor(parseInt(colorHex.slice(5, 7), 16) * 0.6);
+                const r = Math.floor(parseInt(colorHex.slice(1, 3), 16) * 0.6);
+                const g = Math.floor(parseInt(colorHex.slice(3, 5), 16) * 0.6);
+                const b = Math.floor(parseInt(colorHex.slice(5, 7), 16) * 0.6);
                 ctx.fillStyle = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
               } else {
                 ctx.fillStyle = colorHex;
               }
-              ctx.fillRect(x * scale, (y * scale) + currentYOffset, scale, scale);
+              ctx.fillRect(
+                startX + (x - minX) * scale,
+                currentYOffset + (y - minY) * scale,
+                scale,
+                scale
+              );
             }
           }
         }
@@ -1323,6 +1425,9 @@
       fitnessQuestCount: 0,
       diceLeft: BASE_DICE,
       skipTurns: 0,
+      reflectionTurns: 0,
+      reflectionReturnTile: 0,
+      isOnReflectionIsland: false,
       ownedTileIds: [],
       phase: 'LOBBY',
       roomId: null,
@@ -1491,8 +1596,36 @@
           const botNpc = NPC_ROSTER.find(n => n.id !== GameState.selectedNpcId) || NPC_ROSTER[1];
           const botName = `${botNpc.name}(隊友)`;
           GameState.players = [
-            { uid: GameState.uid, name: this.buildDisplayName(GameState.selectedNpcId), shortName: getMyShortName(), npcId: GameState.selectedNpcId, joinOrder: 1, tileIndex: 0, coins: GameState.coins, diceLeft: GameState.diceLeft, skipTurns: 0, isBot: false },
-            { uid: 'bot_partner', name: botName, shortName: botNpc.name, npcId: botNpc.id, joinOrder: 2, tileIndex: 0, coins: 240, diceLeft: GameState.diceLeft, skipTurns: 0, isBot: true }
+            {
+              uid: GameState.uid,
+              name: this.buildDisplayName(GameState.selectedNpcId),
+              shortName: getMyShortName(),
+              npcId: GameState.selectedNpcId,
+              joinOrder: 1,
+              tileIndex: 0,
+              coins: GameState.coins,
+              diceLeft: GameState.diceLeft,
+              skipTurns: 0,
+              reflectionTurns: 0,
+              reflectionReturnTile: 0,
+              isOnReflectionIsland: false,
+              isBot: false
+            },
+            {
+              uid: 'bot_partner',
+              name: botName,
+              shortName: botNpc.name,
+              npcId: botNpc.id,
+              joinOrder: 2,
+              tileIndex: 0,
+              coins: 240,
+              diceLeft: GameState.diceLeft,
+              skipTurns: 0,
+              reflectionTurns: 0,
+              reflectionReturnTile: 0,
+              isOnReflectionIsland: false,
+              isBot: true
+            }
           ];
           GameState.takenNpcMap = { [botNpc.id]: botName };
           HUD.refreshLobbyNpcCards();
@@ -1534,8 +1667,18 @@
 
           const myPlayerRef = this.roomRef.child(`players/${GameState.uid}`);
           await myPlayerRef.set({
-            uid: GameState.uid, name: this.buildDisplayName(GameState.selectedNpcId), shortName: getMyShortName(),
-            npcId: GameState.selectedNpcId, joinedAt: firebase.database.ServerValue.TIMESTAMP, tileIndex: 0, coins: GameState.coins, diceLeft: GameState.diceLeft, skipTurns: 0, isBot: false
+            uid: GameState.uid,
+            name: this.buildDisplayName(GameState.selectedNpcId),
+            shortName: getMyShortName(),
+            npcId: GameState.selectedNpcId,
+            joinedAt: firebase.database.ServerValue.TIMESTAMP,
+            tileIndex: 0,
+            coins: GameState.coins,
+            diceLeft: GameState.diceLeft,
+            skipTurns: 0,
+            reflectionTurns: 0,
+            isOnReflectionIsland: false,
+            isBot: false
           });
           myPlayerRef.onDisconnect().remove();
 
@@ -1595,7 +1738,11 @@
             sortedPlayers.forEach((p) => {
               const displayLabel = p.shortName || p.name;
               if (p.uid !== GameState.uid) {
-                PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel, () => this.tryShowPendingSummary());
+                if (p.isOnReflectionIsland) {
+                  PawnManager.syncRemoteReflection(p.uid, p.npcId, displayLabel);
+                } else {
+                  PawnManager.syncRemotePawn(p.uid, p.npcId, p.tileIndex || 0, displayLabel, () => this.tryShowPendingSummary());
+                }
               } else if (PawnManager.pawns[p.uid]) {
                 PawnManager.pawns[p.uid].displayName = displayLabel;
               }
@@ -1635,6 +1782,48 @@
       },
       checkIfMyTurnIsSkipped() {
         if (GameState.phase !== 'IDLE' || GameState.currentTurnUid !== GameState.uid) return;
+
+        // 1. 檢查是否在反省孤島（反省 3 回合）
+        if (GameState.reflectionTurns > 0 && !GameState.handlingSkipTurn) {
+          GameState.handlingSkipTurn = true;
+          const myPawn = PawnManager.pawns[GameState.uid];
+          const remainingAfterThis = GameState.reflectionTurns - 1;
+          if (myPawn) {
+            FloatingTexts.spawn(
+              myPawn.gx,
+              myPawn.gy,
+              remainingAfterThis > 0 ? `🏝️ 反省孤島反省中（還剩 ${remainingAfterThis} 回）` : '✨ 反省期滿！返回路線！',
+              '#ef9a9a'
+            );
+          }
+          document.getElementById('ui-tile-info').innerHTML =
+            `🏝️ <strong>${getMyShortName()}</strong> 正在反省孤島反省（本回合反省完成，剩餘 ${remainingAfterThis} 回合）...`;
+
+          setTimeout(() => {
+            GameState.reflectionTurns = remainingAfterThis;
+            if (GameState.reflectionTurns <= 0) {
+              GameState.isOnReflectionIsland = false;
+              const retIdx = GameState.reflectionReturnTile ?? 0;
+              PawnManager.flyToTile(GameState.uid, retIdx, () => {
+                this.syncMyPosition(retIdx);
+                this.syncMyPlayerStats();
+                HUD.updateTurnPanel();
+                HUD.update();
+                GameState.handlingSkipTurn = false;
+                this.advanceNextTurn();
+              });
+            } else {
+              this.syncMyPlayerStats();
+              HUD.updateTurnPanel();
+              HUD.update();
+              GameState.handlingSkipTurn = false;
+              this.advanceNextTurn();
+            }
+          }, 1350);
+          return;
+        }
+
+        // 2. 檢查一般命運【暫停一次】
         if (GameState.skipTurns > 0 && !GameState.handlingSkipTurn) {
           GameState.handlingSkipTurn = true;
           const myPawn = PawnManager.pawns[GameState.uid];
@@ -1708,12 +1897,17 @@
           me.coins = GameState.coins;
           me.diceLeft = GameState.diceLeft;
           me.skipTurns = GameState.skipTurns;
+          me.reflectionTurns = GameState.reflectionTurns;
+          me.reflectionReturnTile = GameState.reflectionReturnTile;
+          me.isOnReflectionIsland = GameState.isOnReflectionIsland;
         }
         if (!GameState.isSimulatedBotMode && this.roomRef) {
           this.roomRef.child(`players/${GameState.uid}`).update({
             coins: GameState.coins,
             diceLeft: GameState.diceLeft,
-            skipTurns: GameState.skipTurns
+            skipTurns: GameState.skipTurns,
+            reflectionTurns: GameState.reflectionTurns,
+            isOnReflectionIsland: GameState.isOnReflectionIsland
           });
         }
       },
@@ -1787,6 +1981,31 @@
           return;
         }
 
+        if (tile.type === 'CHANCE') {
+          if (tile.chanceType === 'GAIN_COINS') {
+            bot.coins = (bot.coins || 0) + tile.amount;
+            FloatingTexts.spawn(tile.gx, tile.gy, `❓ ${botLabel}獲得 +${tile.amount} 🪙！`, '#ffd54f');
+            HUD.updateTurnPanel();
+            setTimeout(() => this.advanceNextTurn(), 750);
+          } else if (tile.chanceType === 'LOSE_COINS') {
+            const lost = Math.min(bot.coins || 0, tile.amount);
+            bot.coins = Math.max(0, (bot.coins || 0) - lost);
+            FloatingTexts.spawn(tile.gx, tile.gy, `❓ ${botLabel}損失 -${lost} 🪙！`, '#ff8a65');
+            HUD.updateTurnPanel();
+            setTimeout(() => this.advanceNextTurn(), 750);
+          } else if (tile.chanceType === 'REFLECTION_ISLAND') {
+            bot.reflectionTurns = 3;
+            bot.reflectionReturnTile = finalTileIndex;
+            bot.isOnReflectionIsland = true;
+            FloatingTexts.spawn(tile.gx, tile.gy, `🏝️ ${botLabel}前往反省孤島 3 回合！`, '#ef9a9a');
+            PawnManager.flyToReflectionIsland(bot.uid, () => {
+              HUD.updateTurnPanel();
+              setTimeout(() => this.advanceNextTurn(), 650);
+            });
+          }
+          return;
+        }
+
         if (tile.type === 'PROPERTY') {
           if (!tile.ownerUid && (bot.coins || 0) >= tile.price && Math.random() > 0.35) {
             bot.coins -= tile.price; tile.ownerUid = bot.uid; tile.ownerName = botLabel; tile.ownerNpcId = bot.npcId;
@@ -1806,6 +2025,33 @@
       },
       runSimulatedBotTurn(bot) {
         if ((bot.diceLeft ?? 0) <= 0) { this.advanceNextTurn(); return; }
+
+        if ((bot.reflectionTurns ?? 0) > 0) {
+          bot.reflectionTurns -= 1;
+          const botPawn = PawnManager.pawns[bot.uid];
+          if (botPawn) {
+            FloatingTexts.spawn(
+              botPawn.gx,
+              botPawn.gy,
+              bot.reflectionTurns > 0 ? `🏝️ ${bot.shortName}反省中（剩${bot.reflectionTurns}回）` : `✨ ${bot.shortName}反省期滿！`,
+              '#ef9a9a'
+            );
+          }
+          document.getElementById('ui-tile-info').innerHTML = `🏝️ 隊友 <strong>${bot.name}</strong> 正在反省孤島反省中（剩餘 ${bot.reflectionTurns} 回合）...`;
+          if (bot.reflectionTurns <= 0) {
+            bot.isOnReflectionIsland = false;
+            const retIdx = bot.reflectionReturnTile ?? 0;
+            PawnManager.flyToTile(bot.uid, retIdx, () => {
+              HUD.updateTurnPanel();
+              setTimeout(() => this.advanceNextTurn(), 500);
+            });
+          } else {
+            HUD.updateTurnPanel();
+            setTimeout(() => this.advanceNextTurn(), 1000);
+          }
+          return;
+        }
+
         if ((bot.skipTurns ?? 0) > 0) {
           bot.skipTurns = 0;
           const botPawn = PawnManager.pawns[bot.uid];
@@ -1841,64 +2087,83 @@
 
     /**
      * ============================================================================
-     * 4. 9x9 蜿蜒探險地圖與 44 格新烏路周邊景點＋3 個命運格配置
+     * 4. 9x9 蜿蜒探險地圖（44 格含 3 個命運格 + 5 個機會格）與獨立反省孤島
      * ============================================================================
      */
     const ISO_CONFIG = { GRID_SIZE: 9, TILE_W: 112, TILE_H: 60, BASE_Z: 24 };
 
-    // 44 格蜿蜒路線座標（嚴格落於 0..8 x 0..8 外框內，連續正交閉合迴路）
+    // 獨立反省孤島座標（位於主要 9x9 方形地圖右下方之外，不與主地圖任何道路連接）
+    const REFLECTION_ISLAND = {
+      id: 'reflection_island',
+      name: '反省孤島',
+      gx: 10.3,
+      gy: 4.5
+    };
+
     const WINDING_PATH_COORDS = [
       { gx: 8, gy: 8 }, // 0  起點：探險營地
       { gx: 7, gy: 8 }, // 1
       { gx: 6, gy: 8 }, // 2
-      { gx: 6, gy: 7 }, // 3  [轉入內圈]
+      { gx: 6, gy: 7 }, // 3  [機會 1]
       { gx: 5, gy: 7 }, // 4
       { gx: 4, gy: 7 }, // 5
-      { gx: 4, gy: 8 }, // 6  [轉回外圈]
+      { gx: 4, gy: 8 }, // 6
       { gx: 3, gy: 8 }, // 7
       { gx: 2, gy: 8 }, // 8
       { gx: 1, gy: 8 }, // 9  [命運 1：暫停一次]
-      { gx: 0, gy: 8 }, // 10 最左外角
+      { gx: 0, gy: 8 }, // 10
       { gx: 0, gy: 7 }, // 11
       { gx: 0, gy: 6 }, // 12
-      { gx: 1, gy: 6 }, // 13 [轉入內圈]
+      { gx: 1, gy: 6 }, // 13 [機會 2]
       { gx: 2, gy: 6 }, // 14
       { gx: 2, gy: 5 }, // 15
       { gx: 2, gy: 4 }, // 16
-      { gx: 1, gy: 4 }, // 17 [轉回外圈]
+      { gx: 1, gy: 4 }, // 17
       { gx: 0, gy: 4 }, // 18
-      { gx: 0, gy: 3 }, // 19
+      { gx: 0, gy: 3 }, // 19 [機會 3]
       { gx: 0, gy: 2 }, // 20
-      { gx: 1, gy: 2 }, // 21 [內凹彎道]
+      { gx: 1, gy: 2 }, // 21
       { gx: 1, gy: 1 }, // 22
       { gx: 0, gy: 1 }, // 23 [命運 2：後退3格]
-      { gx: 0, gy: 0 }, // 24 最頂外角
+      { gx: 0, gy: 0 }, // 24
       { gx: 1, gy: 0 }, // 25
       { gx: 2, gy: 0 }, // 26
       { gx: 3, gy: 0 }, // 27
-      { gx: 3, gy: 1 }, // 28 [內凹彎道]
+      { gx: 3, gy: 1 }, // 28 [機會 4]
       { gx: 4, gy: 1 }, // 29
       { gx: 5, gy: 1 }, // 30
-      { gx: 5, gy: 0 }, // 31 [轉回外圈]
+      { gx: 5, gy: 0 }, // 31
       { gx: 6, gy: 0 }, // 32
       { gx: 7, gy: 0 }, // 33
-      { gx: 8, gy: 0 }, // 34 最右外角
+      { gx: 8, gy: 0 }, // 34
       { gx: 8, gy: 1 }, // 35
       { gx: 8, gy: 2 }, // 36 [命運 3：前進5格]
-      { gx: 7, gy: 2 }, // 37 [內凹彎道]
+      { gx: 7, gy: 2 }, // 37
       { gx: 7, gy: 3 }, // 38
       { gx: 7, gy: 4 }, // 39
-      { gx: 8, gy: 4 }, // 40 [轉回外圈]
+      { gx: 8, gy: 4 }, // 40 [機會 5：反省孤島3回合]
       { gx: 8, gy: 5 }, // 41
       { gx: 8, gy: 6 }, // 42
-      { gx: 8, gy: 7 }  // 43 -> 接回 (8, 8)
+      { gx: 8, gy: 7 }  // 43
     ];
 
     const TILE_BLUEPRINTS = [
       { type: 'START',    name: '探險營地',           price: 0,   pixelType: 'camp',      zoneLabel: '起點' },
       { type: 'PROPERTY', name: '龜山國小',           price: 20,  pixelType: 'school',    zoneLabel: '龜山文教' },
       { type: 'PROPERTY', name: '台灣銀行倉庫',       price: 30,  pixelType: 'warehouse', zoneLabel: '龜山文教' },
-      { type: 'PROPERTY', name: '文山茶廠',           price: 40,  pixelType: 'tea',       zoneLabel: '龜山文教' },
+      {
+        type: 'CHANCE',
+        chanceType: 'GAIN_COINS',
+        quoteKey: 'CHANCE_RUN',
+        amount: 50,
+        name: '機會',
+        shortBadge: '+50金幣',
+        chanceTitle: '新烏路健康路跑',
+        chanceDesc: '參加路跑活動，獲得金幣 50！',
+        price: 0,
+        pixelType: 'chance',
+        zoneLabel: '機會'
+      },
       { type: 'PROPERTY', name: '桂山發電廠',         price: 50,  pixelType: 'power',     zoneLabel: '龜山文教' },
       { type: 'LANDMARK', name: '上龜山橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標' },
       { type: 'PROPERTY', name: '桂山冰廠',           price: 70,  pixelType: 'ice',       zoneLabel: '水庫風光' },
@@ -1917,13 +2182,37 @@
       { type: 'PROPERTY', name: '龜山天主堂',         price: 80,  pixelType: 'church',    zoneLabel: '水庫風光' },
       { type: 'LANDMARK', name: '下龜山橋',           price: 0,   pixelType: 'bridge',    zoneLabel: '地標' },
       { type: 'PROPERTY', name: '龜山教會',           price: 90,  pixelType: 'chapel',    zoneLabel: '山林聚落' },
-      { type: 'PROPERTY', name: '全家便利店',         price: 40,  pixelType: 'store',     zoneLabel: '山林聚落' },
+      {
+        type: 'CHANCE',
+        chanceType: 'GAIN_COINS',
+        quoteKey: 'CHANCE_TRAFFIC',
+        amount: 30,
+        name: '機會',
+        shortBadge: '+30金幣',
+        chanceTitle: '模範交通安全',
+        chanceDesc: '遵守交通規則過馬路，受居民表揚，獲得金幣 30！',
+        price: 0,
+        pixelType: 'chance',
+        zoneLabel: '機會'
+      },
       { type: 'PROPERTY', name: '林務局',             price: 50,  pixelType: 'forest',    zoneLabel: '山林聚落' },
       { type: 'PROPERTY', name: '童軍龜山營地',       price: 80,  pixelType: 'scout',     zoneLabel: '山林聚落' },
       { type: 'LANDMARK', name: '南勢溪',             price: 0,   pixelType: 'river',     zoneLabel: '地標' },
       { type: 'PROPERTY', name: '龜山土地公廟',       price: 110, pixelType: 'temple',    zoneLabel: '古道人文' },
       { type: 'PROPERTY', name: '舊茶寮遺址',         price: 80,  pixelType: 'teahut',    zoneLabel: '古道人文' },
-      { type: 'PROPERTY', name: '台電訓練所',         price: 120, pixelType: 'training',  zoneLabel: '古道人文' },
+      {
+        type: 'CHANCE',
+        chanceType: 'GAIN_COINS',
+        quoteKey: 'CHANCE_SWIM',
+        amount: 40,
+        name: '機會',
+        shortBadge: '+40金幣',
+        chanceTitle: '水域安全達人',
+        chanceDesc: '學會游泳技能，獲得金幣 40！',
+        price: 0,
+        pixelType: 'chance',
+        zoneLabel: '機會'
+      },
       { type: 'PROPERTY', name: '籃球場',             price: 50,  pixelType: 'court',     zoneLabel: '古道人文' },
       { type: 'LANDMARK', name: '燕子湖畔',           price: 0,   pixelType: 'river',     zoneLabel: '地標' },
       { type: 'PROPERTY', name: '屈尺古道',           price: 75,  pixelType: 'forest',    zoneLabel: '新烏秘境' },
@@ -1941,7 +2230,19 @@
       { type: 'PROPERTY', name: '濛濛谷秘境',         price: 95,  pixelType: 'dam',       zoneLabel: '新烏秘境' },
       { type: 'PROPERTY', name: '紅河谷越嶺道',       price: 90,  pixelType: 'teahut',    zoneLabel: '新烏秘境' },
       { type: 'PROPERTY', name: '龜山老街',           price: 60,  pixelType: 'store',     zoneLabel: '溪畔風情' },
-      { type: 'PROPERTY', name: '梅花湖步道',         price: 75,  pixelType: 'forest',    zoneLabel: '溪畔風情' },
+      {
+        type: 'CHANCE',
+        chanceType: 'LOSE_COINS',
+        quoteKey: 'CHANCE_SLOW',
+        amount: 60,
+        name: '機會',
+        shortBadge: '-60金幣',
+        chanceTitle: '集合遲到檢討',
+        chanceDesc: '動作太慢，拖到大家時間，損失金幣 60！',
+        price: 0,
+        pixelType: 'chance',
+        zoneLabel: '機會'
+      },
       { type: 'PROPERTY', name: '烏來台車驛站',       price: 95,  pixelType: 'warehouse', zoneLabel: '溪畔風情' },
       { type: 'PROPERTY', name: '桂山冰棒小舖',       price: 65,  pixelType: 'ice',       zoneLabel: '溪畔風情' },
       { type: 'PROPERTY', name: '新店溪畔公園',       price: 85,  pixelType: 'scout',     zoneLabel: '山野秘境' },
@@ -1962,7 +2263,19 @@
       { type: 'PROPERTY', name: '信賢吊橋步道',       price: 85,  pixelType: 'teahut',    zoneLabel: '新烏秘境' },
       { type: 'PROPERTY', name: '龜山古道入口',       price: 70,  pixelType: 'teahut',    zoneLabel: '山野秘境' },
       { type: 'PROPERTY', name: '生態賞鳥亭',         price: 80,  pixelType: 'forest',    zoneLabel: '生態綠廊' },
-      { type: 'PROPERTY', name: '櫻花林秘境',         price: 90,  pixelType: 'tea',       zoneLabel: '生態綠廊' },
+      {
+        type: 'CHANCE',
+        chanceType: 'REFLECTION_ISLAND',
+        quoteKey: 'CHANCE_NOISE',
+        turns: 3,
+        name: '機會',
+        shortBadge: '反省3回',
+        chanceTitle: '秩序守則考驗',
+        chanceDesc: '大叫亂說話擾亂秩序，到反省孤島反省 3 回合！',
+        price: 0,
+        pixelType: 'chance',
+        zoneLabel: '機會'
+      },
       { type: 'PROPERTY', name: '森林教室',           price: 60,  pixelType: 'school',    zoneLabel: '生態綠廊' },
       { type: 'PROPERTY', name: '百年水圳遺址',       price: 105, pixelType: 'ruin',      zoneLabel: '生態綠廊' },
       { type: 'PROPERTY', name: '探險補給站',         price: 45,  pixelType: 'training',  zoneLabel: '生態綠廊' }
@@ -1977,48 +2290,20 @@
     const drawerTotalEl = document.getElementById('drawer-total-count');
     if (drawerTotalEl) drawerTotalEl.textContent = totalPurchasableCount;
 
-    // 建立 9x9 地形與風景佈局（草地、泥土、翡翠湖區、小樹與岩石）
     function createWorldMapGrid() {
       const N = ISO_CONFIG.GRID_SIZE;
       const pathLookup = new Map();
       BOARD_TILES.forEach(t => pathLookup.set(`${t.gx},${t.gy}`, t));
 
-      // 中央湖泊（翡翠水庫/燕子湖意向）與左上溪潭
-      const pondCoords = new Set([
-        '4,4', '5,4', '4,5', '5,5', '4,6',
-        '2,2', '3,2'
-      ]);
-
-      // 自然山林泥土地帶
-      const dirtCoords = new Set([
-        '3,4', '3,5', '6,4', '6,5', '4,3', '5,3',
-        '5,8', '0,5', '6,1', '7,1', '8,3', '7,7'
-      ]);
-
-      // 風景裝飾（大樹、灌木、鵝卵石堆）
+      const pondCoords = new Set(['4,4', '5,4', '4,5', '5,5', '4,6', '2,2', '3,2']);
+      const dirtCoords = new Set(['3,4', '3,5', '6,4', '6,5', '4,3', '5,3', '5,8', '0,5', '6,1', '7,1', '8,3', '7,7']);
       const propMap = new Map([
-        ['1,7', 'tree_oak'],
-        ['2,7', 'pebbles'],
-        ['3,7', 'tree_bush'],
-        ['5,8', 'tree_bush'],
-        ['7,7', 'tree_oak'],
-        ['1,5', 'tree_oak'],
-        ['0,5', 'pebbles'],
-        ['3,6', 'tree_bush'],
-        ['3,5', 'pebbles'],
-        ['3,4', 'tree_oak'],
-        ['3,3', 'tree_bush'],
-        ['4,2', 'tree_oak'],
-        ['5,2', 'pebbles'],
-        ['6,2', 'tree_bush'],
-        ['6,1', 'tree_oak'],
-        ['7,1', 'pebbles'],
-        ['8,3', 'tree_bush'],
-        ['6,3', 'tree_oak'],
-        ['6,4', 'pebbles'],
-        ['6,5', 'tree_bush'],
-        ['6,6', 'tree_oak'],
-        ['7,6', 'pebbles']
+        ['1,7', 'tree_oak'], ['2,7', 'pebbles'], ['3,7', 'tree_bush'], ['5,8', 'tree_bush'],
+        ['7,7', 'tree_oak'], ['1,5', 'tree_oak'], ['0,5', 'pebbles'], ['3,6', 'tree_bush'],
+        ['3,5', 'pebbles'], ['3,4', 'tree_oak'], ['3,3', 'tree_bush'], ['4,2', 'tree_oak'],
+        ['5,2', 'pebbles'], ['6,2', 'tree_bush'], ['6,1', 'tree_oak'], ['7,1', 'pebbles'],
+        ['8,3', 'tree_bush'], ['6,3', 'tree_oak'], ['6,4', 'pebbles'], ['6,5', 'tree_bush'],
+        ['6,6', 'tree_oak'], ['7,6', 'pebbles']
       ]);
 
       const grid = [];
@@ -2062,7 +2347,8 @@
         teahut: ['SSSSSSSSSSSSSSSS','SSSSSSGGGGSSSSSS','SSSSGGGGGGGGSSSS','GGGGGGGGGGGGGGGG','SSSSSTTTTTTSSSSS','SSSSTTTTTTTTSSSS','SSSTTTTTTTTTTSSS','SSSSLLLLLLLLSSSS','SSSSLTTTTTTLSSSS','SSSSLTTTTTTLSSSS','GGGGGGGGGGGGGGGG','DDDDGGGGGGGGDDDD','GGGGGGGGGGGGGGGG','LLLLLLLLLLLLLLLL','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD'],
         training: ['SSSSSSSSSSSSSSSS','SSSSSSSSSSSSSSSS','SSMMMMMMMMMMMMSS','SMMMMMMMMMMMMMMS','SMBBMMBBMMBBMMBS','SMMMMMMMMMMMMMMS','SMBBMMBBMMBBMMBS','SMMMMMMMMMMMMMMS','SMMMMMYYYYMMMMMS','SMMMMMYBBYMMMMMS','GGGGGGGGGGGGGGGG','LLLLLLLLLLLLLLLL','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD'],
         court: ['SSSSSSSSSSSSSSSS','SSSSSSSSSSSSSSSS','SSSTTTTTTTTTTSSS','SSSTWWWWWWWWTSGG','SSSTWWRRRRWWTSGG','SSSTWWWWWWWWTSGG','SSSSSSSMMSSSSSSS','SSSSSSSMMSSSSSSS','OOOOOOOMMOOOOOOO','OWWWWWWWWWWWWWWO','OWWWWRRRRRRWWWWO','OWWWWWWWWWWWWWWO','OOOOOOOOOOOOOOOO','GGGGGGGGGGGGGGGG','DDDDDDDDDDDDDDDD','GGGGGGGGGGGGGGGG'],
-        fate: ['PPPPPPPPPPPPPPPP','PVVVVVVVVVVVVVVP','PVPPPPPPPPPPPPVP','PVPPYYYYYYYYPPVP','PVPYYWWWWWWYYPVP','PVPYWWPPPPWWYPVP','PVPYWPPYYPPWYPVP','PVPYWPYYYYPWYPVP','PVPYWPPYYPPWYPVP','PVPYWWPPPPWWYPVP','PVPYYWWWWWWYYPVP','PVPPYYYYYYYYPPVP','PVPPPPPPPPPPPPVP','PVVVVVVVVVVVVVVP','PPPPPPPPPPPPPPPP','PPPPPPPPPPPPPPPP']
+        fate: ['PPPPPPPPPPPPPPPP','PVVVVVVVVVVVVVVP','PVPPPPPPPPPPPPVP','PVPPYYYYYYYYPPVP','PVPYYWWWWWWYYPVP','PVPYWWPPPPWWYPVP','PVPYWPPYYPPWYPVP','PVPYWPYYYYPWYPVP','PVPYWPPYYPPWYPVP','PVPYWWPPPPWWYPVP','PVPYYWWWWWWYYPVP','PVPPYYYYYYYYPPVP','PVPPPPPPPPPPPPVP','PVVVVVVVVVVVVVVP','PPPPPPPPPPPPPPPP','PPPPPPPPPPPPPPPP'],
+        chance: ['OOOOOOOOOOOOOOOO','OYYYYYYYYYYYYYYO','OYOOOOOOOOOOOOYO','OYOOYYYYYYYYOOYO','OYOYYWWWWWWYYOYO','OYOYWWOOOOWWYOYO','OYOYWOOYYOOWYOYO','OYOYWOOOOYYWYOYO','OYOYWOOOYYOWYOYO','OYOYWOOOYOOWYOYO','OYOYYOOOOOOYYOYO','OYOOYYYYYYYYOOYO','OYOOOOOOOOOOOOYO','OYYYYYYYYYYYYYYO','OOOOOOOOOOOOOOOO','OOOOOOOOOOOOOOOO']
       },
       drawToCanvas(canvas, type, thickness = 6, offsetY = 1) {
         if (!canvas) return;
@@ -2099,15 +2385,67 @@
         const npc = NPC_ROSTER.find(n => n.id === npcId) || NPC_ROSTER[0];
         const label = displayName || npc.name;
         if (!this.pawns[uid]) {
-          this.pawns[uid] = { uid, npcId, displayName: label, tileIndex, gx: tile.gx, gy: tile.gy, jumpHeight: 0, jumpPeak: 34, scaleSquash: 1, stepQueue: [], isHopping: false, hopProgress: 0, hopDuration: 0.23, startPos: { gx: tile.gx, gy: tile.gy }, targetPos: { gx: tile.gx, gy: tile.gy }, onComplete: null };
+          this.pawns[uid] = {
+            uid, npcId, displayName: label, tileIndex,
+            gx: tile.gx, gy: tile.gy,
+            jumpHeight: 0, jumpPeak: 34, scaleSquash: 1,
+            stepQueue: [], isHopping: false, hopProgress: 0, hopDuration: 0.23,
+            startPos: { gx: tile.gx, gy: tile.gy },
+            targetPos: { gx: tile.gx, gy: tile.gy },
+            onComplete: null
+          };
         } else {
           this.pawns[uid].npcId = npcId;
           if (displayName) this.pawns[uid].displayName = displayName;
         }
         return this.pawns[uid];
       },
+      flyToReflectionIsland(uid, onComplete) {
+        const pawn = this.pawns[uid];
+        if (!pawn) return;
+        pawn.stepQueue = [];
+        pawn.startPos = { gx: pawn.gx, gy: pawn.gy };
+        pawn.targetPos = { gx: REFLECTION_ISLAND.gx, gy: REFLECTION_ISLAND.gy };
+        pawn.hopProgress = 0;
+        pawn.hopDuration = 0.65;
+        pawn.jumpPeak = 75;
+        pawn.isHopping = true;
+        pawn.onComplete = () => {
+          pawn.hopDuration = 0.23;
+          pawn.jumpPeak = 34;
+          if (onComplete) onComplete();
+        };
+      },
+      flyToTile(uid, targetTileIndex, onComplete) {
+        const pawn = this.pawns[uid];
+        if (!pawn) return;
+        const targetT = BOARD_TILES[targetTileIndex] || BOARD_TILES[0];
+        pawn.stepQueue = [];
+        pawn.tileIndex = targetTileIndex;
+        pawn.startPos = { gx: pawn.gx, gy: pawn.gy };
+        pawn.targetPos = { gx: targetT.gx, gy: targetT.gy };
+        pawn.hopProgress = 0;
+        pawn.hopDuration = 0.65;
+        pawn.jumpPeak = 75;
+        pawn.isHopping = true;
+        pawn.onComplete = () => {
+          pawn.hopDuration = 0.23;
+          pawn.jumpPeak = 34;
+          if (onComplete) onComplete(targetTileIndex);
+        };
+      },
+      syncRemoteReflection(uid, npcId, displayName = '') {
+        const pawn = this.createOrUpdatePawn(uid, npcId, 0, displayName);
+        if (!pawn.isHopping && (Math.abs(pawn.gx - REFLECTION_ISLAND.gx) > 0.1 || Math.abs(pawn.gy - REFLECTION_ISLAND.gy) > 0.1)) {
+          this.flyToReflectionIsland(uid);
+        }
+      },
       syncRemotePawn(uid, npcId, targetTileIndex, displayName = '', onHopDone = null) {
         const pawn = this.createOrUpdatePawn(uid, npcId, targetTileIndex, displayName);
+        if (Math.abs(pawn.gx - REFLECTION_ISLAND.gx) < 0.2 && Math.abs(pawn.gy - REFLECTION_ISLAND.gy) < 0.2) {
+          this.flyToTile(uid, targetTileIndex, onHopDone);
+          return;
+        }
         if (pawn.tileIndex !== targetTileIndex && !pawn.isHopping) {
           const total = BOARD_TILES.length;
           const forwardSteps = (targetTileIndex - pawn.tileIndex + total) % total;
@@ -2130,6 +2468,7 @@
         const total = BOARD_TILES.length;
         const dir = steps >= 0 ? 1 : -1;
         const count = Math.abs(steps);
+        pawn.hopDuration = 0.23;
         pawn.jumpPeak = count >= 5 ? 46 : (dir < 0 ? 38 : 34);
 
         let simIdx = pawn.tileIndex;
@@ -2179,7 +2518,7 @@
       list: [],
       spawn(gx, gy, text, color = '#ffe082') {
         const { sx, sy } = Engine.gridToIso(gx, gy);
-        this.list.push({ sx, sy: sy - 72, text, color, age: 0, life: 1.7 });
+        this.list.push({ sx, sy: sy - 74, text, color, age: 0, life: 1.75 });
       },
       update(dt) {
         for (let i = this.list.length - 1; i >= 0; i--) {
@@ -2212,7 +2551,7 @@
           const pBox = document.createElement('div');
           pBox.className = 'npc-pixel-box';
           const cvs = document.createElement('canvas');
-          cvs.width = 60; cvs.height = 60;
+          cvs.width = 68; cvs.height = 68;
           drawNpcAvatarToCanvas(cvs, npc.id);
           pBox.appendChild(cvs);
           card.innerHTML = `<div class="npc-name">${npc.name}</div><div class="npc-role" style="background:${npc.tagColor};">${npc.role}</div><div class="npc-desc">${npc.desc}</div>`;
@@ -2249,12 +2588,19 @@
           const isTurn = p.uid === GameState.currentTurnUid;
           const isMe = p.uid === GameState.uid;
           const dLeft = p.diceLeft ?? 0;
+          const reflTurns = isMe ? GameState.reflectionTurns : (p.reflectionTurns ?? 0);
           const isSkipped = isMe ? (GameState.skipTurns > 0) : ((p.skipTurns ?? 0) > 0);
-          const skipBadge = isSkipped ? '<span class="skip-tag">💤暫停</span>' : '';
+
+          let statusBadge = '';
+          if (reflTurns > 0) {
+            statusBadge = `<span class="reflect-tag">🏝️反省${reflTurns}回</span>`;
+          } else if (isSkipped) {
+            statusBadge = '<span class="skip-tag">💤暫停</span>';
+          }
 
           const row = document.createElement('div');
           row.className = 'turn-player-card' + (isTurn ? ' active-turn' : '') + (dLeft <= 0 ? ' out-of-dice' : '');
-          row.innerHTML = `<span class="player-dot" style="background:${npc.flagColor};"></span><div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.joinOrder}. ${p.name}${isMe ? ' (你)' : ''}${skipBadge}</div><span style="font-size:0.74rem;color:${dLeft > 0 ? '#ffd54f' : '#9e9e9e'};">🎲${dLeft}</span>`;
+          row.innerHTML = `<span class="player-dot" style="background:${npc.flagColor};"></span><div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.joinOrder}. ${p.name}${isMe ? ' (你)' : ''}${statusBadge}</div><span style="font-size:0.74rem;color:${dLeft > 0 ? '#ffd54f' : '#9e9e9e'};">🎲${dLeft}</span>`;
           panel.appendChild(row);
         });
       },
@@ -2264,17 +2610,26 @@
         document.getElementById('ui-dice-left').textContent = GameState.diceLeft;
         document.getElementById('ui-deed-count').textContent = GameState.ownedTileIds.length;
         document.getElementById('drawer-count').textContent = GameState.ownedTileIds.length;
-        const myPawn = PawnManager.pawns[GameState.uid];
-        const tile = BOARD_TILES[myPawn ? myPawn.tileIndex : 0];
-        let statusTag = '';
-        if (tile.type === 'PROPERTY') {
-          if (tile.ownerUid === GameState.uid) statusTag = '（✅ 你的領地）';
-          else if (tile.ownerUid) statusTag = `（🚩 ${tile.ownerName} 的領地｜過路費 ${calcTollFee(tile.price)} 🪙）`;
-          else statusTag = `（價值 ${tile.price} 🪙）`;
-        } else if (tile.type === 'FATE') {
-          statusTag = `（🔮 ${tile.fateTitle}）`;
+
+        if (GameState.isOnReflectionIsland || GameState.reflectionTurns > 0) {
+          document.getElementById('ui-tile-info').innerHTML =
+            `🏝️ <strong>${getMyShortName()}</strong> 的位置：<strong>反省孤島</strong>（反省中，剩餘 ${GameState.reflectionTurns} 回合）`;
+        } else {
+          const myPawn = PawnManager.pawns[GameState.uid];
+          const tile = BOARD_TILES[myPawn ? myPawn.tileIndex : 0];
+          let statusTag = '';
+          if (tile.type === 'PROPERTY') {
+            if (tile.ownerUid === GameState.uid) statusTag = '（✅ 你的領地）';
+            else if (tile.ownerUid) statusTag = `（🚩 ${tile.ownerName} 的領地｜過路費 ${calcTollFee(tile.price)} 🪙）`;
+            else statusTag = `（價值 ${tile.price} 🪙）`;
+          } else if (tile.type === 'FATE') {
+            statusTag = `（🔮 ${tile.fateTitle}）`;
+          } else if (tile.type === 'CHANCE') {
+            statusTag = `（❓ ${tile.chanceTitle}）`;
+          }
+          document.getElementById('ui-tile-info').innerHTML = `📍 <strong>${getMyShortName()}</strong> 的位置：<strong>${tile.name}</strong>${statusTag}`;
         }
-        document.getElementById('ui-tile-info').innerHTML = `📍 <strong>${getMyShortName()}</strong> 的位置：<strong>${tile.name}</strong>${statusTag}`;
+
         const rollBtn = document.getElementById('btn-roll');
         const isMyTurn = GameState.currentTurnUid === GameState.uid;
         if (GameState.phase === 'LOBBY' || GameState.phase === 'FINISHED') rollBtn.disabled = true;
@@ -2282,6 +2637,9 @@
           rollBtn.disabled = true;
           const activeP = GameState.players.find(p => p.uid === GameState.currentTurnUid);
           rollBtn.textContent = `等待 ${activeP ? activeP.name : '隊友'} 行動`;
+        } else if (GameState.reflectionTurns > 0) {
+          rollBtn.disabled = true;
+          rollBtn.textContent = `🏝️ 反省孤島反省中 (${GameState.reflectionTurns}回)`;
         } else if (GameState.skipTurns > 0) {
           rollBtn.disabled = true;
           rollBtn.textContent = '💤 暫停休息中...';
@@ -2293,7 +2651,7 @@
         }
       },
       triggerRoll() {
-        if (GameState.phase !== 'IDLE' || GameState.currentTurnUid !== GameState.uid || GameState.diceLeft <= 0 || GameState.skipTurns > 0) return;
+        if (GameState.phase !== 'IDLE' || GameState.currentTurnUid !== GameState.uid || GameState.diceLeft <= 0 || GameState.skipTurns > 0 || GameState.reflectionTurns > 0) return;
         GameState.phase = 'ROLLING'; GameState.diceLeft -= 1;
         MultiplayerManager.syncMyPlayerStats();
         this.updateTurnPanel(); this.update();
@@ -2318,6 +2676,8 @@
         const tile = BOARD_TILES[tileIndex];
         if (tile.type === 'FATE') {
           this.openFateModal(tile);
+        } else if (tile.type === 'CHANCE') {
+          this.openChanceModal(tile);
         } else if (tile.type === 'PROPERTY') {
           if (!tile.ownerUid) this.openBuyModal(tile);
           else if (tile.ownerUid === GameState.uid) { FloatingTexts.spawn(tile.gx, tile.gy, '巡視自家領地!', '#a5d6a7'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn(); }
@@ -2325,6 +2685,67 @@
         } else {
           FloatingTexts.spawn(tile.gx, tile.gy, `抵達 ${tile.name}`, '#ffe082'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn();
         }
+      },
+      openChanceModal(tile) {
+        GameState.phase = 'MODAL';
+        this.update();
+
+        const modal = document.getElementById('modal-chance');
+        const npc = NPC_ROSTER.find(n => n.id === GameState.selectedNpcId) || NPC_ROSTER[0];
+        drawNpcAvatarToCanvas(document.getElementById('chance-npc-preview'), npc.id);
+
+        const roleQuote = (npc.chanceQuotes && npc.chanceQuotes[tile.quoteKey]) || '';
+        document.getElementById('chance-title').textContent = `❓ 機會：${tile.chanceTitle}`;
+        document.getElementById('chance-desc').innerHTML =
+          (roleQuote ? `<div style="color:#fff8e1;margin-bottom:8px;">「${roleQuote}」</div>` : '') +
+          `<div style="font-size:0.9rem;color:#ffcc80;font-weight:700;">${tile.chanceDesc}</div>`;
+
+        const btn = document.getElementById('chance-confirm-btn');
+        if (tile.chanceType === 'GAIN_COINS') {
+          btn.textContent = `🪙 領取 +${tile.amount} 金幣`;
+          btn.onclick = () => {
+            modal.classList.remove('show');
+            GameState.coins += tile.amount;
+            MultiplayerManager.syncMyPlayerStats();
+            FloatingTexts.spawn(tile.gx, tile.gy, `獲得金幣 +${tile.amount} 🪙！`, '#ffd54f');
+            HUD.update();
+            GameState.phase = 'IDLE';
+            MultiplayerManager.advanceNextTurn();
+          };
+        } else if (tile.chanceType === 'LOSE_COINS') {
+          const actualLoss = Math.min(GameState.coins, tile.amount);
+          btn.textContent = actualLoss > 0 ? `💸 扣除 ${actualLoss} 金幣` : '💸 確認（目前無金幣可扣）';
+          btn.onclick = () => {
+            modal.classList.remove('show');
+            GameState.coins = Math.max(0, GameState.coins - actualLoss);
+            MultiplayerManager.syncMyPlayerStats();
+            FloatingTexts.spawn(tile.gx, tile.gy, `損失金幣 -${actualLoss} 🪙！`, '#ff8a65');
+            HUD.update();
+            GameState.phase = 'IDLE';
+            MultiplayerManager.advanceNextTurn();
+          };
+        } else if (tile.chanceType === 'REFLECTION_ISLAND') {
+          btn.textContent = '🏝️ 前往反省孤島（反省 3 回合）';
+          btn.onclick = () => {
+            modal.classList.remove('show');
+            GameState.phase = 'MOVING';
+            GameState.reflectionTurns = tile.turns || 3;
+            GameState.reflectionReturnTile = tile.id;
+            GameState.isOnReflectionIsland = true;
+            MultiplayerManager.syncMyPlayerStats();
+            HUD.updateTurnPanel();
+            this.update();
+
+            FloatingTexts.spawn(tile.gx, tile.gy, '🏝️ 送往反省孤島反省 3 回合！', '#ef9a9a');
+            PawnManager.flyToReflectionIsland(GameState.uid, () => {
+              GameState.phase = 'IDLE';
+              HUD.update();
+              MultiplayerManager.advanceNextTurn();
+            });
+          };
+        }
+
+        modal.classList.add('show');
       },
       openFateModal(tile) {
         GameState.phase = 'MODAL';
@@ -2494,13 +2915,13 @@
 
     /**
      * ============================================================================
-     * 8. 2.5D Sprite-Stacking 體素地形、路緣道路、小樹、水塘與人物渲染引擎
+     * 8. 2.5D Sprite-Stacking 體素地形、格線領地道路、反省孤島與人物渲染引擎
      * ============================================================================
      */
     const Engine = {
       canvas: document.getElementById('game-canvas'), ctx: null, rafId: null,
       isRunning: false, lastTime: 0, width: 0, height: 0, dpr: 1, hasInitializedView: false,
-      camera: { x: 0, y: 0, scale: 1, minScale: 0.38, maxScale: 2.2, autoFollow: true },
+      camera: { x: 0, y: 0, scale: 1, minScale: 0.36, maxScale: 2.2, autoFollow: true },
       pointer: { isDragging: false, lastX: 0, lastY: 0, pinchDist: 0 },
       voxelCache: {},
 
@@ -2521,11 +2942,12 @@
       resetCamera() {
         const w = this.width || window.innerWidth; const h = this.height || window.innerHeight;
         if (w <= 0 || h <= 0) return;
-        const boardPixelW = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_W;
-        const boardPixelH = ISO_CONFIG.GRID_SIZE * ISO_CONFIG.TILE_H + 120;
-        const fitScale = Math.min((w * 0.84) / boardPixelW, (h * 0.74) / boardPixelH, 1.05);
+        // 納入主要 9x9 地圖與右側獨立反省孤島的寬高範圍
+        const boardPixelW = (ISO_CONFIG.GRID_SIZE + 2.4) * ISO_CONFIG.TILE_W;
+        const boardPixelH = (ISO_CONFIG.GRID_SIZE + 1.2) * ISO_CONFIG.TILE_H + 120;
+        const fitScale = Math.min((w * 0.84) / boardPixelW, (h * 0.74) / boardPixelH, 1.0);
         this.camera.scale = Math.max(this.camera.minScale, fitScale || 1);
-        this.camera.x = w / 2;
+        this.camera.x = w / 2 - 42 * this.camera.scale;
         const centerGridY = (ISO_CONFIG.GRID_SIZE - 1) * (ISO_CONFIG.TILE_H / 2);
         this.camera.y = h / 2 - centerGridY * this.camera.scale - 6;
       },
@@ -2559,6 +2981,34 @@
         const g = Math.max(0, Math.floor(parseInt(hex.slice(3, 5), 16) * (1 - factor)));
         const b = Math.max(0, Math.floor(parseInt(hex.slice(5, 7), 16) * (1 - factor)));
         return `rgb(${r},${g},${b})`;
+      },
+
+      hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+      },
+
+      // 繪製等角菱形方框（用於格線、領地邊界、以及玩家位置方框）
+      drawIsoDiamond(ctx, sx, sy, insetRatio = 1, strokeStyle = '#3e240e', lineWidth = 1.5, fillStyle = null) {
+        const hw = (ISO_CONFIG.TILE_W / 2) * insetRatio;
+        const hh = (ISO_CONFIG.TILE_H / 2) * insetRatio;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - hh);
+        ctx.lineTo(sx + hw, sy);
+        ctx.lineTo(sx, sy + hh);
+        ctx.lineTo(sx - hw, sy);
+        ctx.closePath();
+        if (fillStyle) {
+          ctx.fillStyle = fillStyle;
+          ctx.fill();
+        }
+        if (strokeStyle && lineWidth > 0) {
+          ctx.strokeStyle = strokeStyle;
+          ctx.lineWidth = lineWidth;
+          ctx.stroke();
+        }
       },
 
       // 🧱 Sprite-Stacking 核心堆疊烘焙器
@@ -2628,7 +3078,7 @@
         return null;
       },
 
-      // 🛤️ 帶兩側木石路緣邊界 + 碎石/水漬/泥巴材質的道路體素生成器
+      // 🛤️ 帶兩側路緣邊界 + 碎石/水漬/泥巴材質的道路體素生成器
       getStackedPathSprite(tile) {
         const uw = ISO_CONFIG.TILE_W / 6;
         const uh = ISO_CONFIG.TILE_H / 6;
@@ -2636,7 +3086,6 @@
         const prev = BOARD_TILES[(tile.id - 1 + total) % total];
         const next = BOARD_TILES[(tile.id + 1) % total];
 
-        // 偵測四個方向是否連通相鄰道路格
         const connNegX = (prev.gx === tile.gx - 1 && prev.gy === tile.gy) || (next.gx === tile.gx - 1 && next.gy === tile.gy);
         const connPosX = (prev.gx === tile.gx + 1 && prev.gy === tile.gy) || (next.gx === tile.gx + 1 && next.gy === tile.gy);
         const connNegY = (prev.gx === tile.gx && prev.gy === tile.gy - 1) || (next.gx === tile.gx && next.gy === tile.gy - 1);
@@ -2647,36 +3096,38 @@
           ? 'START'
           : tile.type === 'FATE'
             ? 'FATE'
-            : (tile.pixelType === 'bridge' ? 'BRIDGE' : (tile.pixelType === 'river' ? 'RIVER' : 'ROAD'));
+            : tile.type === 'CHANCE'
+              ? 'CHANCE'
+              : (tile.pixelType === 'bridge' ? 'BRIDGE' : (tile.pixelType === 'river' ? 'RIVER' : 'ROAD'));
 
         const cacheKey = `path_${specialKind}_${variant}_${connNegX?1:0}${connPosX?1:0}${connNegY?1:0}${connPosY?1:0}`;
         if (this.voxelCache[cacheKey]) return this.voxelCache[cacheKey];
 
         const pal = {
-          D: '#4a2e16', // 深泥土底座
-          S: '#6b4222', // 泥土側層
-          B: '#7a5230', // 道路兩旁木石路緣邊界
-          K: '#52341b', // 轉角界樁深木色
-          R: '#f0d8b0', // 暖沙岩道路主色（明亮清晰，與草地/泥土明顯區分）
-          r: '#dec090', // 暖沙岩深色紋理
-          P: '#9aa3ab', // 灰色碎石
-          p: '#cfd8dc', // 亮白小石粒
-          W: '#4fc3f7', // 淺藍水漬
-          w: '#0288d1', // 深藍水漬中心
-          M: '#795548', // 泥巴斑塊
-          m: '#5d4037', // 深泥巴
-          // 特殊格子配色
-          G: '#ffd54f', // 起點金邊
-          g: '#ffb300', // 起點暖金
-          T: '#b87a3d', // 木橋木板
-          t: '#8c5826', // 木橋縫隙
-          C: '#29b6f6', // 溪流清澈藍
-          c: '#81d4fa', // 溪流水波
-          F: '#8e24aa', // 命運紫水晶
-          f: '#ce93d8'  // 命運淡紫光暈
+          D: '#4a2e16',
+          S: '#6b4222',
+          B: '#7a5230',
+          K: '#52341b',
+          R: '#f0d8b0',
+          r: '#dec090',
+          P: '#9aa3ab',
+          p: '#cfd8dc',
+          W: '#4fc3f7',
+          w: '#0288d1',
+          M: '#795548',
+          m: '#5d4037',
+          G: '#ffd54f',
+          g: '#ffb300',
+          T: '#b87a3d',
+          t: '#8c5826',
+          C: '#29b6f6',
+          c: '#81d4fa',
+          F: '#8e24aa',
+          f: '#ce93d8',
+          O: '#f57c00',
+          o: '#ffe082'
         };
 
-        // 基礎內部 4x4 紋理（涵蓋道路、碎石、水漬、泥巴與特殊功能格）
         let inner4x4 = [
           ['R','r','R','R'],
           ['r','R','R','r'],
@@ -2698,6 +3149,13 @@
             ['F','G','G','F'],
             ['f','F','F','f']
           ];
+        } else if (specialKind === 'CHANCE') {
+          inner4x4 = [
+            ['o','O','O','o'],
+            ['O','G','G','O'],
+            ['O','G','G','O'],
+            ['o','O','O','o']
+          ];
         } else if (specialKind === 'BRIDGE') {
           inner4x4 = [
             ['T','t','T','t'],
@@ -2713,7 +3171,6 @@
             ['P','c','C','C']
           ];
         } else if (variant === 1) {
-          // 碎石道路
           inner4x4 = [
             ['R','P','p','R'],
             ['P','R','R','r'],
@@ -2721,7 +3178,6 @@
             ['r','P','R','R']
           ];
         } else if (variant === 2) {
-          // 水漬道路
           inner4x4 = [
             ['R','r','R','R'],
             ['r','W','w','R'],
@@ -2729,7 +3185,6 @@
             ['R','R','r','P']
           ];
         } else if (variant === 3) {
-          // 泥巴道路
           inner4x4 = [
             ['R','M','R','r'],
             ['M','m','M','R'],
@@ -2738,7 +3193,6 @@
           ];
         }
 
-        // 組合 6x6 頂面矩陣，自動依據連通方向在道路兩旁加上路緣邊界 B 與轉角柱 K
         const topGrid = [];
         const curbGrid = [];
         for (let vy = 0; vy < 6; vy++) {
@@ -2787,6 +3241,26 @@
         return this.buildStackedSprite(cacheKey, layers, pal, uw, uh, 4.8);
       },
 
+      // 🏝️ 獨立「反省孤島」體素方塊生成器
+      getStackedReflectionIslandSprite() {
+        const uw = ISO_CONFIG.TILE_W / 6;
+        const uh = ISO_CONFIG.TILE_H / 6;
+        const pal = {
+          W: '#1565c0',
+          C: '#42a5f5',
+          R: '#37474f',
+          S: '#607d8b',
+          L: '#90a4ae',
+          D: '#bcaaa4',
+          E: '#d7ccc8'
+        };
+        const sea  = ['WCCWCW','CWWWWC','WCCCCW','CWWWWC','WCCCCW','WCWCWW'];
+        const rock = ['.RRRR.','RRRRRR','RRRRRR','RRRRRR','RRRRRR','.RRRR.'];
+        const mid  = ['.SSSS.','SLLLLS','SLLLLS','SLLLLS','SLLLLS','.SSSS.'];
+        const top  = ['.LLLL.','LDDDDL','LDEEEL','LDEEEL','LDDDDL','.LLLL.'];
+        return this.buildStackedSprite('reflection_island_tile', [sea, rock, rock, mid, mid, top], pal, uw, uh, 4.8);
+      },
+
       getStackedPropSprite(propType) {
         if (propType === 'tree_oak') {
           const pal = { G: '#4a962c', T: '#6e3f1d', t: '#8f5429', D: '#357320', M: '#56ab35', L: '#7ed14b', Y: '#a3e868' };
@@ -2822,6 +3296,16 @@
           ];
           return this.buildStackedSprite('prop_pebbles', layers, pal, 5.6, 3.0, 2.8);
         }
+        if (propType === 'reflection_post') {
+          const pal = { T: '#5d4037', B: '#ef5350', W: '#fff8e1' };
+          const layers = [
+            ['.TT.','.TT.'],
+            ['.TT.','.TT.'],
+            ['BBBB','BWWB'],
+            ['BBBB','BWWB']
+          ];
+          return this.buildStackedSprite('prop_reflection_post', layers, pal, 4.4, 2.3, 2.8);
+        }
         return null;
       },
 
@@ -2852,6 +3336,16 @@
           ];
           return this.buildStackedSprite('tile_fate_crystal', layers, pal, 4.0, 2.1, 2.6);
         }
+        if (tile.type === 'CHANCE') {
+          const pal = { B: '#8d5524', O: '#ff9800', Y: '#ffd54f', W: '#fffde7' };
+          const layers = [
+            ['BBBB','BBBB','BBBB','BBBB'],
+            ['OOOO','OYYO','OYYO','OOOO'],
+            ['.YY.','YWWY','YWWY','.YY.'],
+            ['....','.WW.','.WW.','....']
+          ];
+          return this.buildStackedSprite('tile_chance_box', layers, pal, 4.0, 2.1, 2.5);
+        }
         if (tile.pixelType === 'bridge') {
           const pal = { W: '#b45309', D: '#78350f', P: '#fde68a' };
           const layers = [['P....P','WWWWWW','WWWWWW','P....P'],['.WWWW.','DDDDDD','DDDDDD','.WWWW.'],['..WW..','..WW..','..WW..','..WW..']];
@@ -2876,7 +3370,8 @@
         const hasBuilding = Boolean(voxelObj);
 
         if (voxelObj) {
-          const floatOffset = tile.type === 'FATE' ? Math.sin(performance.now() * 0.004) * 2.5 : 0;
+          const isFloatingIcon = tile.type === 'FATE' || tile.type === 'CHANCE';
+          const floatOffset = isFloatingIcon ? Math.sin(performance.now() * 0.004) * 2.5 : 0;
           ctx.drawImage(
             voxelObj.canvas,
             sx - voxelObj.anchorX,
@@ -2887,14 +3382,12 @@
         ctx.save();
         ctx.translate(sx, sy + (hasBuilding ? 3 : -4));
 
-        // 繪製半透明柔和襯底標籤，確保道路上的景點與命運文字清晰易讀
         const isFate = tile.type === 'FATE';
-        const subText = isFate
-          ? (tile.fateType === 'SKIP_TURN' ? '暫停一次' : (tile.fateType === 'BACK_3' ? '後退3格' : '前進5格'))
-          : (tile.price > 0 ? (tile.ownerUid ? `★${tile.ownerName}` : `$${tile.price}`) : '');
+        const isChance = tile.type === 'CHANCE';
 
         if (isFate) {
-          ctx.fillStyle = 'rgba(74, 20, 140, 0.88)';
+          const subText = tile.fateType === 'SKIP_TURN' ? '暫停一次' : (tile.fateType === 'BACK_3' ? '後退3格' : '前進5格');
+          ctx.fillStyle = 'rgba(74, 20, 140, 0.9)';
           ctx.beginPath();
           ctx.roundRect(-25, -9, 50, 22, 5);
           ctx.fill();
@@ -2910,6 +3403,23 @@
           ctx.fillStyle = '#f3e5f5';
           ctx.font = 'bold 8px sans-serif';
           ctx.fillText(subText, 0, 7.5);
+        } else if (isChance) {
+          ctx.fillStyle = 'rgba(180, 75, 10, 0.92)';
+          ctx.beginPath();
+          ctx.roundRect(-26, -9, 52, 22, 5);
+          ctx.fill();
+          ctx.strokeStyle = '#ffe082';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.fillStyle = '#fff59d';
+          ctx.font = 'bold 9.5px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('❓機會', 0, -2);
+          ctx.fillStyle = '#ffe0b2';
+          ctx.font = 'bold 8px sans-serif';
+          ctx.fillText(tile.shortBadge || '機會事件', 0, 7.5);
         } else {
           ctx.fillStyle = '#2e1808';
           ctx.textAlign = 'center';
@@ -2925,9 +3435,10 @@
           }
           if (tile.price > 0) {
             if (tile.ownerUid) {
-              ctx.fillStyle = tile.ownerUid === GameState.uid ? '#1b5e20' : '#b71c1c';
-              ctx.font = 'bold 8px sans-serif';
-              ctx.fillText(`★${tile.ownerName} ($${calcTollFee(tile.price)})`, 0, 12);
+              const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
+              ctx.fillStyle = ownerNpc.tagColor;
+              ctx.font = 'bold 8.2px sans-serif';
+              ctx.fillText(`🚩${tile.ownerName} ($${calcTollFee(tile.price)})`, 0, 12);
             } else {
               ctx.fillStyle = 'rgba(78, 42, 14, 0.9)';
               ctx.font = 'bold 8.5px sans-serif';
@@ -2935,6 +3446,65 @@
             }
           }
         }
+        ctx.restore();
+      },
+
+      // 繪製每一格清晰格線框、玩家領地區分框、以及角色所在的等角菱形位置方框
+      drawRoadFrameAndTerritory(ctx, sx, topY, tile) {
+        ctx.save();
+
+        // 1. 每一格基礎清晰外框（讓玩家能明確看出每一步的格子邊界）
+        this.drawIsoDiamond(ctx, sx, topY, 0.97, 'rgba(62, 34, 12, 0.65)', 1.5, null);
+
+        // 2. 領地歸屬專屬方框（依購買者 NPC 顏色顯示領地框與頂角標記）
+        if (tile.ownerUid) {
+          const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
+          // 領地半透明底色 + 深色外襯 + 角色專屬彩色粗邊框
+          this.drawIsoDiamond(ctx, sx, topY, 0.91, 'rgba(30, 16, 6, 0.85)', 4.2, this.hexToRgba(ownerNpc.flagColor, 0.24));
+          this.drawIsoDiamond(ctx, sx, topY, 0.91, ownerNpc.flagColor, 2.6, null);
+
+          // 頂角領地小菱形徽記
+          const topCornerY = topY - (ISO_CONFIG.TILE_H / 2) * 0.91;
+          ctx.beginPath();
+          ctx.moveTo(sx, topCornerY - 4);
+          ctx.lineTo(sx + 6, topCornerY);
+          ctx.lineTo(sx, topCornerY + 4);
+          ctx.lineTo(sx - 6, topCornerY);
+          ctx.closePath();
+          ctx.fillStyle = ownerNpc.flagColor;
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // 3. 玩家 NPC 所在位置方框（取代原本的圓圈標示，改為貼合路面的等角菱形方框）
+        const pawnsOnTile = Object.values(PawnManager.pawns).filter((p) => {
+          const onIsland = Math.abs(p.gx - REFLECTION_ISLAND.gx) < 0.25 && Math.abs(p.gy - REFLECTION_ISLAND.gy) < 0.25;
+          return !onIsland && p.tileIndex === tile.id;
+        });
+
+        pawnsOnTile.forEach((p, idx) => {
+          const npc = NPC_ROSTER.find(n => n.id === p.npcId) || NPC_ROSTER[0];
+          const isCurrentTurn = p.uid === GameState.currentTurnUid;
+          const isMe = p.uid === GameState.uid;
+          const pulse = isCurrentTurn ? (0.85 + Math.sin(performance.now() * 0.008) * 0.15) : 0.9;
+          const inset = Math.max(0.68, 0.84 - idx * 0.06);
+
+          ctx.save();
+          ctx.globalAlpha = pulse;
+          this.drawIsoDiamond(
+            ctx,
+            sx,
+            topY,
+            inset,
+            isMe ? '#fff59d' : npc.flagColor,
+            isCurrentTurn ? 2.8 : 2.0,
+            isCurrentTurn ? 'rgba(255, 245, 157, 0.14)' : null
+          );
+          ctx.restore();
+        });
+
         ctx.restore();
       },
 
@@ -2958,17 +3528,8 @@
                 );
               }
 
-              // 玩家腳下的發光提示圈
-              const myPawn = PawnManager.pawns[GameState.uid];
-              if (myPawn && cell.roadTile.id === myPawn.tileIndex) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.ellipse(sx, sy - 24, ISO_CONFIG.TILE_W / 2 - 14, ISO_CONFIG.TILE_H / 2 - 9, 0, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255, 245, 157, 0.9)';
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-                ctx.restore();
-              }
+              // 繪製清晰格線框、領地歸屬框與玩家等角菱形位置方框
+              this.drawRoadFrameAndTerritory(ctx, sx, sy - 24, cell.roadTile);
 
               this.drawTileContent(ctx, sx, sy - 24, cell.roadTile);
             } else {
@@ -2982,6 +3543,69 @@
             }
           }
         }
+      },
+
+      // 🏝️ 繪製主要方形地圖旁獨立的「反省孤島」（不與主要地圖連接）
+      drawReflectionIsland(ctx) {
+        const { sx, sy } = this.gridToIso(REFLECTION_ISLAND.gx, REFLECTION_ISLAND.gy);
+        const topY = sy - 24;
+
+        // 1. 孤島底部海面陰影
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(sx, sy + 22, 62, 34, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(6, 12, 20, 0.55)';
+        ctx.fill();
+        ctx.restore();
+
+        // 2. 孤島體素地形磚
+        const islandSprite = this.getStackedReflectionIslandSprite();
+        if (islandSprite) {
+          ctx.drawImage(
+            islandSprite.canvas,
+            sx - islandSprite.anchorX,
+            sy - islandSprite.anchorY
+          );
+        }
+
+        // 3. 孤島獨立格子外框
+        this.drawIsoDiamond(ctx, sx, topY, 0.94, 'rgba(239, 83, 80, 0.85)', 2.2, 'rgba(183, 28, 28, 0.14)');
+
+        // 若有玩家正在孤島反省，繪製警示位置方框
+        const pawnsOnIsland = Object.values(PawnManager.pawns).filter(
+          p => Math.abs(p.gx - REFLECTION_ISLAND.gx) < 0.25 && Math.abs(p.gy - REFLECTION_ISLAND.gy) < 0.25
+        );
+        if (pawnsOnIsland.length > 0) {
+          const pulse = 0.75 + Math.sin(performance.now() * 0.008) * 0.25;
+          ctx.save();
+          ctx.globalAlpha = pulse;
+          this.drawIsoDiamond(ctx, sx, topY, 0.80, '#ff8a80', 2.8, 'rgba(255, 82, 82, 0.18)');
+          ctx.restore();
+        }
+
+        // 4. 孤島告示牌小裝飾
+        const postSprite = this.getStackedPropSprite('reflection_post');
+        if (postSprite) {
+          ctx.drawImage(postSprite.canvas, sx - 24 - postSprite.anchorX, topY - 10 - postSprite.anchorY);
+        }
+
+        // 5. 「反省孤島」獨立名牌標籤
+        ctx.save();
+        ctx.translate(sx, topY + 12);
+        ctx.fillStyle = 'rgba(127, 20, 20, 0.92)';
+        ctx.beginPath();
+        ctx.roundRect(-30, -10, 60, 20, 6);
+        ctx.fill();
+        ctx.strokeStyle = '#ef9a9a';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffebee';
+        ctx.font = 'bold 9.5px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🏝️反省孤島', 0, 0);
+        ctx.restore();
       },
 
       getStackedPawnSprite(npc) {
@@ -3023,8 +3647,21 @@
           ctx.drawImage(pawnSprite.canvas, -pawnSprite.anchorX, -pawnSprite.anchorY);
 
           const pState = GameState.players.find(p => p.uid === pawn.uid);
+          const reflTurns = pawn.uid === GameState.uid ? GameState.reflectionTurns : (pState?.reflectionTurns ?? 0);
           const isSkipped = pawn.uid === GameState.uid ? (GameState.skipTurns > 0) : ((pState?.skipTurns ?? 0) > 0);
-          if (isSkipped) {
+
+          if (reflTurns > 0) {
+            const bob = Math.sin(performance.now() * 0.006) * 2;
+            ctx.fillStyle = 'rgba(183, 28, 28, 0.94)';
+            ctx.beginPath();
+            ctx.roundRect(-28, -70 + bob, 56, 13, 5);
+            ctx.fill();
+            ctx.fillStyle = '#ffebee';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`🏝️反省(${reflTurns}回)`, 0, -63.5 + bob);
+          } else if (isSkipped) {
             const bob = Math.sin(performance.now() * 0.006) * 2;
             ctx.fillStyle = 'rgba(106, 27, 154, 0.92)';
             ctx.beginPath();
@@ -3056,6 +3693,7 @@
         
         this.drawBoardGroundShadow(ctx);
         this.drawWorldMap(ctx);
+        this.drawReflectionIsland(ctx);
         this.drawAllMinecraftPawns(ctx);
         FloatingTexts.draw(ctx);
         
