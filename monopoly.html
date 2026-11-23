@@ -2290,21 +2290,70 @@
     const drawerTotalEl = document.getElementById('drawer-total-count');
     if (drawerTotalEl) drawerTotalEl.textContent = totalPurchasableCount;
 
-    function createWorldMapGrid() {
+function createWorldMapGrid() {
       const N = ISO_CONFIG.GRID_SIZE;
       const pathLookup = new Map();
       BOARD_TILES.forEach(t => pathLookup.set(`${t.gx},${t.gy}`, t));
 
       const pondCoords = new Set(['4,4', '5,4', '4,5', '5,5', '4,6', '2,2', '3,2']);
       const dirtCoords = new Set(['3,4', '3,5', '6,4', '6,5', '4,3', '5,3', '5,8', '0,5', '6,1', '7,1', '8,3', '7,7']);
-      const propMap = new Map([
-        ['1,7', 'tree_oak'], ['2,7', 'pebbles'], ['3,7', 'tree_bush'], ['5,8', 'tree_bush'],
-        ['7,7', 'tree_oak'], ['1,5', 'tree_oak'], ['0,5', 'pebbles'], ['3,6', 'tree_bush'],
-        ['3,5', 'pebbles'], ['3,4', 'tree_oak'], ['3,3', 'tree_bush'], ['4,2', 'tree_oak'],
-        ['5,2', 'pebbles'], ['6,2', 'tree_bush'], ['6,1', 'tree_oak'], ['7,1', 'pebbles'],
-        ['8,3', 'tree_bush'], ['6,3', 'tree_oak'], ['6,4', 'pebbles'], ['6,5', 'tree_bush'],
-        ['6,6', 'tree_oak'], ['7,6', 'pebbles']
-      ]);
+
+      // 蒐集所有非玩家道路、非水域的可配置陸地格（共 30 格）
+      const availableLandKeys = [];
+      for (let gx = 0; gx < N; gx++) {
+        for (let gy = 0; gy < N; gy++) {
+          const key = `${gx},${gy}`;
+          if (!pathLookup.has(key) && !pondCoords.has(key)) {
+            availableLandKeys.push(key);
+          }
+        }
+      }
+
+      // 隨機洗牌（Fisher-Yates Shuffle）
+      for (let i = availableLandKeys.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [availableLandKeys[i], availableLandKeys[j]] = [availableLandKeys[j], availableLandKeys[i]];
+      }
+
+      const propMap = new Map();
+      let cursor = 0;
+
+      // 1. 隨機配置：房子 3 幢
+      const houseTypes = ['decor_house_blue', 'decor_house_orange', 'decor_house_red'];
+      houseTypes.forEach((type) => {
+        if (cursor < availableLandKeys.length) {
+          propMap.set(availableLandKeys[cursor++], type);
+        }
+      });
+
+      // 2. 隨機配置：菜園 5 畦
+      const farmTypes = ['farm_plot_veg', 'farm_plot_sprout', 'farm_plot_veg', 'farm_plot_sprout', 'farm_plot_veg'];
+      farmTypes.forEach((type) => {
+        if (cursor < availableLandKeys.length) {
+          propMap.set(availableLandKeys[cursor++], type);
+        }
+      });
+
+      // 3. 隨機配置：石塊植物 6 組
+      const rockPlantTypes = [
+        'rock_plant_moss',
+        'rock_plant_mushroom',
+        'rock_plant_flower',
+        'rock_plant_moss',
+        'rock_plant_mushroom',
+        'rock_plant_flower'
+      ];
+      rockPlantTypes.forEach((type) => {
+        if (cursor < availableLandKeys.length) {
+          propMap.set(availableLandKeys[cursor++], type);
+        }
+      });
+
+      // 4. 剩餘空地隨機點綴部分樹木與灌木（保留適量草地留白）
+      const treeTypes = ['tree_oak', 'tree_bush'];
+      for (let i = 0; i < 10 && cursor < availableLandKeys.length; i++, cursor++) {
+        propMap.set(availableLandKeys[cursor], treeTypes[i % treeTypes.length]);
+      }
 
       const grid = [];
       for (let gx = 0; gx < N; gx++) {
@@ -3261,7 +3310,7 @@
         return this.buildStackedSprite('reflection_island_tile', [sea, rock, rock, mid, mid, top], pal, uw, uh, 4.8);
       },
 
-      getStackedPropSprite(propType) {
+getStackedPropSprite(propType) {
         if (propType === 'tree_oak') {
           const pal = { G: '#4a962c', T: '#6e3f1d', t: '#8f5429', D: '#357320', M: '#56ab35', L: '#7ed14b', Y: '#a3e868' };
           const layers = [
@@ -3306,9 +3355,103 @@
           ];
           return this.buildStackedSprite('prop_reflection_post', layers, pal, 4.4, 2.3, 2.8);
         }
+
+        // ==================== 新增：房子 3 幢（仿附圖 HOUSES） ====================
+        if (propType === 'decor_house_blue' || propType === 'decor_house_orange' || propType === 'decor_house_red') {
+          const roofSchemes = {
+            decor_house_blue:   { R: '#2563eb', H: '#60a5fa', D: '#1d4ed8' },
+            decor_house_orange: { R: '#ea580c', H: '#fbbf24', D: '#c2410c' },
+            decor_house_red:    { R: '#dc2626', H: '#f87171', D: '#991b1b' }
+          };
+          const rf = roofSchemes[propType];
+          const pal = {
+            S: '#78716c', s: '#a8a29e', W: '#fef3c7', T: '#78350f',
+            B: '#38bdf8', G: '#4d7c0f', F: '#f43f5e',
+            R: rf.R, H: rf.H, D: rf.D
+          };
+          const layers = [
+            ['.SSSSSS.','SSSSSSSS','SSSSSSSS','SSSSSSSS','SSSSSSSS','SSSSSSSS','G.ssss.G','..ssss..'],
+            ['.TWWWWTS','.WBBBBWS','.WWWWWW.','.WWWWWW.','.WWWWWW.','.TWTTWT.','.GFTTFG.','........'],
+            ['.TWWWWTS','.WBBBBWS','.WWWWWW.','.WWWWWW.','.WWWWWW.','.TWTTWT.','........','........'],
+            ['.TTTTTTS','.WWWWWWs','.WWWWWW.','.WWWWWW.','.WWWWWW.','.TTTTTT.','........','........'],
+            ['RRRRRRRS','RHHHHHHS','RRRRRRRR','RRRRRRRR','RRRRRRRR','RRRRRRRR','DDDDDDDD','........'],
+            ['.RRRRRRS','.RHHHHHs','.RRRRRR.','.RRRRRR.','.RRRRRR.','.DDDDDD.','........','........'],
+            ['..RRRR.S','..RHHHRs','..RRRR..','..RRRR..','..DDDD..','........','........','........'],
+            ['...DD..s','...HH...','...HH...','...DD...','........','........','........','........']
+          ];
+          return this.buildStackedSprite(`prop_${propType}`, layers, pal, 10.5, 5.6, 2.7);
+        }
+
+        // ==================== 新增：菜園 5 畦（仿附圖 FARM PLOTS） ====================
+        if (propType === 'farm_plot_veg') {
+          const pal = {
+            F: '#6d4019', R: '#a66e38', L: '#d9b382',
+            S: '#5c361a', D: '#3e220e',
+            G: '#388e3c', C: '#81c784', O: '#f97316', Y: '#eab308', W: '#fef08a'
+          };
+          const layers = [
+            ['FRRFRRRF','RSSSSSSR','RSDDDDSR','FSSSSSSF','FSSSSSSF','RSDDDDSR','RSSSSSSR','FRRFRRRF'],
+            ['L..L..LL','.GG.OO.Y','.GG.OO.Y','L......L','L......L','.GG.OO.Y','.GG.OO.Y','L..L..LL'],
+            ['........','.CC.GG.W','....GG.W','........','........','.CC.GG.W','....GG.W','........']
+          ];
+          return this.buildStackedSprite('prop_farm_plot_veg', layers, pal, 11.4, 6.1, 2.4);
+        }
+        if (propType === 'farm_plot_sprout') {
+          const pal = {
+            F: '#6d4019', R: '#a66e38', L: '#d9b382',
+            S: '#5c361a', D: '#3e220e',
+            G: '#43a047', C: '#9ccc65'
+          };
+          const layers = [
+            ['FRRFRRRF','RSDDDDSR','RSDDDDSR','FSDDDDSF','FSDDDDSF','RSDDDDSR','RSDDDDSR','FRRFRRRF'],
+            ['L..L..LL','.D.D.D.D','.G.G.G.G','L......L','L......L','.D.D.D.D','.G.G.G.G','L..L..LL'],
+            ['........','........','.C...C..','........','........','........','..C...C.','........']
+          ];
+          return this.buildStackedSprite('prop_farm_plot_sprout', layers, pal, 11.4, 6.1, 2.4);
+        }
+
+        // ==================== 新增：石塊植物 6 組（仿附圖 SMALL DETAILS） ====================
+        if (propType === 'rock_plant_moss') {
+          const pal = {
+            D: '#52585e', M: '#7c848c', L: '#aeb6bf',
+            G: '#4d7c0f', g: '#84cc16', T: '#78350f'
+          };
+          const layers = [
+            ['........','.DDD....','DDDDD.g.','DDDDD.Gg','.DDD.DD.','..g.DDDD','.gGg.DD.','........'],
+            ['........','.MMM....','MMgMM.G.','MMMMM.G.','.MgM.MM.','..G.MLL.','.Gg..MM.','........'],
+            ['........','........','.MLM..T.','.gLL..T.','........','.....L..','.g......','........'],
+            ['........','........','..L.....','........','........','........','........','........']
+          ];
+          return this.buildStackedSprite('prop_rock_plant_moss', layers, pal, 11.0, 5.9, 2.4);
+        }
+        if (propType === 'rock_plant_mushroom') {
+          const pal = {
+            D: '#52585e', M: '#7c848c', L: '#aeb6bf',
+            G: '#4d7c0f', g: '#84cc16', R: '#dc2626', W: '#ffffff'
+          };
+          const layers = [
+            ['........','..DDD...','.DDDDD..','.DDDDD..','..DDD.g.','.g.W.gGg','gGg.W...','........'],
+            ['........','..MMM...','.MMMMM..','.MgMMM..','...M..G.','.G.R..G.','G..RW...','........'],
+            ['........','........','..LLL...','..gLL...','........','..RWR...','...R....','........'],
+            ['........','........','........','........','........','...R....','........','........']
+          ];
+          return this.buildStackedSprite('prop_rock_plant_mushroom', layers, pal, 11.0, 5.9, 2.4);
+        }
+        if (propType === 'rock_plant_flower') {
+          const pal = {
+            D: '#52585e', M: '#7c848c', L: '#aeb6bf',
+            G: '#4d7c0f', g: '#84cc16', Y: '#facc15', O: '#fb923c', W: '#ffffff'
+          };
+          const layers = [
+            ['........','.gG..DDD','gGg.DDDD','.....DDD','.DD..gGg','DDDD..g.','.DD.....','........'],
+            ['........','.OY..MMM','YOY.MLL.','.....MM.','.MM..GWG','MLL..YWY','.MM.....','........'],
+            ['........','.Y....L.','........','........','......Y.','.L......','........','........']
+          ];
+          return this.buildStackedSprite('prop_rock_plant_flower', layers, pal, 11.0, 5.9, 2.4);
+        }
+
         return null;
       },
-
       drawBoardGroundShadow(ctx) {
         const N = ISO_CONFIG.GRID_SIZE; const hw = ISO_CONFIG.TILE_W / 2; const hh = ISO_CONFIG.TILE_H / 2; const z = ISO_CONFIG.BASE_Z;
         const topCorner = this.gridToIso(0, 0); const rightCorner = this.gridToIso(N - 1, 0);
@@ -3533,8 +3676,17 @@ drawTileContent(ctx, sx, sy, tile) {
         ctx.restore();
       },
 
+
+
+      // ✅ 新貼上的 drawWorldMap(ctx) 從這裡開始
       drawWorldMap(ctx) {
         const N = ISO_CONFIG.GRID_SIZE;
+        const groundDecorSet = new Set([
+          'decor_house_blue', 'decor_house_orange', 'decor_house_red',
+          'farm_plot_veg', 'farm_plot_sprout',
+          'rock_plant_moss', 'rock_plant_mushroom', 'rock_plant_flower'
+        ]);
+
         for (let sum = 0; sum <= (N - 1) * 2; sum++) {
           for (let gx = 0; gx < N; gx++) {
             const gy = sum - gx;
@@ -3563,12 +3715,18 @@ drawTileContent(ctx, sx, sy, tile) {
 
               if (cell.prop) {
                 const propSprite = this.getStackedPropSprite(cell.prop);
-                if (propSprite) ctx.drawImage(propSprite.canvas, sx - propSprite.anchorX, sy - 4 - propSprite.anchorY);
+                // 新增的房子、菜園與石塊植物直接貼合地形頂面（sy - 18），樹木則維持原有高度
+                const liftOffset = groundDecorSet.has(cell.prop) ? 18 : 4;
+                if (propSprite) {
+                  ctx.drawImage(propSprite.canvas, sx - propSprite.anchorX, sy - liftOffset - propSprite.anchorY);
+                }
               }
             }
           }
         }
-      },
+      }, // ✅ 新貼上的區塊到這裡結束（保留逗號）
+
+
 
       // 🏝️ 繪製主要方形地圖旁獨立的「反省孤島」（不與主要地圖連接）
       drawReflectionIsland(ctx) {
