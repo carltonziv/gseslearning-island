@@ -2995,6 +2995,7 @@ enqueueSteps(uid, steps, onComplete) {
       },
       closeBuyModal() { document.getElementById('modal-buy').classList.remove('show'); GameState.phase = 'IDLE'; MultiplayerManager.advanceNextTurn(); },
       openPassStartModal(pawn, onConfirm) {
+        const prevPhase = GameState.phase;
         GameState.phase = 'MODAL'; // 進入彈窗狀態，鎖定其他操作
         this.update();
 
@@ -3023,7 +3024,7 @@ enqueueSteps(uid, steps, onComplete) {
         const btn = document.getElementById('pass-start-confirm-btn');
         btn.onclick = () => {
           modal.classList.remove('show');
-          GameState.phase = 'MOVING'; // 恢復移動狀態
+          GameState.phase = prevPhase; // 還原為原本的狀態
           this.update();
           if (onConfirm) onConfirm(); // 執行確認後的回呼 (發獎勵並繼續走)
         };
