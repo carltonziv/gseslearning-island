@@ -900,6 +900,9 @@
 
   <div id="minimap-panel" class="minimap-container" style="height: 135px;">
     <svg class="minimap-svg" viewBox="-24 -28 48 56">
+      <polygon id="mini-wasteland_nw" class="minimap-island minimap-open" 
+               points="-12.0,-10.39 -15.0,-5.2 -21.0,-5.2 -24.0,-10.39 -21.0,-15.59 -15.0,-15.59" 
+               onclick="focusOnIsland(ISLAND_CONFIG[7])" />
       <polygon id="mini-beyblade" class="minimap-island minimap-closed" 
                points="6.0,0 3.0,5.2 -3.0,5.2 -6.0,0 -3.0,-5.2 3.0,-5.2" 
                onclick="focusOnIsland(ISLAND_CONFIG[0])" />
@@ -1495,6 +1498,15 @@
     </div>
   </div>
 
+  <!-- 11. 西北荒地內容面板 -->
+    <div id="panel-wasteland_nw" style="display:none;">
+      <div style="background: linear-gradient(135deg, #fef3c7, #fed7aa); border: 2px dashed #d97706; border-radius: 16px; padding: 18px; text-align: center; color: #9a3412;">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🏜️</span>
+        <h3 style="margin-bottom: 6px; font-weight: 800;">尚未開墾的西北荒地</h3>
+        <p style="font-size: 0.88rem; line-height: 1.6; color: #7c2d12;">這片西北秘境目前碎石遍佈，等待未來被喚醒！</p>
+      </div>
+    </div>
+
   <!-- 🐢 龜山探險島：2.5D 大富翁內視窗 -->
   <div id="modal-monopoly" class="modal-overlay hidden" style="z-index: 300000; padding: 12px;">
     <div class="modal-card" style="width: 96vw; max-width: 1280px; height: 92vh; max-height: 92vh; display: flex; flex-direction: column; padding: 12px; background: #241710; border: 3px solid #f5bc47; overflow: hidden;">
@@ -1620,6 +1632,7 @@
       { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xE8B4B8, pos: [7.8, 0, 4.5], radius: 4.8 },
       { id: 'wasteland_n', title: '荒地', subtitle: '這片土地沉睡已久，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [0, 0, -9.0], radius: 4.8 },
       { id: 'wasteland_s', title: '龜山探險島', subtitle: '龜山探險・擲骰子享受龜山秘境', color: 0x76A652, pos: [0, 0, 9.0], radius: 4.8 }
+      { id: 'wasteland_nw', title: '西北荒地', subtitle: '這片土地沉睡已久，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [-15.6, 0, -9.0], radius: 4.8 }
     ];
 
     // ==========================================
@@ -1823,6 +1836,7 @@ const ISLAND_AUDIO_MAP = {
       wasteland_n: new Audio('./sounds/wasteland_n.mp3'),
       temple_completed: new Audio('./sounds/temple.mp3'),
       wasteland_s: new Audio('./sounds/wasteland_s.mp3'),
+      wasteland_nw: new Audio('./sounds/wasteland_n.mp3'),
       cart: new Audio('./sounds/cart.mp3'),
       boat: new Audio('./sounds/boat.mp3')
     };
@@ -2385,6 +2399,10 @@ const islands = [
       const wsElem = document.getElementById('mini-wasteland_s');
       if (wsElem) {
         wsElem.setAttribute('class', 'minimap-island minimap-open');
+      }
+      const wnwElem = document.getElementById('mini-wasteland_nw');
+      if (wnwElem) {
+        wnwElem.setAttribute('class', 'minimap-island minimap-open');
       }
 
       updateSportTabStatus();
@@ -7738,6 +7756,9 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
         else if (cfg.id === 'wasteland_n') {
           landmark = createWastelandLandmark(cfg.id);
           northIslandRocks = landmark;
+          } else if (cfg.id === 'wasteland_nw') {
+          // 👇 新增：套用荒地岩石模型
+          landmark = createWastelandLandmark(cfg.id);
         } else if (cfg.id === 'wasteland_s') {
           landmark = createTurtleHillLandmark();
         }
@@ -7774,7 +7795,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           islandTitleSprites.push(labelSprite);
         }
 
-        let treeCount = (cfg.id === 'civics') ? 1 : ((cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s') ? 0 : 3);
+        let treeCount = (cfg.id === 'civics') ? 1 : ((cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s' || cfg.id === 'wasteland_nw') ? 0 : 3);
         for (let t = 0; t < treeCount; t++) {
           let tx = 0, tz = 0, foundValidPos = false, attempts = 0;
           if (cfg.id === 'civics') {
@@ -9191,7 +9212,7 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
       isCartPaused = (islandData.id === 'cart');
       isBoatPaused = (islandData.id === 'boat');
 
-      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart', 'boat', 'wasteland_n', 'wasteland_s'].forEach(id => {
+      ['nature', 'sport', 'civics', 'reading', 'beyblade', 'mascot', 'cart', 'boat', 'wasteland_n', 'wasteland_s', 'wasteland_nw'].forEach(id => {
         const el = document.getElementById(`panel-${id}`);
         if (el) el.style.display = 'none';
       });
