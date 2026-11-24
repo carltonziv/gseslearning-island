@@ -947,6 +947,7 @@
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <button id="lobby-bgm-btn" class="btn btn-secondary">🔇 音樂：關</button>
+          <button id="lobby-sfx-btn" class="btn btn-secondary">🔇 音效：關</button>
           <button id="lobby-exit-btn" class="btn btn-exit">🏝️ 返回島嶼</button>
         </div>
       </div>
@@ -1044,6 +1045,7 @@
 
       <div class="top-actions">
         <button id="btn-bgm" class="btn btn-secondary">🔇 音樂：關</button>
+        <button id="btn-sfx" class="btn btn-secondary">🔇 音效：關</button>
         <button id="btn-follow" class="btn btn-secondary active">🎥 跟隨：開</button>
         <button id="btn-reset-view" class="btn btn-secondary">🎯 全覽</button>
         <button id="btn-exit" class="btn btn-exit">🏝️ 結算返回</button>
@@ -1242,6 +1244,39 @@
           if (btn) {
             btn.textContent = label;
             btn.classList.toggle('active', this.isPlaying);
+          }
+        });
+      }
+    };
+    // 🔊 龜山探險島跳躍音效控制（預設關閉）
+    const SfxManager = {
+      jumpAudio: new Audio('./monopoly_assets/jump.mp3'),
+      isEnabled: false,
+      init() {
+        this.jumpAudio.volume = 0.5;
+        this.updateUI();
+      },
+      toggle() {
+        this.isEnabled = !this.isEnabled;
+        if (this.isEnabled) {
+          this.playJump();
+        }
+        this.updateUI();
+      },
+      playJump() {
+        if (!this.isEnabled) return;
+        this.jumpAudio.currentTime = 0;
+        this.jumpAudio.play().catch(err => {
+          console.warn('跳躍音效播放受阻:', err);
+        });
+      },
+      updateUI() {
+        const label = this.isEnabled ? '🔊 音效：開' : '🔇 音效：關';
+        ['btn-sfx', 'lobby-sfx-btn'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) {
+            btn.textContent = label;
+            btn.classList.toggle('active', this.isEnabled);
           }
         });
       }
@@ -2657,6 +2692,7 @@ enqueueSteps(uid, steps, onComplete) {
         pawn.startPos = { gx: currT.gx, gy: currT.gy };
         pawn.targetPos = { gx: nextT.gx, gy: nextT.gy };
         pawn.hopProgress = 0; pawn.isHopping = true; pawn.tileIndex = nextIdx;
+        SfxManager.playJump();
       },
       grantPassStartReward(pawn) {
       const startTile = BOARD_TILES[0];
@@ -4246,6 +4282,8 @@ drawWorldMap(ctx) {
         document.getElementById('btn-roll').addEventListener('click', () => HUD.triggerRoll());
         document.getElementById('btn-bgm').addEventListener('click', () => BgmManager.toggle());
         document.getElementById('lobby-bgm-btn').addEventListener('click', () => BgmManager.toggle());
+        document.getElementById('btn-sfx').addEventListener('click', () => SfxManager.toggle());
+        document.getElementById('lobby-sfx-btn').addEventListener('click', () => SfxManager.toggle());
         document.getElementById('btn-follow').addEventListener('click', () => this.setAutoFollow(!this.camera.autoFollow));
         document.getElementById('btn-reset-view').addEventListener('click', () => this.resetCamera());
         document.getElementById('btn-exit').addEventListener('click', () => GameBridge.closeAndReturn());
@@ -4277,7 +4315,7 @@ drawWorldMap(ctx) {
       }
     };
 
-    GameBridge.init(); BgmManager.init(); HUD.initLobby(); MultiplayerManager.init(); Engine.init();
+    GameBridge.init(); BgmManager.init(); SfxManager.init(); HUD.initLobby(); MultiplayerManager.init(); Engine.init();
   </script>
 </body>
 </html>
