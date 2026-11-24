@@ -945,7 +945,10 @@
           <h1>⛏️ 龜山新烏探險對決</h1>
           <div class="lobby-sub">歡迎 <strong id="lobby-player-name" style="color:#ffd54f;">探險者</strong>！請選擇角色並配對，2～4 位玩家才能啟動遊戲</div>
         </div>
-        <button id="lobby-exit-btn" class="btn btn-exit">🏝️ 返回島嶼</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button id="lobby-bgm-btn" class="btn btn-secondary">🔇 音樂：關</button>
+          <button id="lobby-exit-btn" class="btn btn-exit">🏝️ 返回島嶼</button>
+        </div>
       </div>
 
       <div class="quest-dice-banner">
@@ -1040,6 +1043,7 @@
       </div>
 
       <div class="top-actions">
+        <button id="btn-bgm" class="btn btn-secondary">🔇 音樂：關</button>
         <button id="btn-follow" class="btn btn-secondary active">🎥 跟隨：開</button>
         <button id="btn-reset-view" class="btn btn-secondary">🎯 全覽</button>
         <button id="btn-exit" class="btn btn-exit">🏝️ 結算返回</button>
@@ -1202,6 +1206,46 @@
     const BASE_DICE = 15;
     const QUEST_BONUS_DICE = 2;
     const START_PASS_REWARD = 50;
+    // 🎵 龜山探險島背景音樂控制（預設關閉）
+    const BgmManager = {
+      audio: new Audio('./monopoly_assets/yonhonnorecorder.mp3'),
+      isPlaying: false,
+      init() {
+        this.audio.loop = true;
+        this.audio.volume = 0.35;
+        this.updateUI();
+      },
+      toggle() {
+        if (!this.isPlaying) {
+          this.audio.play().then(() => {
+            this.isPlaying = true;
+            this.updateUI();
+          }).catch(err => {
+            console.warn('背景音樂播放受阻:', err);
+          });
+        } else {
+          this.audio.pause();
+          this.isPlaying = false;
+          this.updateUI();
+        }
+      },
+      stop() {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.isPlaying = false;
+        this.updateUI();
+      },
+      updateUI() {
+        const label = this.isPlaying ? '🎵 音樂：開' : '🔇 音樂：關';
+        ['btn-bgm', 'lobby-bgm-btn'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) {
+            btn.textContent = label;
+            btn.classList.toggle('active', this.isPlaying);
+          }
+        });
+      }
+    };
 
     function calcTollFee(price) {
       return Math.max(1, Math.ceil(price * TOLL_RATIO));
@@ -1555,6 +1599,7 @@
       },
       closeAndReturn() {
         Engine.stopLoop();
+        BgmManager.stop();
         MultiplayerManager.leaveRoomCleanly();
         const refundedEnergy = Math.floor(GameState.coins / EXCHANGE_RATE);
         const finalPersonalEnergy = GameState.personalEnergy + refundedEnergy;
@@ -4199,6 +4244,8 @@ drawWorldMap(ctx) {
         document.getElementById('btn-start-game').addEventListener('click', () => MultiplayerManager.startGameHost());
         document.getElementById('lobby-exit-btn').addEventListener('click', () => GameBridge.closeAndReturn());
         document.getElementById('btn-roll').addEventListener('click', () => HUD.triggerRoll());
+        document.getElementById('btn-bgm').addEventListener('click', () => BgmManager.toggle());
+        document.getElementById('lobby-bgm-btn').addEventListener('click', () => BgmManager.toggle());
         document.getElementById('btn-follow').addEventListener('click', () => this.setAutoFollow(!this.camera.autoFollow));
         document.getElementById('btn-reset-view').addEventListener('click', () => this.resetCamera());
         document.getElementById('btn-exit').addEventListener('click', () => GameBridge.closeAndReturn());
@@ -4230,7 +4277,7 @@ drawWorldMap(ctx) {
       }
     };
 
-    GameBridge.init(); HUD.initLobby(); MultiplayerManager.init(); Engine.init();
+    GameBridge.init(); BgmManager.init(); HUD.initLobby(); MultiplayerManager.init(); Engine.init();
   </script>
 </body>
 </html>
