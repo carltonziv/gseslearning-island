@@ -5670,10 +5670,19 @@ if (isCompleted) {
 
       // 攀爬小樓梯
       for (let st = 0; st < 5; st++) {
-        const step = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.2), metalBlueMat);
-        step.position.set(-1.6 - st * 0.2, 0.3 + st * 0.28, 0);
+        const step = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.76), metalBlueMat);
+        // st = 0 在最外側地面，st = 4 最高處緊貼黃色高台左側 (X = -1.4)
+        step.position.set(-2.35 + st * 0.21, 0.28 + st * 0.28, 0);
+        step.castShadow = true;
         stageSportSlide.add(step);
       }
+      [-0.4, 0.4].forEach(lz => {
+        const railBeam = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 0.06), plasticYellowMat);
+        railBeam.position.set(-1.90, 0.88, lz);
+        railBeam.rotation.z = -0.58;
+        railBeam.castShadow = true;
+        stageSportSlide.add(railBeam);
+      });
 
       // 紅色傾斜溜滑梯道
       const chute = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 0.8), plasticRedMat);
