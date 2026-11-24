@@ -4563,64 +4563,145 @@ if (isCompleted) {
 
     function createNatureLandmark() {
       const group = new THREE.Group();
-      const bodyMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xdc2626, roughness: 0.3, metalness: 0.2 });
-      const spotMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x111827, roughness: 0.5 });
+      // ==========================================
+      // 🔭 生態科技島中央地標：Low-Poly 單筒望遠鏡
+      // ==========================================
+      const telescopeGroup = new THREE.Group();
 
-      const bodyGeo = new THREE.SphereGeometry(1.5, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.scale.set(1.0, 0.75, 1.25);
-      body.castShadow = true;
-      body.receiveShadow = true;
-      group.add(body);
-
-      const bottomCapGeo = new THREE.CircleGeometry(1.5, 24);
-      const bottomCap = new THREE.Mesh(bottomCapGeo, spotMat);
-      bottomCap.rotation.x = Math.PI / 2;
-      bottomCap.scale.set(1.0, 1.25, 1.0);
-      bottomCap.position.y = 0.01;
-      group.add(bottomCap);
-
-      const headGeo = new THREE.SphereGeometry(0.7, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-      const head = new THREE.Mesh(headGeo, spotMat);
-      head.position.set(0, 0, 1.4);
-      head.scale.set(1.0, 0.65, 0.85);
-      head.castShadow = true;
-      group.add(head);
-
-      const spotsParams = [
-        { theta: 0.45, phi: 0.65, size: 0.22 },
-        { theta: 0.75, phi: 1.35, size: 0.25 },
-        { theta: 0.55, phi: 2.35, size: 0.20 }
-      ];
-
-      const R = 1.5, scaleX = 1.0, scaleY = 0.75, scaleZ = 1.25;
-
-      spotsParams.forEach(param => {
-        [-1, 1].forEach(side => {
-          const phi = side === 1 ? param.phi : Math.PI - param.phi;
-          const sinT = Math.sin(param.theta);
-          const cosT = Math.cos(param.theta);
-
-          const nx = sinT * Math.cos(phi);
-          const ny = cosT;
-          const nz = sinT * Math.sin(phi);
-
-          const spotGeo = new THREE.CylinderGeometry(param.size, param.size, 0.04, 16);
-          const spotMesh = new THREE.Mesh(spotGeo, spotMat);
-          spotMesh.position.set(nx * R * scaleX * 1.02, ny * R * scaleY * 1.02, nz * R * scaleZ * 1.02);
-
-          const normal = new THREE.Vector3(nx / scaleX, ny / scaleY, nz / scaleZ).normalize();
-          spotMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
-          group.add(spotMesh);
-        });
+      const tripodMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1E293B, metalness: 0.65, roughness: 0.35 });
+      const greenBarrelMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x15803D, roughness: 0.35, metalness: 0.15 });
+      const whiteBodyMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF8FAFC, roughness: 0.3, metalness: 0.1 });
+      const goldTrimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF59E0B, metalness: 0.85, roughness: 0.2 });
+      const lensGlassMat = SharedPool.getMaterial('MeshStandardMaterial', {
+        color: 0x38BDF8,
+        emissive: 0x0284C7,
+        emissiveIntensity: 0.45,
+        roughness: 0.1,
+        metalness: 0.8
       });
 
-      const lineMesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.03, 3.2), spotMat);
-      lineMesh.position.set(0, 1.12, 0); 
-      group.add(lineMesh);
+      // 1. 三腳架支架（三隻腳精準落地）
+      const hubY = 1.62;
+      const legSpread = 0.92;
+      const upVec = new THREE.Vector3(0, 1, 0);
 
-      registerObstacle('nature', 0, 0, 2.0);
+      for (let i = 0; i < 3; i++) {
+        const ang = (i * Math.PI * 2) / 3 + Math.PI / 6;
+        const footX = Math.cos(ang) * legSpread;
+        const footZ = Math.sin(ang) * legSpread;
 
+        const startPt = new THREE.Vector3(footX, 0, footZ);
+        const endPt = new THREE.Vector3(0, hubY, 0);
+        const legLen = startPt.distanceTo(endPt);
+
+        const legMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.038, legLen, 10), tripodMat);
+        legMesh.position.copy(startPt).lerp(endPt, 0.5);
+        legMesh.quaternion.setFromUnitVectors(upVec, endPt.clone().sub(startPt).normalize());
+        legMesh.castShadow = true;
+        legMesh.receiveShadow = true;
+        telescopeGroup.add(legMesh);
+
+        // 腳架底部防滑墊
+        const footPad = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 0.06, 10), goldTrimMat);
+        footPad.position.set(footX, 0.03, footZ);
+        telescopeGroup.add(footPad);
+
+        // 中段水平支撐連桿
+        const brace = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, legSpread * 0.58), tripodMat);
+        brace.position.set(footX * 0.28, 0.68, footZ * 0.28);
+        brace.rotation.y = -ang + Math.PI / 2;
+        telescopeGroup.add(brace);
+      }
+
+      // 2. 中軸與雲台轉軸
+      const centerCol = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.55, 12), tripodMat);
+      centerCol.position.y = 1.62;
+      centerCol.castShadow = true;
+      telescopeGroup.add(centerCol);
+
+      const mountHead = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.24, 0.32), tripodMat);
+      mountHead.position.y = 1.92;
+      mountHead.castShadow = true;
+      telescopeGroup.add(mountHead);
+
+      // 雲台調整握把
+      const panHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.65, 8), tripodMat);
+      panHandle.position.set(0, 1.72, -0.36);
+      panHandle.rotation.x = 0.65;
+      telescopeGroup.add(panHandle);
+
+      // 3. 望遠鏡光學鏡筒（朝前上方仰望）
+      const scopeTube = new THREE.Group();
+      scopeTube.position.set(0, 2.08, 0);
+      scopeTube.rotation.x = -0.35; // 向上仰角約 20 度
+
+      // 前端綠色遮光罩（物鏡端）
+      const hoodGeo = new THREE.CylinderGeometry(0.38, 0.35, 0.85, 20);
+      hoodGeo.rotateX(Math.PI / 2);
+      const hoodMesh = new THREE.Mesh(hoodGeo, greenBarrelMat);
+      hoodMesh.position.z = 0.82;
+      hoodMesh.castShadow = true;
+      scopeTube.add(hoodMesh);
+
+      // 物鏡端藍色反光鏡片
+      const lensMesh = new THREE.Mesh(new THREE.CircleGeometry(0.33, 20), lensGlassMat);
+      lensMesh.position.z = 1.246;
+      scopeTube.add(lensMesh);
+
+      // 金色調焦飾環
+      const goldRingGeo = new THREE.CylinderGeometry(0.365, 0.365, 0.08, 20);
+      goldRingGeo.rotateX(Math.PI / 2);
+      const goldRing = new THREE.Mesh(goldRingGeo, goldTrimMat);
+      goldRing.position.z = 0.38;
+      scopeTube.add(goldRing);
+
+      // 中段白色流線錐形鏡身
+      const midGeo = new THREE.CylinderGeometry(0.34, 0.22, 0.92, 20);
+      midGeo.rotateX(Math.PI / 2);
+      const midMesh = new THREE.Mesh(midGeo, whiteBodyMat);
+      midMesh.position.z = -0.08;
+      midMesh.castShadow = true;
+      scopeTube.add(midMesh);
+
+      // 後方稜鏡座與調焦旋鈕
+      const prismBox = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.42, 0.5), tripodMat);
+      prismBox.position.z = -0.72;
+      prismBox.castShadow = true;
+      scopeTube.add(prismBox);
+
+      const focusKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.14, 12), goldTrimMat);
+      focusKnob.position.set(0, 0.26, -0.62);
+      scopeTube.add(focusKnob);
+
+      // 45 度斜角目鏡組
+      const eyepieceGroup = new THREE.Group();
+      eyepieceGroup.position.set(0, 0.14, -0.92);
+      eyepieceGroup.rotation.x = -0.72;
+
+      const eyeBarrelGeo = new THREE.CylinderGeometry(0.1, 0.125, 0.44, 16);
+      eyeBarrelGeo.rotateX(Math.PI / 2);
+      const eyeBarrel = new THREE.Mesh(eyeBarrelGeo, greenBarrelMat);
+      eyeBarrel.position.z = -0.22;
+      eyeBarrel.castShadow = true;
+      eyepieceGroup.add(eyeBarrel);
+
+      const eyeCup = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.024, 8, 16), tripodMat);
+      eyeCup.position.z = -0.44;
+      eyepieceGroup.add(eyeCup);
+
+      scopeTube.add(eyepieceGroup);
+      telescopeGroup.add(scopeTube);
+
+      // 望遠鏡朝向東南方海面與群島方向（方便正面觀察鏡身與目鏡）
+      telescopeGroup.rotation.y = 0.45;
+      group.add(telescopeGroup);
+
+      // 註冊中央地標碰撞半徑
+      registerObstacle('nature', 0, 0, 1.4);
+
+      // ==========================================
+      // 🌬️ 保留原本兩座風力發電機
+      // ==========================================
       const turbineCoords = [[-2.4, -1.8], [2.4, 1.8]];
       turbineCoords.forEach(pos => {
         const wt = new THREE.Group();
