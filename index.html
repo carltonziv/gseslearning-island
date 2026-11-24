@@ -5372,19 +5372,7 @@ if (isCompleted) {
         }
       }
 
-      // 👇 --- 新增：在書櫃前捧書閱讀的 NPC --- 👇
-      const readingNPC = createCharacterMesh(true, 0xFFE0BD, 0x7C3AED);
-      readingNPC.position.set(0.35, 0, 1.02);
-      readingNPC.rotation.y = Math.PI * 0.78; // 面向書櫃並微側向鏡頭
 
-      const rLimbs = readingNPC.userData.limbs;
-      if (rLimbs) {
-        // 雙手向前抬起捧書姿勢
-        rLimbs.leftArm.rotation.x = -0.95;
-        rLimbs.leftArm.rotation.z = -0.25;
-        rLimbs.rightArm.rotation.x = -0.95;
-        rLimbs.rightArm.rotation.z = 0.25;
-      }
 // 👇 --- 新增：在書櫃前捧書閱讀的 NPC（每30秒自動換書） --- 👇
       readingNPC = createCharacterMesh(true, 0xFFE0BD, 0x7C3AED);
       readingNPC.position.set(0.35, 0, 1.05);
