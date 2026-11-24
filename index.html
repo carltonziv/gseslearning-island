@@ -9490,21 +9490,30 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
       modal.classList.remove('hidden');
     }
 
+let monopolyCloseFallbackTimer = null;
+    let monopolyStartEnergy = null; // 紀錄進入大富翁前的原始個人能量，確保試算表結算差額正確
+    let monopolyCloseFallbackTimer = null;
+    let monopolyStartEnergy = null;
+
     // 🐢 關閉大富翁內視窗並恢復主島嶼運作
     function closeMonopolyModal(forceClose = false) {
       const modal = document.getElementById('modal-monopoly');
       const iframe = document.getElementById('monopoly-iframe');
 
-      // 若玩家直接點擊外框右上角「×」，先觸發大富翁內部結算以退還剩餘金幣並退出連線房間
-      if (!forceClose && iframe && iframe.contentWindow && iframe.contentWindow.GameBridge) {
-        try {
-          iframe.contentWindow.GameBridge.closeAndReturn();
-          return;
-        } catch (e) {
-          // 若 iframe 尚未載入完成則直接執行下方關閉流程
-        }
+      // 若玩家直接點擊外框右上角「×」，先透過 postMessage 通知大富翁執行內部結算
+      if (!forceClose && modal && !modal.classList.contains('hidden') && iframe && iframe.contentWindow && iframe.src !== 'about:blank') {
+        iframe.contentWindow.postMessage({ type: 'MONOPOLY_FORCE_SETTLE' }, '*');
+
+        // 保底機制：若 400 毫秒內未收到回應（例如畫面尚未載入完畢），則直接關閉外框
+        clearTimeout(monopolyCloseFallbackTimer);
+        monopolyCloseFallbackTimer = setTimeout(() => {
+          closeMonopolyModal(true);
+        }, 400);
+        return;
       }
 
+      clearTimeout(monopolyCloseFallbackTimer);
+      monopolyStartEnergy = null;
       if (modal) modal.classList.add('hidden');
       if (iframe) iframe.src = 'about:blank'; // 釋放記憶體與 Firebase 連線
 
@@ -9517,17 +9526,35 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
       }
     }
 
-    // 🐢 監聽來自 monopoly.html 的結算返回訊息（MONOPOLY_CLOSE）
+    // 🐢 監聽來自 monopoly.html 的即時同步與結算返回訊息
     window.addEventListener('message', (event) => {
       if (event.origin !== window.location.origin && event.origin !== 'null') return;
 
       const { type, payload } = event.data || {};
-      if (type === 'MONOPOLY_CLOSE' && payload) {
-        const oldEnergy = currentStudent.myPoints || 0;
-        const newEnergy = (typeof payload.personalEnergy === 'number') ? payload.personalEnergy : oldEnergy;
-        const energyDiff = newEnergy - oldEnergy;
 
-        // 1. 更新主網頁的個人累積能量與記憶體快取（不影響全班共創能量）
+      // 1. 遊戲進行中的即時能量同步（防止玩家按 F5 重新整理或強關瀏覽器逃避扣分）
+      if (type === 'MONOPOLY_SYNC_ENERGY' && payload && typeof payload.personalEnergy === 'number') {
+        if (currentStudent && currentStudent.seatNumber !== '訪客') {
+          if (monopolyStartEnergy === null) {
+            monopolyStartEnergy = currentStudent.myPoints || 0;
+          }
+          currentStudent.myPoints = payload.personalEnergy;
+          sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
+          if (Array.isArray(rosterList)) {
+            const matched = rosterList.find(s => String(s.seatNumber) === String(currentStudent.seatNumber));
+            if (matched) matched.points = payload.personalEnergy;
+          }
+          updateHudProfile();
+        }
+      }
+
+      // 2. 遊戲正式結算或按外框 × 強制結算關閉（MONOPOLY_CLOSE）
+      if (type === 'MONOPOLY_CLOSE' && payload) {
+        const baseEnergy = (monopolyStartEnergy !== null) ? monopolyStartEnergy : (currentStudent.myPoints || 0);
+        const newEnergy = (typeof payload.personalEnergy === 'number') ? payload.personalEnergy : baseEnergy;
+        const energyDiff = newEnergy - baseEnergy;
+
+        // 更新主網頁的個人累積能量與記憶體快取（不影響全班共創能量）
         currentStudent.myPoints = newEnergy;
         sessionStorage.setItem('island_student_data_session', JSON.stringify(currentStudent));
         if (currentStudent.seatNumber !== '訪客' && Array.isArray(rosterList)) {
@@ -9536,7 +9563,7 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
         }
         updateHudProfile();
 
-        // 2. 若個人能量有變動且為正式座號學生，同步寫入 GAS 試算表紀錄
+        // 若個人能量有變動且為正式座號學生，同步寫入 GAS 試算表紀錄
         if (energyDiff !== 0 && currentStudent.seatNumber !== '訪客') {
           sendToGAS({
             type: 'task_complete',
@@ -9552,7 +9579,7 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
           });
         }
 
-        // 3. 關閉內視窗並恢復主島嶼動畫
+        // 關閉內視窗並恢復主島嶼動畫
         closeMonopolyModal(true);
 
         if (payload.refundedEnergy > 0) {
