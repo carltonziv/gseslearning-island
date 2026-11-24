@@ -4676,7 +4676,7 @@ if (isCompleted) {
       // 45 度斜角目鏡組
       const eyepieceGroup = new THREE.Group();
       eyepieceGroup.position.set(0, 0.14, -0.92);
-      eyepieceGroup.rotation.x = -0.72;
+      eyepieceGroup.rotation.x = 0.72; // 👈 把原本的 -0.72 改成正數 0.72，目鏡就會朝斜上方翹起
 
       const eyeBarrelGeo = new THREE.CylinderGeometry(0.1, 0.125, 0.44, 16);
       eyeBarrelGeo.rotateX(Math.PI / 2);
