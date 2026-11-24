@@ -1669,6 +1669,10 @@
     let readingIslandGroup = null;
     let readingOriginalLandmark = null;
     let stageReadingBookcase = null;      // 階段 1 (20%): 20本小書櫃
+    let stageReadingBookcase = null;      // 階段 1 (20% - 200分): 20本小書櫃
+    let readingNPC = null;                // 👈 新增：閱讀島看書 NPC
+    let readingHeldBook = null;           // 👈 新增：NPC 手上的書本
+    let readingBookCoverMat = null;       // 👈 新增：書本封面材質（換書時自動變色）
     let stageReadingCoffee = null;        // 階段 2 (40%): 咖啡桌與翻開的書
     let stageReadingBookstore = null;     // 階段 3 (60%): 溫馨微型小書店
     let stageReadingConstruction = null;  // 階段 4 (80%): 施工中的圖書館
@@ -5382,23 +5386,36 @@ if (isCompleted) {
         rLimbs.rightArm.rotation.x = -0.95;
         rLimbs.rightArm.rotation.z = 0.25;
       }
+// 👇 --- 新增：在書櫃前捧書閱讀的 NPC（每30秒自動換書） --- 👇
+      readingNPC = createCharacterMesh(true, 0xFFE0BD, 0x7C3AED);
+      readingNPC.position.set(0.35, 0, 1.05);
+      readingNPC.rotation.y = 0.25;
+
+      const rLimbs = readingNPC.userData.limbs;
+      if (rLimbs) {
+        rLimbs.leftArm.rotation.x = -0.95;
+        rLimbs.leftArm.rotation.z = -0.25;
+        rLimbs.rightArm.rotation.x = -0.95;
+        rLimbs.rightArm.rotation.z = 0.25;
+      }
 
       // 手中捧著的迷你翻開書本
-      const heldBookGroup = new THREE.Group();
+      readingHeldBook = new THREE.Group();
       const miniPageMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFFFBEB, roughness: 0.6 });
-      const miniCoverMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x4C1D95, roughness: 0.4 });
+      readingBookCoverMat = new THREE.MeshStandardMaterial({ color: 0x4C1D95, roughness: 0.4 });
+
       [-0.08, 0.08].forEach(bx => {
         const page = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.02, 0.22), miniPageMat);
         page.position.set(bx, 0.01, 0);
         page.rotation.z = (bx < 0 ? 0.2 : -0.2);
-        heldBookGroup.add(page);
+        readingHeldBook.add(page);
       });
-      const miniCover = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.015, 0.24), miniCoverMat);
-      heldBookGroup.add(miniCover);
+      const miniCover = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.015, 0.24), readingBookCoverMat);
+      readingHeldBook.add(miniCover);
 
-      heldBookGroup.position.set(0, 0.68, 0.34);
-      heldBookGroup.rotation.x = 0.45;
-      readingNPC.add(heldBookGroup);
+      readingHeldBook.position.set(0, 0.68, 0.34);
+      readingHeldBook.rotation.x = 0.45;
+      readingNPC.add(readingHeldBook);
 
       stageReadingBookcase.add(readingNPC);
       // 👆 ----------------------------------- 👆
@@ -8288,6 +8305,91 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
             limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(0, -Math.PI / 2, t);
             limbs.leftArm.rotation.set(THREE.MathUtils.lerp(0, -2.3, t), 0, THREE.MathUtils.lerp(0, 0.35, t));
             limbs.rightArm.rotation.set(THREE.MathUtils.lerp(0, -2.3, t), 0, THREE.MathUtils.lerp(0, -0.35, t));
+          }
+        }
+
+        // 📖 閱讀島小書櫃：NPC 看書 30 秒 -> 轉身放回書 -> 挑另一本新書 -> 轉回繼續看（34秒循環）
+        if (stageReadingBookcase && stageReadingBookcase.visible && readingNPC && readingNPC.userData.limbs) {
+          const limbs = readingNPC.userData.limbs;
+          const readCycle = time % 34.0;
+          const bookPalette = [0x4C1D95, 0xDC2626, 0x0284C7, 0x059669, 0xD97706];
+          const bookIdx = Math.floor(time / 34.0) % bookPalette.length;
+
+          if (readCycle < 30.0) {
+            // 階段 1 (0 ~ 30.0秒)：專心捧書閱讀（帶輕微呼吸與點頭律動）
+            if (readingBookCoverMat) readingBookCoverMat.color.setHex(bookPalette[bookIdx]);
+            if (readingHeldBook) readingHeldBook.visible = true;
+
+            readingNPC.position.set(0.35, Math.abs(Math.sin(time * 1.8)) * 0.012, 1.05);
+            readingNPC.rotation.set(0, 0.25 + Math.sin(time * 0.9) * 0.05, 0);
+
+            limbs.leftLeg.rotation.x = 0;
+            limbs.rightLeg.rotation.x = 0;
+            limbs.leftArm.rotation.set(-0.95, 0, -0.25);
+            limbs.rightArm.rotation.set(-0.95, 0, 0.25);
+
+          } else if (readCycle < 30.8) {
+            // 階段 2 (30.0 ~ 30.8秒)：轉身並走近書櫃
+            const t = (readCycle - 30.0) / 0.8;
+            const swing = Math.sin(time * 10) * 0.35;
+            readingNPC.position.set(0.35, Math.abs(Math.sin(time * 10)) * 0.03, THREE.MathUtils.lerp(1.05, 0.78, t));
+            readingNPC.rotation.set(0, THREE.MathUtils.lerp(0.25, Math.PI, t), 0);
+
+            limbs.leftLeg.rotation.x = swing;
+            limbs.rightLeg.rotation.x = -swing;
+            limbs.leftArm.rotation.set(-0.95, 0, -0.25);
+            limbs.rightArm.rotation.set(-0.95, 0, 0.25);
+
+          } else if (readCycle < 31.8) {
+            // 階段 3 (30.8 ~ 31.8秒)：伸手將看完的書放回書架
+            const t = (readCycle - 30.8) / 1.0;
+            readingNPC.position.set(0.35, 0, 0.78);
+            readingNPC.rotation.set(0, Math.PI, 0);
+
+            limbs.leftLeg.rotation.x = 0;
+            limbs.rightLeg.rotation.x = 0;
+            limbs.leftArm.rotation.set(THREE.MathUtils.lerp(-0.95, -0.3, t), 0, -0.15);
+            limbs.rightArm.rotation.set(-1.45 + Math.sin(t * Math.PI) * 0.25, 0, 0.15);
+
+            // 推入書架後隱藏手上書本
+            if (readingHeldBook) readingHeldBook.visible = (t < 0.6);
+
+          } else if (readCycle < 33.0) {
+            // 階段 4 (31.8 ~ 33.0秒)：往旁邊移動半步，從書架抽出另一本新書
+            const t = (readCycle - 31.8) / 1.2;
+            const stepT = Math.min(1, t * 1.6);
+            const swing = (t < 0.6) ? Math.sin(time * 10) * 0.3 : 0;
+
+            readingNPC.position.set(THREE.MathUtils.lerp(0.35, -0.15, stepT), 0, 0.78);
+            readingNPC.rotation.set(0, Math.PI, 0);
+
+            limbs.leftLeg.rotation.x = swing;
+            limbs.rightLeg.rotation.x = -swing;
+            limbs.leftArm.rotation.set(-0.3, 0, -0.15);
+            limbs.rightArm.rotation.set(-1.55 + Math.sin(t * Math.PI) * 0.3, 0, 0.15);
+
+            // 抽出新書並切換書皮顏色
+            if (t >= 0.5) {
+              const nextColor = bookPalette[(bookIdx + 1) % bookPalette.length];
+              if (readingBookCoverMat) readingBookCoverMat.color.setHex(nextColor);
+              if (readingHeldBook) readingHeldBook.visible = true;
+            }
+
+          } else {
+            // 階段 5 (33.0 ~ 34.0秒)：走回原位並轉身，準備繼續看新書
+            const t = (readCycle - 33.0) / 1.0;
+            const swing = Math.sin(time * 10) * 0.35;
+            readingNPC.position.set(
+              THREE.MathUtils.lerp(-0.15, 0.35, t),
+              Math.abs(Math.sin(time * 10)) * 0.03,
+              THREE.MathUtils.lerp(0.78, 1.05, t)
+            );
+            readingNPC.rotation.set(0, THREE.MathUtils.lerp(Math.PI, 0.25, t), 0);
+
+            limbs.leftLeg.rotation.x = swing;
+            limbs.rightLeg.rotation.x = -swing;
+            limbs.leftArm.rotation.set(THREE.MathUtils.lerp(-0.3, -0.95, t), 0, THREE.MathUtils.lerp(-0.15, -0.25, t));
+            limbs.rightArm.rotation.set(THREE.MathUtils.lerp(-1.55, -0.95, t), 0, THREE.MathUtils.lerp(0.15, 0.25, t));
           }
         }
         
