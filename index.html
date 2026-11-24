@@ -1305,66 +1305,97 @@
       </div>
     </div>
 
-    <!-- 6. 島嶼之星冒險指南面板 -->
+<!-- 6. 島嶼之星冒險指南面板 -->
     <div id="panel-mascot" style="display:none;">
       <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
           <span style="font-size:1.3rem;">🎒</span>
           <strong style="color: #b45309; font-size: 0.98rem;">島嶼之星冒險嚮導</strong>
         </div>
-        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">「哈囉！我是島嶼之星！隨時問我關於 301 學習島各島任務、陀螺錦標賽或全班共創能量的任何疑問喔！」</p>
+        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">「哈囉！我是島嶼之星！這座由八座島嶼與新烏探險秘境組成的 301 學習島，正等著大家一起累積能量、開墾神廟、迎戰陀螺大賽！隨時問我任何島嶼玩法喔～」</p>
       </div>
+
       <div style="background:#ffffff; border:2px solid #fed7aa; border-radius:18px; padding:12px; margin-bottom:14px; box-shadow:0 4px 12px rgba(251,146,60,0.12);">
         <div id="mascot-chat-box" style="height:190px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px; margin-bottom:10px;">
           <div style="align-self:flex-start; background:#fef3c7; color:#78350f; font-size:0.82rem; padding:8px 12px; border-radius:14px 14px 14px 4px; max-width:85%; line-height:1.45; border:1px solid #fde68a;">
-            👋 歡迎探險家！今天想要挑戰哪一座島嶼的任務呢？
+            👋 歡迎探險家！今天想要探索哪一座島嶼、搭上環島載具，還是去龜山探險島擲骰呢？
           </div>
         </div>
         <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;">
           <button type="button" class="quick-chip" onclick="askQuickPrompt('學習島有哪些島嶼跟任務？')">🗺️ 島嶼有哪些任務？</button>
           <button type="button" class="quick-chip" onclick="askQuickPrompt('戰鬥陀螺大賽要怎麼參加？')">🪀 陀螺大賽怎麼玩？</button>
           <button type="button" class="quick-chip" onclick="askQuickPrompt('如何替全班累積 5000 能量？')">⚡ 如何累積共創能量？</button>
+          <button type="button" class="quick-chip" onclick="askQuickPrompt('龜山探險島大富翁怎麼玩？')">🐢 探險大富翁玩法</button>
         </div>
         <div style="display:flex; gap:6px;">
-          <input type="text" id="mascot-user-input" placeholder="問問小隊長關於學習島的事..." style="flex:1; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:12px; font-size:0.85rem; outline:none;" onkeydown="if(event.key==='Enter') sendMascotMessage()">
+          <input type="text" id="mascot-user-input" placeholder="問問島嶼之星關於學習島的事..." style="flex:1; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:12px; font-size:0.85rem; outline:none;" onkeydown="if(event.key==='Enter') sendMascotMessage()">
           <button type="button" id="btn-send-mascot" onclick="sendMascotMessage()" style="background:#f97316; color:#fff; border:none; border-radius:12px; padding:0 14px; font-weight:bold; font-size:0.85rem; cursor:pointer;">傳送</button>
         </div>
       </div>
+
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[1])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #059669; font-size: 0.95rem;">🌿 生態科技島</strong>
-            <span style="font-size: 0.75rem; background: #d1fae5; color: #047857; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+5 EXP</span>
+            <span style="font-size: 0.75rem; background: #d1fae5; color: #047857; padding: 2px 8px; border-radius: 10px; font-weight: 700;">每日 1 次・+5 EXP</span>
           </div>
-          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">觀察校園中的昆蟲與植物，記錄名稱與外觀特徵打卡。</p>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">觀察校園植物或昆蟲並記錄外觀特徵打卡；島上有單筒望遠鏡與風力發電機。</p>
         </div>
+
         <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[2])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #d97706; font-size: 0.95rem;">🏃 健身運動島</strong>
-            <span style="font-size: 0.75rem; background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+3~5 EXP</span>
+            <span style="font-size: 0.75rem; background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+3～5 EXP・建設上限 700</span>
           </div>
-          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">跑操場、跳繩、打羽球，或在晚間 18-22 點打卡健康生活習慣。</p>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">挑戰操場 5 圈、跳繩 500 下或羽球 50 球，或於 18:00～22:00 打卡健康生活習慣並推動設施升級。</p>
         </div>
+
         <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[3])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #7c3aed; font-size: 0.95rem;">📖 閱讀島</strong>
-            <span style="font-size: 0.75rem; background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 10px; font-weight: 700;">每日 3 次</span>
+            <span style="font-size: 0.75rem; background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 10px; font-weight: 700;">讀報 +5 / 心得 +10 EXP</span>
           </div>
-          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">節錄書中精采段落並寫下 20 字以上心得（每天可打卡 3 次）。</p>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">參與今日讀報批改挑戰，或撰寫 20 字以上自由閱讀心得（每日可打卡 3 次）並推動書屋建設（上限 1000）。</p>
         </div>
+
         <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[4])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #0284c7; font-size: 0.95rem;">🏛️ 優良公民島</strong>
-            <span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 700;">+5 EXP</span>
+            <span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 700;">每日 1 次・+5 EXP</span>
           </div>
-          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">桌面、抽屜、桌底碎屑與垃圾袋檢查，由同學互相見證認證。</p>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">檢查桌面、抽屜、桌底碎屑與垃圾袋清空，經同學認證後完成；島嶼之星就在這裡守護大家。</p>
         </div>
+
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[5])">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color: #b45309; font-size: 0.95rem;">⛏️ 北方荒地／龜山福德神廟島</strong>
+            <span style="font-size: 0.75rem; background: #ffedd5; color: #9a3412; padding: 2px 8px; border-radius: 10px; font-weight: 700;">解題開墾・海怪防衛戰</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">透過解答數學與除法謎題注入開墾／防禦能量，讓土地逐步建為福德神廟並抵禦海怪奇襲。</p>
+        </div>
+
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[6])">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color: #15803d; font-size: 0.95rem;">🐢 龜山探險島（2.5D 大富翁）</strong>
+            <span style="font-size: 0.75rem; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 10px; font-weight: 700;">1 能量 = 10 金幣</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">2～4 人配對扮演棋哥、嘉麗、查理或小瑜，在 44 格新烏路線擲骰購地、抽命運機會與挑戰反省孤島。</p>
+        </div>
+
         <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[0])">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color: #dc2626; font-size: 0.95rem;">⚔️ 戰鬥陀螺島</strong>
-            <span style="font-size: 0.75rem; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-weight: 700;">全班 5000 能量全滿開啟</span>
+            <span style="font-size: 0.75rem; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-weight: 700;">全班 5000 能量開啟</span>
           </div>
-          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">全班共創能量累積達標時盛大開啟陀螺錦標賽！</p>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">全班共創能量達標時盛大開啟陀螺錦標賽，可報名參賽並查看即時淘汰賽程表與冠軍告示牌。</p>
+        </div>
+
+        <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 14px; padding: 12px; cursor: pointer;" onclick="focusOnIsland(ISLAND_CONFIG[7])">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color: #475569; font-size: 0.95rem;">🏜️ 西北荒地</strong>
+            <span style="font-size: 0.75rem; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-weight: 700;">神祕秘境</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">碎石遍佈的神祕西北荒地，正靜靜等待未來被喚醒的契機；別忘了也能搭輕便車、巡邏艇或熱氣球環島喔！</p>
         </div>
       </div>
     </div>
