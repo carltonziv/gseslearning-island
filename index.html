@@ -5367,6 +5367,42 @@ if (isCompleted) {
           stageReadingBookcase.add(bookMesh);
         }
       }
+
+      // 👇 --- 新增：在書櫃前捧書閱讀的 NPC --- 👇
+      const readingNPC = createCharacterMesh(true, 0xFFE0BD, 0x7C3AED);
+      readingNPC.position.set(0.35, 0, 1.02);
+      readingNPC.rotation.y = Math.PI * 0.78; // 面向書櫃並微側向鏡頭
+
+      const rLimbs = readingNPC.userData.limbs;
+      if (rLimbs) {
+        // 雙手向前抬起捧書姿勢
+        rLimbs.leftArm.rotation.x = -0.95;
+        rLimbs.leftArm.rotation.z = -0.25;
+        rLimbs.rightArm.rotation.x = -0.95;
+        rLimbs.rightArm.rotation.z = 0.25;
+      }
+
+      // 手中捧著的迷你翻開書本
+      const heldBookGroup = new THREE.Group();
+      const miniPageMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFFFBEB, roughness: 0.6 });
+      const miniCoverMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x4C1D95, roughness: 0.4 });
+      [-0.08, 0.08].forEach(bx => {
+        const page = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.02, 0.22), miniPageMat);
+        page.position.set(bx, 0.01, 0);
+        page.rotation.z = (bx < 0 ? 0.2 : -0.2);
+        heldBookGroup.add(page);
+      });
+      const miniCover = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.015, 0.24), miniCoverMat);
+      heldBookGroup.add(miniCover);
+
+      heldBookGroup.position.set(0, 0.68, 0.34);
+      heldBookGroup.rotation.x = 0.45;
+      readingNPC.add(heldBookGroup);
+
+      stageReadingBookcase.add(readingNPC);
+      // 👆 ----------------------------------- 👆
+
+      stageReadingBookcase.position.set(0, 0, 0.2);
       stageReadingBookcase.position.set(0, 0, 0.2);
       stageReadingBookcase.visible = false;
       parentGroup.add(stageReadingBookcase);
@@ -5698,6 +5734,28 @@ if (isCompleted) {
         rail.rotation.z = -0.58;
         stageSportSlide.add(rail);
       });
+
+      // 👇 --- 新增：正在溜滑梯的歡樂 NPC --- 👇
+      const slideNPC = createCharacterMesh(false, 0xF5D0A9, 0x0284C7);
+      slideNPC.position.set(0.42, 0.62, 0);
+      slideNPC.rotation.y = Math.PI / 2; // 朝向滑道下方 (+X)
+      slideNPC.rotation.x = -0.35;       // 配合滑道斜度微微後仰
+
+      const sLimbs = slideNPC.userData.limbs;
+      if (sLimbs) {
+        // 雙腿向前伸直坐姿
+        sLimbs.leftLeg.rotation.x = -Math.PI / 2;
+        sLimbs.rightLeg.rotation.x = -Math.PI / 2;
+        // 雙手高舉歡呼姿勢
+        sLimbs.leftArm.rotation.x = -2.2;
+        sLimbs.leftArm.rotation.z = 0.35;
+        sLimbs.rightArm.rotation.x = -2.2;
+        sLimbs.rightArm.rotation.z = -0.35;
+      }
+      stageSportSlide.add(slideNPC);
+      // 👆 ----------------------------------- 👆
+
+      stageSportSlide.position.set(0, 0, 0.2);
 
       stageSportSlide.position.set(0, 0, 0.2);
       stageSportSlide.visible = false;
