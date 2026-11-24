@@ -1680,6 +1680,7 @@
     let sportOriginalLandmark = null;
     let stageSportPullupBar = null;       // 階段 1 (20% - 140分): 單槓設施
     let stageSportSlide = null;           // 階段 2 (40% - 280分): 彩色溜滑梯
+    let slideNPC = null;                  // 👈 新增：溜滑梯循環 NPC 參照
     let stageSportBasketball = null;      // 階段 3 (60% - 420分): 經典籃球
     let stageSportShoe = null;            // 階段 4 (80% - 560分): 跑鞋 (含勾勾標誌)
     let stageSportTrack = null;           // 階段 5 (100% - 700分): 彩色 PU 跑道
@@ -5736,10 +5737,9 @@ if (isCompleted) {
       });
 
       // 👇 --- 新增：正在溜滑梯的歡樂 NPC --- 👇
-      const slideNPC = createCharacterMesh(false, 0xF5D0A9, 0x0284C7);
-      slideNPC.position.set(0.42, 0.62, 0);
-      slideNPC.rotation.y = Math.PI / 2; // 朝向滑道下方 (+X)
-      slideNPC.rotation.x = -0.35;       // 配合滑道斜度微微後仰
+      slideNPC = createCharacterMesh(false, 0xF5D0A9, 0x0284C7);
+      slideNPC.position.set(-0.25, 1.48, 0);
+      slideNPC.rotation.y = Math.PI / 2;
 
       const sLimbs = slideNPC.userData.limbs;
       if (sLimbs) {
@@ -8181,6 +8181,116 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
 
         windTurbineBlades.forEach(blade => { blade.rotation.z += 0.04; });
 
+        // 🛝 運動島溜滑梯：NPC 溜下 -> 繞回前側 -> 爬樓梯 -> 坐下再溜（12秒無縫循環）
+        if (stageSportSlide && stageSportSlide.visible && slideNPC && slideNPC.userData.limbs) {
+          const limbs = slideNPC.userData.limbs;
+          const cycle = time % 12.0;
+
+          if (cycle < 1.8) {
+            // 階段 1 (0 ~ 1.8秒)：加速溜下滑梯
+            const t = Math.pow(cycle / 1.8, 1.5);
+            slideNPC.position.set(
+              THREE.MathUtils.lerp(-0.25, 1.45, t),
+              THREE.MathUtils.lerp(1.48, 0.24, t),
+              0
+            );
+            slideNPC.rotation.set(-0.45, Math.PI / 2, 0);
+            limbs.leftLeg.rotation.x = -Math.PI / 2;
+            limbs.rightLeg.rotation.x = -Math.PI / 2;
+            limbs.leftArm.rotation.set(-2.3, 0, 0.35);
+            limbs.rightArm.rotation.set(-2.3, 0, -0.35);
+
+          } else if (cycle < 2.6) {
+            // 階段 2 (1.8 ~ 2.6秒)：落地起身並走到滑梯前方走道
+            const t = (cycle - 1.8) / 0.8;
+            slideNPC.position.set(
+              THREE.MathUtils.lerp(1.45, 1.85, t),
+              THREE.MathUtils.lerp(0.24, 0, t),
+              THREE.MathUtils.lerp(0, 0.85, t)
+            );
+            slideNPC.rotation.set(0, THREE.MathUtils.lerp(Math.PI / 2, 0, t), 0);
+            const swing = Math.sin(time * 9) * 0.5;
+            limbs.leftLeg.rotation.x = swing;
+            limbs.rightLeg.rotation.x = -swing;
+            limbs.leftArm.rotation.set(-swing, 0, 0);
+            limbs.rightArm.rotation.set(swing, 0, 0);
+
+          } else if (cycle < 6.2) {
+            // 階段 3 (2.6 ~ 6.2秒)：沿前方走道繞回左側樓梯口
+            const t = (cycle - 2.6) / 3.6;
+            const swing = Math.sin(time * 9) * 0.55;
+            slideNPC.position.set(
+              THREE.MathUtils.lerp(1.85, -2.55, t),
+              Math.abs(Math.sin(time * 9)) * 0.04,
+              0.85
+            );
+            slideNPC.rotation.set(0, -Math.PI / 2, 0);
+            limbs.leftLeg.rotation.x = swing;
+            limbs.rightLeg.rotation.x = -swing;
+            limbs.leftArm.rotation.set(-swing, 0, 0);
+            limbs.rightArm.rotation.set(swing, 0, 0);
+
+          } else if (cycle < 7.2) {
+            // 階段 4 (6.2 ~ 7.2秒)：轉彎對準樓梯底部
+            const t = (cycle - 6.2) / 1.0;
+            const swing = Math.sin(time * 9) * 0.5;
+            slideNPC.position.set(
+              -2.55,
+              Math.abs(Math.sin(time * 9)) * 0.04,
+              THREE.MathUtils.lerp(0.85, 0, t)
+            );
+            slideNPC.rotation.set(0, THREE.MathUtils.lerp(Math.PI, Math.PI / 2, t), 0);
+            limbs.leftLeg.rotation.x = swing;
+            limbs.rightLeg.rotation.x = -swing;
+            limbs.leftArm.rotation.set(-swing, 0, 0);
+            limbs.rightArm.rotation.set(swing, 0, 0);
+
+          } else if (cycle < 9.8) {
+            // 階段 5 (7.2 ~ 9.8秒)：一階階爬上藍色樓梯
+            const t = (cycle - 7.2) / 2.6;
+            const climbSwing = Math.sin(time * 11) * 0.65;
+            slideNPC.position.set(
+              THREE.MathUtils.lerp(-2.55, -1.35, t),
+              THREE.MathUtils.lerp(0, 1.66, t) + Math.abs(Math.sin(time * 11)) * 0.04,
+              0
+            );
+            slideNPC.rotation.set(0.15, Math.PI / 2, 0);
+            limbs.leftLeg.rotation.x = climbSwing;
+            limbs.rightLeg.rotation.x = -climbSwing;
+            limbs.leftArm.rotation.set(-climbSwing, 0, 0);
+            limbs.rightArm.rotation.set(climbSwing, 0, 0);
+
+          } else if (cycle < 11.2) {
+            // 階段 6A (9.8 ~ 11.2秒)：走過黃色高台
+            const t = (cycle - 9.8) / 1.4;
+            const swing = Math.sin(time * 8) * 0.45;
+            slideNPC.position.set(
+              THREE.MathUtils.lerp(-1.35, -0.35, t),
+              1.66 + Math.abs(Math.sin(time * 8)) * 0.03,
+              0
+            );
+            slideNPC.rotation.set(0, Math.PI / 2, 0);
+            limbs.leftLeg.rotation.x = swing;
+            limbs.rightLeg.rotation.x = -swing;
+            limbs.leftArm.rotation.set(-swing, 0, 0);
+            limbs.rightArm.rotation.set(swing, 0, 0);
+
+          } else {
+            // 階段 6B (11.2 ~ 12.0秒)：坐下滑道口並高舉雙手，無縫銜接下一次滑行
+            const t = (cycle - 11.2) / 0.8;
+            slideNPC.position.set(
+              THREE.MathUtils.lerp(-0.35, -0.25, t),
+              THREE.MathUtils.lerp(1.66, 1.48, t),
+              0
+            );
+            slideNPC.rotation.set(THREE.MathUtils.lerp(0, -0.45, t), Math.PI / 2, 0);
+            limbs.leftLeg.rotation.x = THREE.MathUtils.lerp(0, -Math.PI / 2, t);
+            limbs.rightLeg.rotation.x = THREE.MathUtils.lerp(0, -Math.PI / 2, t);
+            limbs.leftArm.rotation.set(THREE.MathUtils.lerp(0, -2.3, t), 0, THREE.MathUtils.lerp(0, 0.35, t));
+            limbs.rightArm.rotation.set(THREE.MathUtils.lerp(0, -2.3, t), 0, THREE.MathUtils.lerp(0, -0.35, t));
+          }
+        }
+        
         // 🏃 運動島 PU 跑道：2 位迷你小跑者繞圈奔跑動畫
         if (stageSportTrack && stageSportTrack.visible && sportTrackRunners.length > 0) {
           sportTrackRunners.forEach(r => {
