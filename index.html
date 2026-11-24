@@ -1663,16 +1663,15 @@
     let northIslandReclaimRef = null;
     let northIslandGroup = null;
     let northIslandRocks = null;
-    // 📚 閱讀島分階段建設專屬變數
+// 📚 閱讀島分階段建設專屬變數
     let readingBuildEnergy = 0;
     let readingBuildEnergyRef = null;
     let readingIslandGroup = null;
     let readingOriginalLandmark = null;
-    let stageReadingBookcase = null;      // 階段 1 (20%): 20本小書櫃
     let stageReadingBookcase = null;      // 階段 1 (20% - 200分): 20本小書櫃
-    let readingNPC = null;                // 👈 新增：閱讀島看書 NPC
-    let readingHeldBook = null;           // 👈 新增：NPC 手上的書本
-    let readingBookCoverMat = null;       // 👈 新增：書本封面材質（換書時自動變色）
+    let readingNPC = null;                // 新增：閱讀島看書 NPC
+    let readingHeldBook = null;           // 新增：NPC 手上的書本
+    let readingBookCoverMat = null;       // 新增：書本封面材質（換書時自動變色
     let stageReadingCoffee = null;        // 階段 2 (40%): 咖啡桌與翻開的書
     let stageReadingBookstore = null;     // 階段 3 (60%): 溫馨微型小書店
     let stageReadingConstruction = null;  // 階段 4 (80%): 施工中的圖書館
@@ -5418,9 +5417,8 @@ if (isCompleted) {
       readingNPC.add(readingHeldBook);
 
       stageReadingBookcase.add(readingNPC);
-      // 👆 ----------------------------------- 👆
+      // 👆 --------------------------------------------------- 👆
 
-      stageReadingBookcase.position.set(0, 0, 0.2);
       stageReadingBookcase.position.set(0, 0, 0.2);
       stageReadingBookcase.visible = false;
       parentGroup.add(stageReadingBookcase);
