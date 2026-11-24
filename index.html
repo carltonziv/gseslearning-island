@@ -2157,6 +2157,40 @@ function applyRosterData(data) {
   }
 }
 
+
+    async function fetchCurrentWeatherAfterLogin() {
+  if (!GAS_API_URL || GAS_API_URL.includes("請替換")) return;
+
+  try {
+    // 優先嘗試以 type: 'get_weather' 向 GAS 索取當下天氣；若後端未分流該 type，則退回一般 GET 取得最新資料
+    let res = await fetch(GAS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ type: 'get_weather' })
+    });
+    let data = await res.json();
+
+    if (!data || !data.weather) {
+      const getRes = await fetch(GAS_API_URL, { cache: 'no-store' });
+      data = await getRes.json();
+    }
+
+    if (data && data.weather) {
+      realLocalWeather = data.weather;
+
+      // 核對海怪事件狀態；若不在海怪暴風雨期間，立即套用最新抓到的天氣
+      if (typeof checkMonsterEventStatus === 'function') {
+        checkMonsterEventStatus();
+      }
+      if (!currentMonsterEvent || !currentMonsterEvent.isActive) {
+        applyWeatherEffect(data.weather);
+      }
+    }
+  } catch (err) {
+    console.warn("登入後抓取天氣狀態失敗，沿用現有氣象設定:", err);
+  }
+}
+
     function fallbackRoster() {
       const select = document.getElementById('select-identity');
       select.innerHTML = `
@@ -2262,6 +2296,7 @@ function applyRosterData(data) {
       }
 
       spawnPlayerCharacter();
+      fetchCurrentWeatherAfterLogin();
 
       setTimeout(() => {
         if (typeof syncDailyCheckinsFromCloud === 'function') syncDailyCheckinsFromCloud(currentStudent.seatNumber);
@@ -2274,7 +2309,6 @@ function applyRosterData(data) {
         }, 800);
       }
 
-// 🚨 登入後核對時段與狀態：決定顯示【警報】或【勝利】彈窗
 // 🚨 登入後核對時段與狀態：決定顯示【警報】或【當日限定勝利】彈窗
       checkMonsterEventStatus();
       const todayStr = getTodayKey();
