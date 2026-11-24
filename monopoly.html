@@ -1601,6 +1601,21 @@
             Engine.stopLoop();
           } else if (type === 'MONOPOLY_RESUME') {
             Engine.startLoop();
+            } else if (type === 'MONOPOLY_FORCE_SETTLE') {
+            // 收到主網頁外框 × 點擊訊號，立即執行正式結算扣分
+            this.closeAndReturn();
+          }
+        });
+      // 防止玩家直接按 F5 重新整理或強制關閉整個瀏覽器分頁
+        window.addEventListener('pagehide', () => {
+          if (GameState.phase !== 'LOBBY' && !GameState._hasSentClose) {
+            const netEnergy = GameState.personalEnergy + Math.floor(GameState.coins / EXCHANGE_RATE);
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({
+                type: 'MONOPOLY_SYNC_ENERGY',
+                payload: { uid: GameState.uid, personalEnergy: netEnergy }
+              }, window.location.origin);
+            }
           }
         });
       },
@@ -1633,6 +1648,8 @@
         HUD.update();
       },
       closeAndReturn() {
+        if (GameState._hasSentClose) return;
+        GameState._hasSentClose = true;
         Engine.stopLoop();
         BgmManager.stop();
         MultiplayerManager.leaveRoomCleanly();
@@ -2033,6 +2050,17 @@ enterGameBoard() {
             reflectionTurns: GameState.reflectionTurns,
             isOnReflectionIsland: GameState.isOnReflectionIsland
           });
+        }
+      // 🔒 即時將當前淨能量（剩餘能量 + 剩餘金幣換算）同步給主網頁存檔，防 F5 逃避扣分
+        if (GameState.phase !== 'LOBBY' && window.parent && window.parent !== window) {
+          const currentNetEnergy = GameState.personalEnergy + Math.floor(GameState.coins / EXCHANGE_RATE);
+          window.parent.postMessage({
+            type: 'MONOPOLY_SYNC_ENERGY',
+            payload: {
+              uid: GameState.uid,
+              personalEnergy: currentNetEnergy
+            }
+          }, window.location.origin);
         }
       },
       syncTilePurchase(tile) {
