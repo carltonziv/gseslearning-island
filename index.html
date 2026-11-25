@@ -928,6 +928,10 @@
       <polygon id="mini-wasteland_s" class="minimap-island minimap-open" 
                points="6.0,10.39 3.0,15.59 -3.0,15.59 -6.0,10.39 -3.0,5.2 3.0,5.2" 
                onclick="focusOnIsland(ISLAND_CONFIG[6])" />
+      <polygon id="mini-wood_cabin" class="minimap-island minimap-open" 
+         points="-3.0,-15.59 -6.0,-10.39 -12.0,-10.39 -15.0,-15.59 -12.0,-20.78 -6.0,-20.78" 
+         transform="translate(0, -10.39)"
+         onclick="focusOnIsland(ISLAND_CONFIG[8])" />
     </svg>
   </div>
 
@@ -1538,6 +1542,14 @@
       </div>
     </div>
     </div>
+<!-- 12. 西北建地內容面板 -->
+  <div id="panel-wood_cabin" style="display:none;">
+  <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #b45309; border-radius: 16px; padding: 18px; text-align: center; color: #78350f;">
+    <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🪵</span>
+    <h3 style="margin-bottom: 6px; font-weight: 800;">木屋營造工地</h3>
+    <p style="font-size: 0.88rem; line-height: 1.6; color: #92400e;">三位木匠正分工合作：敲擊木槌、拉鋸原木與搬運建材，一步步搭建小木屋！</p>
+  </div>
+</div>
 
   <!-- 🐢 龜山探險島：2.5D 大富翁內視窗 -->
   <div id="modal-monopoly" class="modal-overlay hidden" style="z-index: 300000; padding: 12px;">
@@ -1664,7 +1676,8 @@
       { id: 'civics',   title: '優良公民島', subtitle: '個人整潔生活達成', color: 0xE8B4B8, pos: [7.8, 0, 4.5], radius: 4.8 },
       { id: 'wasteland_n', title: '荒地', subtitle: '龜山福德神廟島', color: 0xC2B280, pos: [0, 0, -9.0], radius: 4.8 },
       { id: 'wasteland_s', title: '龜山探險島', subtitle: '龜山探險・擲骰子享受龜山秘境', color: 0x76A652, pos: [0, 0, 9.0], radius: 4.8 },
-      { id: 'wasteland_nw', title: '西北荒地', subtitle: '突然冒出的神祕荒地，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [-15.6, 0, -9.0], radius: 4.8 }
+      { id: 'wasteland_nw', title: '西北荒地', subtitle: '突然冒出的神祕荒地，似乎正在等待某種契機被喚醒...', color: 0xC2B280, pos: [-15.6, 0, -9.0], radius: 4.8 },
+      { id: 'wood_cabin', title: '島嶼建設中', subtitle: '協力建造工程', color: 0xD4A373, pos: [-7.8, 0, -13.5], radius: 4.8 }
     ];
 
     // ==========================================
@@ -1874,7 +1887,8 @@ const ISLAND_AUDIO_MAP = {
       wasteland_s: new Audio('./sounds/wasteland_s.mp3'),
       wasteland_nw: new Audio('./sounds/wasteland_nw.mp3'),
       cart: new Audio('./sounds/cart.mp3'),
-      boat: new Audio('./sounds/boat.mp3')
+      boat: new Audio('./sounds/boat.mp3'),
+      wood_cabin: new Audio('./sounds/wood.mp3')
     };
 
     Object.values(ISLAND_AUDIO_MAP).forEach(audio => { audio.volume = 0.3; });
@@ -4355,7 +4369,6 @@ function updateBeybladeIslandDormancy() {
       leftArmPivot.position.set(-0.28, 0.82, 0);
       const leftArmMesh = new THREE.Mesh(SharedPool.geometries.humanArm, clothMat);
       leftArmMesh.position.y = -0.22;
-      leftArmMesh.castShadow = true;
       leftArmPivot.add(leftArmMesh);
       person.add(leftArmPivot);
 
@@ -4363,7 +4376,6 @@ function updateBeybladeIslandDormancy() {
       rightArmPivot.position.set(0.28, 0.82, 0);
       const rightArmMesh = new THREE.Mesh(SharedPool.geometries.humanArm, clothMat);
       rightArmMesh.position.y = -0.22;
-      rightArmMesh.castShadow = true;
       rightArmPivot.add(rightArmMesh);
       person.add(rightArmPivot);
 
@@ -4374,7 +4386,6 @@ function updateBeybladeIslandDormancy() {
         skirtPivot.position.set(0, 0.46, 0);
         const skirtMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, 0.38, 14), bottomMat);
         skirtMesh.position.y = -0.17;
-        skirtMesh.castShadow = true;
         skirtPivot.add(skirtMesh);
         person.add(skirtPivot);
 
@@ -4397,7 +4408,6 @@ function updateBeybladeIslandDormancy() {
         leftLegPivot.position.set(-0.12, 0.42, 0);
         const leftLegMesh = new THREE.Mesh(SharedPool.geometries.humanLeg, bottomMat);
         leftLegMesh.position.y = -0.24;
-        leftLegMesh.castShadow = true;
         leftLegPivot.add(leftLegMesh);
         person.add(leftLegPivot);
 
@@ -4405,7 +4415,6 @@ function updateBeybladeIslandDormancy() {
         rightLegPivot.position.set(0.12, 0.42, 0);
         const rightLegMesh = new THREE.Mesh(SharedPool.geometries.humanLeg, bottomMat);
         rightLegMesh.position.y = -0.24;
-        rightLegMesh.castShadow = true;
         rightLegPivot.add(rightLegMesh);
         person.add(rightLegPivot);
       }
@@ -4437,7 +4446,6 @@ function updateBeybladeIslandDormancy() {
 
       const collar = new THREE.Mesh(SharedPool.geometries.dogCollar, collarMat);
       collar.position.set(0, 0.38, 0.20);
-      collar.castShadow = true;
       dog.add(collar);
 
       const headPivot = new THREE.Group();
@@ -4451,13 +4459,11 @@ function updateBeybladeIslandDormancy() {
       [-0.09, 0.09].forEach(ex => {
         const ear = new THREE.Mesh(SharedPool.geometries.dogEar, furMat);
         ear.position.set(ex, 0.22, 0.05);
-        ear.castShadow = true;
         headPivot.add(ear);
       });
 
       const snout = new THREE.Mesh(SharedPool.geometries.dogSnout, furMat);
       snout.position.set(0, 0.02, 0.22);
-      snout.castShadow = true;
       headPivot.add(snout);
 
       const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.02), darkMat);
@@ -4481,7 +4487,6 @@ function updateBeybladeIslandDormancy() {
         pivot.position.set(x, 0.26, z);
         const legMesh = new THREE.Mesh(SharedPool.geometries.dogLeg, furMat);
         legMesh.position.y = -0.13;
-        legMesh.castShadow = true;
         pivot.add(legMesh);
         dog.add(pivot);
         return pivot;
@@ -4498,7 +4503,6 @@ function updateBeybladeIslandDormancy() {
 
       const tailMesh = new THREE.Mesh(SharedPool.geometries.dogTail, furMat);
       tailMesh.position.z = -0.11;
-      tailMesh.castShadow = true;
       tailPivot.add(tailMesh);
       dog.add(tailPivot);
 
@@ -4894,7 +4898,6 @@ function updateBeybladeIslandDormancy() {
         );
         mTip.rotation.x = Math.PI;
         mTip.position.y = 0.09;
-        mTip.castShadow = true;
         mini.add(mTip);
 
         const mRing = new THREE.Mesh(
@@ -4902,7 +4905,6 @@ function updateBeybladeIslandDormancy() {
           SharedPool.getMaterial('MeshStandardMaterial', { color: miniColors[i], metalness: 0.7, roughness: 0.25 })
         );
         mRing.position.y = 0.2;
-        mRing.castShadow = true;
         mini.add(mRing);
 
         bb.add(mini);
@@ -5151,7 +5153,7 @@ function updateBeybladeIslandDormancy() {
 
       const windshield = new THREE.Mesh(
         new THREE.BoxGeometry(1.1, 0.48, 0.09),
-        new THREE.MeshPhysicalMaterial({ color: 0xbae6fd, roughness: 0.1, transmission: 0.7, opacity: 0.85, transparent: true })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0xbae6fd, roughness: 0.15, metalness: 0.2, opacity: 0.65, transparent: true })
       );
       windshield.position.set(0, 0.96, 1.83);
       van.add(windshield);
@@ -5404,6 +5406,110 @@ function updateBeybladeIslandDormancy() {
       return group;
     }
 
+    let cabinBuilders = [];
+
+function createWoodCabinLandmark() {
+  const group = new THREE.Group();
+  cabinBuilders = [];
+
+  const logDarkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x6F4E37, roughness: 0.85 });
+  const logLightMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xC19A6B, roughness: 0.75 });
+  const plankMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDEB887, roughness: 0.7 });
+  const ironMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x475569, metalness: 0.7, roughness: 0.3 });
+
+  // 1. 木屋石木地基
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.24, 2.4), logDarkMat);
+  base.position.y = 0.12;
+  base.receiveShadow = true;
+  group.add(base);
+
+  // 2. 半完工交錯原木牆（左、右、後三面堆疊 3~4 層）
+  const logGeoLong = new THREE.CylinderGeometry(0.11, 0.11, 2.7, 8);
+  logGeoLong.rotateZ(Math.PI / 2);
+  const logGeoShort = new THREE.CylinderGeometry(0.11, 0.11, 2.3, 8);
+  logGeoShort.rotateX(Math.PI / 2);
+
+  for (let layer = 0; layer < 4; layer++) {
+    const ly = 0.34 + layer * 0.21;
+    // 後牆
+    const backLog = new THREE.Mesh(logGeoLong, logDarkMat);
+    backLog.position.set(0, ly, -1.05);
+    backLog.castShadow = true;
+    group.add(backLog);
+
+    // 左右側牆（第 4 層刻意留空呈現施工中視覺）
+    if (layer < 3) {
+      [-1.25, 1.25].forEach(sx => {
+        const sideLog = new THREE.Mesh(logGeoShort, logLightMat);
+        sideLog.position.set(sx, ly + 0.1, 0);
+        sideLog.castShadow = true;
+        group.add(sideLog);
+      });
+    }
+  }
+
+  // 3. 四角立柱與未鋪滿的屋頂斜樑（A字木桁架）
+  [[-1.25, -1.05], [1.25, -1.05], [-1.25, 1.05], [1.25, 1.05]].forEach(([px, pz]) => {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.55, 0.16), logDarkMat);
+    post.position.set(px, 0.9, pz);
+    post.castShadow = true;
+    group.add(post);
+  });
+
+  [-0.9, 0, 0.9].forEach(rz => {
+    [-1, 1].forEach(side => {
+      const rafter = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.1, 0.1), plankMat);
+      rafter.position.set(side * 0.68, 2.08, rz);
+      rafter.rotation.z = side * -0.52;
+      rafter.castShadow = true;
+      group.add(rafter);
+    });
+  });
+
+  // --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
+  const npcHammer = createCharacterMesh(false, 0xF5D0A9, 0xD97706);
+  npcHammer.position.set(-0.55, 0.24, 0.85);
+  npcHammer.rotation.y = Math.PI; // 面向屋內木樑
+  const hammerTool = new THREE.Group();
+  const hHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.36, 6), logLightMat);
+  hHandle.rotation.x = Math.PI / 2;
+  hHandle.position.z = 0.15;
+  const hHead = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.08), ironMat);
+  hHead.position.z = 0.32;
+  hammerTool.add(hHandle, hHead);
+  hammerTool.position.set(0, -0.4, 0.05);
+  npcHammer.userData.limbs.rightArm.add(hammerTool);
+  group.add(npcHammer);
+  cabinBuilders.push({ mesh: npcHammer, role: 'hammer', phase: 0 });
+
+  // --- NPC 2：右側鋸木馬前拉鋸原木的師傅 ---
+  const sawHorseLog = new THREE.Mesh(logGeoShort, logLightMat);
+  sawHorseLog.scale.set(1, 1, 0.55);
+  sawHorseLog.position.set(2.05, 0.48, 0.6);
+  group.add(sawHorseLog);
+
+  const npcSaw = createCharacterMesh(true, 0xFFE0BD, 0x0284C7);
+  npcSaw.position.set(2.05, 0, 1.35);
+  npcSaw.rotation.y = Math.PI; // 面向鋸木台
+  const sawBlade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.48), ironMat);
+  sawBlade.position.set(0, -0.4, 0.22);
+  npcSaw.userData.limbs.rightArm.add(sawBlade);
+  group.add(npcSaw);
+  cabinBuilders.push({ mesh: npcSaw, role: 'saw', phase: 1.5 });
+
+  // --- NPC 3：左側往返搬運木板的工匠 ---
+  const npcCarry = createCharacterMesh(false, 0x8D5524, 0x16A34A);
+  npcCarry.position.set(-2.1, 0, 1.4);
+  const carriedPlank = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 1.15), plankMat);
+  carriedPlank.position.set(0, 0.72, 0.38);
+  npcCarry.add(carriedPlank);
+  group.add(npcCarry);
+  cabinBuilders.push({ mesh: npcCarry, role: 'carry', phase: 0 });
+
+  registerObstacle('wood_cabin', 0, 0, 2.3);
+  return group;
+}
+
     function createReclaimLandmarkStages(parentGroup) {
       const grassMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x65A30D, roughness: 0.8, flatShading: true });
       const stoneMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94A3B8, roughness: 0.9, flatShading: true });
@@ -5636,7 +5742,7 @@ function updateBeybladeIslandDormancy() {
 
       const glassWin = new THREE.Mesh(
         new THREE.BoxGeometry(1.2, 0.9, 0.08),
-        new THREE.MeshPhysicalMaterial({ color: 0xBAE6FD, transmission: 0.7, opacity: 0.8, transparent: true })
+        SharedPool.getMaterial('MeshStandardMaterial', { color: 0xBAE6FD, roughness: 0.15, metalness: 0.2, opacity: 0.6, transparent: true })
       );
       glassWin.position.set(0.55, 0.9, 1.21);
       stageReadingBookstore.add(glassWin);
@@ -5714,14 +5820,12 @@ function updateBeybladeIslandDormancy() {
       stageReadingDome.add(coreRack);
 
       // 🌟 未來半透明半球頂 (高折射玻璃)
-      const domeGlassMat = new THREE.MeshPhysicalMaterial({
-        color: 0xE0F2FE,
-        transmission: 0.85,
-        opacity: 0.65,
+      const domeGlassMat = SharedPool.getMaterial('MeshStandardMaterial', {
+        color: 0xBAE6FD,
+        opacity: 0.42,
         transparent: true,
-        roughness: 0.1,
-        metalness: 0.1,
-        ior: 1.5,
+        roughness: 0.12,
+        metalness: 0.25,
         depthWrite: false
       });
       const glassDome = new THREE.Mesh(new THREE.SphereGeometry(2.7, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.5), domeGlassMat);
@@ -6341,48 +6445,58 @@ function updateBeybladeIslandDormancy() {
       return tree;
     }
 
+// 預先建立全島共用的花朵幾何體（零重複配置、無陰影負擔）
+    const SHARED_STEM_GEO = new THREE.CylinderGeometry(0.025, 0.03, 0.35, 5);
+    const SHARED_CENTER_GEO = new THREE.SphereGeometry(0.055, 6, 6);
+    const SHARED_COROLLA_GEO = (function() {
+      // 以單一扁平五角星冠取代原本 5 個獨立花瓣 Mesh（Draw Calls 直接除以 5）
+      const geo = new THREE.CylinderGeometry(0.15, 0.06, 0.035, 5);
+      return geo;
+    })();
+
     function createFlower() {
       const flower = new THREE.Group();
       const stemMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x15803d, roughness: 0.8 });
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.35, 6), stemMat);
+      const stem = new THREE.Mesh(SHARED_STEM_GEO, stemMat);
       stem.position.y = 0.175;
-      stem.castShadow = true;
+      // ✅ 移除 stem.castShadow = true（0.025 細莖在地面看不出影子）
       flower.add(stem);
 
-      const leafGeo = new THREE.BoxGeometry(0.09, 0.02, 0.04);
-      const leafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x16a34a, roughness: 0.7 });
-      const leaf = new THREE.Mesh(leafGeo, leafMat);
-      leaf.position.set(0.04, 0.14, 0);
-      leaf.rotation.z = -0.35;
-      flower.add(leaf);
-
-      const headGroup = new THREE.Group();
-      headGroup.position.set(0, 0.35, 0);
-
-      const centerMesh = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfacc15, roughness: 0.5 }));
-      centerMesh.position.y = 0.015;
-      headGroup.add(centerMesh);
+      const centerMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfacc15, roughness: 0.5 });
+      const centerMesh = new THREE.Mesh(SHARED_CENTER_GEO, centerMat);
+      centerMesh.position.y = 0.365;
+      flower.add(centerMesh);
 
       const petalColors = [0xf472b6, 0xfb7185, 0xf87171, 0xfb923c, 0xffffff, 0xc084fc, 0xa855f7, 0x38bdf8, 0xfde047, 0xff7f50];
-      const petalMat = SharedPool.getMaterial('MeshStandardMaterial', { color: getRandomItem(petalColors), roughness: 0.45 });
+      const petalMat = SharedPool.getMaterial('MeshStandardMaterial', { color: getRandomItem(petalColors), roughness: 0.45, flatShading: true });
+      const corolla = new THREE.Mesh(SHARED_COROLLA_GEO, petalMat);
+      corolla.position.y = 0.35;
+      flower.add(corolla);
 
-      const petalGeo = new THREE.SphereGeometry(0.05, 7, 7);
-      petalGeo.scale(1.0, 0.35, 1.6);
-
-      for (let i = 0; i < 5; i++) {
-        const petal = new THREE.Mesh(petalGeo, petalMat);
-        const angle = (i / 5) * Math.PI * 2;
-        petal.position.x = Math.cos(angle) * 0.085;
-        petal.position.z = Math.sin(angle) * 0.085;
-        petal.rotation.y = -angle + Math.PI / 2;
-        petal.rotation.x = 0.18;
-        headGroup.add(petal);
-      }
-
-      flower.add(headGroup);
       flower.scale.setScalar(0.85 + Math.random() * 0.4);
       return flower;
     }
+
+// 預先建立全島路燈共用的地面柔和光暈材質（取代昂貴的真實 PointLight）
+    const LAMP_GLOW_GEO = new THREE.PlaneGeometry(2.6, 2.6);
+    LAMP_GLOW_GEO.rotateX(-Math.PI / 2);
+    const LAMP_GLOW_MAT = (function() {
+      const c = document.createElement('canvas');
+      c.width = 64; c.height = 64;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0, 'rgba(254, 240, 138, 0.48)');
+      g.addColorStop(0.5, 'rgba(254, 240, 138, 0.16)');
+      g.addColorStop(1, 'rgba(254, 240, 138, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 64, 64);
+      return new THREE.MeshBasicMaterial({
+        map: new THREE.CanvasTexture(c),
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+    })();
 
     function createStreetLamp() {
       const lamp = new THREE.Group();
@@ -6400,9 +6514,11 @@ function updateBeybladeIslandDormancy() {
       bulb.position.y = 2.5;
       lamp.add(bulb);
 
-      const pointLight = new THREE.PointLight(0xfef08a, 0.9, 11);
-      pointLight.position.set(0, 2.5, 0);
-      lamp.add(pointLight);
+      // 地面假光暈貼片（零光照計算成本）
+      const groundGlow = new THREE.Mesh(LAMP_GLOW_GEO, LAMP_GLOW_MAT);
+      groundGlow.position.y = 0.03;
+      lamp.add(groundGlow);
+
       return lamp;
     }
 
@@ -6836,6 +6952,7 @@ function revertToLocalWeather() {
     // ==========================================
     let scene, camera, renderer, controls;
     let islandGroups = [];
+    let clickableTargets = [];
     let islandTitleSprites = [];
     let areLabelsVisible = false;
     let villagers = [];
@@ -6965,9 +7082,20 @@ if (mode === 'panoramic') {
     }
 
     let patrolBoat = null, boatProgress = 0, boatCurve = null, isBoatPaused = false;
-    let boatWakeParticles = [];
     const WAKE_PLANE_GEO = new THREE.PlaneGeometry(0.35, 0.35);
     WAKE_PLANE_GEO.rotateX(-Math.PI / 2);
+
+    const WAKE_POOL_SIZE = 32;
+    const wakePool = [];
+    function initWakePool() {
+      for (let i = 0; i < WAKE_POOL_SIZE; i++) {
+        const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false });
+        const mesh = new THREE.Mesh(WAKE_PLANE_GEO, mat);
+        mesh.visible = false;
+        scene.add(mesh);
+        wakePool.push({ mesh: mesh, active: false, life: 0, decay: 0.025, scaleRate: 1.03 });
+      }
+    }
     let trailerCarts = [], cartProgress = 0, trackCurve = null;
 
     function createOuterLoopTrackAndCart() {
@@ -7110,7 +7238,7 @@ if (mode === 'panoramic') {
       const locoYellowMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFACC15, roughness: 0.4 });
       const ironChassisMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x1F2937, metalness: 0.85, roughness: 0.3 });
       const roofWhiteMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xEDE9FE, roughness: 0.5 });
-      const windowGlassMat = SharedPool.getMaterial('MeshPhysicalMaterial', { color: 0x93C5FD, transmission: 0.75, opacity: 0.85, transparent: true, roughness: 0.1 });
+      const windowGlassMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x93C5FD, opacity: 0.55, transparent: true, roughness: 0.15, metalness: 0.2 });
       const chromeMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xE2E8F0, metalness: 0.9, roughness: 0.2 });
 
       const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.12, 2.3), ironChassisMat);
@@ -7226,7 +7354,6 @@ if (mode === 'panoramic') {
           const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.10, 16), ironFrameMat);
           wheel.rotation.z = Math.PI / 2;
           wheel.position.set(...pos);
-          wheel.castShadow = true;
           trailer.add(wheel);
         });
 
@@ -7242,7 +7369,6 @@ if (mode === 'panoramic') {
         cornerPositions.forEach(pos => {
           const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.92, 0.08), postMat);
           post.position.set(...pos);
-          post.castShadow = true;
           trailer.add(post);
         });
 
@@ -7252,17 +7378,14 @@ if (mode === 'panoramic') {
 
             const seatBase = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.22, 0.30), woodSeatMat);
             seatBase.position.set(0, floorY + 0.11, seatZ);
-            seatBase.castShadow = true;
             bench.add(seatBase);
 
             const seatPlank = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.04, 0.34), woodSeatMat);
             seatPlank.position.set(0, floorY + 0.22, seatZ);
-            seatPlank.castShadow = true;
             bench.add(seatPlank);
 
             const backRest = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.2, 0.03), woodSeatMat);
             backRest.position.set(0, floorY + 0.36, seatZ + (seatZ < 0 ? -0.14 : 0.14));
-            backRest.castShadow = true;
             bench.add(backRest);
 
             trailer.add(bench);
@@ -7273,7 +7396,6 @@ if (mode === 'panoramic') {
             const singleLog = new THREE.Group();
             const logBark = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.6, 12), logBarkMat);
             logBark.rotation.x = Math.PI / 2;
-            logBark.castShadow = true;
             singleLog.add(logBark);
 
             [-1, 1].forEach(dir => {
@@ -7409,13 +7531,18 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       patrolBoat.traverse(child => { child.userData.isBoat = true; });
 
       patrolBoat.userData.emitWake = function() {
-        const pMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0xffffff, transparent: true, opacity: 0.75, depthWrite: false });
         [-0.32, 0.32].forEach(sideOffset => {
-          const particle = new THREE.Mesh(WAKE_PLANE_GEO, pMat.clone());
-          particle.position.set(sideOffset + (Math.random() - 0.5) * 0.15, -0.05, -1.15);
-          patrolBoat.localToWorld(particle.position);
-          scene.add(particle);
-          boatWakeParticles.push({ mesh: particle, life: 1.0, decay: 0.025, scaleRate: 1.03 });
+          // 從池子裡找一個閒置 (!active) 的浪花出來用，不建立新物件
+          const slot = wakePool.find(item => !item.active);
+          if (!slot) return; // 池子滿了就跳過，保護硬體效能
+
+          slot.active = true;
+          slot.life = 1.0;
+          slot.mesh.scale.set(1, 1, 1);
+          slot.mesh.material.opacity = 0.75;
+          slot.mesh.position.set(sideOffset + (Math.random() - 0.5) * 0.15, -0.05, -1.15);
+          patrolBoat.localToWorld(slot.mesh.position);
+          slot.mesh.visible = true;
         });
       };
 
@@ -7679,6 +7806,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
 
       scene.add(createOuterLoopTrackAndCart());
       scene.add(createPatrolBoatSystem());
+      initWakePool();
       hotAirBalloon = createHotAirBalloon();
       scene.add(hotAirBalloon);
 
@@ -7708,14 +7836,12 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
 
       oceanGeo.setAttribute('color', new THREE.Float32BufferAttribute(oceanColors, 3));
 
-      const oceanMat = new THREE.MeshPhysicalMaterial({
+      const oceanMat = new THREE.MeshStandardMaterial({
         vertexColors: true,
-        roughness: 0.05,
-        metalness: 0.08,
-        transmission: 0.20,
-        ior: 1.333,
+        roughness: 0.08,
+        metalness: 0.12,
         transparent: true,
-        opacity: 0.94,
+        opacity: 0.92,
         emissive: 0x011b24,
         emissiveIntensity: 0.45,
         depthWrite: false
@@ -7983,15 +8109,16 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           readingOriginalLandmark = landmark; // 🌟 用大括號妥善包覆
         } else if (cfg.id === 'civics') {
           landmark = createCivicsLandmark();
-        }
-        else if (cfg.id === 'wasteland_n') {
+        
+        } else if (cfg.id === 'wasteland_n') {
           landmark = createWastelandLandmark(cfg.id);
           northIslandRocks = landmark;
-          } else if (cfg.id === 'wasteland_nw') {
-          // 👇 新增：套用荒地岩石模型
+        } else if (cfg.id === 'wasteland_nw') {
           landmark = createWastelandLandmark(cfg.id);
         } else if (cfg.id === 'wasteland_s') {
           landmark = createTurtleHillLandmark();
+        } else if (cfg.id === 'wood_cabin') {
+          landmark = createWoodCabinLandmark();
         }
         group.add(landmark);
         if (cfg.id === 'wasteland_n') {
@@ -8026,7 +8153,7 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           islandTitleSprites.push(labelSprite);
         }
 
-        let treeCount = (cfg.id === 'civics') ? 1 : ((cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s' || cfg.id === 'wasteland_nw') ? 0 : 3);
+        let treeCount = (cfg.id === 'civics') ? 1 : ((cfg.id === 'wasteland_n' || cfg.id === 'wasteland_s' || cfg.id === 'wasteland_nw' || cfg.id === 'wood_cabin') ? 0 : 3);
         for (let t = 0; t < treeCount; t++) {
           let tx = 0, tz = 0, foundValidPos = false, attempts = 0;
           if (cfg.id === 'civics') {
@@ -8083,6 +8210,11 @@ if (foundValidPos) {
         scene.add(group);
         islandGroups.push(group);
       });
+
+      clickableTargets = [...islandGroups];
+      if (cartGroup) clickableTargets.push(cartGroup);
+      if (trailerCarts && trailerCarts.length > 0) clickableTargets.push(...trailerCarts);
+      if (patrolBoat) clickableTargets.push(patrolBoat);
 
       updateBeybladeIslandDormancy();
       if (typeof updateBeybladeChampionSignboard === 'function') {
@@ -8214,9 +8346,7 @@ if (foundValidPos) {
         mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-        raycaster.setFromCamera(mouse, camera);
-        const allIntersects = raycaster.intersectObjects(scene.children, true);
-
+        const allIntersects = raycaster.intersectObjects(clickableTargets, true);
         const mascotHit = allIntersects.find(item => {
           let curr = item.object;
           while (curr) {
@@ -8302,13 +8432,42 @@ if (foundValidPos) {
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
-      let clock = new THREE.Clock();
+      resumeMainLoopFn = animate; // 綁定主迴圈恢復函式
+      document.addEventListener('visibilitychange', () => {
+        const monopolyModal = document.getElementById('modal-monopoly');
+        const isMonopolyOpen = monopolyModal && !monopolyModal.classList.contains('hidden');
+
+        if (document.hidden) {
+          // 分頁退到背景：暫停 3D 渲染迴圈、計時器與載具音效
+          isMainLoopPaused = true;
+          clock.stop();
+          if (isBgmPlaying) bgmAudio.pause();
+          stopCustomAudio('cart');
+          stopCustomAudio('boat');
+        } else if (!isMonopolyOpen) {
+          // 切回學習島分頁（且未開啟大富翁視窗）：恢復計時與 3D 渲染
+          clock.start();
+          if (isBgmPlaying) bgmAudio.play().catch(() => {});
+          if (isRidingCart) playCustomAudio('cart');
+          if (isRidingBoat) playCustomAudio('boat');
+          if (isMainLoopPaused) {
+            isMainLoopPaused = false;
+            requestAnimationFrame(animate);
+          }
+        }
+      });
+
+let clock = new THREE.Clock();
+      let cachedCurrentHour = new Date().getHours();
+      setInterval(() => { cachedCurrentHour = new Date().getHours(); }, 60000);
+      const _tempCamWorldPos = new THREE.Vector3();
+      const _tempBoatLook = new THREE.Vector3();
 
       function animate() {
         if (isMainLoopPaused) return; // ⏸️ 大富翁開啟時直接中斷排程，停止所有 3D 運算
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
-        const currentHour = new Date().getHours(); // 🌟 每幀只取得一次時間
+        const currentHour = cachedCurrentHour; // ✅ 直接讀取快取，零系統時鐘查詢開銷
 
         if (isFocusing) {
           camera.position.lerp(targetCameraPos, 0.15);
@@ -8343,6 +8502,42 @@ if (foundValidPos) {
         }
 
         windTurbineBlades.forEach(blade => { blade.rotation.z += 0.04; });
+
+        // 👇 「3 位木工 NPC 施工動作」 👇
+          for (let i = 0; i < cabinBuilders.length; i++) {
+          const b = cabinBuilders[i];
+          const limbs = b.mesh.userData.limbs;
+          if (!limbs) continue;
+
+          if (b.role === 'hammer') {
+            // 師傅 1：右手上下敲擊鐵鎚、身體隨節奏微傾
+            const strike = Math.sin(time * 7.5 + b.phase);
+            limbs.rightArm.rotation.x = -1.35 + strike * 0.65;
+            limbs.leftArm.rotation.x = -0.6;
+            b.mesh.rotation.x = Math.max(0, strike) * 0.08;
+          } else if (b.role === 'saw') {
+            // 師傅 2：前後推拉手鋸、雙腿微蹲出力
+            const pushPull = Math.sin(time * 6.0 + b.phase);
+            limbs.rightArm.rotation.x = -1.1 + pushPull * 0.42;
+            limbs.leftArm.rotation.x = -0.9 + pushPull * 0.25;
+            b.mesh.rotation.x = 0.15 + pushPull * 0.08;
+            b.mesh.position.z = 1.35 - pushPull * 0.06;
+          } else if (b.role === 'carry') {
+            // 師傅 3：雙手托住木板，在木料堆與木屋間來回走動
+            const walkT = (Math.sin(time * 1.4) + 1) * 0.5;
+            b.mesh.position.x = THREE.MathUtils.lerp(-2.4, -1.35, walkT);
+            b.mesh.position.z = THREE.MathUtils.lerp(1.6, 0.85, walkT);
+            const dir = Math.cos(time * 1.4) >= 0 ? 1 : -1;
+            b.mesh.rotation.y = (dir > 0) ? Math.atan2(1.05, -0.75) : Math.atan2(-1.05, 0.75);
+
+            const step = Math.sin(time * 9.0) * 0.45;
+            limbs.leftLeg.rotation.x = step;
+            limbs.rightLeg.rotation.x = -step;
+            limbs.leftArm.rotation.x = -1.25;
+            limbs.rightArm.rotation.x = -1.25;
+            b.mesh.position.y = Math.abs(Math.sin(time * 9.0)) * 0.035;
+          }
+        }
 
         // 🛝 運動島溜滑梯：NPC 溜下 -> 繞回前側 -> 爬樓梯 -> 坐下再溜（12秒無縫循環）
         if (stageSportSlide && stageSportSlide.visible && slideNPC && slideNPC.userData.limbs) {
@@ -8708,13 +8903,12 @@ if (foundValidPos) {
             mascotLeader.position.set(0, 0.28 + Math.max(0, Math.sin(time * 3.0)) * 0.18, 0);
             mascotLeader.rotation.x = 0;
 
-            if (camera && mascotLeader.parent) {
-              const camWorldPos = new THREE.Vector3();
-              camera.getWorldPosition(camWorldPos);
-              const camLocalPos = mascotLeader.parent.worldToLocal(camWorldPos);
+if (camera && mascotLeader.parent) {
+              camera.getWorldPosition(_tempCamWorldPos);
+              mascotLeader.parent.worldToLocal(_tempCamWorldPos);
               const targetAngleY = Math.atan2(
-                camLocalPos.x - mascotLeader.position.x,
-                camLocalPos.z - mascotLeader.position.z
+                _tempCamWorldPos.x - mascotLeader.position.x,
+                _tempCamWorldPos.z - mascotLeader.position.z
               );
               mascotLeader.rotation.y = targetAngleY + Math.sin(time * 2.2) * 0.08;
             }
@@ -8781,7 +8975,8 @@ if (foundValidPos) {
           patrolBoat.position.copy(bPos);
           patrolBoat.position.y += Math.sin(time * 2.8) * 0.05;
 
-          patrolBoat.lookAt(bPos.clone().sub(bTan));
+          _tempBoatLook.copy(bPos).sub(bTan);
+          patrolBoat.lookAt(_tempBoatLook);
           patrolBoat.rotation.x += Math.sin(time * 3.2) * 0.06;
           patrolBoat.rotation.z += Math.cos(time * 2.5) * 0.08;
 
@@ -8794,16 +8989,17 @@ if (foundValidPos) {
           }
         }
 
-        for (let i = boatWakeParticles.length - 1; i >= 0; i--) {
-          const p = boatWakeParticles[i];
-          p.life -= p.decay;
-          p.mesh.scale.multiplyScalar(p.scaleRate);
-          p.mesh.material.opacity = p.life * 0.7;
+          for (let i = 0; i < WAKE_POOL_SIZE; i++) {
+          const p = wakePool[i];
+          if (!p.active) continue;
 
+          p.life -= p.decay;
           if (p.life <= 0) {
-            scene.remove(p.mesh);
-            p.mesh.material.dispose();
-            boatWakeParticles.splice(i, 1);
+            p.active = false;
+            p.mesh.visible = false; // 只隱藏不銷毀，留給下一秒重複使用
+          } else {
+            p.mesh.scale.multiplyScalar(p.scaleRate);
+            p.mesh.material.opacity = p.life * 0.7;
           }
         }
 
