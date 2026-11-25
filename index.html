@@ -9727,11 +9727,12 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
               hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.025;
               hotAirBalloon.rotation.x = Math.cos(time * 0.4) * 0.015;
             }
-          } else {
+            } else {
             // 降落坪未解鎖時：常態外圍高空巡航
-            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, cruiseX, 1 - Math.pow(0.97, delta * 30);
-            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, cruiseY, 1 - Math.pow(0.97, delta * 30);
-            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, cruiseZ, 1 - Math.pow(0.97, delta * 30);
+            const idleLerp = 1 - Math.pow(0.97, delta * 30);
+            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, cruiseX, idleLerp);
+            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, cruiseY, idleLerp);
+            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, cruiseZ, idleLerp);
 
             hotAirBalloon.rotation.y = -cruiseAngle + Math.PI / 2;
             hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.04;
