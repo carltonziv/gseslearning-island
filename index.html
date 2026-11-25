@@ -930,7 +930,6 @@
                onclick="focusOnIsland(ISLAND_CONFIG[6])" />
       <polygon id="mini-wood_cabin" class="minimap-island minimap-open" 
          points="-3.0,-15.59 -6.0,-10.39 -12.0,-10.39 -15.0,-15.59 -12.0,-20.78 -6.0,-20.78" 
-         transform="translate(0, -10.39)"
          onclick="focusOnIsland(ISLAND_CONFIG[8])" />
     </svg>
   </div>
@@ -8489,6 +8488,7 @@ let clock = new THREE.Clock();
       setInterval(() => { cachedCurrentHour = new Date().getHours(); }, 60000);
       const _tempCamWorldPos = new THREE.Vector3();
       const _tempBoatLook = new THREE.Vector3();
+      let totalElapsedTime = 0;
 
       function animate() {
         if (isMainLoopPaused) return; // ⏸️ 大富翁開啟時直接中斷排程，停止所有 3D 運算
