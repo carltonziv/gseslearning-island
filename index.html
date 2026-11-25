@@ -5490,8 +5490,8 @@ function createWoodCabinLandmark() {
   group.add(sawHorseLog);
 
   const npcSaw = createCharacterMesh(true, 0xFFE0BD, 0x0284C7);
-  npcSaw.position.set(2.05, 0, 1.35);
-  npcSaw.rotation.y = Math.PI; // 面向鋸木台
+  npcSaw.position.set(2.68, 0, 0.6);      // 👈 移到木頭右側正旁邊（Z 與木頭對齊 0.6）
+  npcSaw.rotation.y = -Math.PI / 2;       // 👈 面向左側（-X 方向），與 Z 軸原木呈 90 度垂直！
   const sawBlade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.48), ironMat);
   sawBlade.position.set(0, -0.4, 0.22);
   npcSaw.userData.limbs.rightArm.add(sawBlade);
@@ -8517,14 +8517,14 @@ let clock = new THREE.Clock();
             limbs.rightArm.rotation.x = -1.35 + strike * 0.65;
             limbs.leftArm.rotation.x = -0.6;
             b.mesh.rotation.x = Math.max(0, strike) * 0.08;
-          } else if (b.role === 'saw') {
-            // 師傅 2：前後推拉手鋸、雙腿微蹲出力
+            } else if (b.role === 'saw') {
+            // 師傅 2：垂直面對橫木頭，沿 X 軸前後推拉手鋸
             const pushPull = Math.sin(time * 6.0 + b.phase);
             limbs.rightArm.rotation.x = -1.1 + pushPull * 0.42;
             limbs.leftArm.rotation.x = -0.9 + pushPull * 0.25;
             b.mesh.rotation.x = 0.15 + pushPull * 0.08;
-            b.mesh.position.z = 1.35 - pushPull * 0.06;
-          } else if (b.role === 'carry') {
+            b.mesh.position.x = 2.68 + pushPull * 0.06; // 👈 改為沿 X 軸微幅前後推拉
+            } else if (b.role === 'carry') {
             // 師傅 3：雙手托住木板，在木料堆與木屋間來回走動
             const walkT = (Math.sin(time * 1.4) + 1) * 0.5;
             b.mesh.position.x = THREE.MathUtils.lerp(-2.4, -1.35, walkT);
