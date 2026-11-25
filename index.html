@@ -5680,61 +5680,65 @@ function createWoodCabinLandmark() {
       stageReadingBookcase.visible = false;
       parentGroup.add(stageReadingBookcase);
 
-      // ------------------------------------------
-      // 階段 2 (40% - 400分): 戶外閱讀咖啡座 (一杯咖啡與一本翻開的書)
+// ------------------------------------------
+      // 階段 2 (40% - 400分): 戶外閱讀咖啡座 (和風矮桌 + 厚布坐墊 + 喝咖啡看書 NPC)
       // ------------------------------------------
       stageReadingCoffee = new THREE.Group();
-      const tablePlate = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.12, 16), woodWarmMat);
-      tablePlate.position.y = 0.85;
+
+      // 1. 和風原木矮圓桌（配合坐墊高度，桌面高度降至 0.52）
+      const tablePlate = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.10, 16), woodWarmMat);
+      tablePlate.position.y = 0.52;
       stageReadingCoffee.add(tablePlate);
 
-      const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.18, 0.85, 8), woodDarkMat);
-      tableLeg.position.y = 0.425;
+      const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.22, 0.50, 8), woodDarkMat);
+      tableLeg.position.y = 0.25;
       stageReadingCoffee.add(tableLeg);
 
-      // 兩張原木休閒椅
-      [-1.4, 1.4].forEach(chairX => {
-        const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.08, 10), woodLightMat);
-        seat.position.set(chairX, 0.48, 0);
-        stageReadingCoffee.add(seat);
-        const sLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.48, 6), woodDarkMat);
-        sLeg.position.set(chairX, 0.24, 0);
-        stageReadingCoffee.add(sLeg);
+      // 2. 兩張厚實和風圓形布坐墊（取代原本會穿模的木椅）
+      const cushionMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDC2626, roughness: 0.88 });
+      const cushionTrimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFACC15, roughness: 0.7 });
+      [-1.42, 1.42].forEach(padX => {
+        const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.45, 0.10, 14), cushionMat);
+        pad.position.set(padX, 0.05, 0);
+        stageReadingCoffee.add(pad);
+
+        const trim = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.015, 6, 20), cushionTrimMat);
+        trim.rotation.x = Math.PI / 2;
+        trim.position.set(padX, 0.05, 0);
+        stageReadingCoffee.add(trim);
       });
 
-      // 桌上的翻開大書
+      // 3. 矮桌上的翻開大書（高度同步調降至 0.59）
       const openBookMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFFFBEB, roughness: 0.6 });
       [-0.22, 0.22].forEach(bx => {
         const pageWing = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.04, 0.52), openBookMat);
-        pageWing.position.set(bx, 0.94, -0.15);
+        pageWing.position.set(bx, 0.59, -0.15);
         pageWing.rotation.z = (bx < 0 ? 0.15 : -0.15);
         stageReadingCoffee.add(pageWing);
       });
 
-      // 冒熱氣的咖啡杯
+      // 4. 杯墊與可端起的咖啡杯（高度同步調降至 0.58 / 0.66）
       const saucer = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.02, 12), SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94A3B8 }));
-      saucer.position.set(0.45, 0.91, 0.15);
+      saucer.position.set(0.45, 0.58, 0.15);
       stageReadingCoffee.add(saucer);
 
       coffeeTableCup = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.16, 12), SharedPool.getMaterial('MeshStandardMaterial', { color: 0xFAFAFA }));
-      coffeeTableCup.position.set(0.45, 0.99, 0.15);
+      coffeeTableCup.position.set(0.45, 0.66, 0.15);
       stageReadingCoffee.add(coffeeTableCup);
 
-      // 👇 新增：坐在右側椅子（X = 1.4）上看書喝咖啡的 NPC
+      // 5. 盤腿／屈膝坐在右側坐墊（X = 1.42, Y = 0.08）上的 NPC（完全貼合坐墊無穿模）
       coffeeReaderNPC = createCharacterMesh(true, 0xFFE0BD, 0xEA580C);
-      coffeeReaderNPC.position.set(1.4, 0.12, 0);   // 精準坐在 Y = 0.48 的木椅面上
-      coffeeReaderNPC.rotation.y = -Math.PI / 2;   // 面向左側圓桌與書本
+      coffeeReaderNPC.position.set(1.42, 0.08, 0);
+      coffeeReaderNPC.rotation.y = -Math.PI / 2;
 
       const cLimbs = coffeeReaderNPC.userData.limbs;
       if (cLimbs) {
-        // 雙腿向前彎曲呈現自然坐姿
         cLimbs.leftLeg.rotation.x = -Math.PI / 2;
         cLimbs.rightLeg.rotation.x = -Math.PI / 2;
-        if (cLimbs.skirt) cLimbs.skirt.rotation.x = -0.65;
+        if (cLimbs.skirt) cLimbs.skirt.rotation.x = -0.85; // 裙擺順著坐墊自然平鋪
 
-        // 雙手自然放在桌緣看書
-        cLimbs.leftArm.rotation.x = -0.85;
-        cLimbs.rightArm.rotation.x = -0.85;
+        cLimbs.leftArm.rotation.x = -0.75;
+        cLimbs.rightArm.rotation.x = -0.75;
       }
       stageReadingCoffee.add(coffeeReaderNPC);
 
@@ -8757,59 +8761,53 @@ let clock = new THREE.Clock();
           }
         }
 
-        // ☕ 閱讀島階段 2 咖啡座：NPC 坐著看書 -> 伸手端杯喝咖啡 -> 放回繼續看（12秒循環）
+// ☕ 閱讀島階段 2 咖啡座：NPC 坐墊看書 -> 伸手端杯喝咖啡 -> 放回繼續看（12秒循環）
         if (stageReadingCoffee && stageReadingCoffee.visible && coffeeReaderNPC && coffeeReaderNPC.userData.limbs) {
           const limbs = coffeeReaderNPC.userData.limbs;
           const sipCycle = time % 12.0;
 
-          // 維持坐姿雙腿
           limbs.leftLeg.rotation.x = -Math.PI / 2;
           limbs.rightLeg.rotation.x = -Math.PI / 2;
-          if (limbs.skirt) limbs.skirt.rotation.x = -0.65;
+          if (limbs.skirt) limbs.skirt.rotation.x = -0.85;
 
           if (sipCycle < 7.5) {
-            // 階段 1 (0 ~ 7.5秒)：專心低頭看桌上翻開的書（帶輕微呼吸律動）
             coffeeReaderNPC.rotation.x = 0.14 + Math.sin(time * 1.6) * 0.02;
-            limbs.leftArm.rotation.set(-0.85, 0, -0.15);
-            limbs.rightArm.rotation.set(-0.85, 0, 0.15);
+            limbs.leftArm.rotation.set(-0.75, 0, -0.15);
+            limbs.rightArm.rotation.set(-0.75, 0, 0.15);
             if (coffeeTableCup) {
-              coffeeTableCup.position.set(0.45, 0.99, 0.15);
+              coffeeTableCup.position.set(0.45, 0.66, 0.15);
               coffeeTableCup.rotation.set(0, 0, 0);
             }
           } else if (sipCycle < 8.5) {
-            // 階段 2 (7.5 ~ 8.5秒)：抬起頭、右手伸向桌上的咖啡杯
             const t = (sipCycle - 7.5) / 1.0;
             coffeeReaderNPC.rotation.x = THREE.MathUtils.lerp(0.14, 0, t);
-            limbs.leftArm.rotation.set(-0.85, 0, -0.15);
-            limbs.rightArm.rotation.set(THREE.MathUtils.lerp(-0.85, -1.25, t), 0, THREE.MathUtils.lerp(0.15, -0.1, t));
+            limbs.leftArm.rotation.set(-0.75, 0, -0.15);
+            limbs.rightArm.rotation.set(THREE.MathUtils.lerp(-0.75, -1.15, t), 0, THREE.MathUtils.lerp(0.15, -0.1, t));
             if (coffeeTableCup) {
-              coffeeTableCup.position.set(0.45, 0.99, 0.15);
+              coffeeTableCup.position.set(0.45, 0.66, 0.15);
               coffeeTableCup.rotation.set(0, 0, 0);
             }
           } else if (sipCycle < 10.5) {
-            // 階段 3 (8.5 ~ 10.5秒)：端起咖啡杯送到嘴邊喝一口
-            const t = Math.sin(((sipCycle - 8.5) / 2.0) * Math.PI); // 0 -> 1 -> 0 平滑舉杯與放下
-            coffeeReaderNPC.rotation.x = -0.08 * t; // 喝咖啡時頭微仰
-            limbs.leftArm.rotation.set(-0.85, 0, -0.15);
-            limbs.rightArm.rotation.set(-1.25 - t * 0.65, 0, -0.1 + t * 0.25);
+            const t = Math.sin(((sipCycle - 8.5) / 2.0) * Math.PI);
+            coffeeReaderNPC.rotation.x = -0.08 * t;
+            limbs.leftArm.rotation.set(-0.75, 0, -0.15);
+            limbs.rightArm.rotation.set(-1.15 - t * 0.65, 0, -0.1 + t * 0.25);
 
             if (coffeeTableCup) {
-              // 杯子從杯墊 (0.45, 0.99, 0.15) 同步移動到 NPC 嘴邊 (1.12, 1.15, 0.12)
               coffeeTableCup.position.set(
                 THREE.MathUtils.lerp(0.45, 1.12, t),
-                THREE.MathUtils.lerp(0.99, 1.15, t),
+                THREE.MathUtils.lerp(0.66, 0.96, t),
                 THREE.MathUtils.lerp(0.15, 0.12, t)
               );
-              coffeeTableCup.rotation.z = t * 0.35; // 杯身微傾斜喝水角度
+              coffeeTableCup.rotation.z = t * 0.35;
             }
           } else {
-            // 階段 4 (10.5 ~ 12.0秒)：將咖啡杯放回杯墊，低頭繼續看書
             const t = (sipCycle - 10.5) / 1.5;
             coffeeReaderNPC.rotation.x = THREE.MathUtils.lerp(0, 0.14, t);
-            limbs.leftArm.rotation.set(-0.85, 0, -0.15);
-            limbs.rightArm.rotation.set(THREE.MathUtils.lerp(-1.25, -0.85, t), 0, THREE.MathUtils.lerp(-0.1, 0.15, t));
+            limbs.leftArm.rotation.set(-0.75, 0, -0.15);
+            limbs.rightArm.rotation.set(THREE.MathUtils.lerp(-1.15, -0.75, t), 0, THREE.MathUtils.lerp(-0.1, 0.15, t));
             if (coffeeTableCup) {
-              coffeeTableCup.position.set(0.45, 0.99, 0.15);
+              coffeeTableCup.position.set(0.45, 0.66, 0.15);
               coffeeTableCup.rotation.set(0, 0, 0);
             }
           }
