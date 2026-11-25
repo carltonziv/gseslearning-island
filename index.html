@@ -8494,6 +8494,7 @@ let clock = new THREE.Clock();
         if (isMainLoopPaused) return; // ⏸️ 大富翁開啟時直接中斷排程，停止所有 3D 運算
         requestAnimationFrame(animate);
         const time = clock.getElapsedTime();
+        const delta = Math.min(clock.getDelta(), 0.05);
         const currentHour = cachedCurrentHour; // ✅ 直接讀取快取，零系統時鐘查詢開銷
 
         if (isFocusing) {
@@ -9022,7 +9023,7 @@ if (camera && mascotLeader.parent) {
         }
 
         if (cartGroup && trackCurve && !isCartPaused) {
-          cartProgress = (cartProgress + 0.00014) % 1.0;
+          cartProgress = (cartProgress + 0.0042 * delta) % 1.0;
           const pos = trackCurve.getPointAt(cartProgress);
           const tangent = trackCurve.getTangentAt(cartProgress).normalize();
 
@@ -9045,7 +9046,7 @@ if (camera && mascotLeader.parent) {
         }
 
         if (patrolBoat && boatCurve && !isBoatPaused) {
-          boatProgress -= 0.00015;
+          boatProgress -= 0.0045 * delta;
           if (boatProgress < 0) boatProgress += 1.0;
 
           const bPos = boatCurve.getPointAt(boatProgress);
@@ -9709,9 +9710,11 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
             }
 
             // 平滑插值更新熱氣球本體位置
-            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, targetX, lerpFactor);
-            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, targetY, lerpFactor);
-            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, targetZ, lerpFactor);
+            const frameIndependentLerp = 1 - Math.pow(1 - lerpFactor, delta * 30);
+
+            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, targetX, frameIndependentLerp);
+            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, targetY, frameIndependentLerp);
+            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, targetZ, frameIndependentLerp);
 
             if (cycle >= 65 && cycle < 80) {
               // 地面停泊期間：保持水平穩定、微幅順時針自轉
@@ -9726,9 +9729,9 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
             }
           } else {
             // 降落坪未解鎖時：常態外圍高空巡航
-            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, cruiseX, 0.03);
-            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, cruiseY, 0.03);
-            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, cruiseZ, 0.03);
+            hotAirBalloon.position.x = THREE.MathUtils.lerp(hotAirBalloon.position.x, cruiseX, 1 - Math.pow(0.97, delta * 30);
+            hotAirBalloon.position.y = THREE.MathUtils.lerp(hotAirBalloon.position.y, cruiseY, 1 - Math.pow(0.97, delta * 30);
+            hotAirBalloon.position.z = THREE.MathUtils.lerp(hotAirBalloon.position.z, cruiseZ, 1 - Math.pow(0.97, delta * 30);
 
             hotAirBalloon.rotation.y = -cruiseAngle + Math.PI / 2;
             hotAirBalloon.rotation.z = Math.sin(time * 0.5) * 0.04;
