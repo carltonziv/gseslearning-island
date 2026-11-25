@@ -8459,43 +8459,45 @@ if (foundValidPos) {
       });
 
       resumeMainLoopFn = animate; // 綁定主迴圈恢復函式
-      document.addEventListener('visibilitychange', () => {
+document.addEventListener('visibilitychange', () => {
         const monopolyModal = document.getElementById('modal-monopoly');
         const isMonopolyOpen = monopolyModal && !monopolyModal.classList.contains('hidden');
 
         if (document.hidden) {
-          // 分頁退到背景：暫停 3D 渲染迴圈、計時器與載具音效
+          // 分頁退到背景：暫停 3D 渲染迴圈與載具音效
           isMainLoopPaused = true;
-          clock.stop();
           if (isBgmPlaying) bgmAudio.pause();
           stopCustomAudio('cart');
           stopCustomAudio('boat');
         } else if (!isMonopolyOpen) {
-          // 切回學習島分頁（且未開啟大富翁視窗）：恢復計時與 3D 渲染
-          clock.start();
+          // 切回學習島分頁：重置時間基準並重新啟動 animate() 迴圈
+          lastFrameTime = performance.now();
           if (isBgmPlaying) bgmAudio.play().catch(() => {});
           if (isRidingCart) playCustomAudio('cart');
           if (isRidingBoat) playCustomAudio('boat');
           if (isMainLoopPaused) {
             isMainLoopPaused = false;
-            requestAnimationFrame(animate);
+            animate(); // ✅ 直接重新啟動主迴圈
           }
         }
       });
 
-let clock = new THREE.Clock();
+      let lastFrameTime = performance.now();
+      let totalElapsedTime = 0;
       let cachedCurrentHour = new Date().getHours();
       setInterval(() => { cachedCurrentHour = new Date().getHours(); }, 60000);
       const _tempCamWorldPos = new THREE.Vector3();
       const _tempBoatLook = new THREE.Vector3();
-      let totalElapsedTime = 0;
 
       function animate() {
-        if (isMainLoopPaused) return; // ⏸️ 大富翁開啟時直接中斷排程，停止所有 3D 運算
+        if (isMainLoopPaused) return;
         requestAnimationFrame(animate);
-        const time = clock.getElapsedTime();
-        const delta = Math.min(clock.getDelta(), 0.05);
-        const currentHour = cachedCurrentHour; // ✅ 直接讀取快取，零系統時鐘查詢開銷
+        const now = performance.now();
+        const delta = Math.min((now - lastFrameTime) / 1000, 0.05);
+        lastFrameTime = now;
+        totalElapsedTime += delta;
+        const time = totalElapsedTime;
+        const currentHour = cachedCurrentHour;
 
         if (isFocusing) {
           camera.position.lerp(targetCameraPos, 0.15);
