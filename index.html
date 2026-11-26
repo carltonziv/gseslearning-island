@@ -1710,7 +1710,6 @@
 // 📚 閱讀島分階段建設專屬變數
     let readingBuildEnergy = 0;
     let readingBuildEnergyRef = null;
-    let readingIslandGroup = null;
     let readingOriginalLandmark = null;
     let stageReadingBookcase = null;      // 階段 1 (20% - 200分): 20本小書櫃
     let readingNPC = null;                // 新增：閱讀島看書 NPC
@@ -1725,7 +1724,6 @@
     // 🏃 運動島分階段建設專屬變數 (0~700 封頂)
     let sportBuildEnergy = 0;
     let sportBuildEnergyRef = null;
-    let sportIslandGroup = null;
     let sportOriginalLandmark = null;
     let stageSportPullupBar = null;       // 階段 1 (20% - 140分): 單槓設施
     let stageSportSlide = null;           // 階段 2 (40% - 280分): 彩色溜滑梯
@@ -3432,7 +3430,7 @@ if (isCompleted) {
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
-      ['nature', 'sport', 'civics', 'reading', 'wasteland_s'].forEach(id => {
+      ['nature', 'sport', 'civics', 'reading'].forEach(id => {
         const pauseNotice = document.getElementById(`pause-notice-${id}`);
         const taskContent = document.getElementById(`task-content-${id}`);
         if (pauseNotice && taskContent) {
@@ -5915,6 +5913,9 @@ function createWoodCabinLandmark() {
           pDesc.textContent = "📖 目前由彩虹行動書車巡迴駐點，全班閱讀打卡累積能量，逐步進化島嶼！";
         }
       }
+    if (readingBuildEnergy >= 200) {
+        islandObstacles['reading'] = [{ x: 0, z: 0.2, r: readingBuildEnergy >= 600 ? 2.1 : 1.5 }];
+      }
     }
     // ==========================================
     // 🏃 運動島：五階段 Low-Poly 具象化地標工廠 (單槓/滑梯/籃球/跑鞋/PU跑道)
@@ -6048,7 +6049,6 @@ function createWoodCabinLandmark() {
       // 👆 ----------------------------------- 👆
 
       stageSportSlide.position.set(0, 0, 0.2);
-
       stageSportSlide.position.set(0, 0, 0.2);
       stageSportSlide.visible = false;
       parentGroup.add(stageSportSlide);
@@ -6148,11 +6148,7 @@ function createWoodCabinLandmark() {
       trackInner.receiveShadow = true;
       stageSportTrack.add(trackInner);
 
-      // 白色分道線與起跑標線
-      const laneLine = new THREE.Mesh(new THREE.RingGeometry(1.83, 1.87, 32), whiteLineMat);
-      laneLine.rotation.x = -Math.PI / 2;
-      laneLine.position.y = 0.055;
-      stageSportTrack.add(laneLine);
+
 
       // 🌟 生成 2 位小尺寸跑者 (縮小至 0.55 倍)
       sportTrackRunners = [];
@@ -6226,6 +6222,9 @@ function createWoodCabinLandmark() {
         } else {
           pDesc.textContent = "🏋️ 目前為重訓啞鈴廣場，全班累積運動生活能量，逐步解鎖校園運動設施！";
         }
+      }
+    if (sportBuildEnergy >= 140) {
+        islandObstacles['sport'] = [{ x: 0, z: 0.2, r: sportBuildEnergy >= 700 ? 2.7 : 1.7 }];
       }
     }
 
@@ -8151,12 +8150,10 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           createReclaimLandmarkStages(group);
         }
         if (cfg.id === 'reading') {
-          readingIslandGroup = group;
           createReadingLandmarkStages(group);
         }
 
         if (cfg.id === 'sport') {
-          sportIslandGroup = group;
           createSportLandmarkStages(group);
         }
 
@@ -9103,14 +9100,14 @@ if (camera && mascotLeader.parent) {
           }
         }
         
-if (ropeMesh && jumperMan && jumpRopeGroup) {
-  const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
-  const swingerA = jumpRopeGroup.userData.swingerA;
-  const swingerB = jumpRopeGroup.userData.swingerB;
-  const zzzA = jumpRopeGroup.userData.zzzA;
-  const zzzB = jumpRopeGroup.userData.zzzB;
-  const zzzJumper = jumpRopeGroup.userData.zzzJumper;
-  const posArr = ropeMesh.geometry.attributes.position.array;
+        if (sportOriginalLandmark && sportOriginalLandmark.visible && ropeMesh && jumperMan && jumpRopeGroup) {
+          const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
+          const swingerA = jumpRopeGroup.userData.swingerA;
+          const swingerB = jumpRopeGroup.userData.swingerB;
+          const zzzA = jumpRopeGroup.userData.zzzA;
+          const zzzB = jumpRopeGroup.userData.zzzB;
+          const zzzJumper = jumpRopeGroup.userData.zzzJumper;
+          const posArr = ropeMesh.geometry.attributes.position.array;
 
   if (isJumperSleeping) {
     ropeCurve.points[0].set(-1.45, 0.05, 0);
@@ -10040,10 +10037,6 @@ if (isEventActive) {
     }
 
     function closeDrawer() {
-      if (typeof isPlayerFarming !== 'undefined' && isPlayerFarming) {
-        stopPlayerFarming();
-      }
-      document.getElementById('side-drawer').classList.remove('open');
       isCartPaused = false;
       isBoatPaused = false;
 
