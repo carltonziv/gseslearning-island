@@ -3217,25 +3217,29 @@ enqueueSteps(uid, steps, onComplete) {
         else { drawer.classList.remove('open'); backdrop.classList.remove('open'); }
       }
     };
-
-    /**
-     * ============================================================================
-     * 8. 2.5D Sprite-Stacking 體素地形、格線領地道路、反省孤島與人物渲染引擎
-     * ============================================================================
-     */
-      const Engine = {
+const Engine = {
       canvas: document.getElementById('game-canvas'), ctx: null, rafId: null,
       isRunning: false, lastTime: 0, width: 0, height: 0, dpr: 1, hasInitializedView: false,
       camera: { x: 0, y: 0, scale: 1, minScale: 0.36, maxScale: 2.2, autoFollow: true },
       pointer: { isDragging: false, lastX: 0, lastY: 0, pinchDist: 0 },
       voxelCache: {},
-      staticTerrainCache: null,
+      
+      // 🌟 三層烘焙快取系統
+      bakedStaticCanvas: null,
+      bakedTerritoryCanvas: null,
+      isTerritoryDirty: true,
+      
+      // 🌟 HD-2D 動態粒子與水域快取
       cachedBgGrad: null,
+      cachedVignetteGrad: null,
+      waterCells: [],
+      motes: [],
       tilePawnsMap: null,
       stationaryTileSet: null,
 
       init() {
         this.ctx = this.canvas.getContext('2d');
+        this.initAtmosphereParticles();
         this.bindEvents();
         this.observeResize();
         document.addEventListener('visibilitychange', () => {
@@ -3244,15 +3248,58 @@ enqueueSteps(uid, steps, onComplete) {
         });
       },
 
+      initAtmosphereParticles() {
+        // 蒐集所有水域格座標（用於動態水面波光）
+        this.waterCells = [];
+        const N = ISO_CONFIG.GRID_SIZE;
+        for (let gx = 0; gx < N; gx++) {
+          for (let gy = 0; gy < N; gy++) {
+            const cell = WORLD_MAP[gx][gy];
+            if (cell.terrain === 'water' || (cell.roadTile && cell.roadTile.pixelType === 'river')) {
+              this.waterCells.push({ gx, gy, phase: (gx * 1.7 + gy * 2.3) });
+            }
+          }
+        }
+
+        // 初始化 28 顆 HD-2D 飄浮微光塵粒
+        this.motes = [];
+        for (let i = 0; i < 28; i++) {
+          this.motes.push({
+            rx: Math.random(),
+            ry: Math.random(),
+            size: 1.5 + Math.random() * 2.2,
+            speedY: 0.008 + Math.random() * 0.012,
+            swaySpeed: 1.2 + Math.random() * 1.5,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      },
+
+      markTerritoryDirty() {
+        this.isTerritoryDirty = true;
+      },
+
+      invalidateBake() {
+        this.bakedStaticCanvas = null;
+        this.isTerritoryDirty = true;
+      },
+
       observeResize() {
         const updateSize = (w, h) => {
           if (w <= 0 || h <= 0) return;
           this.width = w; this.height = h; this.dpr = Math.min(window.devicePixelRatio || 1, 2);
           this.canvas.width = Math.floor(this.width * this.dpr); this.canvas.height = Math.floor(this.height * this.dpr);
           if (this.ctx) {
-            this.cachedBgGrad = this.ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, Math.max(w, h) * 0.75);
-            this.cachedBgGrad.addColorStop(0, '#2e2418');
-            this.cachedBgGrad.addColorStop(1, '#140e08');
+            this.cachedBgGrad = this.ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, Math.max(w, h) * 0.78);
+            this.cachedBgGrad.addColorStop(0, '#332518');
+            this.cachedBgGrad.addColorStop(1, '#120b06');
+
+            // HD-2D 微縮模型上下景深暗角漸層
+            this.cachedVignetteGrad = this.ctx.createLinearGradient(0, 0, 0, h);
+            this.cachedVignetteGrad.addColorStop(0, 'rgba(12, 7, 4, 0.58)');
+            this.cachedVignetteGrad.addColorStop(0.14, 'rgba(12, 7, 4, 0)');
+            this.cachedVignetteGrad.addColorStop(0.86, 'rgba(12, 7, 4, 0)');
+            this.cachedVignetteGrad.addColorStop(1, 'rgba(12, 7, 4, 0.65)');
           }
           if (!this.hasInitializedView) { this.resetCamera(); this.hasInitializedView = true; }
         };
@@ -3264,7 +3311,6 @@ enqueueSteps(uid, steps, onComplete) {
       resetCamera() {
         const w = this.width || window.innerWidth; const h = this.height || window.innerHeight;
         if (w <= 0 || h <= 0) return;
-        // 納入主要 9x9 地圖與右側獨立反省孤島的寬高範圍
         const boardPixelW = (ISO_CONFIG.GRID_SIZE + 2.4) * ISO_CONFIG.TILE_W;
         const boardPixelH = (ISO_CONFIG.GRID_SIZE + 1.2) * ISO_CONFIG.TILE_H + 120;
         const fitScale = Math.min((w * 0.84) / boardPixelW, (h * 0.74) / boardPixelH, 1.0);
@@ -3312,7 +3358,6 @@ enqueueSteps(uid, steps, onComplete) {
         return `rgba(${r},${g},${b},${alpha})`;
       },
 
-      // 繪製等角菱形方框（用於格線、領地邊界、以及玩家位置方框）
       drawIsoDiamond(ctx, sx, sy, insetRatio = 1, strokeStyle = '#3e240e', lineWidth = 1.5, fillStyle = null) {
         const hw = (ISO_CONFIG.TILE_W / 2) * insetRatio;
         const hh = (ISO_CONFIG.TILE_H / 2) * insetRatio;
@@ -3322,19 +3367,12 @@ enqueueSteps(uid, steps, onComplete) {
         ctx.lineTo(sx, sy + hh);
         ctx.lineTo(sx - hw, sy);
         ctx.closePath();
-        if (fillStyle) {
-          ctx.fillStyle = fillStyle;
-          ctx.fill();
-        }
-        if (strokeStyle && lineWidth > 0) {
-          ctx.strokeStyle = strokeStyle;
-          ctx.lineWidth = lineWidth;
-          ctx.stroke();
-        }
+        if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+        if (strokeStyle && lineWidth > 0) { ctx.strokeStyle = strokeStyle; ctx.lineWidth = lineWidth; ctx.stroke(); }
       },
 
-      // 🧱 Sprite-Stacking 核心堆疊烘焙器
-      buildStackedSprite(key, layers, palette, unitW = 4, unitH = 2.2, layerStep = 2.4) {
+      // 🧱 Sprite-Stacking 體素堆疊烘焙器（支援自動 HD-2D 外輪廓描邊）
+      buildStackedSprite(key, layers, palette, unitW = 4, unitH = 2.2, layerStep = 2.4, withOutline = false) {
         if (this.voxelCache[key]) return this.voxelCache[key];
 
         const depthZ = layers.length; const sizeY = layers[0].length; const sizeX = layers[0][0].length;
@@ -3356,26 +3394,32 @@ enqueueSteps(uid, steps, onComplete) {
               if (!baseColor) continue;
               const cx = originX + (vx - vy) * hw; const cy = originY + (vx + vy) * hh - liftY;
               
+              // 頂面（暖光源受光面）
               ctx.fillStyle = baseColor;
               ctx.beginPath(); ctx.moveTo(cx, cy - hh); ctx.lineTo(cx + hw, cy); ctx.lineTo(cx, cy + hh); ctx.lineTo(cx - hw, cy); ctx.closePath(); ctx.fill();
               
+              // 左側面（次受光面）
               ctx.fillStyle = this.darkenHex(baseColor, 0.22);
               ctx.beginPath(); ctx.moveTo(cx - hw, cy); ctx.lineTo(cx, cy + hh); ctx.lineTo(cx, cy + hh + layerStep); ctx.lineTo(cx - hw, cy + layerStep); ctx.closePath(); ctx.fill();
               
-              ctx.fillStyle = this.darkenHex(baseColor, 0.40);
+              // 右側面（背光冷調陰影面）
+              ctx.fillStyle = this.darkenHex(baseColor, 0.42);
               ctx.beginPath(); ctx.moveTo(cx, cy + hh); ctx.lineTo(cx + hw, cy); ctx.lineTo(cx + hw, cy + layerStep); ctx.lineTo(cx, cy + hh + layerStep); ctx.closePath(); ctx.fill();
             }
           }
+        }
+        if (withOutline) {
+          this.applyPixelOutline(cvs, '#231712');
         }
         const centerAnchorY = originY + ((sizeX - 1 + sizeY - 1) / 2) * hh;
         const result = { canvas: cvs, anchorX: originX, anchorY: centerAnchorY };
         this.voxelCache[key] = result;
         return result;
       },
+
       applyPixelOutline(canvas, outlineHex = '#231712') {
         const ctx = canvas.getContext('2d');
-        const w = canvas.width;
-        const h = canvas.height;
+        const w = canvas.width; const h = canvas.height;
         const imgData = ctx.getImageData(0, 0, w, h);
         const src = new Uint8ClampedArray(imgData.data);
         const dst = imgData.data;
@@ -3394,10 +3438,7 @@ enqueueSteps(uid, steps, onComplete) {
                 src[(y * w + (x - 1)) * 4 + 3] > 200 ||
                 src[(y * w + (x + 1)) * 4 + 3] > 200;
               if (hasOpaqueNeighbor) {
-                dst[idx] = r;
-                dst[idx + 1] = g;
-                dst[idx + 2] = b;
-                dst[idx + 3] = 255;
+                dst[idx] = r; dst[idx + 1] = g; dst[idx + 2] = b; dst[idx + 3] = 255;
               }
             }
           }
@@ -3432,7 +3473,6 @@ enqueueSteps(uid, steps, onComplete) {
         return null;
       },
 
-      // 🛤️ 帶兩側路緣邊界 + 碎石/水漬/泥巴材質的道路體素生成器
       getStackedPathSprite(tile) {
         const uw = ISO_CONFIG.TILE_W / 6;
         const uh = ISO_CONFIG.TILE_H / 6;
@@ -3446,112 +3486,30 @@ enqueueSteps(uid, steps, onComplete) {
         const connPosY = (prev.gx === tile.gx && prev.gy === tile.gy + 1) || (next.gx === tile.gx && next.gy === tile.gy + 1);
 
         const variant = tile.id % 4;
-        const specialKind = tile.type === 'START'
-          ? 'START'
-          : tile.type === 'FATE'
-            ? 'FATE'
-            : tile.type === 'CHANCE'
-              ? 'CHANCE'
-              : (tile.pixelType === 'bridge' ? 'BRIDGE' : (tile.pixelType === 'river' ? 'RIVER' : 'ROAD'));
-
+        const specialKind = tile.type === 'START' ? 'START' : tile.type === 'FATE' ? 'FATE' : tile.type === 'CHANCE' ? 'CHANCE' : (tile.pixelType === 'bridge' ? 'BRIDGE' : (tile.pixelType === 'river' ? 'RIVER' : 'ROAD'));
         const cacheKey = `path_${specialKind}_${variant}_${connNegX?1:0}${connPosX?1:0}${connNegY?1:0}${connPosY?1:0}`;
         if (this.voxelCache[cacheKey]) return this.voxelCache[cacheKey];
 
         const pal = {
-          D: '#4a2e16',
-          S: '#6b4222',
-          B: '#7a5230',
-          K: '#52341b',
-          R: '#f0d8b0',
-          r: '#dec090',
-          P: '#9aa3ab',
-          p: '#cfd8dc',
-          W: '#4fc3f7',
-          w: '#0288d1',
-          M: '#795548',
-          m: '#5d4037',
-          G: '#ffd54f',
-          g: '#ffb300',
-          T: '#b87a3d',
-          t: '#8c5826',
-          C: '#29b6f6',
-          c: '#81d4fa',
-          F: '#8e24aa',
-          f: '#ce93d8',
-          O: '#f57c00',
-          o: '#ffe082'
+          D: '#4a2e16', S: '#6b4222', B: '#7a5230', K: '#52341b', R: '#f0d8b0', r: '#dec090',
+          P: '#9aa3ab', p: '#cfd8dc', W: '#4fc3f7', w: '#0288d1', M: '#795548', m: '#5d4037',
+          G: '#ffd54f', g: '#ffb300', T: '#b87a3d', t: '#8c5826', C: '#29b6f6', c: '#81d4fa',
+          F: '#8e24aa', f: '#ce93d8', O: '#f57c00', o: '#ffe082'
         };
 
-        let inner4x4 = [
-          ['R','r','R','R'],
-          ['r','R','R','r'],
-          ['R','R','r','R'],
-          ['R','r','R','R']
-        ];
+        let inner4x4 = [['R','r','R','R'],['r','R','R','r'],['R','R','r','R'],['R','r','R','R']];
+        if (specialKind === 'START') inner4x4 = [['G','g','g','G'],['g','R','R','g'],['g','R','R','g'],['G','g','g','G']];
+        else if (specialKind === 'FATE') inner4x4 = [['f','F','F','f'],['F','G','G','F'],['F','G','G','F'],['f','F','F','f']];
+        else if (specialKind === 'CHANCE') inner4x4 = [['o','O','O','o'],['O','G','G','O'],['O','G','G','O'],['o','O','O','o']];
+        else if (specialKind === 'BRIDGE') inner4x4 = [['T','t','T','t'],['T','t','T','t'],['T','t','T','t'],['T','t','T','t']];
+        else if (specialKind === 'RIVER') inner4x4 = [['C','c','C','P'],['c','C','C','c'],['C','C','c','C'],['P','c','C','C']];
+        else if (variant === 1) inner4x4 = [['R','P','p','R'],['P','R','R','r'],['R','r','P','p'],['r','P','R','R']];
+        else if (variant === 2) inner4x4 = [['R','r','R','R'],['r','W','w','R'],['R','w','W','r'],['R','R','r','P']];
+        else if (variant === 3) inner4x4 = [['R','M','R','r'],['M','m','M','R'],['r','M','R','P'],['R','r','M','R']];
 
-        if (specialKind === 'START') {
-          inner4x4 = [
-            ['G','g','g','G'],
-            ['g','R','R','g'],
-            ['g','R','R','g'],
-            ['G','g','g','G']
-          ];
-        } else if (specialKind === 'FATE') {
-          inner4x4 = [
-            ['f','F','F','f'],
-            ['F','G','G','F'],
-            ['F','G','G','F'],
-            ['f','F','F','f']
-          ];
-        } else if (specialKind === 'CHANCE') {
-          inner4x4 = [
-            ['o','O','O','o'],
-            ['O','G','G','O'],
-            ['O','G','G','O'],
-            ['o','O','O','o']
-          ];
-        } else if (specialKind === 'BRIDGE') {
-          inner4x4 = [
-            ['T','t','T','t'],
-            ['T','t','T','t'],
-            ['T','t','T','t'],
-            ['T','t','T','t']
-          ];
-        } else if (specialKind === 'RIVER') {
-          inner4x4 = [
-            ['C','c','C','P'],
-            ['c','C','C','c'],
-            ['C','C','c','C'],
-            ['P','c','C','C']
-          ];
-        } else if (variant === 1) {
-          inner4x4 = [
-            ['R','P','p','R'],
-            ['P','R','R','r'],
-            ['R','r','P','p'],
-            ['r','P','R','R']
-          ];
-        } else if (variant === 2) {
-          inner4x4 = [
-            ['R','r','R','R'],
-            ['r','W','w','R'],
-            ['R','w','W','r'],
-            ['R','R','r','P']
-          ];
-        } else if (variant === 3) {
-          inner4x4 = [
-            ['R','M','R','r'],
-            ['M','m','M','R'],
-            ['r','M','R','P'],
-            ['R','r','M','R']
-          ];
-        }
-
-        const topGrid = [];
-        const curbGrid = [];
+        const topGrid = []; const curbGrid = [];
         for (let vy = 0; vy < 6; vy++) {
-          let rowTop = '';
-          let rowCurb = '';
+          let rowTop = ''; let rowCurb = '';
           for (let vx = 0; vx < 6; vx++) {
             const isCorner = (vx === 0 || vx === 5) && (vy === 0 || vy === 5);
             const isEdgeNegX = vx === 0 && vy >= 1 && vy <= 4;
@@ -3559,55 +3517,24 @@ enqueueSteps(uid, steps, onComplete) {
             const isEdgeNegY = vy === 0 && vx >= 1 && vx <= 4;
             const isEdgePosY = vy === 5 && vx >= 1 && vx <= 4;
 
-            if (isCorner) {
-              rowTop += 'K';
-              rowCurb += 'B';
-            } else if (isEdgeNegX) {
-              const ch = connNegX ? inner4x4[vy - 1][0] : 'B';
-              rowTop += ch;
-              rowCurb += ch;
-            } else if (isEdgePosX) {
-              const ch = connPosX ? inner4x4[vy - 1][3] : 'B';
-              rowTop += ch;
-              rowCurb += ch;
-            } else if (isEdgeNegY) {
-              const ch = connNegY ? inner4x4[0][vx - 1] : 'B';
-              rowTop += ch;
-              rowCurb += ch;
-            } else if (isEdgePosY) {
-              const ch = connPosY ? inner4x4[3][vx - 1] : 'B';
-              rowTop += ch;
-              rowCurb += ch;
-            } else {
-              const ch = inner4x4[vy - 1][vx - 1];
-              rowTop += ch;
-              rowCurb += ch;
-            }
+            if (isCorner) { rowTop += 'K'; rowCurb += 'B'; }
+            else if (isEdgeNegX) { const ch = connNegX ? inner4x4[vy - 1][0] : 'B'; rowTop += ch; rowCurb += ch; }
+            else if (isEdgePosX) { const ch = connPosX ? inner4x4[vy - 1][3] : 'B'; rowTop += ch; rowCurb += ch; }
+            else if (isEdgeNegY) { const ch = connNegY ? inner4x4[0][vx - 1] : 'B'; rowTop += ch; rowCurb += ch; }
+            else if (isEdgePosY) { const ch = connPosY ? inner4x4[3][vx - 1] : 'B'; rowTop += ch; rowCurb += ch; }
+            else { const ch = inner4x4[vy - 1][vx - 1]; rowTop += ch; rowCurb += ch; }
           }
-          topGrid.push(rowTop);
-          curbGrid.push(rowCurb);
+          topGrid.push(rowTop); curbGrid.push(rowCurb);
         }
 
         const base = ['DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD','DDDDDD'];
         const mid  = ['SSSSSS','SSSSSS','SSSSSS','SSSSSS','SSSSSS','SSSSSS'];
-        const layers = [base, base, mid, mid, curbGrid, topGrid];
-
-        return this.buildStackedSprite(cacheKey, layers, pal, uw, uh, 4.8);
+        return this.buildStackedSprite(cacheKey, [base, base, mid, mid, curbGrid, topGrid], pal, uw, uh, 4.8);
       },
 
-      // 🏝️ 獨立「反省孤島」體素方塊生成器
       getStackedReflectionIslandSprite() {
-        const uw = ISO_CONFIG.TILE_W / 6;
-        const uh = ISO_CONFIG.TILE_H / 6;
-        const pal = {
-          W: '#1565c0',
-          C: '#42a5f5',
-          R: '#37474f',
-          S: '#607d8b',
-          L: '#90a4ae',
-          D: '#bcaaa4',
-          E: '#d7ccc8'
-        };
+        const uw = ISO_CONFIG.TILE_W / 6; const uh = ISO_CONFIG.TILE_H / 6;
+        const pal = { W: '#1565c0', C: '#42a5f5', R: '#37474f', S: '#607d8b', L: '#90a4ae', D: '#bcaaa4', E: '#d7ccc8' };
         const sea  = ['WCCWCW','CWWWWC','WCCCCW','CWWWWC','WCCCCW','WCWCWW'];
         const rock = ['.RRRR.','RRRRRR','RRRRRR','RRRRRR','RRRRRR','.RRRR.'];
         const mid  = ['.SSSS.','SLLLLS','SLLLLS','SLLLLS','SLLLLS','.SSSS.'];
@@ -3615,7 +3542,7 @@ enqueueSteps(uid, steps, onComplete) {
         return this.buildStackedSprite('reflection_island_tile', [sea, rock, rock, mid, mid, top], pal, uw, uh, 4.8);
       },
 
-getStackedPropSprite(propType) {
+      getStackedPropSprite(propType) {
         if (propType === 'tree_oak') {
           const pal = { G: '#4a962c', T: '#6e3f1d', t: '#8f5429', D: '#357320', M: '#56ab35', L: '#7ed14b', Y: '#a3e868' };
           const layers = [
@@ -3628,7 +3555,7 @@ getStackedPropSprite(propType) {
             ['..LL..','.LYYL.','.LYYL.','.LLLL.','..LL..','......'],
             ['......','..YY..','..YY..','......','......','......']
           ];
-          return this.buildStackedSprite('prop_tree_oak', layers, pal, 5.2, 2.8, 3.3);
+          return this.buildStackedSprite('prop_tree_oak', layers, pal, 5.2, 2.8, 3.3, true);
         }
         if (propType === 'tree_bush') {
           const pal = { D: '#2f6b1c', G: '#49992e', L: '#71c744', Y: '#96e35f' };
@@ -3639,162 +3566,128 @@ getStackedPropSprite(propType) {
             ['..LL..','.LYYL.','.LYYL.','.LLLL.','..LL..','......'],
             ['......','..YY..','..YY..','......','......','......']
           ];
-          return this.buildStackedSprite('prop_tree_bush', layers, pal, 5.4, 2.9, 3.2);
-        }
-        if (propType === 'pebbles') {
-          const pal = { G: '#5ca332', D: '#5b6269', M: '#7a828a', L: '#a2aab3' };
-          const layers = [
-            ['.GG...','DD.MM.','DD.MMG','...GG.'],
-            ['......','MM.LL.','MM....','......'],
-            ['......','L.....','......','......']
-          ];
-          return this.buildStackedSprite('prop_pebbles', layers, pal, 5.6, 3.0, 2.8);
+          return this.buildStackedSprite('prop_tree_bush', layers, pal, 5.4, 2.9, 3.2, true);
         }
         if (propType === 'reflection_post') {
           const pal = { T: '#5d4037', B: '#ef5350', W: '#fff8e1' };
-          const layers = [
-            ['.TT.','.TT.'],
-            ['.TT.','.TT.'],
-            ['BBBB','BWWB'],
-            ['BBBB','BWWB']
-          ];
-          return this.buildStackedSprite('prop_reflection_post', layers, pal, 4.4, 2.3, 2.8);
+          const layers = [['.TT.','.TT.'],['.TT.','.TT.'],['BBBB','BWWB'],['BBBB','BWWB']];
+          return this.buildStackedSprite('prop_reflection_post', layers, pal, 4.4, 2.3, 2.8, true);
         }
-
-// ==================== 新增：房子 3 幢（仿附圖像素斜頂小屋） ====================
         if (propType === 'decor_house_blue' || propType === 'decor_house_orange' || propType === 'decor_house_red') {
           const cacheKey = `prop_cottage_${propType}`;
           if (this.voxelCache[cacheKey]) return this.voxelCache[cacheKey];
-
           const roofSchemes = {
             decor_house_blue:   { R: '#2563eb', H: '#60a5fa', D: '#1d4ed8', E: '#38bdf8' },
             decor_house_orange: { R: '#f97316', H: '#fdba74', D: '#c2410c', E: '#fb923c' },
             decor_house_red:    { R: '#dc2626', H: '#fca5a5', D: '#991b1b', E: '#f87171' }
           };
           const rf = roofSchemes[propType];
-
           const pal = {
-            K: '#231712', // 底座深色陰影邊
-            S: '#64748b', // 石頭地基
-            W: '#f1f5f9', // 白色石牆
-            G: '#cbd5e1', // 屋簷下陰影灰牆
-            O: '#ea580c', // 橘色拱門框
-            A: '#c2410c', // 側門紅橘門框
-            T: '#451a03', // 深木色門板
-            P: '#f97316', // 藍屋右側橘色裝飾帶
-            B: '#38bdf8', // 小窗戶
-            R: rf.R,      // 屋頂主瓦片色
-            H: rf.H,      // 屋頂亮面瓦片
-            D: rf.D,      // 屋頂瓦片格線
-            E: rf.E       // 屋簷亮邊
+            K: '#231712', S: '#64748b', W: '#f1f5f9', G: '#cbd5e1', O: '#ea580c', A: '#c2410c',
+            T: '#451a03', P: '#f97316', B: '#38bdf8', R: rf.R, H: rf.H, D: rf.D, E: rf.E
           };
-
-          // 左屋（藍頂）右側帶橘色腰線；右屋（橘頂）雙側皆有拱門；紅屋帶側窗
-          const sideL1 = propType === 'decor_house_blue'
-            ? '.WWWWWWP.'
-            : (propType === 'decor_house_orange' ? '.WWWAATW.' : '.WWWWWWW.');
-          const sideL2 = propType === 'decor_house_blue'
-            ? '.WWWWWWP.'
-            : (propType === 'decor_house_orange' ? '.WWWAATW.' : '.WWWBWWW.');
+          const sideL1 = propType === 'decor_house_blue' ? '.WWWWWWP.' : (propType === 'decor_house_orange' ? '.WWWAATW.' : '.WWWWWWW.');
+          const sideL2 = propType === 'decor_house_blue' ? '.WWWWWWP.' : (propType === 'decor_house_orange' ? '.WWWAATW.' : '.WWWBWWW.');
           const sideL3 = propType === 'decor_house_orange' ? '.WWWAAAW.' : '.WWWWWWW.';
-
           const layers = [
-            // Z=0: 底座陰影與石砌地基
             ['.KKKKKKK.','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','KSSSSSSSK','.KKKKKKK.'],
-            // Z=1: 一樓石牆與正面橘框拱門
             ['.........','.WWWWWWW.',sideL1,sideL1,sideL1,'.WWWWWWW.','.WWWWWWW.','.WWOTOWW.','.........'],
-            // Z=2: 二樓石牆與門身
             ['.........','.WWWWWWW.',sideL2,sideL2,sideL2,'.WWWWWWW.','.WWWWWWW.','.WWOTOWW.','.........'],
-            // Z=3: 門楣拱頂
             ['.........','.WWWWWWW.',sideL3,sideL3,sideL3,'.WWWWWWW.','.WWWWWWW.','.WWOOOWW.','.........'],
-            // Z=4: 屋簷下石牆收邊
             ['.........','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.GGGGGGG.','.........'],
-            // Z=5: 人字屋頂第 1 層（前後外推屋簷 + 瓦片格紋）
             ['EDDDDDDDE','DRRRRRRRE','DRHHRHHRE','DDDDDDDDE','DRHHRHHRE','DRRRRRRRE','DDDDDDDDE','DRHHRHHRE','EEEEEEEEE'],
-            // Z=6: 人字屋頂第 2 層（正面呈現白色三角形山牆）
             ['.EDDDDDE.','.DRRRRRE.','.DRHRHRE.','.DDDDDDE.','.DRHRHRE.','.DRRRRRE.','.DDDDDDE.','.EWWWWWE.','.EEEEEEE.'],
-            // Z=7: 人字屋頂第 3 層
             ['..EDDDE..','..DRRRE..','..DRHRE..','..DDDDE..','..DRHRE..','..DRRRE..','..DDDDE..','..EWWWE..','..EEEEE..'],
-            // Z=8: 人字屋頂第 4 層
             ['...EDE...','...DRE...','...DHE...','...DDE...','...DHE...','...DRE...','...DDE...','...EWE...','...EEE...'],
-            // Z=9: 屋脊頂端
             ['....E....','....H....','....H....','....D....','....H....','....H....','....D....','....H....','....E....']
           ];
-
-          const sprite = this.buildStackedSprite(cacheKey, layers, pal, 6.8, 3.6, 2.6);
-          this.applyPixelOutline(sprite.canvas, '#231712');
-          return sprite;
+          return this.buildStackedSprite(cacheKey, layers, pal, 6.8, 3.6, 2.6, true);
         }
-        // ==================== 新增：菜園 5 畦（仿附圖 FARM PLOTS） ====================
         if (propType === 'farm_plot_veg') {
-          const pal = {
-            F: '#6d4019', R: '#a66e38', L: '#d9b382',
-            S: '#5c361a', D: '#3e220e',
-            G: '#388e3c', C: '#81c784', O: '#f97316', Y: '#eab308', W: '#fef08a'
-          };
+          const pal = { F: '#6d4019', R: '#a66e38', L: '#d9b382', S: '#5c361a', D: '#3e220e', G: '#388e3c', C: '#81c784', O: '#f97316', Y: '#eab308', W: '#fef08a' };
           const layers = [
             ['FRRFRRRF','RSSSSSSR','RSDDDDSR','FSSSSSSF','FSSSSSSF','RSDDDDSR','RSSSSSSR','FRRFRRRF'],
             ['L..L..LL','.GG.OO.Y','.GG.OO.Y','L......L','L......L','.GG.OO.Y','.GG.OO.Y','L..L..LL'],
             ['........','.CC.GG.W','....GG.W','........','........','.CC.GG.W','....GG.W','........']
           ];
-          return this.buildStackedSprite('prop_farm_plot_veg', layers, pal, 11.4, 6.1, 2.4);
+          return this.buildStackedSprite('prop_farm_plot_veg', layers, pal, 11.4, 6.1, 2.4, true);
         }
         if (propType === 'farm_plot_sprout') {
-          const pal = {
-            F: '#6d4019', R: '#a66e38', L: '#d9b382',
-            S: '#5c361a', D: '#3e220e',
-            G: '#43a047', C: '#9ccc65'
-          };
+          const pal = { F: '#6d4019', R: '#a66e38', L: '#d9b382', S: '#5c361a', D: '#3e220e', G: '#43a047', C: '#9ccc65' };
           const layers = [
             ['FRRFRRRF','RSDDDDSR','RSDDDDSR','FSDDDDSF','FSDDDDSF','RSDDDDSR','RSDDDDSR','FRRFRRRF'],
             ['L..L..LL','.D.D.D.D','.G.G.G.G','L......L','L......L','.D.D.D.D','.G.G.G.G','L..L..LL'],
             ['........','........','.C...C..','........','........','........','..C...C.','........']
           ];
-          return this.buildStackedSprite('prop_farm_plot_sprout', layers, pal, 11.4, 6.1, 2.4);
+          return this.buildStackedSprite('prop_farm_plot_sprout', layers, pal, 11.4, 6.1, 2.4, true);
         }
-
-        // ==================== 新增：石塊植物 6 組（仿附圖 SMALL DETAILS） ====================
         if (propType === 'rock_plant_moss') {
-          const pal = {
-            D: '#52585e', M: '#7c848c', L: '#aeb6bf',
-            G: '#4d7c0f', g: '#84cc16', T: '#78350f'
-          };
+          const pal = { D: '#52585e', M: '#7c848c', L: '#aeb6bf', G: '#4d7c0f', g: '#84cc16', T: '#78350f' };
           const layers = [
             ['........','.DDD....','DDDDD.g.','DDDDD.Gg','.DDD.DD.','..g.DDDD','.gGg.DD.','........'],
             ['........','.MMM....','MMgMM.G.','MMMMM.G.','.MgM.MM.','..G.MLL.','.Gg..MM.','........'],
             ['........','........','.MLM..T.','.gLL..T.','........','.....L..','.g......','........'],
             ['........','........','..L.....','........','........','........','........','........']
           ];
-          return this.buildStackedSprite('prop_rock_plant_moss', layers, pal, 11.0, 5.9, 2.4);
+          return this.buildStackedSprite('prop_rock_plant_moss', layers, pal, 11.0, 5.9, 2.4, true);
         }
         if (propType === 'rock_plant_mushroom') {
-          const pal = {
-            D: '#52585e', M: '#7c848c', L: '#aeb6bf',
-            G: '#4d7c0f', g: '#84cc16', R: '#dc2626', W: '#ffffff'
-          };
+          const pal = { D: '#52585e', M: '#7c848c', L: '#aeb6bf', G: '#4d7c0f', g: '#84cc16', R: '#dc2626', W: '#ffffff' };
           const layers = [
             ['........','..DDD...','.DDDDD..','.DDDDD..','..DDD.g.','.g.W.gGg','gGg.W...','........'],
             ['........','..MMM...','.MMMMM..','.MgMMM..','...M..G.','.G.R..G.','G..RW...','........'],
             ['........','........','..LLL...','..gLL...','........','..RWR...','...R....','........'],
             ['........','........','........','........','........','...R....','........','........']
           ];
-          return this.buildStackedSprite('prop_rock_plant_mushroom', layers, pal, 11.0, 5.9, 2.4);
+          return this.buildStackedSprite('prop_rock_plant_mushroom', layers, pal, 11.0, 5.9, 2.4, true);
         }
         if (propType === 'rock_plant_flower') {
-          const pal = {
-            D: '#52585e', M: '#7c848c', L: '#aeb6bf',
-            G: '#4d7c0f', g: '#84cc16', Y: '#facc15', O: '#fb923c', W: '#ffffff'
-          };
+          const pal = { D: '#52585e', M: '#7c848c', L: '#aeb6bf', G: '#4d7c0f', g: '#84cc16', Y: '#facc15', O: '#fb923c', W: '#ffffff' };
           const layers = [
             ['........','.gG..DDD','gGg.DDDD','.....DDD','.DD..gGg','DDDD..g.','.DD.....','........'],
             ['........','.OY..MMM','YOY.MLL.','.....MM.','.MM..GWG','MLL..YWY','.MM.....','........'],
             ['........','.Y....L.','........','........','......Y.','.L......','........','........']
           ];
-          return this.buildStackedSprite('prop_rock_plant_flower', layers, pal, 11.0, 5.9, 2.4);
+          return this.buildStackedSprite('prop_rock_plant_flower', layers, pal, 11.0, 5.9, 2.4, true);
         }
-
         return null;
       },
+
+      getTileVoxelSprite(tile) {
+        if (tile.type === 'START') {
+          const pal = { T: '#f59e0b', R: '#d97706', W: '#fef3c7', F: '#ef4444', Y: '#fde047', L: '#78350f' };
+          const layers = [['TTTT..','TTTT..','TTTT..','TTTT..','....LL','....FY'],['TTTT..','.TT...','.TT...','TTTT..','......','....Y.'],['.TT...','.TT...','.TT...','.TT...','......','......'],['.WW...','.WW...','.WW...','.WW...','......','......']];
+          return this.buildStackedSprite('tile_start', layers, pal, 4.0, 2.1, 2.5, true);
+        }
+        if (tile.type === 'FATE') {
+          const pal = { T: '#8D6E63', D: '#5D4037', S: '#3E2723', W: '#F5F5DC' };
+          const layers = [['......','......','..DD..','..DD..','......','......'],['......','......','..DD..','..DD..','......','......'],['......','.TTTTT','.TWWWT','.TTTTT','......','......'],['......','......','..DD..','..DD..','......','......'],['......','TTTTT.','TWWWT.','TTTTT.','......','......'],['......','......','..DD..','..DD..','......','......']];
+          return this.buildStackedSprite('tile_fate_signpost', layers, pal, 3.8, 2.0, 2.5, true);
+        }
+        if (tile.type === 'CHANCE') {
+          const pal = { D: '#3e2723', B: '#5d4037', W: '#8d6e63', L: '#a1887f' };
+          const layers = [['.DDDD.','DBBBBD','DBBBBD','DBBBBD','DBBBBD','.DDDD.'],['.DDDD.','DWBBWD','BWDWWB','BWDWWB','DWBBWD','.DDDD.'],['.DDDD.','DWWWWD','DWWWWD','DWWWWD','DWWWWD','.DDDD.'],['.DDDD.','DDDDDD','DDDDDD','DDDDDD','DDDDDD','.DDDD.']];
+          return this.buildStackedSprite('tile_chance_crate', layers, pal, 3.8, 2.0, 2.5, true);
+        }
+        if (tile.pixelType === 'bridge') {
+          const pal = { W: '#b45309', D: '#78350f', P: '#fde68a' };
+          const layers = [['P....P','WWWWWW','WWWWWW','P....P'],['.WWWW.','DDDDDD','DDDDDD','.WWWW.'],['..WW..','..WW..','..WW..','..WW..']];
+          return this.buildStackedSprite('tile_bridge', layers, pal, 4.2, 2.2, 2.4, true);
+        }
+        if (tile.pixelType === 'river') {
+          const pal = { B: '#0284c7', L: '#7dd3fc', W: '#e0f2fe', R: '#64748b' };
+          const layers = [['RBBBB.','BBBBBL','LBBBBW','BBBBBR'],['R.....','..LW..','..WL..','.....R']];
+          return this.buildStackedSprite('tile_river', layers, pal, 4.2, 2.2, 2.3, true);
+        }
+        if (tile.ownerUid) {
+          const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
+          const pal = { S: '#78716c', W: '#fef3c7', D: '#451a03', R: ownerNpc.flagColor, C: '#cbd5e1' };
+          const layers = [['SSSSS','SSSSS','SSSSS','SSSSS','SSSSS'],['WWWWW','W...W','W...W','W...W','WWDWW'],['WWWWW','W...W','W...W','W...W','WWDWW'],['RRRRR','RRRRR','RRRRR','RRRRR','RRRRR'],['.RRR.','.RRR.','.RRR.','.RRR.','.RRR.'],['..R..','..R..','..C..','..R..','..R..']];
+          return this.buildStackedSprite(`house_${ownerNpc.id}`, layers, pal, 3.8, 2.0, 2.5, true);
+        }
+        return null;
+      },
+
       drawBoardGroundShadow(ctx) {
         const N = ISO_CONFIG.GRID_SIZE; const hw = ISO_CONFIG.TILE_W / 2; const hh = ISO_CONFIG.TILE_H / 2; const z = ISO_CONFIG.BASE_Z;
         const topCorner = this.gridToIso(0, 0); const rightCorner = this.gridToIso(N - 1, 0);
@@ -3802,23 +3695,47 @@ getStackedPropSprite(propType) {
         ctx.save();
         ctx.beginPath(); ctx.moveTo(topCorner.sx, topCorner.sy - hh + z + 10); ctx.lineTo(rightCorner.sx + hw + 16, rightCorner.sy + z + 14);
         ctx.lineTo(bottomCorner.sx, bottomCorner.sy + hh + z + 20); ctx.lineTo(leftCorner.sx - hw - 16, leftCorner.sy + z + 14); ctx.closePath();
-        ctx.fillStyle = 'rgba(8, 4, 2, 0.58)'; ctx.shadowColor = 'rgba(0, 0, 0, 0.78)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14; ctx.fill();
+        ctx.fillStyle = 'rgba(8, 4, 2, 0.62)'; ctx.shadowColor = 'rgba(0, 0, 0, 0.85)'; ctx.shadowBlur = 34; ctx.shadowOffsetY = 16; ctx.fill();
         ctx.restore();
       },
-        getStaticTerrainCanvas() {
-        if (this.staticTerrainCache) return this.staticTerrainCache;
+
+      // 🌟 45度角微縮模型投影（增強 HD-2D 立體落地重量感）
+      drawDioramaShadow(ctx, sx, sy, rx = 18, ry = 9) {
+        ctx.save();
+        ctx.translate(sx + 6, sy + 2);
+        ctx.rotate(-0.25);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(22, 12, 5, 0.32)';
+        ctx.fill();
+        ctx.restore();
+      },
+
+      // =========================================================================
+      // 🏗️ 第一層：靜態棋盤全烘焙（開局僅執行一次，合併所有地形、路網、靜態裝飾、孤島）
+      // =========================================================================
+      getBakedStaticBoard() {
+        if (this.bakedStaticCanvas) return this.bakedStaticCanvas;
+
         const offCvs = document.createElement('canvas');
-        offCvs.width = 1160;
-        offCvs.height = 680;
+        offCvs.width = 1320;
+        offCvs.height = 760;
         const octx = offCvs.getContext('2d');
         const offsetX = 580;
-        const offsetY = 80;
+        const offsetY = 100;
 
         octx.save();
         octx.translate(offsetX, offsetY);
         this.drawBoardGroundShadow(octx);
 
         const N = ISO_CONFIG.GRID_SIZE;
+        const groundDecorSet = new Set([
+          'decor_house_blue', 'decor_house_orange', 'decor_house_red',
+          'farm_plot_veg', 'farm_plot_sprout',
+          'rock_plant_moss', 'rock_plant_mushroom', 'rock_plant_flower'
+        ]);
+
+        // 1. 烘焙 9x9 地表與道路路緣
         for (let sum = 0; sum <= (N - 1) * 2; sum++) {
           for (let gx = 0; gx < N; gx++) {
             const gy = sum - gx;
@@ -3828,15 +3745,162 @@ getStackedPropSprite(propType) {
             if (cell.terrain === 'road' && cell.roadTile) {
               const pathSprite = this.getStackedPathSprite(cell.roadTile);
               if (pathSprite) octx.drawImage(pathSprite.canvas, sx - pathSprite.anchorX, sy - pathSprite.anchorY);
+              // 道路格線框
+              this.drawIsoDiamond(octx, sx, sy - 24, 0.97, 'rgba(62, 34, 12, 0.65)', 1.5, null);
             } else {
               const terrainSprite = this.getStackedTerrainTile(cell.terrain);
               if (terrainSprite) octx.drawImage(terrainSprite.canvas, sx - terrainSprite.anchorX, sy - terrainSprite.anchorY);
             }
           }
         }
+
+        // 2. 烘焙所有靜態環境裝飾（小屋、菜園、樹木、岩石）與不可購買的固定地標（起點、橋樑、溪流）
+        for (let sum = 0; sum <= (N - 1) * 2; sum++) {
+          for (let gx = 0; gx < N; gx++) {
+            const gy = sum - gx;
+            if (gy < 0 || gy >= N) continue;
+            const cell = WORLD_MAP[gx][gy];
+            const { sx, sy } = this.gridToIso(gx, gy);
+
+            if (cell.terrain === 'road' && cell.roadTile) {
+              const tile = cell.roadTile;
+              // 僅烘焙固定不變的建築（起點、橋樑、溪流），動態的命運/機會/可買地產留給上層
+              if (tile.type === 'START' || tile.pixelType === 'bridge' || tile.pixelType === 'river') {
+                const voxelObj = this.getTileVoxelSprite(tile);
+                if (voxelObj) {
+                  this.drawDioramaShadow(octx, sx, sy - 24, 18, 9);
+                  octx.drawImage(voxelObj.canvas, sx - voxelObj.anchorX, sy - 37 - voxelObj.anchorY);
+                }
+              }
+            } else if (cell.prop) {
+              const propSprite = this.getStackedPropSprite(cell.prop);
+              const liftOffset = groundDecorSet.has(cell.prop) ? 18 : 4;
+              if (propSprite) {
+                if (cell.prop.startsWith('decor_house') || cell.prop.startsWith('tree_')) {
+                  this.drawDioramaShadow(octx, sx, sy - 22, 22, 11);
+                }
+                octx.drawImage(propSprite.canvas, sx - propSprite.anchorX, sy - liftOffset - propSprite.anchorY);
+              }
+            }
+          }
+        }
+
+        // 3. 烘焙獨立「反省孤島」靜態基底與告示牌
+        const isl = this.gridToIso(REFLECTION_ISLAND.gx, REFLECTION_ISLAND.gy);
+        const islTopY = isl.sy - 24;
+        octx.save();
+        octx.beginPath();
+        octx.ellipse(isl.sx, isl.sy + 22, 62, 34, 0, 0, Math.PI * 2);
+        octx.fillStyle = 'rgba(6, 12, 20, 0.55)';
+        octx.fill();
         octx.restore();
-        this.staticTerrainCache = { canvas: offCvs, offsetX, offsetY };
-        return this.staticTerrainCache;
+
+        const islandSprite = this.getStackedReflectionIslandSprite();
+        if (islandSprite) octx.drawImage(islandSprite.canvas, isl.sx - islandSprite.anchorX, isl.sy - islandSprite.anchorY);
+        this.drawIsoDiamond(octx, isl.sx, islTopY, 0.94, 'rgba(239, 83, 80, 0.85)', 2.2, 'rgba(183, 28, 28, 0.14)');
+
+        const postSprite = this.getStackedPropSprite('reflection_post');
+        if (postSprite) octx.drawImage(postSprite.canvas, isl.sx - 24 - postSprite.anchorX, islTopY - 10 - postSprite.anchorY);
+
+        octx.save();
+        octx.translate(isl.sx, islTopY + 12);
+        octx.fillStyle = 'rgba(127, 20, 20, 0.92)';
+        octx.beginPath(); octx.roundRect(-30, -10, 60, 20, 6); octx.fill();
+        octx.strokeStyle = '#ef9a9a'; octx.lineWidth = 1.2; octx.stroke();
+        octx.fillStyle = '#ffebee'; octx.font = 'bold 9.5px sans-serif'; octx.textAlign = 'center'; octx.textBaseline = 'middle';
+        octx.fillText('🏝️反省孤島', 0, 0);
+        octx.restore();
+
+        octx.restore();
+        this.bakedStaticCanvas = { canvas: offCvs, offsetX, offsetY };
+        return this.bakedStaticCanvas;
+      },
+
+      // =========================================================================
+      // 🏘️ 第二層：半靜態領地層（僅在有人買地或斷線時重繪一次，平時零消耗）
+      // =========================================================================
+      getBakedTerritoryLayer() {
+        if (this.bakedTerritoryCanvas && !this.isTerritoryDirty) {
+          return this.bakedTerritoryCanvas;
+        }
+
+        if (!this.bakedTerritoryCanvas) {
+          const offCvs = document.createElement('canvas');
+          offCvs.width = 1320;
+          offCvs.height = 760;
+          this.bakedTerritoryCanvas = { canvas: offCvs, offsetX: 580, offsetY: 100 };
+        }
+
+        const { canvas: offCvs, offsetX, offsetY } = this.bakedTerritoryCanvas;
+        const octx = offCvs.getContext('2d');
+        octx.clearRect(0, 0, offCvs.width, offCvs.height);
+
+        octx.save();
+        octx.translate(offsetX, offsetY);
+
+        // 依深度順序繪製所有地點名稱、價格與地主小屋
+        const sortedTiles = [...BOARD_TILES].sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
+        sortedTiles.forEach(tile => {
+          if (tile.type === 'FATE' || tile.type === 'CHANCE') return;
+          const { sx, sy } = this.gridToIso(tile.gx, tile.gy);
+          const topY = sy - 24;
+          let hasBuilding = (tile.type === 'START' || tile.pixelType === 'bridge' || tile.pixelType === 'river');
+
+          // 若已被購買，繪製領地彩框、頂角徽記與地主房屋
+          if (tile.ownerUid) {
+            hasBuilding = true;
+            const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
+            this.drawIsoDiamond(octx, sx, topY, 0.91, 'rgba(30, 16, 6, 0.85)', 4.2, this.hexToRgba(ownerNpc.flagColor, 0.24));
+            this.drawIsoDiamond(octx, sx, topY, 0.91, ownerNpc.flagColor, 2.6, null);
+
+            const topCornerY = topY - (ISO_CONFIG.TILE_H / 2) * 0.91;
+            octx.beginPath();
+            octx.moveTo(sx, topCornerY - 4); octx.lineTo(sx + 6, topCornerY);
+            octx.lineTo(sx, topCornerY + 4); octx.lineTo(sx - 6, topCornerY);
+            octx.closePath();
+            octx.fillStyle = ownerNpc.flagColor; octx.fill();
+            octx.strokeStyle = '#fff'; octx.lineWidth = 1; octx.stroke();
+
+            const houseObj = this.getTileVoxelSprite(tile);
+            if (houseObj) {
+              this.drawDioramaShadow(octx, sx, topY, 16, 8);
+              octx.drawImage(houseObj.canvas, sx - houseObj.anchorX, topY - 13 - houseObj.anchorY);
+            }
+          }
+
+          // 繪製地點名稱與價格標籤
+          octx.save();
+          octx.translate(sx, topY + (hasBuilding ? 3 : -4));
+          octx.fillStyle = '#2e1808';
+          octx.textAlign = 'center';
+          octx.textBaseline = 'middle';
+          if (tile.name.length > 5) {
+            octx.font = 'bold 8.5px sans-serif';
+            const mid = Math.ceil(tile.name.length / 2);
+            octx.fillText(tile.name.slice(0, mid), 0, -7);
+            octx.fillText(tile.name.slice(mid), 0, 2);
+          } else {
+            octx.font = 'bold 9.5px sans-serif';
+            octx.fillText(tile.name, 0, tile.price > 0 ? -3 : 0);
+          }
+          if (tile.price > 0) {
+            if (tile.ownerUid) {
+              const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
+              octx.fillStyle = ownerNpc.tagColor;
+              octx.font = 'bold 8.2px sans-serif';
+              octx.fillText(`🚩${tile.ownerName} ($${calcTollFee(tile.price)})`, 0, 12);
+            } else {
+              octx.fillStyle = 'rgba(78, 42, 14, 0.9)';
+              octx.font = 'bold 8.5px sans-serif';
+              octx.fillText(`$${tile.price}`, 0, 12);
+            }
+          }
+          octx.restore();
+        });
+
+        octx.restore();
+        this.isTerritoryDirty = false;
+        return this.bakedTerritoryCanvas;
       },
 
       rebuildPawnTileIndex() {
@@ -3852,311 +3916,101 @@ getStackedPropSprite(propType) {
         }
       },
 
-      getTileVoxelSprite(tile) {
-        if (tile.type === 'START') {
-          const pal = { T: '#f59e0b', R: '#d97706', W: '#fef3c7', F: '#ef4444', Y: '#fde047', L: '#78350f' };
-          const layers = [['TTTT..','TTTT..','TTTT..','TTTT..','....LL','....FY'],['TTTT..','.TT...','.TT...','TTTT..','......','....Y.'],['.TT...','.TT...','.TT...','.TT...','......','......'],['.WW...','.WW...','.WW...','.WW...','......','......']];
-          return this.buildStackedSprite('tile_start', layers, pal, 4.0, 2.1, 2.5);
-        }
-if (tile.type === 'FATE') {
-          const pal = { T: '#8D6E63', D: '#5D4037', S: '#3E2723', W: '#F5F5DC' };
-          const layers = [
-            ['......','......','..DD..','..DD..','......','......'],
-            ['......','......','..DD..','..DD..','......','......'],
-            ['......','.TTTTT','.TWWWT','.TTTTT','......','......'],
-            ['......','......','..DD..','..DD..','......','......'],
-            ['......','TTTTT.','TWWWT.','TTTTT.','......','......'],
-            ['......','......','..DD..','..DD..','......','......']
-          ];
-          return this.buildStackedSprite('tile_fate_signpost', layers, pal, 3.8, 2.0, 2.5);
-        }
-        if (tile.type === 'CHANCE') {
-          const pal = { D: '#3e2723', B: '#5d4037', W: '#8d6e63', L: '#a1887f' };
-          const layers = [
-            ['.DDDD.','DBBBBD','DBBBBD','DBBBBD','DBBBBD','.DDDD.'],
-            ['.DDDD.','DWBBWD','BWDWWB','BWDWWB','DWBBWD','.DDDD.'],
-            ['.DDDD.','DWWWWD','DWWWWD','DWWWWD','DWWWWD','.DDDD.'],
-            ['.DDDD.','DDDDDD','DDDDDD','DDDDDD','DDDDDD','.DDDD.']
-          ];
-          return this.buildStackedSprite('tile_chance_crate', layers, pal, 3.8, 2.0, 2.5);
-        }
-        if (tile.pixelType === 'bridge') {
-          const pal = { W: '#b45309', D: '#78350f', P: '#fde68a' };
-          const layers = [['P....P','WWWWWW','WWWWWW','P....P'],['.WWWW.','DDDDDD','DDDDDD','.WWWW.'],['..WW..','..WW..','..WW..','..WW..']];
-          return this.buildStackedSprite('tile_bridge', layers, pal, 4.2, 2.2, 2.4);
-        }
-        if (tile.pixelType === 'river') {
-          const pal = { B: '#0284c7', L: '#7dd3fc', W: '#e0f2fe', R: '#64748b' };
-          const layers = [['RBBBB.','BBBBBL','LBBBBW','BBBBBR'],['R.....','..LW..','..WL..','.....R']];
-          return this.buildStackedSprite('tile_river', layers, pal, 4.2, 2.2, 2.3);
-        }
-        if (tile.ownerUid) {
-          const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
-          const pal = { S: '#78716c', W: '#fef3c7', D: '#451a03', R: ownerNpc.flagColor, C: '#cbd5e1' };
-          const layers = [['SSSSS','SSSSS','SSSSS','SSSSS','SSSSS'],['WWWWW','W...W','W...W','W...W','WWDWW'],['WWWWW','W...W','W...W','W...W','WWDWW'],['RRRRR','RRRRR','RRRRR','RRRRR','RRRRR'],['.RRR.','.RRR.','.RRR.','.RRR.','.RRR.'],['..R..','..R..','..C..','..R..','..R..']];
-          return this.buildStackedSprite(`house_${ownerNpc.id}`, layers, pal, 3.8, 2.0, 2.5);
-        }
-        return null;
+      // =========================================================================
+      // ✨ 第三層：純動態實體與 HD-2D 光影特效層（每幀 60fps 即時渲染）
+      // =========================================================================
+      drawDynamicWaterShimmer(ctx, now) {
+        ctx.save();
+        this.waterCells.forEach(w => {
+          const { sx, sy } = this.gridToIso(w.gx, w.gy);
+          const wave = Math.sin(now * 0.0035 + w.phase);
+          if (wave > -0.2) {
+            const alpha = (wave + 0.2) * 0.45;
+            const shiftX = Math.cos(now * 0.002 + w.phase) * 6;
+            ctx.fillStyle = `rgba(224, 247, 250, ${alpha})`;
+            ctx.fillRect(sx - 10 + shiftX, sy - 16, 12, 2);
+            ctx.fillRect(sx + 2 - shiftX, sy - 11, 8, 2);
+          }
+        });
+        ctx.restore();
       },
 
-drawTileContent(ctx, sx, sy, tile) {
-        const voxelObj = this.getTileVoxelSprite(tile);
-        const hasBuilding = Boolean(voxelObj);
+      drawDynamicPropsAndHighlights(ctx, now) {
+        // 1. 命運與機會懸浮道具 + 玩家停駐彈出名牌
+        BOARD_TILES.forEach(tile => {
+          if (tile.type !== 'FATE' && tile.type !== 'CHANCE') return;
+          const { sx, sy } = this.gridToIso(tile.gx, tile.gy);
+          const topY = sy - 24;
+          const voxelObj = this.getTileVoxelSprite(tile);
+          const floatOffset = Math.sin(now * 0.004) * 2.2 + 3.2;
 
-        if (voxelObj) {
-          const isFloatingIcon = tile.type === 'FATE' || tile.type === 'CHANCE';
-          // 讓物件在地面上方約 1px～5.4px 之間上下微微漂浮（避免往下沉入地板）
-          const floatOffset = isFloatingIcon ? (Math.sin(performance.now() * 0.004) * 2.2 + 3.2) : 0;
-
-          // 漂浮時在地面加上會隨高度微調的小陰影，增加懸浮立體感
-          if (isFloatingIcon) {
+          if (voxelObj) {
             const shadowScale = 1 - (floatOffset / 28);
             ctx.save();
             ctx.beginPath();
-            ctx.ellipse(sx, sy - 11, 11 * shadowScale, 5.5 * shadowScale, 0, 0, Math.PI * 2);
+            ctx.ellipse(sx, topY - 11, 11 * shadowScale, 5.5 * shadowScale, 0, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(30, 15, 5, 0.35)';
             ctx.fill();
             ctx.restore();
+
+            ctx.drawImage(voxelObj.canvas, sx - voxelObj.anchorX, topY - 13 - voxelObj.anchorY - floatOffset);
           }
 
-          ctx.drawImage(
-            voxelObj.canvas,
-            sx - voxelObj.anchorX,
-            sy - 13 - voxelObj.anchorY - floatOffset
-          );
-        }
-
-        ctx.save();
-        ctx.translate(sx, sy + (hasBuilding ? 3 : -4));
-
-        const isFate = tile.type === 'FATE';
-        const isChance = tile.type === 'CHANCE';
-
-        // 判斷是否有玩家（且不含正在跳躍移動中的狀態）確實停留在該格
-        const hasPlayer = this.stationaryTileSet?.has(tile.id) || false;
-
-        if (isFate) {
-          // 只有當玩家走到該格時，才渲染面板標籤
-          if (hasPlayer) {
-            const subText = tile.fateType === 'SKIP_TURN' ? '暫停一次' : (tile.fateType === 'BACK_3' ? '後退3格' : '前進5格');
-            ctx.fillStyle = 'rgba(74, 20, 140, 0.9)';
-            ctx.beginPath();
-            ctx.roundRect(-25, -36, 50, 22, 5);
-            ctx.fill();
-            ctx.strokeStyle = '#e1bee7';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            ctx.fillStyle = '#ffd54f';
-            ctx.font = 'bold 9.5px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('🔮命運', 0, -29);
-            ctx.fillStyle = '#f3e5f5';
-            ctx.font = 'bold 8px sans-serif';
-            ctx.fillText(subText, 0, -19.5);
-          }
-        } else if (isChance) {
-          // 只有當玩家走到該格時，才渲染面板標籤
-          if (hasPlayer) {
-            ctx.fillStyle = 'rgba(180, 75, 10, 0.92)';
-            ctx.beginPath();
-            ctx.roundRect(-26, -36, 52, 22, 5);
-            ctx.fill();
-            ctx.strokeStyle = '#ffe082';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            ctx.fillStyle = '#fff59d';
-            ctx.font = 'bold 9.5px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('❓機會', 0, -29);
-            ctx.fillStyle = '#ffe0b2';
-            ctx.font = 'bold 8px sans-serif';
-            ctx.fillText(tile.shortBadge || '機會事件', 0, -19.5);
-          }
-        } else {
-          ctx.fillStyle = '#2e1808';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          if (tile.name.length > 5) {
-            ctx.font = 'bold 8.5px sans-serif';
-            const mid = Math.ceil(tile.name.length / 2);
-            ctx.fillText(tile.name.slice(0, mid), 0, -7);
-            ctx.fillText(tile.name.slice(mid), 0, 2);
-          } else {
-            ctx.font = 'bold 9.5px sans-serif';
-            ctx.fillText(tile.name, 0, tile.price > 0 ? -3 : 0);
-          }
-          if (tile.price > 0) {
-            if (tile.ownerUid) {
-              const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
-              ctx.fillStyle = ownerNpc.tagColor;
-              ctx.font = 'bold 8.2px sans-serif';
-              ctx.fillText(`🚩${tile.ownerName} ($${calcTollFee(tile.price)})`, 0, 12);
+          if (this.stationaryTileSet?.has(tile.id)) {
+            ctx.save();
+            ctx.translate(sx, topY + 3);
+            if (tile.type === 'FATE') {
+              const subText = tile.fateType === 'SKIP_TURN' ? '暫停一次' : (tile.fateType === 'BACK_3' ? '後退3格' : '前進5格');
+              ctx.fillStyle = 'rgba(74, 20, 140, 0.9)';
+              ctx.beginPath(); ctx.roundRect(-25, -36, 50, 22, 5); ctx.fill();
+              ctx.strokeStyle = '#e1bee7'; ctx.lineWidth = 1; ctx.stroke();
+              ctx.fillStyle = '#ffd54f'; ctx.font = 'bold 9.5px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.fillText('🔮命運', 0, -29);
+              ctx.fillStyle = '#f3e5f5'; ctx.font = 'bold 8px sans-serif';
+              ctx.fillText(subText, 0, -19.5);
             } else {
-              ctx.fillStyle = 'rgba(78, 42, 14, 0.9)';
-              ctx.font = 'bold 8.5px sans-serif';
-              ctx.fillText(`$${tile.price}`, 0, 12);
+              ctx.fillStyle = 'rgba(180, 75, 10, 0.92)';
+              ctx.beginPath(); ctx.roundRect(-26, -36, 52, 22, 5); ctx.fill();
+              ctx.strokeStyle = '#ffe082'; ctx.lineWidth = 1; ctx.stroke();
+              ctx.fillStyle = '#fff59d'; ctx.font = 'bold 9.5px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.fillText('❓機會', 0, -29);
+              ctx.fillStyle = '#ffe0b2'; ctx.font = 'bold 8px sans-serif';
+              ctx.fillText(tile.shortBadge || '機會事件', 0, -19.5);
             }
+            ctx.restore();
           }
-        }
-        ctx.restore();
-      },
-
-      // 繪製每一格清晰格線框、玩家領地區分框、以及角色所在的等角菱形位置方框
-      drawRoadFrameAndTerritory(ctx, sx, topY, tile) {
-        ctx.save();
-
-        // 1. 每一格基礎清晰外框（讓玩家能明確看出每一步的格子邊界）
-        this.drawIsoDiamond(ctx, sx, topY, 0.97, 'rgba(62, 34, 12, 0.65)', 1.5, null);
-
-        // 2. 領地歸屬專屬方框（依購買者 NPC 顏色顯示領地框與頂角標記）
-        if (tile.ownerUid) {
-          const ownerNpc = NPC_ROSTER.find(n => n.id === tile.ownerNpcId) || NPC_ROSTER[0];
-          // 領地半透明底色 + 深色外襯 + 角色專屬彩色粗邊框
-          this.drawIsoDiamond(ctx, sx, topY, 0.91, 'rgba(30, 16, 6, 0.85)', 4.2, this.hexToRgba(ownerNpc.flagColor, 0.24));
-          this.drawIsoDiamond(ctx, sx, topY, 0.91, ownerNpc.flagColor, 2.6, null);
-
-          // 頂角領地小菱形徽記
-          const topCornerY = topY - (ISO_CONFIG.TILE_H / 2) * 0.91;
-          ctx.beginPath();
-          ctx.moveTo(sx, topCornerY - 4);
-          ctx.lineTo(sx + 6, topCornerY);
-          ctx.lineTo(sx, topCornerY + 4);
-          ctx.lineTo(sx - 6, topCornerY);
-          ctx.closePath();
-          ctx.fillStyle = ownerNpc.flagColor;
-          ctx.fill();
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-
-        // 3. 玩家 NPC 所在位置方框（取代原本的圓圈標示，改為貼合路面的等角菱形方框）
-        const pawnsOnTile = this.tilePawnsMap?.get(tile.id) || [];
-
-        pawnsOnTile.forEach((p, idx) => {
-          const npc = NPC_ROSTER.find(n => n.id === p.npcId) || NPC_ROSTER[0];
-          const isCurrentTurn = p.uid === GameState.currentTurnUid;
-          const isMe = p.uid === GameState.uid;
-          const pulse = isCurrentTurn ? (0.85 + Math.sin(performance.now() * 0.008) * 0.15) : 0.9;
-          const inset = Math.max(0.68, 0.84 - idx * 0.06);
-
-          ctx.save();
-          ctx.globalAlpha = pulse;
-          this.drawIsoDiamond(
-            ctx,
-            sx,
-            topY,
-            inset,
-            isMe ? '#fff59d' : npc.flagColor,
-            isCurrentTurn ? 2.8 : 2.0,
-            isCurrentTurn ? 'rgba(255, 245, 157, 0.14)' : null
-          );
-          ctx.restore();
         });
 
-        ctx.restore();
-      },
+        // 2. 玩家所在格呼吸發光方框（含反省孤島）
+        this.tilePawnsMap?.forEach((pawnsOnTile, tileId) => {
+          const tile = BOARD_TILES[tileId];
+          const { sx, sy } = this.gridToIso(tile.gx, tile.gy);
+          const topY = sy - 24;
+          pawnsOnTile.forEach((p, idx) => {
+            const npc = NPC_ROSTER.find(n => n.id === p.npcId) || NPC_ROSTER[0];
+            const isCurrentTurn = p.uid === GameState.currentTurnUid;
+            const isMe = p.uid === GameState.uid;
+            const pulse = isCurrentTurn ? (0.85 + Math.sin(now * 0.008) * 0.15) : 0.9;
+            const inset = Math.max(0.68, 0.84 - idx * 0.06);
 
+            ctx.save();
+            ctx.globalAlpha = pulse;
+            this.drawIsoDiamond(ctx, sx, topY, inset, isMe ? '#fff59d' : npc.flagColor, isCurrentTurn ? 2.8 : 2.0, isCurrentTurn ? 'rgba(255, 245, 157, 0.16)' : null);
+            ctx.restore();
+          });
+        });
 
-
-      
-drawWorldMap(ctx) {
-        const N = ISO_CONFIG.GRID_SIZE;
-        const groundDecorSet = new Set([
-          'decor_house_blue', 'decor_house_orange', 'decor_house_red',
-          'farm_plot_veg', 'farm_plot_sprout',
-          'rock_plant_moss', 'rock_plant_mushroom', 'rock_plant_flower'
-        ]);
-
-        for (let sum = 0; sum <= (N - 1) * 2; sum++) {
-          for (let gx = 0; gx < N; gx++) {
-            const gy = sum - gx;
-            if (gy < 0 || gy >= N) continue;
-
-            const cell = WORLD_MAP[gx][gy];
-            const { sx, sy } = this.gridToIso(gx, gy);
-
-            if (cell.terrain === 'road' && cell.roadTile) {
-              this.drawRoadFrameAndTerritory(ctx, sx, sy - 24, cell.roadTile);
-              this.drawTileContent(ctx, sx, sy - 24, cell.roadTile);
-            } else if (cell.prop) {
-              const propSprite = this.getStackedPropSprite(cell.prop);
-              const liftOffset = groundDecorSet.has(cell.prop) ? 18 : 4;
-              if (propSprite) {
-                ctx.drawImage(propSprite.canvas, sx - propSprite.anchorX, sy - liftOffset - propSprite.anchorY);
-              }
-            }
-          }
-        }
-      },
-
-
-
-      // 🏝️ 繪製主要方形地圖旁獨立的「反省孤島」（不與主要地圖連接）
-      drawReflectionIsland(ctx) {
-        const { sx, sy } = this.gridToIso(REFLECTION_ISLAND.gx, REFLECTION_ISLAND.gy);
-        const topY = sy - 24;
-
-        // 1. 孤島底部海面陰影
-        ctx.save();
-        ctx.beginPath();
-        ctx.ellipse(sx, sy + 22, 62, 34, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(6, 12, 20, 0.55)';
-        ctx.fill();
-        ctx.restore();
-
-        // 2. 孤島體素地形磚
-        const islandSprite = this.getStackedReflectionIslandSprite();
-        if (islandSprite) {
-          ctx.drawImage(
-            islandSprite.canvas,
-            sx - islandSprite.anchorX,
-            sy - islandSprite.anchorY
-          );
-        }
-
-        // 3. 孤島獨立格子外框
-        this.drawIsoDiamond(ctx, sx, topY, 0.94, 'rgba(239, 83, 80, 0.85)', 2.2, 'rgba(183, 28, 28, 0.14)');
-
-        // 若有玩家正在孤島反省，繪製警示位置方框
         const pawnsOnIsland = Object.values(PawnManager.pawns).filter(
           p => Math.abs(p.gx - REFLECTION_ISLAND.gx) < 0.25 && Math.abs(p.gy - REFLECTION_ISLAND.gy) < 0.25
         );
         if (pawnsOnIsland.length > 0) {
-          const pulse = 0.75 + Math.sin(performance.now() * 0.008) * 0.25;
+          const isl = this.gridToIso(REFLECTION_ISLAND.gx, REFLECTION_ISLAND.gy);
+          const pulse = 0.75 + Math.sin(now * 0.008) * 0.25;
           ctx.save();
           ctx.globalAlpha = pulse;
-          this.drawIsoDiamond(ctx, sx, topY, 0.80, '#ff8a80', 2.8, 'rgba(255, 82, 82, 0.18)');
+          this.drawIsoDiamond(ctx, isl.sx, isl.sy - 24, 0.80, '#ff8a80', 2.8, 'rgba(255, 82, 82, 0.18)');
           ctx.restore();
         }
-
-        // 4. 孤島告示牌小裝飾
-        const postSprite = this.getStackedPropSprite('reflection_post');
-        if (postSprite) {
-          ctx.drawImage(postSprite.canvas, sx - 24 - postSprite.anchorX, topY - 10 - postSprite.anchorY);
-        }
-
-        // 5. 「反省孤島」獨立名牌標籤
-        ctx.save();
-        ctx.translate(sx, topY + 12);
-        ctx.fillStyle = 'rgba(127, 20, 20, 0.92)';
-        ctx.beginPath();
-        ctx.roundRect(-30, -10, 60, 20, 6);
-        ctx.fill();
-        ctx.strokeStyle = '#ef9a9a';
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-
-        ctx.fillStyle = '#ffebee';
-        ctx.font = 'bold 9.5px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🏝️反省孤島', 0, 0);
-        ctx.restore();
       },
 
       getStackedPawnSprite(npc) {
@@ -4169,10 +4023,11 @@ drawWorldMap(ctx) {
           scout: [['.DD..DD.','.DD..DD.','.DD..DD.','........'],['.DD..DD.','.DD..DD.','.DD..DD.','........'],['.DD..DD.','.DD..DD.','.DD..DD.','........'],['.DDDDDD.','.DDDDDD.','.DDDDDD.','........'],['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'],['FOOOOOOF','FOOOOOOF','FOOOOOOF','.OOOOOO.'],['OOOOOOOO','OOOOOOOO','OOOOOOOO','.ORRRRO.'],['OOOOOOOO','OOOOOOOO','OOOOOOOO','.OORROO.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFPPFF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FFNNFF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FWFFWF.'],['.BBBBBB.','.BFFFFB.','.BFFFFB.','.FKFFKF.'],['.BBBBBB.','.BBBBBB.','.BFFFFB.','.FFFFFF.'],['.RRRRRR.','.RRRRRR.','.RRRRRR.','.rrrrrr.'],['.RRRRRR.','.RRRRRR.','.RRRRRR.','.RRRRRR.'],['..RRRR..','..RRRR..','..RRRR..','........']]
         };
         const layers = characterModels[npc.id] || characterModels.ranger;
-        return this.buildStackedSprite(key, layers, pal, 3.6, 1.9, 2.1);
+        // 啟用 withOutline = true，為角色加上銳利像素描邊
+        return this.buildStackedSprite(key, layers, pal, 3.6, 1.9, 2.1, true);
       },
 
-      drawAllMinecraftPawns(ctx) {
+      drawAllMinecraftPawns(ctx, now) {
         const pawnList = Object.values(PawnManager.pawns).sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
         const offsets = [{ dx: -10, dy: 4 }, { dx: 10, dy: -3 }, { dx: -10, dy: -5 }, { dx: 10, dy: 6 }];
 
@@ -4189,7 +4044,7 @@ drawWorldMap(ctx) {
           ctx.save();
           ctx.beginPath();
           ctx.ellipse(sx, sy + 2, 12 * shadowScale, 6.5 * shadowScale, 0, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(30, 15, 5, ${0.45 * shadowScale})`;
+          ctx.fillStyle = `rgba(30, 15, 5, ${0.48 * shadowScale})`;
           ctx.fill();
 
           const pawnSprite = this.getStackedPawnSprite(npc);
@@ -4202,26 +4057,16 @@ drawWorldMap(ctx) {
           const isSkipped = pawn.uid === GameState.uid ? (GameState.skipTurns > 0) : ((pState?.skipTurns ?? 0) > 0);
 
           if (reflTurns > 0) {
-            const bob = Math.sin(performance.now() * 0.006) * 2;
+            const bob = Math.sin(now * 0.006) * 2;
             ctx.fillStyle = 'rgba(183, 28, 28, 0.94)';
-            ctx.beginPath();
-            ctx.roundRect(-28, -70 + bob, 56, 13, 5);
-            ctx.fill();
-            ctx.fillStyle = '#ffebee';
-            ctx.font = 'bold 8px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.beginPath(); ctx.roundRect(-28, -70 + bob, 56, 13, 5); ctx.fill();
+            ctx.fillStyle = '#ffebee'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(`🏝️反省(${reflTurns}回)`, 0, -63.5 + bob);
           } else if (isSkipped) {
-            const bob = Math.sin(performance.now() * 0.006) * 2;
+            const bob = Math.sin(now * 0.006) * 2;
             ctx.fillStyle = 'rgba(106, 27, 154, 0.92)';
-            ctx.beginPath();
-            ctx.roundRect(-22, -70 + bob, 44, 13, 5);
-            ctx.fill();
-            ctx.fillStyle = '#f3e5f5';
-            ctx.font = 'bold 8px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.beginPath(); ctx.roundRect(-22, -70 + bob, 44, 13, 5); ctx.fill();
+            ctx.fillStyle = '#f3e5f5'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText('💤 暫停', 0, -63.5 + bob);
           }
 
@@ -4233,25 +4078,88 @@ drawWorldMap(ctx) {
         });
       },
 
-        render() {
+      // 🌟 HD-2D 螢幕空間光影後製（斜射暖陽光束 + 飄浮光塵 + 微縮模型景深暗角）
+      drawHD2DAtmosphere(ctx, dt, now) {
+        const w = this.width;
+        const h = this.height;
+
+        // 1. 左上方斜射的暖金色丁達爾光束 (God Rays)
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const rayGrad = ctx.createLinearGradient(0, 0, w * 0.65, h * 0.75);
+        rayGrad.addColorStop(0, 'rgba(255, 224, 150, 0.14)');
+        rayGrad.addColorStop(0.5, 'rgba(255, 200, 110, 0.05)');
+        rayGrad.addColorStop(1, 'rgba(255, 200, 110, 0)');
+        ctx.fillStyle = rayGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(w * 0.45, 0);
+        ctx.lineTo(w * 0.85, h);
+        ctx.lineTo(w * 0.15, h);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. 緩慢飄浮的金色微光塵粒 (Fireflies / Dust Motes)
+        for (const m of this.motes) {
+          m.ry -= m.speedY * dt;
+          if (m.ry < -0.05) { m.ry = 1.05; m.rx = Math.random(); }
+          const px = (m.rx * w) + Math.sin(now * 0.001 * m.swaySpeed + m.phase) * 18;
+          const py = m.ry * h;
+          const twinkle = 0.35 + (Math.sin(now * 0.0025 + m.phase) + 1) * 0.32;
+
+          ctx.fillStyle = `rgba(255, 236, 179, ${twinkle})`;
+          ctx.fillRect(px, py, m.size, m.size);
+        }
+        ctx.restore();
+
+        // 3. 微縮模型景深暗角 (Tilt-Shift Vignette)
+        if (this.cachedVignetteGrad) {
+          ctx.fillStyle = this.cachedVignetteGrad;
+          ctx.fillRect(0, 0, w, h);
+        }
+      },
+
+      render(dt = 0.016) {
         const ctx = this.ctx;
         if (!ctx || this.width <= 0 || this.height <= 0) return;
+        const now = performance.now();
         this.rebuildPawnTileIndex();
 
-        ctx.save(); ctx.scale(this.dpr, this.dpr);
-        if (!this.cachedBgGrad) {
-          this.cachedBgGrad = ctx.createRadialGradient(this.width / 2, this.height / 2, 40, this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.75);
-          this.cachedBgGrad.addColorStop(0, '#2e2418'); this.cachedBgGrad.addColorStop(1, '#140e08');
-        }
-        ctx.fillStyle = this.cachedBgGrad; ctx.fillRect(0, 0, this.width, this.height);
-        ctx.translate(this.camera.x, this.camera.y); ctx.scale(this.camera.scale, this.camera.scale);
+        ctx.save();
+        ctx.scale(this.dpr, this.dpr);
 
-        const terrainCache = this.getStaticTerrainCanvas();
-        ctx.drawImage(terrainCache.canvas, -terrainCache.offsetX, -terrainCache.offsetY);
-        this.drawWorldMap(ctx);
-        this.drawReflectionIsland(ctx);
-        this.drawAllMinecraftPawns(ctx);
+        // 背景深暖褐漸層
+        if (!this.cachedBgGrad) {
+          this.cachedBgGrad = ctx.createRadialGradient(this.width / 2, this.height / 2, 40, this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.78);
+          this.cachedBgGrad.addColorStop(0, '#332518'); this.cachedBgGrad.addColorStop(1, '#120b06');
+        }
+        ctx.fillStyle = this.cachedBgGrad;
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        // 進入世界攝影機座標系
+        ctx.save();
+        ctx.translate(this.camera.x, this.camera.y);
+        ctx.scale(this.camera.scale, this.camera.scale);
+
+        // 【圖層 1】靜態棋盤全烘焙畫布（單次 drawImage）
+        const staticBoard = this.getBakedStaticBoard();
+        ctx.drawImage(staticBoard.canvas, -staticBoard.offsetX, -staticBoard.offsetY);
+
+        // 【圖層 1.5】動態水面高光波紋
+        this.drawDynamicWaterShimmer(ctx, now);
+
+        // 【圖層 2】半靜態領地層（買地時才重繪的房屋與地價標籤）
+        const territoryLayer = this.getBakedTerritoryLayer();
+        ctx.drawImage(territoryLayer.canvas, -territoryLayer.offsetX, -territoryLayer.offsetY);
+
+        // 【圖層 3】動態懸浮道具、呼吸框與角色棋子
+        this.drawDynamicPropsAndHighlights(ctx, now);
+        this.drawAllMinecraftPawns(ctx, now);
         FloatingTexts.draw(ctx);
+        ctx.restore();
+
+        // 【圖層 4】螢幕空間 HD-2D 暖陽光束、微光塵粒與景深暗角
+        this.drawHD2DAtmosphere(ctx, dt, now);
 
         ctx.restore();
       },
@@ -4263,7 +4171,7 @@ drawWorldMap(ctx) {
           if (!this.isRunning) return;
           const dt = Math.min((now - this.lastTime) / 1000, 0.05);
           this.lastTime = now;
-          PawnManager.updateAll(dt); FloatingTexts.update(dt); this.updateCameraFollow(dt); this.render();
+          PawnManager.updateAll(dt); FloatingTexts.update(dt); this.updateCameraFollow(dt); this.render(dt);
           this.rafId = requestAnimationFrame(tick);
         };
         this.rafId = requestAnimationFrame(tick);
@@ -4310,8 +4218,6 @@ drawWorldMap(ctx) {
         document.getElementById('btn-roll').addEventListener('click', () => HUD.triggerRoll());
         document.getElementById('btn-bgm').addEventListener('click', () => BgmManager.toggle());
         document.getElementById('lobby-bgm-btn').addEventListener('click', () => BgmManager.toggle());
-        document.getElementById('btn-sfx').addEventListener('click', () => SfxManager.toggle());
-        document.getElementById('lobby-sfx-btn').addEventListener('click', () => SfxManager.toggle());
         document.getElementById('btn-follow').addEventListener('click', () => this.setAutoFollow(!this.camera.autoFollow));
         document.getElementById('btn-reset-view').addEventListener('click', () => this.resetCamera());
         document.getElementById('btn-exit').addEventListener('click', () => GameBridge.closeAndReturn());
