@@ -1617,6 +1617,20 @@
         <label>👥 線上連線人物管理</label>
         <button class="btn-action btn-red" style="background:#b91c1c;" onclick="adminClearAllOnlinePlayers()">🗑️ 清除所有線上使用者 NPC</button>
       </div>
+      <!-- 🪙【新增】：發送大富翁金幣給指定學生 -->
+      <hr style="margin:14px 0; border:0; border-top:1px solid #e2e8f0;">
+      <div class="form-group">
+        <label>🪙 發送大富翁專屬金幣給指定玩家</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <select id="admin-coin-student" style="flex:1.2; min-width:130px;">
+            <option value="">載入學生名單...</option>
+          </select>
+          <input type="number" id="admin-coin-amount" placeholder="金幣數量 (如: 100)" min="1" step="10" style="flex:1; min-width:110px;">
+          <button type="button" class="btn-action btn-green" style="width:auto; padding:0 16px;" onclick="adminSendMonopolyCoins()">
+            🎁 發送金幣
+          </button>
+        </div>
+      </div>
       <!-- 🌟【新增】：北荒地神廟劇情事件控制 -->
       <div class="form-group" style="margin-top: 10px;">
         <label>⛩️ 北荒地神廟劇情事件控制</label>
@@ -2222,7 +2236,17 @@ function applyRosterData(data) {
       html += '<option value="guest">✨ 訪客探險家 (自訂暱稱)</option>';
       select.innerHTML = html;
 
-      if (currentStudent.seatNumber) select.value = currentStudent.seatNumber;
+if (currentStudent.seatNumber) select.value = currentStudent.seatNumber;
+
+      // 🌟 補充 A 放在這裡（renderSelectOptions 的大括號裡面）：
+      const adminCoinSelect = document.getElementById('admin-coin-student');
+      if (adminCoinSelect) {
+        let adminHtml = '<option value="">請選擇學生座號</option>';
+        rosterList.forEach(s => {
+          adminHtml += `<option value="${s.seatNumber}">${s.seatNumber}號 ${s.name}</option>`;
+        });
+        adminCoinSelect.innerHTML = adminHtml;
+      }
     }
 
     document.getElementById('select-identity').addEventListener('change', (e) => {
@@ -2311,6 +2335,7 @@ function applyRosterData(data) {
 
       spawnPlayerCharacter();
       fetchCurrentWeatherAfterLogin();
+      startListeningMonopolyCoinGifts();
 
       setTimeout(() => {
         if (typeof syncDailyCheckinsFromCloud === 'function') syncDailyCheckinsFromCloud(currentStudent.seatNumber);
@@ -3848,6 +3873,81 @@ function updateBeybladeIslandDormancy() {
           alert('設定失敗，請檢查權限：' + err.message);
         });
       }
+    }
+
+    // 🪙 1. 教師發送大富翁金幣（寫入 Firebase 專屬信箱，確保玩家在線或離線都能收到）
+    function adminSendMonopolyCoins() {
+      const seatSelect = document.getElementById('admin-coin-student');
+      const amountInput = document.getElementById('admin-coin-amount');
+      const seatNumber = seatSelect ? seatSelect.value : '';
+      const amount = parseInt(amountInput ? amountInput.value : '0', 10);
+
+      if (!seatNumber) {
+        alert('請先選擇要發送金幣的學生！');
+        return;
+      }
+      if (isNaN(amount) || amount <= 0) {
+        alert('請輸入大於 0 的有效金幣數量！');
+        return;
+      }
+
+      const matched = rosterList.find(s => String(s.seatNumber) === String(seatNumber));
+      const studentDisplay = matched ? `${matched.seatNumber}號 ${matched.name}` : `${seatNumber}號`;
+
+      if (!confirm(`確定要發送 【${amount} 🪙 大富翁金幣】 給 ${studentDisplay} 嗎？`)) return;
+
+      if (db) {
+        const giftRef = db.ref(`monopoly_coin_gifts/seat_${seatNumber}`);
+        giftRef.transaction(curr => (curr || 0) + amount).then(() => {
+          amountInput.value = '';
+          alert(`✅ 已成功發送 ${amount} 🪙 金幣給 ${studentDisplay}！\n（若該生正在大富翁內會立即入帳；若尚未進入則於下次開啟時自動領取）`);
+
+          if (liveFeedRef) {
+            liveFeedRef.push({
+              student: "【🎁 教師獎勵】",
+              msg: `發送了 ${amount} 🪙 大富翁金幣給 ${studentDisplay}！`,
+              time: firebase.database.ServerValue.TIMESTAMP
+            });
+          }
+        }).catch(err => {
+          alert('發送失敗，請檢查網路或權限：' + err.message);
+        });
+      }
+    }
+
+    // 🪙 2. 監聽當前登入學生的金幣信箱，一旦有金幣就立刻轉發給大富翁 iframe 並清空信箱
+    let activeCoinGiftRef = null;
+    function startListeningMonopolyCoinGifts() {
+      if (!db || !currentStudent || !currentStudent.seatNumber || currentStudent.seatNumber === '訪客') return;
+
+      if (activeCoinGiftRef) activeCoinGiftRef.off();
+      activeCoinGiftRef = db.ref(`monopoly_coin_gifts/seat_${currentStudent.seatNumber}`);
+
+      activeCoinGiftRef.on('value', snap => {
+        const pendingCoins = snap.val() || 0;
+        if (pendingCoins <= 0) return;
+
+        // 確認大富翁視窗是否正在開啟中
+        const modal = document.getElementById('modal-monopoly');
+        const iframe = document.getElementById('monopoly-iframe');
+        const isMonopolyOpen = modal && !modal.classList.contains('hidden') && iframe && iframe.contentWindow;
+
+        if (isMonopolyOpen) {
+          // 原子性歸零信箱後，透過 postMessage 通知大富翁加幣
+          activeCoinGiftRef.transaction(curr => {
+            if (!curr || curr <= 0) return 0;
+            return 0;
+          }, (err, committed, finalSnap) => {
+            if (!err && committed) {
+              iframe.contentWindow.postMessage({
+                type: 'MONOPOLY_ADD_COINS',
+                payload: { amount: pendingCoins }
+              }, window.location.origin);
+              showLiveBanner(`🎁 收到老師發送的 +${pendingCoins} 🪙 大富翁金幣，已自動入帳！`);
+            }
+          });
+        }
+      });
     }
 
     function adminRemoveChampionSignboard() {
@@ -9826,6 +9926,7 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
             type: 'MONOPOLY_INIT',
             payload: { uid, name, energy, readCount, fitCount }
           }, window.location.origin);
+          setTimeout(() => startListeningMonopolyCoinGifts(), 300);
         }
       };
 
@@ -10037,6 +10138,7 @@ if (isEventActive) {
     }
 
     function closeDrawer() {
+      document.getElementById('side-drawer').classList.remove('open');
       isCartPaused = false;
       isBoatPaused = false;
 
