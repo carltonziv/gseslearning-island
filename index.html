@@ -4508,37 +4508,41 @@ const PIXEL_SPRITE_TEMPLATES = [
       if (customClothes !== undefined && tpl.id !== 'moogle_white') pal.C = customClothes;
 
       const px = 0.042;
+      // 1. 像素頭部（原本 Y: 0.96 -> 降為 0.72）
       const headMesh = buildVoxelPartFromMatrix(tpl.head, pal, px, 0.22);
-      headMesh.position.set(0, 0.96, 0);
+      headMesh.position.set(0, 0.72, 0);
       person.add(headMesh);
 
+      // 2. 像素軀幹（原本 Y: 0.65 -> 降為 0.41）
       const torsoMesh = buildVoxelPartFromMatrix(tpl.body, pal, px, 0.18);
-      torsoMesh.position.set(0, 0.65, 0);
+      torsoMesh.position.set(0, 0.41, 0);
       person.add(torsoMesh);
 
+      // 3. 左／右手臂樞紐（原本 Y: 0.74 -> 降為 0.50）
       const leftArmPivot = new THREE.Group();
-      leftArmPivot.position.set(-0.24, 0.74, 0);
+      leftArmPivot.position.set(-0.24, 0.50, 0);
       const leftArmVoxel = buildVoxelPartFromMatrix(tpl.arm, pal, px * 0.9, 0.12);
       leftArmVoxel.position.y = -0.10;
       leftArmPivot.add(leftArmVoxel);
       person.add(leftArmPivot);
 
       const rightArmPivot = new THREE.Group();
-      rightArmPivot.position.set(0.24, 0.74, 0);
+      rightArmPivot.position.set(0.24, 0.50, 0);
       const rightArmVoxel = buildVoxelPartFromMatrix(tpl.arm, pal, px * 0.9, 0.12);
       rightArmVoxel.position.y = -0.10;
       rightArmPivot.add(rightArmVoxel);
       person.add(rightArmPivot);
 
+      // 4. 左／右腿部樞紐（原本 Y: 0.52 -> 降為 0.23，腳底就會精準踩在 Y = 0 地面上）
       const leftLegPivot = new THREE.Group();
-      leftLegPivot.position.set(-0.10, 0.52, 0);
+      leftLegPivot.position.set(-0.10, 0.23, 0);
       const leftLegVoxel = buildVoxelPartFromMatrix(tpl.leg, pal, px * 0.95, 0.14);
       leftLegVoxel.position.y = -0.11;
       leftLegPivot.add(leftLegVoxel);
       person.add(leftLegPivot);
 
       const rightLegPivot = new THREE.Group();
-      rightLegPivot.position.set(0.10, 0.52, 0);
+      rightLegPivot.position.set(0.10, 0.23, 0);
       const rightLegVoxel = buildVoxelPartFromMatrix(tpl.leg, pal, px * 0.95, 0.14);
       rightLegVoxel.position.y = -0.11;
       rightLegPivot.add(rightLegVoxel);
