@@ -7181,6 +7181,7 @@ function revertToLocalWeather() {
 
     let isFocusing = false;
     let isMainLoopPaused = false;
+    let mainLoopRafId = null;
     let resumeMainLoopFn = null;
     let targetCameraPos = new THREE.Vector3(0, 22, 46);
     let targetLookAt = new THREE.Vector3(0, 0, 0);
@@ -8655,20 +8656,24 @@ document.addEventListener('visibilitychange', () => {
         const isMonopolyOpen = monopolyModal && !monopolyModal.classList.contains('hidden');
 
         if (document.hidden) {
-          // 分頁退到背景：暫停 3D 渲染迴圈與載具音效
+          // 分頁退到背景：徹底取消當前的動畫幀，防止背景殘留
           isMainLoopPaused = true;
+          if (mainLoopRafId !== null) {
+            cancelAnimationFrame(mainLoopRafId);
+            mainLoopRafId = null;
+          }
           if (isBgmPlaying) bgmAudio.pause();
           stopCustomAudio('cart');
           stopCustomAudio('boat');
         } else if (!isMonopolyOpen) {
-          // 切回學習島分頁：重置時間基準並重新啟動 animate() 迴圈
+          // 切回學習島分頁：只有在沒有迴圈運作時才啟動
           lastFrameTime = performance.now();
           if (isBgmPlaying) bgmAudio.play().catch(() => {});
           if (isRidingCart) playCustomAudio('cart');
           if (isRidingBoat) playCustomAudio('boat');
-          if (isMainLoopPaused) {
+          if (isMainLoopPaused && mainLoopRafId === null) {
             isMainLoopPaused = false;
-            animate(); // ✅ 直接重新啟動主迴圈
+            animate();
           }
         }
       });
@@ -8681,10 +8686,19 @@ document.addEventListener('visibilitychange', () => {
       const _tempBoatLook = new THREE.Vector3();
 
       function animate() {
-        if (isMainLoopPaused) return;
-        requestAnimationFrame(animate);
+        if (isMainLoopPaused) {
+          mainLoopRafId = null;
+          return;
+        }
+        // 👈【關鍵】每次排程前先清除舊的幀請求，保證全場永遠只有 1 個迴圈在跑
+        if (mainLoopRafId !== null) {
+          cancelAnimationFrame(mainLoopRafId);
+        }
+        mainLoopRafId = requestAnimationFrame(animate);
+
         const now = performance.now();
         const delta = Math.min((now - lastFrameTime) / 1000, 0.05);
+        const frameScale = delta * 60;
         lastFrameTime = now;
         totalElapsedTime += delta;
         const time = totalElapsedTime;
@@ -9400,8 +9414,9 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
 
             if (tdist > 0.12) {
               if (v.zzzSprite) v.zzzSprite.visible = false;
-              v.currentX += (tdx / tdist) * 0.028;
-              v.currentZ += (tdz / tdist) * 0.028;
+              v.currentX += (tdx / tdist) * 0.028 * frameScale;
+              v.currentZ += (tdz / tdist) * 0.028 * frameScale;
+              v.walkCycle += 0.16 * frameScale;
               v.obj.position.x = v.currentX;
               v.obj.position.z = v.currentZ;
               v.obj.rotation.y = Math.atan2(tdx, tdz);
@@ -9591,8 +9606,9 @@ if (ropeMesh && jumperMan && jumpRopeGroup) {
               const dist = Math.hypot(dx, dz);
 
               if (dist > 0.08) {
-                v.currentX += (dx / dist) * v.speed;
-                v.currentZ += (dz / dist) * v.speed;
+                v.currentX += (dx / dist) * v.speed * frameScale;
+                v.currentZ += (dz / dist) * v.speed * frameScale;
+                v.walkCycle += (v.isJogging ? 0.22 : 0.14) * frameScale;
 
                 const localPos = {
                   x: v.currentX - curIslandCfg.pos[0],
