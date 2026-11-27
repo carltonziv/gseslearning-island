@@ -1188,6 +1188,16 @@
   </div>
 
   <script>
+
+    function syncMonopolyCashToCloud(currentTotalCash) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'UPDATE_GAME_COINS',
+      setExactCoins: currentTotalCash // 直接將雲端錢包更新為最新總額
+    }, '*');
+  }
+}
+    
     /**
      * ============================================================================
      * 0. FIREBASE 設定區
