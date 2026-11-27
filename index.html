@@ -4643,43 +4643,60 @@ function updateBeybladeIslandDormancy() {
       return tex;
     }
 
-    // 🌟 3. 立體公仔化 16-bit 角色生成器（具備真實厚度、接收光影、四方向自動轉向）
+// 🌟 3. 立體公仔化 16-bit 角色生成器（無黑框、3層浮雕立體厚度、四方向自動轉向）
     function createCharacterMesh(isSkirt = false, customSkin, customClothes) {
       const person = new THREE.Group();
       const tpl = getRandomItem(HD2D_SPRITE_DATA);
       const pal = { ...tpl.pal };
       if (customClothes !== undefined && tpl.id !== 'moogle') pal.C = customClothes;
 
-      // 建立四個方向的銳利像素貼圖（正面、背面、右側面、左側面）
+      // 建立四個方向的銳利像素貼圖
       const texFront = buildPixelDirTexture(tpl.front, pal, false);
       const texBack  = buildPixelDirTexture(tpl.back,  pal, false);
       const texRight = buildPixelDirTexture(tpl.side,  pal, false);
       const texLeft  = buildPixelDirTexture(tpl.side,  pal, true);
 
-      // 立體像素板主體（厚度 0.24，擁有真實側面邊框與光影）
-      const depthThickness = 0.24;
-      const sideEdgeMat = SharedPool.getMaterial('MeshStandardMaterial', {
-        color: 0x1e181a, // 深黑立體像素描邊厚度
-        roughness: 0.75
-      });
+      // 建立 3 層立體浮雕容器（取代原本會有黑邊框的 BoxGeometry）
+      const bodyGroup = new THREE.Group();
+      bodyGroup.position.y = 0.48;
 
-      const faceMat = new THREE.MeshStandardMaterial({
+      const planeGeo = new THREE.PlaneGeometry(0.96, 0.96);
+
+      // 前層與後層材質（正常亮彩）
+      const frontMat = new THREE.MeshStandardMaterial({
         map: texFront,
         transparent: true,
-        alphaTest: 0.5,   // 關鍵：讓透明像素完全裁切，並能投射出人形輪廓影子！
-        roughness: 0.65,
-        metalness: 0.05
+        alphaTest: 0.5,
+        side: THREE.DoubleSide,
+        roughness: 0.65
       });
 
-      // BoxGeometry 6 個面材質：[+X右, -X左, +Y頂, -Y底, +Z正面, -Z背面]
-      const bodyBox = new THREE.Mesh(
-        new THREE.BoxGeometry(0.96, 0.96, depthThickness),
-        [sideEdgeMat, sideEdgeMat, sideEdgeMat, sideEdgeMat, faceMat, faceMat]
-      );
-      bodyBox.position.y = 0.48; // 腳底精準踩在 Y = 0 地面！
-      bodyBox.castShadow = true; // 投射真實立體人形陰影
-      bodyBox.receiveShadow = true;
-      person.add(bodyBox);
+      // 中層材質（深色立體剪影層，提供側看時的公仔厚度感）
+      const midMat = new THREE.MeshStandardMaterial({
+        map: texFront,
+        color: 0x332b2e, // 壓暗作為立體側面陰影層
+        transparent: true,
+        alphaTest: 0.5,
+        side: THREE.DoubleSide,
+        roughness: 0.85
+      });
+
+      // 依序疊放前、中、後三層（Z 軸錯開產生實體厚度，完全沒有多餘黑框）
+      const layerOffsets = [
+        { z:  0.055, mat: frontMat, castShadow: true },
+        { z:  0.000, mat: midMat,   castShadow: false },
+        { z: -0.055, mat: frontMat, castShadow: true }
+      ];
+
+      layerOffsets.forEach(cfg => {
+        const layer = new THREE.Mesh(planeGeo, cfg.mat);
+        layer.position.z = cfg.z;
+        layer.castShadow = cfg.castShadow;
+        layer.receiveShadow = true;
+        bodyGroup.add(layer);
+      });
+
+      person.add(bodyGroup);
 
       // 腳底柔和接觸陰影
       const shadowMesh = new THREE.Mesh(
@@ -4690,10 +4707,11 @@ function updateBeybladeIslandDormancy() {
       shadowMesh.position.y = 0.01;
       person.add(shadowMesh);
 
-      // 儲存貼圖與材質供主迴圈依移動面向自動切換
+      // 儲存貼圖與雙層材質供主迴圈同步切換方向
       person.userData.voxelSprite = {
-        mesh: bodyBox,
-        mat: faceMat,
+        mesh: bodyGroup,
+        mat: frontMat,
+        midMat: midMat,
         textures: { front: texFront, back: texBack, right: texRight, left: texLeft },
         currentDir: 'front'
       };
