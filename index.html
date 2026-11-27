@@ -4721,7 +4721,7 @@ function updateBeybladeIslandDormancy() {
       return person;
     }
 
-    // --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
+// --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
   const npcHammer = createBuilderSpriteMesh('hammer');
   npcHammer.position.set(-0.55, 0.24, 0.85);
   group.add(npcHammer);
@@ -4734,7 +4734,7 @@ function updateBeybladeIslandDormancy() {
   sawHorseLog.castShadow = true;
   group.add(sawHorseLog);
 
-  // 鋸木馬十字木腳架（讓木頭架在半空中才符合鋸木動作）
+  // 鋸木馬十字木腳架
   [-0.45, 0.45].forEach(lz => {
     const legA = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
     legA.position.set(2.05, 0.24, 0.6 + lz);
@@ -5819,49 +5819,171 @@ function createWoodCabinLandmark() {
   partialPlank2.castShadow = true;
   group.add(partialPlank2);
 
-  // --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
-  const npcHammer = createCharacterMesh(false, 0xF5D0A9, 0xD97706);
-  npcHammer.position.set(-0.55, 0.24, 0.85);
-  npcHammer.rotation.y = Math.PI;
-  const hammerTool = new THREE.Group();
-  const hHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.36), logLightMat);
-  hHandle.position.z = 0.15;
-  const hHead = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.08), ironMat);
-  hHead.position.z = 0.32;
-  hammerTool.add(hHandle, hHead);
-  hammerTool.position.set(0, -0.4, 0.05);
-  npcHammer.userData.limbs.rightArm.add(hammerTool);
-  group.add(npcHammer);
-  cabinBuilders.push({ mesh: npcHammer, role: 'hammer', phase: 0 });
+  const dummyPivot = new THREE.Group();
+      person.userData.limbs = { leftArm: dummyPivot, rightArm: dummyPivot, leftLeg: dummyPivot, rightLeg: dummyPivot, skirt: null };
+      return person;
+    }
 
-  // --- NPC 2：右側鋸木馬前拉鋸方塊原木的師傅 ---
-  const sawHorseLog = new THREE.Mesh(logGeoShort, logLightMat);
-  sawHorseLog.scale.set(1.1, 1.1, 0.55);
-  sawHorseLog.position.set(2.05, 0.48, 0.6);
-  sawHorseLog.castShadow = true;
-  group.add(sawHorseLog);
+    // 🌟 木工師傅專用：帶施工姿勢的 16-bit 立體像素角色生成器
+    function createBuilderSpriteMesh(role) {
+      const group = new THREE.Group();
 
-  const npcSaw = createCharacterMesh(true, 0xFFE0BD, 0x0284C7);
-  npcSaw.position.set(2.68, 0, 0.6);
-  npcSaw.rotation.y = -Math.PI / 2;
-  const sawBlade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.48), ironMat);
-  sawBlade.position.set(0, -0.4, 0.22);
-  npcSaw.userData.limbs.rightArm.add(sawBlade);
-  group.add(npcSaw);
-  cabinBuilders.push({ mesh: npcSaw, role: 'saw', phase: 1.5 });
+      const pal = {
+        K: '#141013', H: '#d97706', h: '#fbbf24', F: '#ffcdb2', E: '#141013',
+        B: '#0284c7', b: '#0369a1', O: '#ea580c', G: '#16a34a',
+        S: '#cbd5e1', s: '#64748b', W: '#92400e', w: '#d97706'
+      };
 
-  // --- NPC 3：左側往返搬運木板的工匠 ---
-  const npcCarry = createCharacterMesh(false, 0x8D5524, 0x16A34A);
-  npcCarry.position.set(-2.1, 0, 1.4);
-  const carriedPlank = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 1.15), plankMat);
-  carriedPlank.position.set(0, 0.72, 0.38);
-  npcCarry.add(carriedPlank);
-  group.add(npcCarry);
-  cabinBuilders.push({ mesh: npcCarry, role: 'carry', phase: 0 });
+      const arts = {
+        hammer: [
+          [
+            '....KKKK........',
+            '...KssssK.......',
+            '....KKKK........',
+            '.....KK.KKKKKK..',
+            '.....KKKhhhhhhK.',
+            '.....KFFHFFFFFK.',
+            '.....KFFHEFFFFK.',
+            '....KKOOFFFFFFK.',
+            '...KOOOOOOOOOK..',
+            '....KKBBBBBBK...',
+            '.....KBBKKBBK...',
+            '.....KWWKKWWK...',
+            '.....KKKKKKKK...'
+          ],
+          [
+            '.....KKKKKK.....',
+            '....KhhhhhhK....',
+            '....KHFFFFFK....',
+            '....KHEFFFFK....',
+            '....KKFFFFFK....',
+            'KKK.KOOOOOOK....',
+            'KssKKOOOOOOK....',
+            'KKK..KBBBBBK....',
+            '.....KBBKKBBK...',
+            '.....KWWKKWWK...',
+            '.....KKKKKKKK...'
+          ]
+        ],
+        saw: [
+          [
+            '.....KKKKKK.....',
+            '....KhhhhhhK....',
+            '....KHFFFFFK....',
+            '....KHEFFFFK....',
+            '....KKFFFFFK....',
+            '....KBBBBBBK....',
+            '.KKKKBBBBBBK....',
+            'KssssFFBBBBK....',
+            '.KKKKKKBBBBK....',
+            '.....KbbKKbbK...',
+            '.....KWWKKWWK...',
+            '.....KKKKKKKK...'
+          ],
+          [
+            '.....KKKKKK.....',
+            '....KhhhhhhK....',
+            '....KHFFFFFK....',
+            '....KHEFFFFK....',
+            '....KKFFFFFK....',
+            '....KBBBBBBK....',
+            '...KKKKBBBBK....',
+            '..KssssFFBBK....',
+            '...KKKKKKBBK....',
+            '....KbbKKbbK....',
+            '....KWWKKWWK....',
+            '....KKKKKKKK....'
+          ]
+        ],
+        carry: [
+          [
+            '.KKKKKKKKKKKKKK.',
+            'KwwwwwwwwwwwwwwK',
+            'KWWWWWWWWWWWWWWK',
+            '.KKKKKKKKKKKKKK.',
+            '..KFFKKKKKKFFK..',
+            '..KFFKhhhhKFFK..',
+            '...KKHFFFFHKK...',
+            '....KHEFFEFK....',
+            '....KGGGGGGK....',
+            '....KGGGGGGK....',
+            '...KbbK..KbbK...',
+            '..KWWK....KWWK..',
+            '..KKKK....KKKK..'
+          ],
+          [
+            '.KKKKKKKKKKKKKK.',
+            'KwwwwwwwwwwwwwwK',
+            'KWWWWWWWWWWWWWWK',
+            '.KKKKKKKKKKKKKK.',
+            '..KFFKKKKKKFFK..',
+            '..KFFKhhhhKFFK..',
+            '...KKHFFFFHKK...',
+            '....KHEFFEFK....',
+            '....KGGGGGGK....',
+            '....KGGGGGGK....',
+            '....KbbKKbbK....',
+            '....KWWKKWWK....',
+            '....KKKKKKKK....'
+          ]
+        ]
+      };
 
-  registerObstacle('wood_cabin', 0, 0, 2.3);
-  return group;
-}
+      const frameSet = arts[role] || arts.hammer;
+      const tex0 = buildPixelDirTexture(frameSet[0], pal, false);
+      const tex1 = buildPixelDirTexture(frameSet[1], pal, false);
+
+      const bodyGroup = new THREE.Group();
+      bodyGroup.position.y = 0.52;
+      const planeGeo = new THREE.PlaneGeometry(1.05, 1.05);
+
+      const frontMat = new THREE.MeshStandardMaterial({
+        map: tex0,
+        transparent: true,
+        alphaTest: 0.5,
+        side: THREE.DoubleSide,
+        roughness: 0.65
+      });
+
+      const midMat = new THREE.MeshStandardMaterial({
+        map: tex0,
+        color: 0x332b2e,
+        transparent: true,
+        alphaTest: 0.5,
+        side: THREE.DoubleSide,
+        roughness: 0.85
+      });
+
+      [{ z: 0.055, mat: frontMat }, { z: 0, mat: midMat }, { z: -0.055, mat: frontMat }].forEach(cfg => {
+        const layer = new THREE.Mesh(planeGeo, cfg.mat);
+        layer.position.z = cfg.z;
+        layer.castShadow = (cfg.z !== 0);
+        bodyGroup.add(layer);
+      });
+
+      group.add(bodyGroup);
+
+      const shadowMesh = new THREE.Mesh(
+        new THREE.CircleGeometry(0.35, 14),
+        new THREE.MeshBasicMaterial({ color: 0x1a120b, transparent: true, opacity: 0.35, depthWrite: false })
+      );
+      shadowMesh.rotation.x = -Math.PI / 2;
+      shadowMesh.position.y = 0.01;
+      group.add(shadowMesh);
+
+      group.userData.builderAnim = {
+        bodyGroup: bodyGroup,
+        frontMat: frontMat,
+        midMat: midMat,
+        tex0: tex0,
+        tex1: tex1,
+        currentFrame: 0
+      };
+
+      return group;
+    }
+
+    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) {
 
     function createReclaimLandmarkStages(parentGroup) {
       const grassMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x65A30D, roughness: 0.8, flatShading: true });
