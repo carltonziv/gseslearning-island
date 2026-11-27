@@ -1668,25 +1668,29 @@
         HUD.update();
         this.recalculateInitialDice();
       },
-      closeAndReturn() {
-        if (GameState._hasSentClose) return;
-        GameState._hasSentClose = true;
+closeAndReturn() {
         Engine.stopLoop();
-        BgmManager.stop();
         MultiplayerManager.leaveRoomCleanly();
-        const refundedEnergy = Math.floor(GameState.coins / EXCHANGE_RATE);
-        const finalPersonalEnergy = GameState.personalEnergy + refundedEnergy;
-        const leftoverCoins = GameState.coins % EXCHANGE_RATE;
+        const finalRemainingCoins = Math.max(0, Math.floor(GameState.coins));
         const ownedNames = GameState.ownedTileIds.map(id => BOARD_TILES[id].name);
 
+        // 1. 將剩餘的通用遊戲金幣即時寫回主舞台的 Firebase 錢包
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'UPDATE_GAME_COINS',
+            setExactCoins: finalRemainingCoins
+          }, '*');
+        }
+
+        // 2. 通知主舞台關閉大富翁視窗並更新個人能量
         const message = {
           type: 'MONOPOLY_CLOSE',
           payload: {
             uid: GameState.uid,
             name: getMyShortName(),
-            personalEnergy: finalPersonalEnergy,
-            refundedEnergy: refundedEnergy,
-            remainingCoins: leftoverCoins,
+            personalEnergy: GameState.personalEnergy,
+            refundedEnergy: 0,
+            remainingCoins: finalRemainingCoins,
             affectClassEnergy: false,
             ownedTileIds: GameState.ownedTileIds,
             ownedNames
@@ -1695,7 +1699,7 @@
         if (window.parent && window.parent !== window) {
           window.parent.postMessage(message, window.location.origin);
         } else {
-          alert(`已結算並準備返回主島嶼！\n• 玩家：${getMyShortName()}\n• 剩餘金幣 ${GameState.coins} 🪙 已自動換回 ${refundedEnergy} ⚡ 個人能量\n• 最終個人累積能量：${finalPersonalEnergy} ⚡（不影響全班能量）\n• 購得地點：${ownedNames.length > 0 ? ownedNames.join('、') : '無'}`);
+          alert(`已結算並準備返回主島嶼！\n• 玩家：${getMyShortName()}\n• 剩餘通用遊戲金幣：${finalRemainingCoins} 🪙（已自動存入錢包供下次遊戲使用）\n• 剩餘個人能量：${GameState.personalEnergy} ⚡\n• 購得地點：${ownedNames.length > 0 ? ownedNames.join('、') : '無'}`);
         }
       }
     };
