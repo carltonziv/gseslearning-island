@@ -3490,13 +3490,27 @@ function updateNightClosedState() {
 function updateBeybladeIslandDormancy() {
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
+      // 👇 ===【取代原本的 if (beybladeBaseMesh) { ... } 區塊】=== 👇
       if (beybladeBaseMesh) {
-        if (!beybladeBaseMesh.userData.isMatCloned) {
-          beybladeBaseMesh.material = beybladeBaseMesh.material.clone();
-          beybladeBaseMesh.userData.isMatCloned = true;
+        if (Array.isArray(beybladeBaseMesh.material)) {
+          // 支援多材質陣列：[0:側面懸崖, 1:頂面石板草地, 2:底面]
+          if (!beybladeBaseMesh.userData.isMatCloned) {
+            beybladeBaseMesh.material = beybladeBaseMesh.material.map(m => m.clone());
+            beybladeBaseMesh.userData.isMatCloned = true;
+          }
+          // 只讓頂面草地（索引 1）在休眠與開賽時切換灰白色／草綠色
+          if (beybladeBaseMesh.material[1] && beybladeBaseMesh.material[1].color) {
+            beybladeBaseMesh.material[1].color.setHex(isTournamentActive ? 0x5B8E3D : COLOR_GRAY_DORMANT);
+          }
+        } else {
+          if (!beybladeBaseMesh.userData.isMatCloned) {
+            beybladeBaseMesh.material = beybladeBaseMesh.material.clone();
+            beybladeBaseMesh.userData.isMatCloned = true;
+          }
+          beybladeBaseMesh.material.color.setHex(isTournamentActive ? 0x5B8E3D : COLOR_GRAY_DORMANT);
         }
-        beybladeBaseMesh.material.color.setHex(isTournamentActive ? 0x5B8E3D : COLOR_GRAY_DORMANT);
       }
+      // 👆 ===【取代到這裡為止】=== 👆
 
       if (beybladeLandmarkGroup) {
         beybladeLandmarkGroup.traverse(child => {
