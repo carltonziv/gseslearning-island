@@ -5369,12 +5369,17 @@ function updateBeybladeIslandDormancy() {
       return group;
     }
 
-    function createCivicsLandmark() {
+function createCivicsLandmark() {
       const group = new THREE.Group();
       const temple = new THREE.Group();
-      const marbleMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF6F4F0, roughness: 0.45 });
-      const trimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF6F4F0, roughness: 0.35 });
 
+      // 🌟 體素白灰大理石磚貼圖
+      const civicBrickTex = createVoxelWallTexture('#f8fafc', '#e2e8f0', false);
+      const marbleMat = new THREE.MeshStandardMaterial({ map: civicBrickTex, roughness: 0.65 });
+      const trimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xcbd5e1, roughness: 0.55 });
+      const goldAccentMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfacc15, metalness: 0.75, roughness: 0.25 });
+
+      // 1. 三層體素石階基座
       [3.6, 3.2, 2.8].forEach((w, i) => {
         const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.18, w * 0.8), marbleMat);
         baseStep.position.y = 0.09 + i * 0.18;
@@ -5383,36 +5388,37 @@ function updateBeybladeIslandDormancy() {
         temple.add(baseStep);
       });
 
+      // 2. 六根體素方柱（取代原本圓柱 CylinderGeometry）
       const colPositions = [
         [-1.05, 0.6, -0.8], [0, 0.6, -0.8], [1.05, 0.6, -0.8],
         [-1.05, 0.6,  0.8], [0, 0.6,  0.8], [1.05, 0.6,  0.8]
       ];
       colPositions.forEach(p => {
-        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.6, 14), marbleMat);
+        const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.6, 0.24), marbleMat);
         shaft.position.set(p[0], p[1] + 0.8, p[2]);
         shaft.castShadow = true;
         temple.add(shaft);
 
-        const capital = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.1, 0.34), trimMat);
+        const capital = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.36), trimMat);
         capital.position.set(p[0], p[1] + 1.65, p[2]);
         temple.add(capital);
       });
 
-      const architrave = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 2.05), marbleMat);
+      // 3. 體素橫樑與階梯三角山形神殿屋頂
+      const architrave = new THREE.Mesh(new THREE.BoxGeometry(2.85, 0.22, 2.1), trimMat);
       architrave.position.y = 2.45;
       architrave.castShadow = true;
       temple.add(architrave);
 
-      const flatCornice = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.14, 2.2), trimMat);
-      flatCornice.position.y = 2.62;
-      flatCornice.castShadow = true;
-      flatCornice.receiveShadow = true;
-      temple.add(flatCornice);
+      const steppedRoof = buildVoxelSteppedRoof(3.1, 2.35, 0.72, '#f1f5f9', '#cbd5e1', '#94a3b8');
+      steppedRoof.position.y = 2.56;
+      temple.add(steppedRoof);
 
-      const flatRoofPlate = new THREE.Mesh(new THREE.BoxGeometry(2.85, 0.12, 2.05), marbleMat);
-      flatRoofPlate.position.y = 2.75;
-      flatRoofPlate.castShadow = true;
-      temple.add(flatRoofPlate);
+      // 屋頂中央金色榮譽徽章裝飾
+      const crest = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.32), goldAccentMat);
+      crest.position.set(0, 3.36, 0);
+      crest.rotation.y = Math.PI / 4;
+      temple.add(crest);
 
       temple.traverse(child => {
         if (child.isMesh) {
@@ -5558,40 +5564,42 @@ function createWoodCabinLandmark() {
   const plankMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDEB887, roughness: 0.7 });
   const ironMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x475569, metalness: 0.7, roughness: 0.3 });
 
-  // 1. 木屋石木地基
-  const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.24, 2.4), logDarkMat);
+  // 1. 體素石木地基（套用像素石磚貼圖）
+  const baseTex = createVoxelWallTexture('#78716c', '#57534e', false);
+  const baseMat = new THREE.MeshStandardMaterial({ map: baseTex, roughness: 0.9 });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.24, 2.4), baseMat);
   base.position.y = 0.12;
   base.receiveShadow = true;
   group.add(base);
 
-  // 2. 半完工交錯原木牆（左、右、後三面堆疊 3~4 層）
-  const logGeoLong = new THREE.CylinderGeometry(0.11, 0.11, 2.7, 8);
-  logGeoLong.rotateZ(Math.PI / 2);
-  const logGeoShort = new THREE.CylinderGeometry(0.11, 0.11, 2.3, 8);
-  logGeoShort.rotateX(Math.PI / 2);
+  // 2. 體素方塊原木牆（以方塊原木取代原本圓柱 CylinderGeometry）
+  const logGeoLong = new THREE.BoxGeometry(2.7, 0.20, 0.22);
+  const logGeoShort = new THREE.BoxGeometry(0.22, 0.20, 2.3);
 
   for (let layer = 0; layer < 4; layer++) {
     const ly = 0.34 + layer * 0.21;
-    // 後牆
-    const backLog = new THREE.Mesh(logGeoLong, logDarkMat);
+    // 後牆（深淺方木交錯堆疊）
+    const backLog = new THREE.Mesh(logGeoLong, (layer % 2 === 0) ? logDarkMat : logLightMat);
     backLog.position.set(0, ly, -1.05);
     backLog.castShadow = true;
+    backLog.receiveShadow = true;
     group.add(backLog);
 
     // 左右側牆（第 4 層刻意留空呈現施工中視覺）
     if (layer < 3) {
       [-1.25, 1.25].forEach(sx => {
-        const sideLog = new THREE.Mesh(logGeoShort, logLightMat);
+        const sideLog = new THREE.Mesh(logGeoShort, (layer % 2 === 0) ? logLightMat : logDarkMat);
         sideLog.position.set(sx, ly + 0.1, 0);
         sideLog.castShadow = true;
+        sideLog.receiveShadow = true;
         group.add(sideLog);
       });
     }
   }
 
-  // 3. 四角立柱與未鋪滿的屋頂斜樑（A字木桁架）
+  // 3. 四角立柱與階段性階梯斜樑（體素 A 字木桁架）
   [[-1.25, -1.05], [1.25, -1.05], [-1.25, 1.05], [1.25, 1.05]].forEach(([px, pz]) => {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.55, 0.16), logDarkMat);
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.20, 1.55, 0.20), logDarkMat);
     post.position.set(px, 0.9, pz);
     post.castShadow = true;
     group.add(post);
@@ -5599,7 +5607,7 @@ function createWoodCabinLandmark() {
 
   [-0.9, 0, 0.9].forEach(rz => {
     [-1, 1].forEach(side => {
-      const rafter = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.1, 0.1), plankMat);
+      const rafter = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.12, 0.12), plankMat);
       rafter.position.set(side * 0.68, 2.08, rz);
       rafter.rotation.z = side * -0.52;
       rafter.castShadow = true;
@@ -5607,13 +5615,25 @@ function createWoodCabinLandmark() {
     });
   });
 
+  // 屋頂左側已先鋪設兩階體素瓦片（展現半完工施工感）
+  const partialRoofTex = createVoxelRoofTexture('#b45309', '#92400e');
+  const partialRoofMat = new THREE.MeshStandardMaterial({ map: partialRoofTex, roughness: 0.85 });
+  const partialPlank1 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.10, 2.35), partialRoofMat);
+  partialPlank1.position.set(-1.15, 1.78, 0);
+  partialPlank1.castShadow = true;
+  group.add(partialPlank1);
+
+  const partialPlank2 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.10, 2.35), partialRoofMat);
+  partialPlank2.position.set(-0.75, 2.02, 0);
+  partialPlank2.castShadow = true;
+  group.add(partialPlank2);
+
   // --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
   const npcHammer = createCharacterMesh(false, 0xF5D0A9, 0xD97706);
   npcHammer.position.set(-0.55, 0.24, 0.85);
-  npcHammer.rotation.y = Math.PI; // 面向屋內木樑
+  npcHammer.rotation.y = Math.PI;
   const hammerTool = new THREE.Group();
-  const hHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.36, 6), logLightMat);
-  hHandle.rotation.x = Math.PI / 2;
+  const hHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.36), logLightMat);
   hHandle.position.z = 0.15;
   const hHead = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.08), ironMat);
   hHead.position.z = 0.32;
@@ -5623,15 +5643,16 @@ function createWoodCabinLandmark() {
   group.add(npcHammer);
   cabinBuilders.push({ mesh: npcHammer, role: 'hammer', phase: 0 });
 
-  // --- NPC 2：右側鋸木馬前拉鋸原木的師傅 ---
+  // --- NPC 2：右側鋸木馬前拉鋸方塊原木的師傅 ---
   const sawHorseLog = new THREE.Mesh(logGeoShort, logLightMat);
-  sawHorseLog.scale.set(1, 1, 0.55);
+  sawHorseLog.scale.set(1.1, 1.1, 0.55);
   sawHorseLog.position.set(2.05, 0.48, 0.6);
+  sawHorseLog.castShadow = true;
   group.add(sawHorseLog);
 
   const npcSaw = createCharacterMesh(true, 0xFFE0BD, 0x0284C7);
-  npcSaw.position.set(2.68, 0, 0.6);      // 👈 移到木頭右側正旁邊（Z 與木頭對齊 0.6）
-  npcSaw.rotation.y = -Math.PI / 2;       // 👈 面向左側（-X 方向），與 Z 軸原木呈 90 度垂直！
+  npcSaw.position.set(2.68, 0, 0.6);
+  npcSaw.rotation.y = -Math.PI / 2;
   const sawBlade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.48), ironMat);
   sawBlade.position.set(0, -0.4, 0.22);
   npcSaw.userData.limbs.rightArm.add(sawBlade);
@@ -5713,24 +5734,31 @@ function createWoodCabinLandmark() {
       stageMeshRuinTemple.visible = false;
       parentGroup.add(stageMeshRuinTemple);
 
-      stageMeshNewTemple = new THREE.Group();
-      const tBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.45, 3.2), stoneMat);
+stageMeshNewTemple = new THREE.Group();
+      const templeStoneTex = createVoxelWallTexture('#cbd5e1', '#94a3b8', false);
+      const templeStoneMat = new THREE.MeshStandardMaterial({ map: templeStoneTex, roughness: 0.85 });
+
+      const tBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.45, 3.2), templeStoneMat);
       tBase.position.y = 0.22;
+      tBase.receiveShadow = true;
       stageMeshNewTemple.add(tBase);
 
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(pos => {
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 1.8, 8), redTempleMat);
+        // 體素方柱取代原本圓柱
+        const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.8, 0.26), redTempleMat);
         pillar.position.set(pos[0], 1.25, pos[1]);
+        pillar.castShadow = true;
         stageMeshNewTemple.add(pillar);
       });
 
-      const tRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 0.9, 4), redTempleMat);
-      tRoof.rotation.y = Math.PI / 4;
-      tRoof.position.set(0, 2.5, 0);
+      // 紅瓦體素階梯廟頂（取代原本平滑的 ConeGeometry）
+      const tRoof = buildVoxelSteppedRoof(3.4, 3.4, 1.0, '#dc2626', '#991b1b', '#fbbf24');
+      tRoof.position.y = 2.1;
       stageMeshNewTemple.add(tRoof);
 
+      // 保留原本的金色屋脊與神廟能量核心
       const roofTop = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.15, 0.35), goldMat);
-      roofTop.position.set(0, 2.95, 0);
+      roofTop.position.set(0, 3.12, 0);
       stageMeshNewTemple.add(roofTop);
 
       const altarCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.4, 0), energyGlowMat);
@@ -5887,19 +5915,33 @@ function createWoodCabinLandmark() {
       // ------------------------------------------
       // 階段 3 (60% - 600分): 溫馨微型小書店 (含木窗與紫色斜屋頂)
       // ------------------------------------------
+// ------------------------------------------
+      // 階段 3 (60% - 600分): 溫馨微型小書店 (體素原木牆 + 發光窗格 + 紫色階梯屋頂 + 磚紅煙囪)
+      // ------------------------------------------
       stageReadingBookstore = new THREE.Group();
-      const houseBody = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.8, 2.4), woodLightMat);
+      const shopWallTex = createVoxelWallTexture('#c19a6b', '#a47148', true);
+      const shopWallMat = new THREE.MeshStandardMaterial({ map: shopWallTex, roughness: 0.85 });
+
+      const houseBody = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.8, 2.4), shopWallMat);
       houseBody.position.y = 0.9;
+      houseBody.castShadow = true;
       stageReadingBookstore.add(houseBody);
 
-      // 紫色三角斜屋頂
-      const cabinRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 1.1, 4), roofMat);
-      cabinRoof.rotation.y = Math.PI / 4;
-      cabinRoof.scale.set(1.1, 1.0, 1.0);
-      cabinRoof.position.y = 2.3;
+      // 紫色階梯體素屋頂（取代原本平滑的 ConeGeometry）
+      const cabinRoof = buildVoxelSteppedRoof(3.3, 2.7, 1.15, '#7e22ce', '#581c87', '#e9d5ff');
+      cabinRoof.position.y = 1.8;
       stageReadingBookstore.add(cabinRoof);
 
-      // 前門與玻璃展示窗
+      // 體素磚紅煙囪
+      const chimney = new THREE.Mesh(
+        new THREE.BoxGeometry(0.36, 0.85, 0.36),
+        SharedPool.getMaterial('MeshStandardMaterial', { color: '#b91c1c', roughness: 0.85 })
+      );
+      chimney.position.set(0.95, 2.75, -0.45);
+      chimney.castShadow = true;
+      stageReadingBookstore.add(chimney);
+
+      // 前門與玻璃展示窗（保留原本細節）
       const door = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.08), woodDarkMat);
       door.position.set(-0.8, 0.6, 1.21);
       stageReadingBookstore.add(door);
@@ -5911,7 +5953,7 @@ function createWoodCabinLandmark() {
       glassWin.position.set(0.55, 0.9, 1.21);
       stageReadingBookstore.add(glassWin);
 
-      // 門口遮陽木雨棚
+      // 門口遮陽木雨棚（保留原本細節）
       const awning = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.08, 0.75), woodWarmMat);
       awning.position.set(0, 1.7, 1.55);
       awning.rotation.x = 0.25;
@@ -6715,6 +6757,104 @@ function createWoodCabinLandmark() {
       tex.wrapS = THREE.RepeatWrapping;
       tex.repeat.set(3, 1); // 繞島嶼一圈重複 3 次，讓懸崖顆粒更細緻
       return tex;
+    }
+
+    // 🌟 1. 體素建築外牆貼圖（原木橫條／石磚／發光黃色像素格子窗）
+    function createVoxelWallTexture(wallHex1, wallHex2, hasGlowingWindows = true) {
+      const w = 32, h = 32;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      // 交替橫向原木／石磚條紋
+      for (let y = 0; y < h; y += 2) {
+        ctx.fillStyle = (y % 4 === 0) ? wallHex1 : wallHex2;
+        ctx.fillRect(0, y, w, 2);
+      }
+
+      // 加上深色木縫／磚縫陰影點
+      ctx.fillStyle = 'rgba(20, 12, 5, 0.35)';
+      for (let y = 0; y < h; y += 4) {
+        for (let x = (y % 8 === 0 ? 0 : 4); x < w; x += 8) {
+          ctx.fillRect(x, y, 1, 2);
+        }
+      }
+
+      // 繪製溫暖發光的像素格子窗（HD-2.5D 靈魂細節）
+      if (hasGlowingWindows) {
+        [6, 20].forEach(wx => {
+          ctx.fillStyle = '#3e2723'; // 深棕窗框
+          ctx.fillRect(wx, 10, 6, 8);
+          ctx.fillStyle = '#fef08a'; // 暖黃燈光
+          ctx.fillRect(wx + 1, 11, 4, 6);
+          ctx.fillStyle = '#5d4037'; // 十字窗格
+          ctx.fillRect(wx + 2, 11, 1, 6);
+          ctx.fillRect(wx + 1, 13, 4, 1);
+        });
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
+      return tex;
+    }
+
+    // 🌟 2. 體素屋頂瓦片貼圖（階梯波浪魚鱗瓦）
+    function createVoxelRoofTexture(roofHex1, roofHex2) {
+      const size = 16;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = roofHex1;
+      ctx.fillRect(0, 0, size, size);
+
+      for (let y = 0; y < size; y += 2) {
+        for (let x = 0; x < size; x += 2) {
+          if ((x + y) % 4 === 0) {
+            ctx.fillStyle = roofHex2;
+            ctx.fillRect(x, y, 2, 1);
+          }
+        }
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(4, 4);
+      return tex;
+    }
+
+    // 🌟 3. 樂高階梯狀體素斜屋頂（取代光滑四角錐 ConeGeometry）
+    function buildVoxelSteppedRoof(width, depth, height, color1, color2, trimColor = 0xd4a373) {
+      const roofGroup = new THREE.Group();
+      const roofTex = createVoxelRoofTexture(color1, color2);
+      const roofMat = new THREE.MeshStandardMaterial({ map: roofTex, roughness: 0.8 });
+      const trimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: trimColor, roughness: 0.75 });
+
+      const steps = 5;
+      const stepH = height / steps;
+      for (let s = 0; s < steps; s++) {
+        const ratio = 1 - (s / steps) * 0.82;
+        const w = width * ratio;
+        const d = depth * ratio;
+        const tier = new THREE.Mesh(new THREE.BoxGeometry(w, stepH, d), roofMat);
+        tier.position.y = stepH * (s + 0.5);
+        tier.castShadow = true;
+        tier.receiveShadow = true;
+        roofGroup.add(tier);
+      }
+
+      // 最底層淺木色屋簷邊框
+      const eaves = new THREE.Mesh(new THREE.BoxGeometry(width + 0.16, 0.12, depth + 0.16), trimMat);
+      eaves.position.y = 0.06;
+      roofGroup.add(eaves);
+
+      return roofGroup;
     }
 
     const TREE_LEAF_COLORS = [0xd97706, 0xf59e0b, 0xea580c, 0xc2410c, 0xb91c1c, 0xdc2626];
