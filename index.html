@@ -4706,7 +4706,6 @@ function updateBeybladeIslandDormancy() {
       shadowMesh.rotation.x = -Math.PI / 2;
       shadowMesh.position.y = 0.01;
       person.add(shadowMesh);
-
       // 儲存貼圖與雙層材質供主迴圈同步切換方向
       person.userData.voxelSprite = {
         mesh: bodyGroup,
@@ -4721,48 +4720,7 @@ function updateBeybladeIslandDormancy() {
       return person;
     }
 
-// --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
-  const npcHammer = createBuilderSpriteMesh('hammer');
-  npcHammer.position.set(-0.55, 0.24, 0.85);
-  group.add(npcHammer);
-  cabinBuilders.push({ mesh: npcHammer, role: 'hammer', phase: 0 });
-
-  // --- NPC 2：右側鋸木馬前拉鋸原木的師傅 ---
-  const sawHorseLog = new THREE.Mesh(logGeoShort, logLightMat);
-  sawHorseLog.scale.set(1.1, 1.1, 0.55);
-  sawHorseLog.position.set(2.05, 0.48, 0.6);
-  sawHorseLog.castShadow = true;
-  group.add(sawHorseLog);
-
-  // 鋸木馬十字木腳架
-  [-0.45, 0.45].forEach(lz => {
-    const legA = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
-    legA.position.set(2.05, 0.24, 0.6 + lz);
-    legA.rotation.z = 0.45;
-    group.add(legA);
-
-    const legB = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
-    legB.position.set(2.05, 0.24, 0.6 + lz);
-    legB.rotation.z = -0.45;
-    group.add(legB);
-  });
-
-  const npcSaw = createBuilderSpriteMesh('saw');
-  npcSaw.position.set(2.65, 0, 0.6);
-  group.add(npcSaw);
-  cabinBuilders.push({ mesh: npcSaw, role: 'saw', phase: 1.5 });
-
-  // --- NPC 3：左側往返雙手高舉扛木板的工匠 ---
-  const npcCarry = createBuilderSpriteMesh('carry');
-  npcCarry.position.set(-2.1, 0, 1.4);
-  group.add(npcCarry);
-  cabinBuilders.push({ mesh: npcCarry, role: 'carry', phase: 0 });
-
-  registerObstacle('wood_cabin', 0, 0, 2.3);
-  return group;
-}
-
-    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) {
+    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) { // 👈 補上這一行！
       const dog = new THREE.Group();
 
       const furMat = SharedPool.getMaterial('MeshStandardMaterial', { color: furColor, roughness: 0.85, flatShading: true });
@@ -5746,85 +5704,7 @@ function createCivicsLandmark() {
 
     let cabinBuilders = [];
 
-function createWoodCabinLandmark() {
-  const group = new THREE.Group();
-  cabinBuilders = [];
-
-  const logDarkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x6F4E37, roughness: 0.85 });
-  const logLightMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xC19A6B, roughness: 0.75 });
-  const plankMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDEB887, roughness: 0.7 });
-  const ironMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x475569, metalness: 0.7, roughness: 0.3 });
-
-  // 1. 體素石木地基（套用像素石磚貼圖）
-  const baseTex = createVoxelWallTexture('#78716c', '#57534e', false);
-  const baseMat = new THREE.MeshStandardMaterial({ map: baseTex, roughness: 0.9 });
-  const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.24, 2.4), baseMat);
-  base.position.y = 0.12;
-  base.receiveShadow = true;
-  group.add(base);
-
-  // 2. 體素方塊原木牆（以方塊原木取代原本圓柱 CylinderGeometry）
-  const logGeoLong = new THREE.BoxGeometry(2.7, 0.20, 0.22);
-  const logGeoShort = new THREE.BoxGeometry(0.22, 0.20, 2.3);
-
-  for (let layer = 0; layer < 4; layer++) {
-    const ly = 0.34 + layer * 0.21;
-    // 後牆（深淺方木交錯堆疊）
-    const backLog = new THREE.Mesh(logGeoLong, (layer % 2 === 0) ? logDarkMat : logLightMat);
-    backLog.position.set(0, ly, -1.05);
-    backLog.castShadow = true;
-    backLog.receiveShadow = true;
-    group.add(backLog);
-
-    // 左右側牆（第 4 層刻意留空呈現施工中視覺）
-    if (layer < 3) {
-      [-1.25, 1.25].forEach(sx => {
-        const sideLog = new THREE.Mesh(logGeoShort, (layer % 2 === 0) ? logLightMat : logDarkMat);
-        sideLog.position.set(sx, ly + 0.1, 0);
-        sideLog.castShadow = true;
-        sideLog.receiveShadow = true;
-        group.add(sideLog);
-      });
-    }
-  }
-
-  // 3. 四角立柱與階段性階梯斜樑（體素 A 字木桁架）
-  [[-1.25, -1.05], [1.25, -1.05], [-1.25, 1.05], [1.25, 1.05]].forEach(([px, pz]) => {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.20, 1.55, 0.20), logDarkMat);
-    post.position.set(px, 0.9, pz);
-    post.castShadow = true;
-    group.add(post);
-  });
-
-  [-0.9, 0, 0.9].forEach(rz => {
-    [-1, 1].forEach(side => {
-      const rafter = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.12, 0.12), plankMat);
-      rafter.position.set(side * 0.68, 2.08, rz);
-      rafter.rotation.z = side * -0.52;
-      rafter.castShadow = true;
-      group.add(rafter);
-    });
-  });
-
-  // 屋頂左側已先鋪設兩階體素瓦片（展現半完工施工感）
-  const partialRoofTex = createVoxelRoofTexture('#b45309', '#92400e');
-  const partialRoofMat = new THREE.MeshStandardMaterial({ map: partialRoofTex, roughness: 0.85 });
-  const partialPlank1 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.10, 2.35), partialRoofMat);
-  partialPlank1.position.set(-1.15, 1.78, 0);
-  partialPlank1.castShadow = true;
-  group.add(partialPlank1);
-
-  const partialPlank2 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.10, 2.35), partialRoofMat);
-  partialPlank2.position.set(-0.75, 2.02, 0);
-  partialPlank2.castShadow = true;
-  group.add(partialPlank2);
-
-  const dummyPivot = new THREE.Group();
-      person.userData.limbs = { leftArm: dummyPivot, rightArm: dummyPivot, leftLeg: dummyPivot, rightLeg: dummyPivot, skirt: null };
-      return person;
-    }
-
-    // 🌟 木工師傅專用：帶施工姿勢的 16-bit 立體像素角色生成器
+// 🌟 木工師傅專用：帶施工姿勢的 16-bit 立體像素角色生成器
     function createBuilderSpriteMesh(role) {
       const group = new THREE.Group();
 
@@ -5983,8 +5863,115 @@ function createWoodCabinLandmark() {
       return group;
     }
 
-    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) {
+    function createWoodCabinLandmark() {
+      const group = new THREE.Group();
+      cabinBuilders = [];
 
+      const logDarkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x6F4E37, roughness: 0.85 });
+      const logLightMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xC19A6B, roughness: 0.75 });
+      const plankMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDEB887, roughness: 0.7 });
+
+      // 1. 體素石木地基
+      const baseTex = createVoxelWallTexture('#78716c', '#57534e', false);
+      const baseMat = new THREE.MeshStandardMaterial({ map: baseTex, roughness: 0.9 });
+      const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.24, 2.4), baseMat);
+      base.position.y = 0.12;
+      base.receiveShadow = true;
+      group.add(base);
+
+      // 2. 體素方塊原木牆
+      const logGeoLong = new THREE.BoxGeometry(2.7, 0.20, 0.22);
+      const logGeoShort = new THREE.BoxGeometry(0.22, 0.20, 2.3);
+
+      for (let layer = 0; layer < 4; layer++) {
+        const ly = 0.34 + layer * 0.21;
+        const backLog = new THREE.Mesh(logGeoLong, (layer % 2 === 0) ? logDarkMat : logLightMat);
+        backLog.position.set(0, ly, -1.05);
+        backLog.castShadow = true;
+        backLog.receiveShadow = true;
+        group.add(backLog);
+
+        if (layer < 3) {
+          [-1.25, 1.25].forEach(sx => {
+            const sideLog = new THREE.Mesh(logGeoShort, (layer % 2 === 0) ? logLightMat : logDarkMat);
+            sideLog.position.set(sx, ly + 0.1, 0);
+            sideLog.castShadow = true;
+            sideLog.receiveShadow = true;
+            group.add(sideLog);
+          });
+        }
+      }
+
+      // 3. 四角立柱與 A 字木桁架
+      [[-1.25, -1.05], [1.25, -1.05], [-1.25, 1.05], [1.25, 1.05]].forEach(([px, pz]) => {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.20, 1.55, 0.20), logDarkMat);
+        post.position.set(px, 0.9, pz);
+        post.castShadow = true;
+        group.add(post);
+      });
+
+      [-0.9, 0, 0.9].forEach(rz => {
+        [-1, 1].forEach(side => {
+          const rafter = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.12, 0.12), plankMat);
+          rafter.position.set(side * 0.68, 2.08, rz);
+          rafter.rotation.z = side * -0.52;
+          rafter.castShadow = true;
+          group.add(rafter);
+        });
+      });
+
+      // 屋頂左側兩階體素瓦片
+      const partialRoofTex = createVoxelRoofTexture('#b45309', '#92400e');
+      const partialRoofMat = new THREE.MeshStandardMaterial({ map: partialRoofTex, roughness: 0.85 });
+      const partialPlank1 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.10, 2.35), partialRoofMat);
+      partialPlank1.position.set(-1.15, 1.78, 0);
+      partialPlank1.castShadow = true;
+      group.add(partialPlank1);
+
+      const partialPlank2 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.10, 2.35), partialRoofMat);
+      partialPlank2.position.set(-0.75, 2.02, 0);
+      partialPlank2.castShadow = true;
+      group.add(partialPlank2);
+
+      // --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
+      const npcHammer = createBuilderSpriteMesh('hammer');
+      npcHammer.position.set(-0.55, 0.24, 0.85);
+      group.add(npcHammer);
+      cabinBuilders.push({ mesh: npcHammer, role: 'hammer', phase: 0 });
+
+      // --- NPC 2：右側鋸木馬前拉鋸原木的師傅 ---
+      const sawHorseLog = new THREE.Mesh(logGeoShort, logLightMat);
+      sawHorseLog.scale.set(1.1, 1.1, 0.55);
+      sawHorseLog.position.set(2.05, 0.48, 0.6);
+      sawHorseLog.castShadow = true;
+      group.add(sawHorseLog);
+
+      [-0.45, 0.45].forEach(lz => {
+        const legA = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
+        legA.position.set(2.05, 0.24, 0.6 + lz);
+        legA.rotation.z = 0.45;
+        group.add(legA);
+
+        const legB = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
+        legB.position.set(2.05, 0.24, 0.6 + lz);
+        legB.rotation.z = -0.45;
+        group.add(legB);
+      });
+
+      const npcSaw = createBuilderSpriteMesh('saw');
+      npcSaw.position.set(2.65, 0, 0.6);
+      group.add(npcSaw);
+      cabinBuilders.push({ mesh: npcSaw, role: 'saw', phase: 1.5 });
+
+      // --- NPC 3：左側往返雙手高舉扛木板的工匠 ---
+      const npcCarry = createBuilderSpriteMesh('carry');
+      npcCarry.position.set(-2.1, 0, 1.4);
+      group.add(npcCarry);
+      cabinBuilders.push({ mesh: npcCarry, role: 'carry', phase: 0 });
+
+      registerObstacle('wood_cabin', 0, 0, 2.3);
+      return group;
+    }
     function createReclaimLandmarkStages(parentGroup) {
       const grassMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x65A30D, roughness: 0.8, flatShading: true });
       const stoneMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94A3B8, roughness: 0.9, flatShading: true });
