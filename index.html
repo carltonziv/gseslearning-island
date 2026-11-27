@@ -4721,6 +4721,47 @@ function updateBeybladeIslandDormancy() {
       return person;
     }
 
+    // --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
+  const npcHammer = createBuilderSpriteMesh('hammer');
+  npcHammer.position.set(-0.55, 0.24, 0.85);
+  group.add(npcHammer);
+  cabinBuilders.push({ mesh: npcHammer, role: 'hammer', phase: 0 });
+
+  // --- NPC 2：右側鋸木馬前拉鋸原木的師傅 ---
+  const sawHorseLog = new THREE.Mesh(logGeoShort, logLightMat);
+  sawHorseLog.scale.set(1.1, 1.1, 0.55);
+  sawHorseLog.position.set(2.05, 0.48, 0.6);
+  sawHorseLog.castShadow = true;
+  group.add(sawHorseLog);
+
+  // 鋸木馬十字木腳架（讓木頭架在半空中才符合鋸木動作）
+  [-0.45, 0.45].forEach(lz => {
+    const legA = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
+    legA.position.set(2.05, 0.24, 0.6 + lz);
+    legA.rotation.z = 0.45;
+    group.add(legA);
+
+    const legB = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
+    legB.position.set(2.05, 0.24, 0.6 + lz);
+    legB.rotation.z = -0.45;
+    group.add(legB);
+  });
+
+  const npcSaw = createBuilderSpriteMesh('saw');
+  npcSaw.position.set(2.65, 0, 0.6);
+  group.add(npcSaw);
+  cabinBuilders.push({ mesh: npcSaw, role: 'saw', phase: 1.5 });
+
+  // --- NPC 3：左側往返雙手高舉扛木板的工匠 ---
+  const npcCarry = createBuilderSpriteMesh('carry');
+  npcCarry.position.set(-2.1, 0, 1.4);
+  group.add(npcCarry);
+  cabinBuilders.push({ mesh: npcCarry, role: 'carry', phase: 0 });
+
+  registerObstacle('wood_cabin', 0, 0, 2.3);
+  return group;
+}
+
     function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) {
       const dog = new THREE.Group();
 
@@ -9125,39 +9166,58 @@ document.addEventListener('visibilitychange', () => {
         windTurbineBlades.forEach(blade => { blade.rotation.z += 0.04; });
 
         // 👇 「3 位木工 NPC 施工動作」 👇
-          for (let i = 0; i < cabinBuilders.length; i++) {
+          // 👇 「3 位木工 NPC 16-bit 雙格施工動畫」 👇
+        const builderCamAng = camera ? Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z) : 0;
+        for (let i = 0; i < cabinBuilders.length; i++) {
           const b = cabinBuilders[i];
-          const limbs = b.mesh.userData.limbs;
-          if (!limbs) continue;
+          const anim = b.mesh.userData.builderAnim;
+          if (!anim) continue;
+
+          // 讓工匠面向鏡頭並保留微側立體角度
+          anim.bodyGroup.rotation.y = builderCamAng - b.mesh.rotation.y + 0.15;
 
           if (b.role === 'hammer') {
-            // 師傅 1：右手上下敲擊鐵鎚、身體隨節奏微傾
-            const strike = Math.sin(time * 7.5 + b.phase);
-            limbs.rightArm.rotation.x = -1.35 + strike * 0.65;
-            limbs.leftArm.rotation.x = -0.6;
-            b.mesh.rotation.x = Math.max(0, strike) * 0.08;
-            } else if (b.role === 'saw') {
-            // 師傅 2：垂直面對橫木頭，沿 X 軸前後推拉手鋸
-            const pushPull = Math.sin(time * 6.0 + b.phase);
-            limbs.rightArm.rotation.x = -1.1 + pushPull * 0.42;
-            limbs.leftArm.rotation.x = -0.9 + pushPull * 0.25;
-            b.mesh.rotation.x = 0.15 + pushPull * 0.08;
-            b.mesh.position.x = 2.68 + pushPull * 0.06; // 👈 改為沿 X 軸微幅前後推拉
-            } else if (b.role === 'carry') {
-            // 師傅 3：雙手托住木板，在木料堆與木屋間來回走動
-            const walkT = (Math.sin(time * 1.4) + 1) * 0.5;
-            b.mesh.position.x = THREE.MathUtils.lerp(-2.4, -1.35, walkT);
-            b.mesh.position.z = THREE.MathUtils.lerp(1.6, 0.85, walkT);
-            const dir = Math.cos(time * 1.4) >= 0 ? 1 : -1;
-            b.mesh.rotation.y = (dir > 0) ? Math.atan2(1.05, -0.75) : Math.atan2(-1.05, 0.75);
+            // 師傅 1：高舉鐵鎚 -> 用力敲下（雙格切換 + 身體下壓震動）
+            const wave = Math.sin(time * 7.0 + b.phase);
+            const nextFrame = wave > 0 ? 1 : 0;
+            if (anim.currentFrame !== nextFrame) {
+              anim.currentFrame = nextFrame;
+              const tex = nextFrame === 1 ? anim.tex1 : anim.tex0;
+              anim.frontMat.map = tex; anim.frontMat.needsUpdate = true;
+              anim.midMat.map = tex; anim.midMat.needsUpdate = true;
+            }
+            anim.bodyGroup.position.y = (nextFrame === 1) ? 0.49 : 0.54;
 
-            const step = Math.sin(time * 9.0) * 0.45;
-            limbs.leftLeg.rotation.x = step;
-            limbs.rightLeg.rotation.x = -step;
-            limbs.leftArm.rotation.x = -1.25;
-            limbs.rightArm.rotation.x = -1.25;
-            b.mesh.position.y = Math.abs(Math.sin(time * 9.0)) * 0.035;
+          } else if (b.role === 'saw') {
+            // 師傅 2：站在木頭旁前後推拉手鋸（雙格切換 + 左右推拉位移）
+            const pushPull = Math.sin(time * 6.5 + b.phase);
+            const nextFrame = pushPull > 0 ? 1 : 0;
+            if (anim.currentFrame !== nextFrame) {
+              anim.currentFrame = nextFrame;
+              const tex = nextFrame === 1 ? anim.tex1 : anim.tex0;
+              anim.frontMat.map = tex; anim.frontMat.needsUpdate = true;
+              anim.midMat.map = tex; anim.midMat.needsUpdate = true;
+            }
+            b.mesh.position.x = 2.62 + pushPull * 0.10;
+            anim.bodyGroup.rotation.z = pushPull * 0.08;
+
+          } else if (b.role === 'carry') {
+            // 師傅 3：雙手高舉原木板在工地左側來回搬運（雙格邁步 + 往返移動）
+            const walkT = (Math.sin(time * 1.4) + 1) * 0.5;
+            b.mesh.position.x = THREE.MathUtils.lerp(-2.5, -1.45, walkT);
+            b.mesh.position.z = THREE.MathUtils.lerp(1.6, 0.85, walkT);
+
+            const stepWave = Math.sin(time * 8.5);
+            const nextFrame = stepWave > 0 ? 1 : 0;
+            if (anim.currentFrame !== nextFrame) {
+              anim.currentFrame = nextFrame;
+              const tex = nextFrame === 1 ? anim.tex1 : anim.tex0;
+              anim.frontMat.map = tex; anim.frontMat.needsUpdate = true;
+              anim.midMat.map = tex; anim.midMat.needsUpdate = true;
+            }
+            anim.bodyGroup.position.y = 0.52 + Math.abs(stepWave) * 0.04;
           }
+        
         }
 
         // 🛝 運動島溜滑梯：NPC 溜下 -> 繞回前側 -> 爬樓梯 -> 坐下再溜（12秒無縫循環）
