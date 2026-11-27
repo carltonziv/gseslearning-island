@@ -5810,9 +5810,9 @@ function createCivicsLandmark() {
       };
 
       const frameSet = arts[role] || arts.hammer;
-      const tex0 = buildPixelDirTexture(frameSet[0], pal, false);
-      const tex1 = buildPixelDirTexture(frameSet[1], pal, false);
-
+      const shouldFlip = (role === 'saw'); // 👈 讓鋸木師傅水平鏡像翻轉，面向左側的原木！
+      const tex0 = buildPixelDirTexture(frameSet[0], pal, shouldFlip);
+      const tex1 = buildPixelDirTexture(frameSet[1], pal, shouldFlip);
       const bodyGroup = new THREE.Group();
       bodyGroup.position.y = 0.52;
       const planeGeo = new THREE.PlaneGeometry(1.05, 1.05);
