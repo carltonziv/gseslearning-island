@@ -981,7 +981,8 @@
 
         <div class="lobby-footer">
           <div style="font-size:0.82rem;color:#dfc6ab;">
-            攜帶個人能量：<strong style="color:#7ee8fa;" id="lobby-energy-val">50</strong> ⚡
+            攜帶個人能量：<strong style="color:#7ee8fa;" id="lobby-energy-val">50</strong> ⚡ ｜ 
+            通用遊戲金幣：<strong style="color:#ffd54f;" id="lobby-coins-val">0</strong> 🪙
           </div>
           <div style="display:flex;gap:10px;">
             <button id="btn-join-match" class="btn btn-primary">🔍 隨機配對加入</button>
@@ -1588,6 +1589,10 @@
           const val = Number(params.get('energy'));
           if (!Number.isNaN(val) && val >= 0) GameState.personalEnergy = val;
         }
+        if (params.has('coins')) {
+          const coinVal = Number(params.get('coins'));
+          if (!Number.isNaN(coinVal) && coinVal >= 0) GameState.coins = coinVal;
+        }
         if (params.has('readCount') || params.has('fitCount')) {
           GameState.readChallengeCount = Math.max(0, Number(params.get('readCount')) || 0);
           GameState.fitnessQuestCount = Math.max(0, Number(params.get('fitCount')) || 0);
@@ -1614,20 +1619,23 @@
             } else if (type === 'MONOPOLY_FORCE_SETTLE') {
             // 收到主網頁外框 × 點擊訊號，立即執行正式結算扣分
             this.closeAndReturn();
-          }
-        });
-      // 防止玩家直接按 F5 重新整理或強制關閉整個瀏覽器分頁
-        window.addEventListener('pagehide', () => {
-          if (GameState.phase !== 'LOBBY' && !GameState._hasSentClose) {
-            const netEnergy = GameState.personalEnergy + Math.floor(GameState.coins / EXCHANGE_RATE);
-            if (window.parent && window.parent !== window) {
-              window.parent.postMessage({
-                type: 'MONOPOLY_SYNC_ENERGY',
-                payload: { uid: GameState.uid, personalEnergy: netEnergy }
-              }, window.location.origin);
+          } else if (type === 'SYNC_PLAYER_WALLET') {
+            // 👇 貼在這裡：接收主舞台傳來的教師發放通用金幣 👇
+            if (typeof event.data.coins === 'number') {
+              GameState.coins = event.data.coins;
+              HUD.update();
+            }
+            if (typeof event.data.exp === 'number') {
+              GameState.personalEnergy = event.data.exp;
+              this.recalculateInitialDice();
             }
           }
         });
+
+        // 大富翁載入完成後，主動向主舞台索取最新通用金幣
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'REQUEST_PLAYER_WALLET' }, '*');
+        }
       },
       updatePlayerNameDisplay() {
         const nameEl = document.getElementById('lobby-player-name');
@@ -1638,6 +1646,8 @@
         GameState.diceLeft = calcQuestDice(GameState.readChallengeCount, GameState.fitnessQuestCount);
 
         document.getElementById('lobby-energy-val').textContent = GameState.personalEnergy;
+        const lobbyCoinsEl = document.getElementById('lobby-coins-val');
+        if (lobbyCoinsEl) lobbyCoinsEl.textContent = GameState.coins;
         document.getElementById('quest-read-count').textContent = GameState.readChallengeCount;
         document.getElementById('quest-fit-count').textContent = GameState.fitnessQuestCount;
         document.getElementById('quest-dice-total').textContent = GameState.diceLeft;
@@ -1656,6 +1666,7 @@
           joinBtn.textContent = '🔍 隨機配對加入';
         }
         HUD.update();
+        this.recalculateInitialDice();
       },
       closeAndReturn() {
         if (GameState._hasSentClose) return;
