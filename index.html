@@ -833,6 +833,12 @@
         <span class="personal-energy-val" id="my-energy-text">0 EXP</span>
       </div>
 
+      <div class="personal-energy-card" style="border-color: #d97706; background: rgba(255, 251, 235, 0.92);">
+        <span class="personal-energy-label" style="color: #b45309;">🪙 遊戲金幣：</span>
+        <span class="personal-energy-val" id="my-coins-text" style="color: #b45309;">0 枚</span>
+      </div>
+      
+
       <div class="bb-honor-badge hidden" id="my-bb-badge">
         <span>🏆</span>
         <span id="my-bb-text">上次戰鬥陀螺大賽冠軍</span>
@@ -1607,6 +1613,28 @@
       <hr style="margin:14px 0; border:0; border-top:1px solid #e2e8f0;">
       <div class="form-group">
         <label>⚡ 全班共創能量控制</label>
+        
+        <!-- 🪙教師發放通用遊戲金幣區塊 -->
+<hr style="margin:14px 0; border:0; border-top:1px solid #e2e8f0;">
+<div class="form-group" style="background: #fffbeb; border: 2px solid #f59e0b; border-radius: 14px; padding: 12px;">
+  <label style="color: #b45309; font-size: 0.95rem; font-weight: 900;">
+    🪙 通用遊戲金幣發放（適用大富翁及後續所有遊戲）
+  </label>
+  <div style="display:flex; gap:8px; margin-top:6px; flex-wrap: wrap;">
+    <select id="admin-coin-target" style="flex: 1.4; min-width: 140px;">
+      <option value="all">🌟 全班所有學生</option>
+      <!-- 學生清單將由 JS 自動填入 -->
+    </select>
+    <input type="number" id="admin-coin-amount" placeholder="輸入金幣數量 (如 500)" style="flex: 1; min-width: 120px;">
+  </div>
+  <div style="display:flex; gap:8px; margin-top:8px;">
+    <input type="text" id="admin-coin-reason" placeholder="發放事由（選填，如：表現優異獎勵）" style="flex: 1;">
+    <button type="button" class="btn-action" style="width:auto; padding:0 18px; background: #d97706; box-shadow: 0 4px 0 #92400e;" onclick="adminGrantGameCoins()">
+      💰 發放金幣
+    </button>
+  </div>
+</div>
+        
         <div style="display:flex; gap:8px; margin-bottom:8px;">
           <input type="number" id="admin-energy-input" placeholder="輸入指定數值 (0~5000)" style="flex:1;">
           <button class="btn-action btn-blue" style="width:auto; padding:0 16px;" onclick="adminSetCustomEnergy()">設定數值</button>
@@ -2312,6 +2340,17 @@ function applyRosterData(data) {
       }
 
       spawnPlayerCharacter();
+      if (db && currentStudent.seatNumber && currentStudent.seatNumber !== '訪客') {
+        if (window.currentWalletRef) {
+          window.currentWalletRef.off(); // 先關閉上一位學生的監聽，避免殘留
+        }
+        window.currentWalletRef = db.ref(`game_wallets/seat_${currentStudent.seatNumber}`);
+        window.currentWalletRef.on('value', snap => {
+          currentStudentCoins = snap.val() || 0;
+          const coinText = document.getElementById('my-coins-text');
+          if (coinText) coinText.textContent = `${currentStudentCoins} 枚`;
+        });
+      }
       fetchCurrentWeatherAfterLogin();
 
       setTimeout(() => {
@@ -2344,6 +2383,58 @@ function applyRosterData(data) {
         }, 500);
       }
     });
+
+    // ==========================================
+// 📡 跨視窗通用遊戲金幣與玩家資料同步管家 (方式 B)
+// ==========================================
+window.addEventListener('message', (event) => {
+  const data = event.data;
+  if (!data || !data.type) return;
+
+  // 1. 子遊戲請求取得最新玩家資料與通用金幣
+  if (data.type === 'REQUEST_PLAYER_WALLET') {
+    // 透過 event.source 精準回傳給發出請求的那個遊戲視窗（支援未來任何遊戲 iframe）
+    if (event.source) {
+      event.source.postMessage({
+        type: 'SYNC_PLAYER_WALLET',
+        seatNumber: currentStudent.seatNumber,
+        name: currentStudent.name,
+        avatar: currentStudent.avatar,
+        coins: currentStudentCoins || 0, // 教師發放的通用遊戲金幣
+        exp: currentStudent.myPoints || 0 // 個人累積能量
+      }, '*');
+    }
+  }
+
+  // 2. 子遊戲結算或消費金幣，寫回 Firebase 通用錢包
+  if (data.type === 'UPDATE_GAME_COINS') {
+    if (!db || !currentStudent.seatNumber || currentStudent.seatNumber === '訪客') return;
+    
+    const walletRef = db.ref(`game_wallets/seat_${currentStudent.seatNumber}`);
+    const gameName = data.gameName || '小遊戲';
+    const reason = data.reason || '遊戲結算';
+
+    if (typeof data.setExactCoins === 'number') {
+      // 模式 1：直接覆寫最新總餘額（適合大富翁這類全程計算總現金的遊戲）
+      const finalCoins = Math.max(0, Math.floor(data.setExactCoins));
+      walletRef.set(finalCoins);
+    } else if (typeof data.deltaCoins === 'number') {
+      // 模式 2：增減差額（適合扣除入場費 -50，或贏得獎金 +100）
+      const delta = Math.floor(data.deltaCoins);
+      walletRef.transaction(curr => Math.max(0, (curr || 0) + delta));
+
+      // 順便寫入一筆異動紀錄方便日後對帳
+      if (delta !== 0) {
+        db.ref('game_coin_logs').push({
+          target: currentStudent.seatNumber,
+          amount: delta,
+          reason: `[${gameName}] ${reason}`,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
+    }
+  }
+});
 
     // ==========================================
     // 4. 每日打卡限制與狀態
@@ -3731,7 +3822,8 @@ function updateBeybladeIslandDormancy() {
         if (modal) {
           modal.classList.remove('hidden');
           modal.style.zIndex = "100005";
-          adminLoadCheckinMatrix(); // 🌟【新增：開啟後台時自動獲取全班今日矩陣】
+          adminLoadCheckinMatrix(); // 【開啟後台時自動獲取全班今日矩陣】
+          populateAdminCoinTargets();
         }
       };
 
@@ -3823,6 +3915,105 @@ function updateBeybladeIslandDormancy() {
           alert('清除失敗，請檢查網路或權限：' + err.message);
         });
     }
+
+    // ==========================================
+// 🪙 通用遊戲金幣系統（支援大富翁與未來所有遊戲）
+// ==========================================
+let currentStudentCoins = 0;
+
+// 1. 開啟教師控制台時，將學生名冊填入「發金幣對象」下拉選單
+function populateAdminCoinTargets() {
+  const select = document.getElementById('admin-coin-target');
+  if (!select) return;
+  
+  let html = '<option value="all">🌟 全班所有學生（每人發放）</option>';
+  if (rosterList && rosterList.length > 0) {
+    const sorted = [...rosterList].sort((a, b) => Number(a.seatNumber) - Number(b.seatNumber));
+    sorted.forEach(s => {
+      html += `<option value="${s.seatNumber}">${s.seatNumber}號 ${escapeHTML(s.name)}</option>`;
+    });
+  }
+  select.innerHTML = html;
+}
+
+// 2. 教師執行發放金幣
+async function adminGrantGameCoins() {
+  const target = document.getElementById('admin-coin-target').value;
+  const amountInput = document.getElementById('admin-coin-amount');
+  const reasonInput = document.getElementById('admin-coin-reason');
+  
+  const amount = parseInt(amountInput.value, 10);
+  const reason = reasonInput.value.trim() || '教師獎勵發放';
+
+  if (isNaN(amount) || amount === 0) {
+    alert('請輸入有效的金幣數量（可輸入正數發放，或負數扣除）！');
+    return;
+  }
+  if (!db) {
+    alert('資料庫尚未連線！');
+    return;
+  }
+
+  const targetName = target === 'all' ? '【全班所有學生】' : `【${target}號同學】`;
+  const actionText = amount > 0 ? `發放 ${amount}` : `扣除 ${Math.abs(amount)}`;
+  
+  if (!confirm(`確定要對 ${targetName} ${actionText} 枚通用遊戲金幣嗎？\n事由：${reason}`)) {
+    return;
+  }
+
+  try {
+    if (target === 'all') {
+      // 全班發放
+      if (!rosterList || rosterList.length === 0) {
+        alert('學生名冊尚未載入，請稍後再試！');
+        return;
+      }
+      const promises = rosterList.map(st => {
+        const walletRef = db.ref(`game_wallets/seat_${st.seatNumber}`);
+        return walletRef.transaction(curr => Math.max(0, (curr || 0) + amount));
+      });
+      await Promise.all(promises);
+
+      // 推播全班橫幅與紀錄
+      if (liveFeedRef && amount > 0) {
+        liveFeedRef.push({
+          student: '【🪙 教師獎勵】',
+          msg: `發放給全班每人 ${amount} 枚遊戲金幣（${reason}）！`,
+          time: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
+    } else {
+      // 單一學生發放
+      const walletRef = db.ref(`game_wallets/seat_${target}`);
+      await walletRef.transaction(curr => Math.max(0, (curr || 0) + amount));
+
+      const matched = rosterList.find(s => String(s.seatNumber) === String(target));
+      const stDisplay = matched ? `${target}號 ${matched.name}` : `${target}號同學`;
+
+      if (liveFeedRef && amount > 0) {
+        liveFeedRef.push({
+          student: `【🪙 教師獎勵】`,
+          msg: `發放給 ${stDisplay} ${amount} 枚遊戲金幣（${reason}）！`,
+          time: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
+    }
+
+    // 寫入發放紀錄備查
+    db.ref('game_coin_logs').push({
+      target: target,
+      amount: amount,
+      reason: reason,
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    alert(`✅ 已成功對 ${targetName} ${actionText} 枚遊戲金幣！`);
+    amountInput.value = '';
+    reasonInput.value = '';
+  } catch (err) {
+    alert('發放失敗：' + err.message);
+  }
+}
 
     // 🌟【補上】：教師後台發動劇情事件，重置神廟進度至荒地或廢墟
     function adminDamageTemple(targetProgress = 0) {
