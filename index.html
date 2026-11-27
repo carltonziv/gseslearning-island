@@ -10520,20 +10520,27 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
             if (!entityObj || !entityObj.userData || !entityObj.userData.voxelSprite) return;
             const vs = entityObj.userData.voxelSprite;
 
-            // 計算角色面向（entityObj.rotation.y）與鏡頭視線的相對夾角 (-PI ~ PI)
-            let relAngle = entityObj.rotation.y - camAngle;
+            // 🌟 取得父層容器的 Y 軸旋轉角度（修正島嶼之星木樁容器自帶 -135° 旋轉的問題）
+            const parentRotY = (entityObj.parent && entityObj.parent !== scene) ? entityObj.parent.rotation.y : 0;
+            const worldRotY = entityObj.rotation.y + parentRotY;
+
+            // 計算角色世界面向與鏡頭視線的相對夾角 (-PI ~ PI)
+            let relAngle = worldRotY - camAngle;
             while (relAngle > Math.PI) relAngle -= Math.PI * 2;
             while (relAngle < -Math.PI) relAngle += Math.PI * 2;
 
+            // 如果是島嶼之星（isMascot），永遠保持正面立繪看著玩家；其他角色依移動方向切換四面
             let nextDir = 'front';
-            if (relAngle >= -Math.PI * 0.25 && relAngle <= Math.PI * 0.25) {
-              nextDir = 'front'; // 朝向鏡頭（正面）
-            } else if (relAngle > Math.PI * 0.25 && relAngle < Math.PI * 0.75) {
-              nextDir = 'right'; // 朝向畫面右側
-            } else if (relAngle < -Math.PI * 0.25 && relAngle > -Math.PI * 0.75) {
-              nextDir = 'left';  // 朝向畫面左側
-            } else {
-              nextDir = 'back';  // 背對鏡頭（背面）
+            if (!entityObj.userData.isMascot) {
+              if (relAngle >= -Math.PI * 0.25 && relAngle <= Math.PI * 0.25) {
+                nextDir = 'front'; // 朝向鏡頭（正面）
+              } else if (relAngle > Math.PI * 0.25 && relAngle < Math.PI * 0.75) {
+                nextDir = 'right'; // 朝向畫面右側
+              } else if (relAngle < -Math.PI * 0.25 && relAngle > -Math.PI * 0.75) {
+                nextDir = 'left';  // 朝向畫面左側
+              } else {
+                nextDir = 'back';  // 背對鏡頭（背面）
+              }
             }
 
             if (vs.currentDir !== nextDir) {
@@ -10546,9 +10553,9 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
               }
             }
 
-            // 讓立體像素板面朝鏡頭，同時保留 ±18 度微側傾，展現立體邊框厚度！
-            const tiltOffset = (nextDir === 'right') ? 0.30 : ((nextDir === 'left') ? -0.30 : 0.12);
-            vs.mesh.rotation.y = camAngle - entityObj.rotation.y + tiltOffset;
+            // 精準抵銷自身與父層的旋轉，讓正面永遠對準鏡頭（僅保留微幅 ±10° 立體側傾）
+            const tiltOffset = entityObj.userData.isMascot ? 0.08 : ((nextDir === 'right') ? 0.25 : ((nextDir === 'left') ? -0.25 : 0.10));
+            vs.mesh.rotation.y = camAngle - worldRotY + tiltOffset;
           };
 
           villagers.forEach(v => updateEntitySpriteFacing(v.obj));
