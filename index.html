@@ -4444,117 +4444,116 @@ function updateBeybladeIslandDormancy() {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-const PIXEL_SPRITE_TEMPLATES = [
+// 🌟 高精細 16-bit 像素精靈生成器（100% 還原模擬圖中的角色質感）
+    const HD2D_SPRITE_DATA = [
       {
-        id: 'terra_green',
-        palette: { K:'#181425', H:'#26854c', h:'#63c74d', F:'#fdd2a8', E:'#181425', C:'#d73b3e', c:'#f77622', P:'#a22633', B:'#5a3921' },
-        head: ['....KKKKKK....','...KhhhhhhK...','..KhHHHHHHhK..','.KhHHFFFFHHhK.','.KhHFFFFFFHhK.','.KhHFEFFEFHhK.','..KhFFFFFFhK..','...KFFFFFFK...','....KKKKKK....'],
-        body: ['...KccccccK...','..KcCCCCCCcK..','..KcCCCCCCcK..','..KPPPPPPPPK..','...KPPPPPPK...'],
-        arm: ['..KK..', '.KFFK.', '.KccK.', '.KFFK.', '..KK..'],
-        leg: ['..KK..', '.KPPK.', '.KPPK.', '.KBBK.', '.KKKK.']
+        id: 'terra', // 綠髮少女
+        pal: { K:'#141013', H:'#1e6f50', h:'#52b788', F:'#ffcdb2', E:'#141013', C:'#d62828', Y:'#fcbf49', P:'#9b2226' },
+        art: [
+          '.....KKKKKK.....',
+          '....KhhhhhhK....',
+          '...KhHHHHHHhK...',
+          '..KhHHFFFFHHhK..',
+          '..KhHFFFFFFHhK..',
+          '.KhhHFEFFEFHhhK.',
+          '.KhHHFFFFFFHHhK.',
+          '..KKhFFFFFFhKK..',
+          '...KKCCCCCCKK...',
+          '..KYYCCCCCCYYK..',
+          '..KFFCCCCCCFFK..',
+          '...KKPPPPPPKK...',
+          '....KPPKKPPK....',
+          '....KPPKKPPK....',
+          '....KKKKKKK.....'
+        ]
       },
       {
-        id: 'celes_blonde',
-        palette: { K:'#181425', H:'#fee761', h:'#fff8b8', F:'#fdd2a8', E:'#181425', C:'#e43b44', c:'#ffffff', P:'#e43b44', B:'#ffffff' },
-        head: ['....KKKKKK....','...KhhhhhhK...','..KhHHHHHHhK..','.KhHHFFFFHHhK.','.KhHFFFFFFHhK.','.KhHFEFFEFHhK.','.KhHFFFFFFHhK.','..KhFFFFFFhK..','...KKKKKKKK...'],
-        body: ['..KcCCCCCCcK..','.KcCCCCCCCCcK.','.KcCCcCCcCCcK.','..KPPPPPPPPK..','...KPPPPPPK...'],
-        arm: ['..KK..', '.KFFK.', '.KCCK.', '.KFFK.', '..KK..'],
-        leg: ['..KK..', '.KPPK.', '.KBBK.', '.KBBK.', '.KKKK.']
+        id: 'locke', // 金髮紅披風旅人
+        pal: { K:'#141013', H:'#f77f00', h:'#fcbf49', F:'#ffcdb2', E:'#141013', C:'#d62828', B:'#0077b6', W:'#ffffff' },
+        art: [
+          '.....KKKKKK.....',
+          '....KhhhhhhK....',
+          '...KhHHHHHHhK...',
+          '...KFFFFFFFFK...',
+          '...KFEFFFFEFK...',
+          '....KFFFFFFK....',
+          '..KKKCCCCCCKKK..',
+          '.KCCBBBBBBBBCCK.',
+          '.KCCBBWWWWBBCCK.',
+          '.KFFBBBBBBBBFFK.',
+          '..KKBBBBBBBBKK..',
+          '....KBBKKBBK....',
+          '....KWWKKWWK....',
+          '....KKKKKKKK....'
+        ]
       },
       {
-        id: 'locke_bandana',
-        palette: { K:'#181425', H:'#0099db', h:'#2ce8f5', F:'#fdd2a8', E:'#181425', C:'#124e89', c:'#fee761', P:'#181425', B:'#ffffff' },
-        head: ['....KKKKKK....','...KhhhhhhK...','..KHHHHHHHHK..','..KFFFFFFFFK..','..KFEFFFFEFK..','..KFFFFFFFFK..','...KFFFFFFK...','....KKKKKK....','..............'],
-        body: ['...KccccccK...','..KcCCCCCCcK..','..KCCcCCcCCK..','..KPPPPPPPPK..','...KPPPPPPK...'],
-        arm: ['..KK..', '.KFFK.', '.KCCK.', '.KFFK.', '..KK..'],
-        leg: ['..KK..', '.KPPK.', '.KPPK.', '.KBBK.', '.KKKK.']
-      },
-      {
-        id: 'moogle_white',
-        palette: { K:'#181425', R:'#e43b44', W:'#ffffff', w:'#c0cbdc', P:'#f6757a', E:'#181425', B:'#f77622' },
-        head: ['......KK......','.....KRRK.....','......KK......','...KK.KK.KK...','..KWWKWWKWWK..','.KWWWWWWWWWWK.','.KWWEWWWWWEWK.','.KWWWWPPWWWWK.','..KwwwwwwwwK..'],
-        body: ['...KWWWWWWK...','..KWWWWWWWWK..','..KWWWWWWWWK..','..KwwwwwwwwK..','...KwwwwwwK...'],
-        arm: ['..KK..', '.KWWK.', '.KWWK.', '.KwwK.', '..KK..'],
-        leg: ['..KK..', '.KWWK.', '.KwwK.', '.KBBK.', '.KKKK.']
+        id: 'moogle', // 白毛莫古利（帶紅絨球與粉紅小翅膀）
+        pal: { K:'#141013', R:'#e63946', W:'#ffffff', g:'#cbd5e1', P:'#ff758f', Y:'#ffb703' },
+        art: [
+          '.......KK.......',
+          '......KRRK......',
+          '.......KK.......',
+          '....KK.KK.KK....',
+          '...KWWKWWKWWK...',
+          '..KWWWWWWWWWWK..',
+          '..KWWKWWWWKWWK..',
+          '.KPPWWWWWWWWWWK.',
+          '.KPPWWWWWWWWWgK.',
+          '..KKWWWWWWWWgK..',
+          '...KWWWWWWWWgK..',
+          '....KYYKKYYKK...',
+          '....KKKKKKKK....'
+        ]
       }
     ];
 
-    function buildVoxelPartFromMatrix(matrix, palette, voxelSize = 0.036, depth = 0.14) {
-      const group = new THREE.Group();
-      const rows = matrix.length, cols = matrix[0].length;
-      const geo = new THREE.BoxGeometry(voxelSize, voxelSize, depth);
+    function createCharacterMesh(isSkirt = false, customSkin, customClothes) {
+      const person = new THREE.Group();
+      const tpl = getRandomItem(HD2D_SPRITE_DATA);
+      const pal = { ...tpl.pal };
+      if (customClothes !== undefined && tpl.id !== 'moogle') pal.C = customClothes;
+
+      // 將 16x15 像素圖放大繪製到離屏 Canvas（保持銳利邊緣）
+      const scale = 8;
+      const rows = tpl.art.length, cols = tpl.art[0].length;
+      const canvas = document.createElement('canvas');
+      canvas.width = cols * scale;
+      canvas.height = rows * scale;
+      const ctx = canvas.getContext('2d');
+
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const hex = palette[matrix[r][c]];
-          if (!hex) continue;
-          const mat = SharedPool.getMaterial('MeshStandardMaterial', { color: hex, roughness: 0.75 });
-          const cube = new THREE.Mesh(geo, mat);
-          cube.position.set((c - (cols - 1) / 2) * voxelSize, ((rows - 1) / 2 - r) * voxelSize, 0);
-          cube.castShadow = true;
-          cube.receiveShadow = true;
-          group.add(cube);
+          const hex = pal[tpl.art[r][c]];
+          if (hex) {
+            ctx.fillStyle = hex;
+            ctx.fillRect(c * scale, r * scale, scale, scale);
+          }
         }
       }
-      return group;
-    }
 
-    function createCharacterMesh(isSkirt = false, customSkin, customClothes, customHair) {
-      const person = new THREE.Group();
-      const candidatePool = isSkirt
-        ? [PIXEL_SPRITE_TEMPLATES[0], PIXEL_SPRITE_TEMPLATES[1], PIXEL_SPRITE_TEMPLATES[3]]
-        : [PIXEL_SPRITE_TEMPLATES[2], PIXEL_SPRITE_TEMPLATES[3], PIXEL_SPRITE_TEMPLATES[0]];
-      const tpl = getRandomItem(candidatePool);
-      const pal = { ...tpl.palette };
-      if (customClothes !== undefined && tpl.id !== 'moogle_white') pal.C = customClothes;
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
 
-      const px = 0.042;
-      // 1. 像素頭部（原本 Y: 0.96 -> 降為 0.72）
-      const headMesh = buildVoxelPartFromMatrix(tpl.head, pal, px, 0.22);
-      headMesh.position.set(0, 0.72, 0);
-      person.add(headMesh);
+      const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(1.05, 1.0, 1);
+      sprite.position.y = 0.50; // 腳底精準踩在 Y = 0 地面！
+      person.add(sprite);
 
-      // 2. 像素軀幹（原本 Y: 0.65 -> 降為 0.41）
-      const torsoMesh = buildVoxelPartFromMatrix(tpl.body, pal, px, 0.18);
-      torsoMesh.position.set(0, 0.41, 0);
-      person.add(torsoMesh);
+      // 腳底圓形接觸陰影（HD-2D 落地感關鍵）
+      const shadowMesh = new THREE.Mesh(
+        new THREE.CircleGeometry(0.28, 12),
+        new THREE.MeshBasicMaterial({ color: 0x1a120b, transparent: true, opacity: 0.35 })
+      );
+      shadowMesh.rotation.x = -Math.PI / 2;
+      shadowMesh.position.y = 0.01;
+      person.add(shadowMesh);
 
-      // 3. 左／右手臂樞紐（原本 Y: 0.74 -> 降為 0.50）
-      const leftArmPivot = new THREE.Group();
-      leftArmPivot.position.set(-0.24, 0.50, 0);
-      const leftArmVoxel = buildVoxelPartFromMatrix(tpl.arm, pal, px * 0.9, 0.12);
-      leftArmVoxel.position.y = -0.10;
-      leftArmPivot.add(leftArmVoxel);
-      person.add(leftArmPivot);
-
-      const rightArmPivot = new THREE.Group();
-      rightArmPivot.position.set(0.24, 0.50, 0);
-      const rightArmVoxel = buildVoxelPartFromMatrix(tpl.arm, pal, px * 0.9, 0.12);
-      rightArmVoxel.position.y = -0.10;
-      rightArmPivot.add(rightArmVoxel);
-      person.add(rightArmPivot);
-
-      // 4. 左／右腿部樞紐（原本 Y: 0.52 -> 降為 0.23，腳底就會精準踩在 Y = 0 地面上）
-      const leftLegPivot = new THREE.Group();
-      leftLegPivot.position.set(-0.10, 0.23, 0);
-      const leftLegVoxel = buildVoxelPartFromMatrix(tpl.leg, pal, px * 0.95, 0.14);
-      leftLegVoxel.position.y = -0.11;
-      leftLegPivot.add(leftLegVoxel);
-      person.add(leftLegPivot);
-
-      const rightLegPivot = new THREE.Group();
-      rightLegPivot.position.set(0.10, 0.23, 0);
-      const rightLegVoxel = buildVoxelPartFromMatrix(tpl.leg, pal, px * 0.95, 0.14);
-      rightLegVoxel.position.y = -0.11;
-      rightLegPivot.add(rightLegVoxel);
-      person.add(rightLegPivot);
-
-      person.userData.limbs = {
-        leftArm: leftArmPivot,
-        rightArm: rightArmPivot,
-        leftLeg: leftLegPivot,
-        rightLeg: rightLegPivot,
-        skirt: null
-      };
+      // 保留虛擬關節介面，確保所有動畫程式碼不報錯
+      const dummyPivot = new THREE.Group();
+      person.userData.limbs = { leftArm: dummyPivot, rightArm: dummyPivot, leftLeg: dummyPivot, rightLeg: dummyPivot, skirt: null };
       return person;
     }
 
@@ -6603,36 +6602,143 @@ function createWoodCabinLandmark() {
       return tex;
     }
 
+    // 🌟 1. 島嶼頂面貼圖：綠草坪 + 泥土小徑 + 灰白不規則石板磚小路
+    function createCobblestoneTopTexture(baseColorHex) {
+      const size = 64;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // 底層套用各島原本的主題色
+      ctx.fillStyle = '#' + new THREE.Color(baseColorHex).getHexString();
+      ctx.fillRect(0, 0, size, size);
+
+      // 撒上像素草叢與深淺斑點
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const r = Math.random();
+          if (r < 0.16) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.14)'; // 亮草點
+            ctx.fillRect(x, y, 1, 1);
+          } else if (r < 0.30) {
+            ctx.fillStyle = 'rgba(20, 40, 15, 0.16)';    // 暗草點
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+
+      // 繪製交叉的暖棕色泥土小徑基底
+      ctx.fillStyle = '#a47148';
+      ctx.fillRect(24, 0, 16, size); // 縱向主幹道
+      ctx.fillRect(0, 26, size, 12); // 橫向支線道
+
+      // 在道路中央鋪設灰白色不規則像素石板磚（模擬圖核心質感）
+      const stoneColors = ['#e2e8f0', '#cbd5e1', '#f8fafc', '#94a3b8'];
+      for (let y = 2; y < size - 2; y += 4) {
+        for (let x = 26; x < 38; x += 4) {
+          if (Math.random() > 0.18) {
+            ctx.fillStyle = stoneColors[Math.floor(Math.random() * stoneColors.length)];
+            const w = (Math.random() > 0.5) ? 3 : 2;
+            const h = (Math.random() > 0.5) ? 3 : 2;
+            ctx.fillRect(x + (Math.random() > 0.5 ? 1 : 0), y, w, h);
+          }
+        }
+      }
+      // 橫向支道也鋪上部分石板磚
+      for (let x = 4; x < size - 4; x += 4) {
+        for (let y = 28; y < 36; y += 4) {
+          if (Math.random() > 0.3) {
+            ctx.fillStyle = stoneColors[Math.floor(Math.random() * stoneColors.length)];
+            ctx.fillRect(x, y, 3, 2);
+          }
+        }
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.magFilter = THREE.NearestFilter; // 保持像素方塊銳利不模糊
+      tex.minFilter = THREE.NearestFilter;
+      return tex;
+    }
+
+    // 🌟 2. 島嶼側面懸崖貼圖：上方垂掛草皮 + 中段垂直條紋深棕岩壁 + 底部灰岩塊
+    function createCliffSideTexture(topGrassHex) {
+      const w = 64, h = 32;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      // 中段主體：暖深棕色泥土岩壁
+      ctx.fillStyle = '#6f4518';
+      ctx.fillRect(0, 0, w, h);
+
+      // 垂直條紋岩壁刻痕（模擬圖中的體素懸崖垂直紋理）
+      for (let x = 0; x < w; x++) {
+        const stripeColor = (x % 3 === 0) ? '#583101' : ((x % 2 === 0) ? '#8b5e34' : '#6f4518');
+        ctx.fillStyle = stripeColor;
+        ctx.fillRect(x, 4, 1, h - 10);
+      }
+
+      // 最上方 4~7 像素：不規則鋸齒狀垂掛綠草邊緣
+      ctx.fillStyle = '#' + new THREE.Color(topGrassHex).getHexString();
+      for (let x = 0; x < w; x++) {
+        const overhang = 4 + Math.floor(Math.sin(x * 0.7) * 2 + Math.random() * 2);
+        ctx.fillRect(x, 0, 1, overhang);
+      }
+
+      // 最底部 6 像素：灰色岩石基座方塊
+      const rockColors = ['#64748b', '#94a3b8', '#475569'];
+      for (let x = 0; x < w; x += 3) {
+        ctx.fillStyle = rockColors[(x / 3) % rockColors.length];
+        const rockH = 5 + (x % 3);
+        ctx.fillRect(x, h - rockH, 3, rockH);
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.repeat.set(3, 1); // 繞島嶼一圈重複 3 次，讓懸崖顆粒更細緻
+      return tex;
+    }
+
     const TREE_LEAF_COLORS = [0xd97706, 0xf59e0b, 0xea580c, 0xc2410c, 0xb91c1c, 0xdc2626];
 function createTree() {
       const tree = new THREE.Group();
-      const trunkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5c2b0c, roughness: 0.9 });
+      const trunkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5c3a21, roughness: 0.9 });
+      const darkLeafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x2d6a4f, roughness: 0.8 });
+      const lightLeafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x52b788, roughness: 0.75 });
 
-      // 體素方塊樹幹
-      const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.15, 0.32), trunkMat);
-      trunk.position.y = 0.575;
+      // 體素樹幹與樹根
+      const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.36, 1.3, 0.36), trunkMat);
+      trunk.position.y = 0.65;
       trunk.castShadow = true;
-      trunk.receiveShadow = true;
       tree.add(trunk);
 
-      // 階梯狀方塊像素樹冠
-      const leafColor = getRandomItem(TREE_LEAF_COLORS);
-      const leafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: leafColor, roughness: 0.8 });
+      // 階梯狀體素樹冠（模擬圖中的立體積木圓球）
+      const layers = [
+        { y: 1.25, w: 1.4, h: 0.35, mat: darkLeafMat },
+        { y: 1.55, w: 1.65, h: 0.35, mat: lightLeafMat },
+        { y: 1.85, w: 1.45, h: 0.35, mat: lightLeafMat },
+        { y: 2.15, w: 1.05, h: 0.30, mat: lightLeafMat },
+        { y: 2.40, w: 0.65, h: 0.25, mat: lightLeafMat }
+      ];
+      layers.forEach(l => {
+        const block = new THREE.Mesh(new THREE.BoxGeometry(l.w, l.h, l.w), l.mat);
+        block.position.y = l.y;
+        block.castShadow = true;
+        block.receiveShadow = true;
+        tree.add(block);
+      });
 
-      const crownBot = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.45, 1.35), leafMat);
-      crownBot.position.y = 1.15;
-      crownBot.castShadow = true;
-      tree.add(crownBot);
-
-      const crownMid = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.45, 1.05), leafMat);
-      crownMid.position.y = 1.55;
-      crownMid.castShadow = true;
-      tree.add(crownMid);
-
-      const crownTop = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.35, 0.65), leafMat);
-      crownTop.position.y = 1.9;
-      crownTop.castShadow = true;
-      tree.add(crownTop);
+      // 四周突出像素葉塊（打破單調正方體輪廓）
+      [[0.75, 1.55, 0.2], [-0.75, 1.6, -0.2], [0.2, 1.65, 0.75], [-0.2, 1.5, -0.75]].forEach(p => {
+        const nub = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), darkLeafMat);
+        nub.position.set(...p);
+        nub.castShadow = true;
+        tree.add(nub);
+      });
 
       return tree;
     }
@@ -8285,14 +8391,18 @@ const oceanPixelTex = createPixelGridTexture('#0e7490', '#22d3ee', '#083344', 16
           group.add(vines);
         }
 
-        const islandPixelTex = createPixelGridTexture('#ffffff', '#e2e8f0', '#cbd5e1', 16, 8);
-        const baseMat = new THREE.MeshStandardMaterial({
-          color: cfg.color,
-          map: islandPixelTex,
-          flatShading: true,
-          roughness: 0.88
-        });
-        const islandBase = new THREE.Mesh(new THREE.CylinderGeometry(baseRadius, baseRadius * 0.95, 0.9, 6), baseMat);
+        const topTex = createCobblestoneTopTexture(cfg.color);
+        const sideTex = createCliffSideTexture(cfg.color);
+
+        // CylinderGeometry 材質陣列順序：[0: 側面懸崖, 1: 頂面石板草地, 2: 底面]
+        const sideMat = new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.9, flatShading: true });
+        const topMat  = new THREE.MeshStandardMaterial({ map: topTex,  roughness: 0.85, flatShading: true });
+        const botMat  = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x475569, roughness: 0.9 });
+
+        const islandBase = new THREE.Mesh(
+          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.95, 0.9, 6),
+          [sideMat, topMat, botMat]
+        );
         islandBase.position.y = -0.43;
         islandBase.rotation.y = Math.PI / 6;
         islandBase.receiveShadow = true;
