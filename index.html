@@ -810,16 +810,6 @@
       text-align: left;
       margin-bottom: 14px;
     }
-    /* 🌟 HD-2.5D 微縮模型移軸景深與暖光暗角層 */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 5;
-      background: radial-gradient(ellipse at center, rgba(255, 240, 200, 0.04) 45%, rgba(15, 10, 5, 0.38) 100%);
-      backdrop-filter: blur(0px);
-    }
   </style>
 </head>
 <body>
@@ -1627,7 +1617,6 @@
         <label>👥 線上連線人物管理</label>
         <button class="btn-action btn-red" style="background:#b91c1c;" onclick="adminClearAllOnlinePlayers()">🗑️ 清除所有線上使用者 NPC</button>
       </div>
-
       <!-- 🌟【新增】：北荒地神廟劇情事件控制 -->
       <div class="form-group" style="margin-top: 10px;">
         <label>⛩️ 北荒地神廟劇情事件控制</label>
@@ -1660,20 +1649,6 @@
         <button class="btn-action btn-purple" style="margin-top:8px;" onclick="adminGenerateBracket()">🎲 截止報名並生成賽程</button>
       </div>
     </div>
-    <!-- 🪙【新增】：發送大富翁金幣給指定學生 -->
-      <hr style="margin:14px 0; border:0; border-top:1px solid #e2e8f0;">
-      <div class="form-group">
-        <label>🪙 發送大富翁專屬金幣給指定玩家</label>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <select id="admin-coin-student" style="flex:1.2; min-width:130px;">
-            <option value="">載入學生名單...</option>
-          </select>
-          <input type="number" id="admin-coin-amount" placeholder="金幣數量 (如: 100)" min="1" step="10" style="flex:1; min-width:110px;">
-          <button type="button" class="btn-action btn-green" style="width:auto; padding:0 16px;" onclick="adminSendMonopolyCoins()">
-            🎁 發送金幣
-          </button>
-        </div>
-      </div>
   </div>
 
   <script>
@@ -1735,6 +1710,7 @@
 // 📚 閱讀島分階段建設專屬變數
     let readingBuildEnergy = 0;
     let readingBuildEnergyRef = null;
+    let readingIslandGroup = null;
     let readingOriginalLandmark = null;
     let stageReadingBookcase = null;      // 階段 1 (20% - 200分): 20本小書櫃
     let readingNPC = null;                // 新增：閱讀島看書 NPC
@@ -1749,6 +1725,7 @@
     // 🏃 運動島分階段建設專屬變數 (0~700 封頂)
     let sportBuildEnergy = 0;
     let sportBuildEnergyRef = null;
+    let sportIslandGroup = null;
     let sportOriginalLandmark = null;
     let stageSportPullupBar = null;       // 階段 1 (20% - 140分): 單槓設施
     let stageSportSlide = null;           // 階段 2 (40% - 280分): 彩色溜滑梯
@@ -2247,17 +2224,7 @@ function applyRosterData(data) {
       html += '<option value="guest">✨ 訪客探險家 (自訂暱稱)</option>';
       select.innerHTML = html;
 
-if (currentStudent.seatNumber) select.value = currentStudent.seatNumber;
-
-      // 🌟 補充 A 放在這裡（renderSelectOptions 的大括號裡面）：
-      const adminCoinSelect = document.getElementById('admin-coin-student');
-      if (adminCoinSelect) {
-        let adminHtml = '<option value="">請選擇學生座號</option>';
-        rosterList.forEach(s => {
-          adminHtml += `<option value="${s.seatNumber}">${s.seatNumber}號 ${s.name}</option>`;
-        });
-        adminCoinSelect.innerHTML = adminHtml;
-      }
+      if (currentStudent.seatNumber) select.value = currentStudent.seatNumber;
     }
 
     document.getElementById('select-identity').addEventListener('change', (e) => {
@@ -2346,7 +2313,6 @@ if (currentStudent.seatNumber) select.value = currentStudent.seatNumber;
 
       spawnPlayerCharacter();
       fetchCurrentWeatherAfterLogin();
-      startListeningMonopolyCoinGifts();
 
       setTimeout(() => {
         if (typeof syncDailyCheckinsFromCloud === 'function') syncDailyCheckinsFromCloud(currentStudent.seatNumber);
@@ -3461,12 +3427,12 @@ if (isCompleted) {
       sb.classList.toggle('open', (typeof forceOpen === 'boolean') ? forceOpen : undefined);
     }
 
-function updateNightClosedState() {
+    function updateNightClosedState() {
       const currentHour = new Date().getHours();
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
-      ['nature', 'sport', 'civics', 'reading'].forEach(id => { // 👈 這裡只保留這四個島
+      ['nature', 'sport', 'civics', 'reading', 'wasteland_s'].forEach(id => {
         const pauseNotice = document.getElementById(`pause-notice-${id}`);
         const taskContent = document.getElementById(`task-content-${id}`);
         if (pauseNotice && taskContent) {
@@ -3490,27 +3456,13 @@ function updateNightClosedState() {
 function updateBeybladeIslandDormancy() {
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
-      // 👇 ===【取代原本的 if (beybladeBaseMesh) { ... } 區塊】=== 👇
       if (beybladeBaseMesh) {
-        if (Array.isArray(beybladeBaseMesh.material)) {
-          // 支援多材質陣列：[0:側面懸崖, 1:頂面石板草地, 2:底面]
-          if (!beybladeBaseMesh.userData.isMatCloned) {
-            beybladeBaseMesh.material = beybladeBaseMesh.material.map(m => m.clone());
-            beybladeBaseMesh.userData.isMatCloned = true;
-          }
-          // 只讓頂面草地（索引 1）在休眠與開賽時切換灰白色／草綠色
-          if (beybladeBaseMesh.material[1] && beybladeBaseMesh.material[1].color) {
-            beybladeBaseMesh.material[1].color.setHex(isTournamentActive ? 0x5B8E3D : COLOR_GRAY_DORMANT);
-          }
-        } else {
-          if (!beybladeBaseMesh.userData.isMatCloned) {
-            beybladeBaseMesh.material = beybladeBaseMesh.material.clone();
-            beybladeBaseMesh.userData.isMatCloned = true;
-          }
-          beybladeBaseMesh.material.color.setHex(isTournamentActive ? 0x5B8E3D : COLOR_GRAY_DORMANT);
+        if (!beybladeBaseMesh.userData.isMatCloned) {
+          beybladeBaseMesh.material = beybladeBaseMesh.material.clone();
+          beybladeBaseMesh.userData.isMatCloned = true;
         }
+        beybladeBaseMesh.material.color.setHex(isTournamentActive ? 0x5B8E3D : COLOR_GRAY_DORMANT);
       }
-      // 👆 ===【取代到這裡為止】=== 👆
 
       if (beybladeLandmarkGroup) {
         beybladeLandmarkGroup.traverse(child => {
@@ -3898,81 +3850,6 @@ function updateBeybladeIslandDormancy() {
           alert('設定失敗，請檢查權限：' + err.message);
         });
       }
-    }
-
-    // 🪙 1. 教師發送大富翁金幣（寫入 Firebase 專屬信箱，確保玩家在線或離線都能收到）
-    function adminSendMonopolyCoins() {
-      const seatSelect = document.getElementById('admin-coin-student');
-      const amountInput = document.getElementById('admin-coin-amount');
-      const seatNumber = seatSelect ? seatSelect.value : '';
-      const amount = parseInt(amountInput ? amountInput.value : '0', 10);
-
-      if (!seatNumber) {
-        alert('請先選擇要發送金幣的學生！');
-        return;
-      }
-      if (isNaN(amount) || amount <= 0) {
-        alert('請輸入大於 0 的有效金幣數量！');
-        return;
-      }
-
-      const matched = rosterList.find(s => String(s.seatNumber) === String(seatNumber));
-      const studentDisplay = matched ? `${matched.seatNumber}號 ${matched.name}` : `${seatNumber}號`;
-
-      if (!confirm(`確定要發送 【${amount} 🪙 大富翁金幣】 給 ${studentDisplay} 嗎？`)) return;
-
-      if (db) {
-        const giftRef = db.ref(`monopoly_coin_gifts/seat_${seatNumber}`);
-        giftRef.transaction(curr => (curr || 0) + amount).then(() => {
-          amountInput.value = '';
-          alert(`✅ 已成功發送 ${amount} 🪙 金幣給 ${studentDisplay}！\n（若該生正在大富翁內會立即入帳；若尚未進入則於下次開啟時自動領取）`);
-
-          if (liveFeedRef) {
-            liveFeedRef.push({
-              student: "【🎁 教師獎勵】",
-              msg: `發送了 ${amount} 🪙 大富翁金幣給 ${studentDisplay}！`,
-              time: firebase.database.ServerValue.TIMESTAMP
-            });
-          }
-        }).catch(err => {
-          alert('發送失敗，請檢查網路或權限：' + err.message);
-        });
-      }
-    }
-
-    // 🪙 2. 監聽當前登入學生的金幣信箱，一旦有金幣就立刻轉發給大富翁 iframe 並清空信箱
-    let activeCoinGiftRef = null;
-    function startListeningMonopolyCoinGifts() {
-      if (!db || !currentStudent || !currentStudent.seatNumber || currentStudent.seatNumber === '訪客') return;
-
-      if (activeCoinGiftRef) activeCoinGiftRef.off();
-      activeCoinGiftRef = db.ref(`monopoly_coin_gifts/seat_${currentStudent.seatNumber}`);
-
-      activeCoinGiftRef.on('value', snap => {
-        const pendingCoins = snap.val() || 0;
-        if (pendingCoins <= 0) return;
-
-        // 確認大富翁視窗是否正在開啟中
-        const modal = document.getElementById('modal-monopoly');
-        const iframe = document.getElementById('monopoly-iframe');
-        const isMonopolyOpen = modal && !modal.classList.contains('hidden') && iframe && iframe.contentWindow;
-
-        if (isMonopolyOpen) {
-          // 原子性歸零信箱後，透過 postMessage 通知大富翁加幣
-          activeCoinGiftRef.transaction(curr => {
-            if (!curr || curr <= 0) return 0;
-            return 0;
-          }, (err, committed, finalSnap) => {
-            if (!err && committed) {
-              iframe.contentWindow.postMessage({
-                type: 'MONOPOLY_ADD_COINS',
-                payload: { amount: pendingCoins }
-              }, window.location.origin);
-              showLiveBanner(`🎁 收到老師發送的 +${pendingCoins} 🪙 大富翁金幣，已自動入帳！`);
-            }
-          });
-        }
-      });
     }
 
     function adminRemoveChampionSignboard() {
@@ -4458,269 +4335,104 @@ function updateBeybladeIslandDormancy() {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-// 🌟 1. 升級版 HD-2.5D 立體像素角色資料庫（含正面、背面、側面與雙色立體陰影層次）
-    const HD2D_SPRITE_DATA = [
-      {
-        id: 'terra', // 綠髮少女（帶高光髮絲與紅披風）
-        pal: { K:'#141013', H:'#1b4332', h:'#40916c', g:'#74c69d', F:'#ffcdb2', f:'#e5989b', E:'#141013', C:'#d62828', c:'#9b2226', Y:'#fcbf49', P:'#590d22' },
-        front: [
-          '.....KKKKKK.....',
-          '....KggggggK....',
-          '...KgHHHHHHgK...',
-          '..KhHHFFFFHHhK..',
-          '..KhHFFFFFFHhK..',
-          '.KhhHFEFFEFHhhK.',
-          '.KhHHFfFFfFHHhK.',
-          '..KKhFFFFFFhKK..',
-          '...KKCCCCCCKK...',
-          '..KYYCCCCCCYYK..',
-          '..KFFcCCCCcFFK..',
-          '...KKPPPPPPKK...',
-          '....KPPKKPPK....',
-          '....KccKKccK....',
-          '....KKKKKKKK....'
-        ],
-        back: [
-          '.....KKKKKK.....',
-          '....KggggggK....',
-          '...KhhhhhhhhK...',
-          '..KhhhhhhhhhhK..',
-          '..KhHHHHHHHHhK..',
-          '.KhhHHHHHHHHhhK.',
-          '.KhHHHHHHHHHHhK.',
-          '..KKhHHHHHHhKK..',
-          '...KKCCCCCCKK...',
-          '..KYYcCCCCcYYK..',
-          '..KFFcCCCCcFFK..',
-          '...KKPPPPPPKK...',
-          '....KPPKKPPK....',
-          '....KccKKccK....',
-          '....KKKKKKKK....'
-        ],
-        side: [
-          '.....KKKKKK.....',
-          '....KggggggK....',
-          '...KhhhhhhhhK...',
-          '..KhHHHFFFFhK...',
-          '..KhHHFFFFFEK...',
-          '.KhhHHFFFFFFK...',
-          '.KhHHHFFFFfK....',
-          '..KKhFFFFKK.....',
-          '...KKCCCCCCK....',
-          '..KYYcCCCCCcK...',
-          '..KFFcCCCCCcK...',
-          '...KKPPPPPPK....',
-          '....KPPKKPPK....',
-          '....KccKKccK....',
-          '....KKKKKKKK....'
-        ]
-      },
-      {
-        id: 'locke', // 金髮冒險者（附圖上方石板路主角）
-        pal: { K:'#141013', H:'#f77f00', h:'#fcbf49', y:'#eae2b7', F:'#ffcdb2', f:'#e5989b', E:'#141013', C:'#d62828', B:'#0077b6', b:'#023e8a', W:'#ffffff' },
-        front: [
-          '.....KKKKKK.....',
-          '....KyyyyyyK....',
-          '...KyhhhhhhyK...',
-          '...KFFFFFFFFK...',
-          '...KFEFFFFEFK...',
-          '....KFfFFfFK....',
-          '..KKKCCCCCCKKK..',
-          '.KCCBBBBBBBBCCK.',
-          '.KCCBbWWWWbBCCK.',
-          '.KFFBbBBBBbBFFK.',
-          '..KKBBBBBBBBKK..',
-          '....KbbKKbbK....',
-          '....KWWKKWWK....',
-          '....KKKKKKKK....'
-        ],
-        back: [
-          '.....KKKKKK.....',
-          '....KyyyyyyK....',
-          '...KyhhhhhhyK...',
-          '..KhhhhhhhhhhK..',
-          '..KhHHHHHHHHhK..',
-          '...KHHHHHHHHK...',
-          '..KKKCCCCCCKKK..',
-          '.KCCCCCCCCCCCCK.',
-          '.KCcCCCCCCCCcCK.',
-          '.KFFcCCCCCCcFFK.',
-          '..KKCCCCCCCCKK..',
-          '....KbbKKbbK....',
-          '....KWWKKWWK....',
-          '....KKKKKKKK....'
-        ],
-        side: [
-          '.....KKKKKK.....',
-          '....KyyyyyyK....',
-          '...KyhhhhhhyK...',
-          '...KhhhhFFFFK...',
-          '...KhhhFFFFEK...',
-          '....KhhFFFFfK...',
-          '..KKKCCCCCCK....',
-          '.KCCBBBBBBbCK...',
-          '.KCCBbWWWWbCK...',
-          '.KFFBbBBBBbK....',
-          '..KKBBBBBBK.....',
-          '....KbbKKbbK....',
-          '....KWWKKWWK....',
-          '....KKKKKKKK....'
-        ]
-      },
-      {
-        id: 'moogle', // 白毛莫古利（附圖左下角經典角色）
-        pal: { K:'#141013', R:'#e63946', r:'#9b2226', W:'#ffffff', g:'#cbd5e1', P:'#ff758f', Y:'#ffb703' },
-        front: [
-          '.......KK.......',
-          '......KRRK......',
-          '......KrRK......',
-          '....KK.KK.KK....',
-          '...KWWKWWKWWK...',
-          '..KWWWWWWWWWWK..',
-          '..KWWKWWWWKWWK..',
-          '.KPPWWWWWWWWWWK.',
-          '.KPPWWWWWWWWWgK.',
-          '..KKWWWWWWWWgK..',
-          '...KWWWWWWWWgK..',
-          '....KYYKKYYKK...',
-          '....KKKKKKKK....'
-        ],
-        back: [
-          '.......KK.......',
-          '......KRRK......',
-          '......KrRK......',
-          '....KK.KK.KK....',
-          '...KWWKWWKWWK...',
-          '..KWWWWWWWWWWK..',
-          '..KWWWWWWWWWWK..',
-          '.KPPWWWWWWWWPPK.',
-          '.KPPWWWWWWWWPPK.',
-          '..KKWWWWWWWWKK..',
-          '...KWWWWggggK...',
-          '....KYYKKYYKK...',
-          '....KKKKKKKK....'
-        ],
-        side: [
-          '.......KK.......',
-          '......KRRK......',
-          '.......KK.......',
-          '.....KK.KK......',
-          '....KWWKWWK.....',
-          '...KWWWWWWWK....',
-          '...KWWWWWKWWK...',
-          '..KPPWWWWWWWK...',
-          '..KPPWWWWWWgK...',
-          '...KKWWWWWWgK...',
-          '....KWWWWggK....',
-          '.....KYYKYYK....',
-          '.....KKKKKKK....'
-        ]
-      }
-    ];
-
-    // 🌟 2. 輔助：將像素陣列繪製成帶左右翻轉選項的 CanvasTexture
-    function buildPixelDirTexture(artRows, pal, flipX = false) {
-      const scale = 8;
-      const rows = artRows.length, cols = artRows[0].length;
-      const canvas = document.createElement('canvas');
-      canvas.width = cols * scale;
-      canvas.height = rows * scale;
-      const ctx = canvas.getContext('2d');
-
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const srcCol = flipX ? (cols - 1 - c) : c;
-          const hex = pal[artRows[r][srcCol]];
-          if (hex) {
-            ctx.fillStyle = hex;
-            ctx.fillRect(c * scale, r * scale, scale, scale);
-          }
-        }
-      }
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.magFilter = THREE.NearestFilter;
-      tex.minFilter = THREE.NearestFilter;
-      return tex;
-    }
-
-// 🌟 3. 立體公仔化 16-bit 角色生成器（無黑框、3層浮雕立體厚度、四方向自動轉向）
-    function createCharacterMesh(isSkirt = false, customSkin, customClothes) {
+    function createCharacterMesh(isSkirt = false, customSkin, customClothes, customHair) {
       const person = new THREE.Group();
-      const tpl = getRandomItem(HD2D_SPRITE_DATA);
-      const pal = { ...tpl.pal };
-      if (customClothes !== undefined && tpl.id !== 'moogle') pal.C = customClothes;
 
-      // 建立四個方向的銳利像素貼圖
-      const texFront = buildPixelDirTexture(tpl.front, pal, false);
-      const texBack  = buildPixelDirTexture(tpl.back,  pal, false);
-      const texRight = buildPixelDirTexture(tpl.side,  pal, false);
-      const texLeft  = buildPixelDirTexture(tpl.side,  pal, true);
+      const skinColor = customSkin !== undefined ? customSkin : getRandomItem(SKIN_COLORS);
+      const cColor = customClothes !== undefined ? customClothes : getRandomItem(CLOTHES_PALETTE);
+      const bColor = getRandomItem(BOTTOM_PALETTE);
 
-      // 建立 3 層立體浮雕容器（取代原本會有黑邊框的 BoxGeometry）
-      const bodyGroup = new THREE.Group();
-      bodyGroup.position.y = 0.48;
+      const skinMat = SharedPool.getMaterial('MeshStandardMaterial', { color: skinColor, roughness: 0.65 });
+      const clothMat = SharedPool.getMaterial('MeshStandardMaterial', { color: cColor, roughness: 0.7 });
+      const bottomMat = SharedPool.getMaterial('MeshStandardMaterial', { color: bColor, roughness: 0.75 });
+      const eyeMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0x111827 });
 
-      const planeGeo = new THREE.PlaneGeometry(0.96, 0.96);
+      const torso = new THREE.Mesh(SharedPool.geometries.humanTorso, clothMat);
+      torso.position.y = 0.62;
+      torso.castShadow = true;
+      torso.receiveShadow = true;
+      person.add(torso);
 
-      // 前層與後層材質（正常亮彩）
-      const frontMat = new THREE.MeshStandardMaterial({
-        map: texFront,
-        transparent: true,
-        alphaTest: 0.5,
-        side: THREE.DoubleSide,
-        roughness: 0.65
-      });
+      const head = new THREE.Mesh(SharedPool.geometries.humanHead, skinMat);
+      head.position.y = 1.02;
+      head.castShadow = true;
+      head.receiveShadow = true;
+      person.add(head);
 
-      // 中層材質（深色立體剪影層，提供側看時的公仔厚度感）
-      const midMat = new THREE.MeshStandardMaterial({
-        map: texFront,
-        color: 0x332b2e, // 壓暗作為立體側面陰影層
-        transparent: true,
-        alphaTest: 0.5,
-        side: THREE.DoubleSide,
-        roughness: 0.85
-      });
+      const leftEye = new THREE.Mesh(SharedPool.geometries.humanEye, eyeMat);
+      leftEye.position.set(-0.08, 1.03, 0.185);
+      person.add(leftEye);
 
-      // 依序疊放前、中、後三層（Z 軸錯開產生實體厚度，完全沒有多餘黑框）
-      const layerOffsets = [
-        { z:  0.055, mat: frontMat, castShadow: true },
-        { z:  0.000, mat: midMat,   castShadow: false },
-        { z: -0.055, mat: frontMat, castShadow: true }
-      ];
+      const rightEye = new THREE.Mesh(SharedPool.geometries.humanEye, eyeMat);
+      rightEye.position.set(0.08, 1.03, 0.185);
+      person.add(rightEye);
 
-      layerOffsets.forEach(cfg => {
-        const layer = new THREE.Mesh(planeGeo, cfg.mat);
-        layer.position.z = cfg.z;
-        layer.castShadow = cfg.castShadow;
-        layer.receiveShadow = true;
-        bodyGroup.add(layer);
-      });
+      const leftArmPivot = new THREE.Group();
+      leftArmPivot.position.set(-0.28, 0.82, 0);
+      const leftArmMesh = new THREE.Mesh(SharedPool.geometries.humanArm, clothMat);
+      leftArmMesh.position.y = -0.22;
+      leftArmPivot.add(leftArmMesh);
+      person.add(leftArmPivot);
 
-      person.add(bodyGroup);
+      const rightArmPivot = new THREE.Group();
+      rightArmPivot.position.set(0.28, 0.82, 0);
+      const rightArmMesh = new THREE.Mesh(SharedPool.geometries.humanArm, clothMat);
+      rightArmMesh.position.y = -0.22;
+      rightArmPivot.add(rightArmMesh);
+      person.add(rightArmPivot);
 
-      // 腳底柔和接觸陰影
-      const shadowMesh = new THREE.Mesh(
-        new THREE.CircleGeometry(0.32, 14),
-        new THREE.MeshBasicMaterial({ color: 0x1a120b, transparent: true, opacity: 0.35, depthWrite: false })
-      );
-      shadowMesh.rotation.x = -Math.PI / 2;
-      shadowMesh.position.y = 0.01;
-      person.add(shadowMesh);
-      // 儲存貼圖與雙層材質供主迴圈同步切換方向
-      person.userData.voxelSprite = {
-        mesh: bodyGroup,
-        mat: frontMat,
-        midMat: midMat,
-        textures: { front: texFront, back: texBack, right: texRight, left: texLeft },
-        currentDir: 'front'
+      let leftLegPivot, rightLegPivot, skirtPivot = null;
+
+      if (isSkirt) {
+        skirtPivot = new THREE.Group();
+        skirtPivot.position.set(0, 0.46, 0);
+        const skirtMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, 0.38, 14), bottomMat);
+        skirtMesh.position.y = -0.17;
+        skirtPivot.add(skirtMesh);
+        person.add(skirtPivot);
+
+        const legGeo = new THREE.BoxGeometry(0.1, 0.36, 0.1);
+        leftLegPivot = new THREE.Group();
+        leftLegPivot.position.set(-0.11, 0.36, 0);
+        const leftLegMesh = new THREE.Mesh(legGeo, skinMat);
+        leftLegMesh.position.y = -0.18;
+        leftLegPivot.add(leftLegMesh);
+        person.add(leftLegPivot);
+
+        rightLegPivot = new THREE.Group();
+        rightLegPivot.position.set(0.11, 0.36, 0);
+        const rightLegMesh = new THREE.Mesh(legGeo, skinMat);
+        rightLegMesh.position.y = -0.18;
+        rightLegPivot.add(rightLegMesh);
+        person.add(rightLegPivot);
+      } else {
+        leftLegPivot = new THREE.Group();
+        leftLegPivot.position.set(-0.12, 0.42, 0);
+        const leftLegMesh = new THREE.Mesh(SharedPool.geometries.humanLeg, bottomMat);
+        leftLegMesh.position.y = -0.24;
+        leftLegPivot.add(leftLegMesh);
+        person.add(leftLegPivot);
+
+        rightLegPivot = new THREE.Group();
+        rightLegPivot.position.set(0.12, 0.42, 0);
+        const rightLegMesh = new THREE.Mesh(SharedPool.geometries.humanLeg, bottomMat);
+        rightLegMesh.position.y = -0.24;
+        rightLegPivot.add(rightLegMesh);
+        person.add(rightLegPivot);
+      }
+
+      person.userData.limbs = {
+        leftArm: leftArmPivot,
+        rightArm: rightArmPivot,
+        leftLeg: leftLegPivot,
+        rightLeg: rightLegPivot,
+        skirt: skirtPivot
       };
 
-      const dummyPivot = new THREE.Group();
-      person.userData.limbs = { leftArm: dummyPivot, rightArm: dummyPivot, leftLeg: dummyPivot, rightLeg: dummyPivot, skirt: null };
       return person;
     }
 
-    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) { // 👈 補上這一行！
+    function createMinecraftDogMesh(furColor = 0xE5E3DC, collarColor = 0xDC2626) {
       const dog = new THREE.Group();
 
       const furMat = SharedPool.getMaterial('MeshStandardMaterial', { color: furColor, roughness: 0.85, flatShading: true });
@@ -5518,17 +5230,12 @@ function updateBeybladeIslandDormancy() {
       return group;
     }
 
-function createCivicsLandmark() {
+    function createCivicsLandmark() {
       const group = new THREE.Group();
       const temple = new THREE.Group();
+      const marbleMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF6F4F0, roughness: 0.45 });
+      const trimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xF6F4F0, roughness: 0.35 });
 
-      // 🌟 體素白灰大理石磚貼圖
-      const civicBrickTex = createVoxelWallTexture('#f8fafc', '#e2e8f0', false);
-      const marbleMat = new THREE.MeshStandardMaterial({ map: civicBrickTex, roughness: 0.65 });
-      const trimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xcbd5e1, roughness: 0.55 });
-      const goldAccentMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xfacc15, metalness: 0.75, roughness: 0.25 });
-
-      // 1. 三層體素石階基座
       [3.6, 3.2, 2.8].forEach((w, i) => {
         const baseStep = new THREE.Mesh(new THREE.BoxGeometry(w, 0.18, w * 0.8), marbleMat);
         baseStep.position.y = 0.09 + i * 0.18;
@@ -5537,37 +5244,36 @@ function createCivicsLandmark() {
         temple.add(baseStep);
       });
 
-      // 2. 六根體素方柱（取代原本圓柱 CylinderGeometry）
       const colPositions = [
         [-1.05, 0.6, -0.8], [0, 0.6, -0.8], [1.05, 0.6, -0.8],
         [-1.05, 0.6,  0.8], [0, 0.6,  0.8], [1.05, 0.6,  0.8]
       ];
       colPositions.forEach(p => {
-        const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.6, 0.24), marbleMat);
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.6, 14), marbleMat);
         shaft.position.set(p[0], p[1] + 0.8, p[2]);
         shaft.castShadow = true;
         temple.add(shaft);
 
-        const capital = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.36), trimMat);
+        const capital = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.1, 0.34), trimMat);
         capital.position.set(p[0], p[1] + 1.65, p[2]);
         temple.add(capital);
       });
 
-      // 3. 體素橫樑與階梯三角山形神殿屋頂
-      const architrave = new THREE.Mesh(new THREE.BoxGeometry(2.85, 0.22, 2.1), trimMat);
+      const architrave = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 2.05), marbleMat);
       architrave.position.y = 2.45;
       architrave.castShadow = true;
       temple.add(architrave);
 
-      const steppedRoof = buildVoxelSteppedRoof(3.1, 2.35, 0.72, '#f1f5f9', '#cbd5e1', '#94a3b8');
-      steppedRoof.position.y = 2.56;
-      temple.add(steppedRoof);
+      const flatCornice = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.14, 2.2), trimMat);
+      flatCornice.position.y = 2.62;
+      flatCornice.castShadow = true;
+      flatCornice.receiveShadow = true;
+      temple.add(flatCornice);
 
-      // 屋頂中央金色榮譽徽章裝飾
-      const crest = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.32), goldAccentMat);
-      crest.position.set(0, 3.36, 0);
-      crest.rotation.y = Math.PI / 4;
-      temple.add(crest);
+      const flatRoofPlate = new THREE.Mesh(new THREE.BoxGeometry(2.85, 0.12, 2.05), marbleMat);
+      flatRoofPlate.position.y = 2.75;
+      flatRoofPlate.castShadow = true;
+      temple.add(flatRoofPlate);
 
       temple.traverse(child => {
         if (child.isMesh) {
@@ -5704,274 +5410,108 @@ function createCivicsLandmark() {
 
     let cabinBuilders = [];
 
-// 🌟 木工師傅專用：帶施工姿勢的 16-bit 立體像素角色生成器
-    function createBuilderSpriteMesh(role) {
-      const group = new THREE.Group();
+function createWoodCabinLandmark() {
+  const group = new THREE.Group();
+  cabinBuilders = [];
 
-      const pal = {
-        K: '#141013', H: '#d97706', h: '#fbbf24', F: '#ffcdb2', E: '#141013',
-        B: '#0284c7', b: '#0369a1', O: '#ea580c', G: '#16a34a',
-        S: '#cbd5e1', s: '#64748b', W: '#92400e', w: '#d97706'
-      };
+  const logDarkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x6F4E37, roughness: 0.85 });
+  const logLightMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xC19A6B, roughness: 0.75 });
+  const plankMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDEB887, roughness: 0.7 });
+  const ironMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x475569, metalness: 0.7, roughness: 0.3 });
 
-      const arts = {
-        hammer: [
-          [
-            '....KKKK........',
-            '...KssssK.......',
-            '....KKKK........',
-            '.....KK.KKKKKK..',
-            '.....KKKhhhhhhK.',
-            '.....KFFHFFFFFK.',
-            '.....KFFHEFFFFK.',
-            '....KKOOFFFFFFK.',
-            '...KOOOOOOOOOK..',
-            '....KKBBBBBBK...',
-            '.....KBBKKBBK...',
-            '.....KWWKKWWK...',
-            '.....KKKKKKKK...'
-          ],
-          [
-            '.....KKKKKK.....',
-            '....KhhhhhhK....',
-            '....KHFFFFFK....',
-            '....KHEFFFFK....',
-            '....KKFFFFFK....',
-            'KKK.KOOOOOOK....',
-            'KssKKOOOOOOK....',
-            'KKK..KBBBBBK....',
-            '.....KBBKKBBK...',
-            '.....KWWKKWWK...',
-            '.....KKKKKKKK...'
-          ]
-        ],
-        saw: [
-          [
-            '.....KKKKKK.....',
-            '....KhhhhhhK....',
-            '....KHFFFFFK....',
-            '....KHEFFFFK....',
-            '....KKFFFFFK....',
-            '....KBBBBBBK....',
-            '.KKKKBBBBBBK....',
-            'KssssFFBBBBK....',
-            '.KKKKKKBBBBK....',
-            '.....KbbKKbbK...',
-            '.....KWWKKWWK...',
-            '.....KKKKKKKK...'
-          ],
-          [
-            '.....KKKKKK.....',
-            '....KhhhhhhK....',
-            '....KHFFFFFK....',
-            '....KHEFFFFK....',
-            '....KKFFFFFK....',
-            '....KBBBBBBK....',
-            '...KKKKBBBBK....',
-            '..KssssFFBBK....',
-            '...KKKKKKBBK....',
-            '....KbbKKbbK....',
-            '....KWWKKWWK....',
-            '....KKKKKKKK....'
-          ]
-        ],
-        carry: [
-          [
-            '.KKKKKKKKKKKKKK.',
-            'KwwwwwwwwwwwwwwK',
-            'KWWWWWWWWWWWWWWK',
-            '.KKKKKKKKKKKKKK.',
-            '..KFFKKKKKKFFK..',
-            '..KFFKhhhhKFFK..',
-            '...KKHFFFFHKK...',
-            '....KHEFFEFK....',
-            '....KGGGGGGK....',
-            '....KGGGGGGK....',
-            '...KbbK..KbbK...',
-            '..KWWK....KWWK..',
-            '..KKKK....KKKK..'
-          ],
-          [
-            '.KKKKKKKKKKKKKK.',
-            'KwwwwwwwwwwwwwwK',
-            'KWWWWWWWWWWWWWWK',
-            '.KKKKKKKKKKKKKK.',
-            '..KFFKKKKKKFFK..',
-            '..KFFKhhhhKFFK..',
-            '...KKHFFFFHKK...',
-            '....KHEFFEFK....',
-            '....KGGGGGGK....',
-            '....KGGGGGGK....',
-            '....KbbKKbbK....',
-            '....KWWKKWWK....',
-            '....KKKKKKKK....'
-          ]
-        ]
-      };
+  // 1. 木屋石木地基
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.24, 2.4), logDarkMat);
+  base.position.y = 0.12;
+  base.receiveShadow = true;
+  group.add(base);
 
-      const frameSet = arts[role] || arts.hammer;
-      const shouldFlip = (role === 'saw'); // 👈 讓鋸木師傅水平鏡像翻轉，面向左側的原木！
-      const tex0 = buildPixelDirTexture(frameSet[0], pal, shouldFlip);
-      const tex1 = buildPixelDirTexture(frameSet[1], pal, shouldFlip);
-      const bodyGroup = new THREE.Group();
-      bodyGroup.position.y = 0.52;
-      const planeGeo = new THREE.PlaneGeometry(1.05, 1.05);
+  // 2. 半完工交錯原木牆（左、右、後三面堆疊 3~4 層）
+  const logGeoLong = new THREE.CylinderGeometry(0.11, 0.11, 2.7, 8);
+  logGeoLong.rotateZ(Math.PI / 2);
+  const logGeoShort = new THREE.CylinderGeometry(0.11, 0.11, 2.3, 8);
+  logGeoShort.rotateX(Math.PI / 2);
 
-      const frontMat = new THREE.MeshStandardMaterial({
-        map: tex0,
-        transparent: true,
-        alphaTest: 0.5,
-        side: THREE.DoubleSide,
-        roughness: 0.65
+  for (let layer = 0; layer < 4; layer++) {
+    const ly = 0.34 + layer * 0.21;
+    // 後牆
+    const backLog = new THREE.Mesh(logGeoLong, logDarkMat);
+    backLog.position.set(0, ly, -1.05);
+    backLog.castShadow = true;
+    group.add(backLog);
+
+    // 左右側牆（第 4 層刻意留空呈現施工中視覺）
+    if (layer < 3) {
+      [-1.25, 1.25].forEach(sx => {
+        const sideLog = new THREE.Mesh(logGeoShort, logLightMat);
+        sideLog.position.set(sx, ly + 0.1, 0);
+        sideLog.castShadow = true;
+        group.add(sideLog);
       });
-
-      const midMat = new THREE.MeshStandardMaterial({
-        map: tex0,
-        color: 0x332b2e,
-        transparent: true,
-        alphaTest: 0.5,
-        side: THREE.DoubleSide,
-        roughness: 0.85
-      });
-
-      [{ z: 0.055, mat: frontMat }, { z: 0, mat: midMat }, { z: -0.055, mat: frontMat }].forEach(cfg => {
-        const layer = new THREE.Mesh(planeGeo, cfg.mat);
-        layer.position.z = cfg.z;
-        layer.castShadow = (cfg.z !== 0);
-        bodyGroup.add(layer);
-      });
-
-      group.add(bodyGroup);
-
-      const shadowMesh = new THREE.Mesh(
-        new THREE.CircleGeometry(0.35, 14),
-        new THREE.MeshBasicMaterial({ color: 0x1a120b, transparent: true, opacity: 0.35, depthWrite: false })
-      );
-      shadowMesh.rotation.x = -Math.PI / 2;
-      shadowMesh.position.y = 0.01;
-      group.add(shadowMesh);
-
-      group.userData.builderAnim = {
-        bodyGroup: bodyGroup,
-        frontMat: frontMat,
-        midMat: midMat,
-        tex0: tex0,
-        tex1: tex1,
-        currentFrame: 0
-      };
-
-      return group;
     }
+  }
 
-    function createWoodCabinLandmark() {
-      const group = new THREE.Group();
-      cabinBuilders = [];
+  // 3. 四角立柱與未鋪滿的屋頂斜樑（A字木桁架）
+  [[-1.25, -1.05], [1.25, -1.05], [-1.25, 1.05], [1.25, 1.05]].forEach(([px, pz]) => {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.55, 0.16), logDarkMat);
+    post.position.set(px, 0.9, pz);
+    post.castShadow = true;
+    group.add(post);
+  });
 
-      const logDarkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x6F4E37, roughness: 0.85 });
-      const logLightMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xC19A6B, roughness: 0.75 });
-      const plankMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0xDEB887, roughness: 0.7 });
+  [-0.9, 0, 0.9].forEach(rz => {
+    [-1, 1].forEach(side => {
+      const rafter = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.1, 0.1), plankMat);
+      rafter.position.set(side * 0.68, 2.08, rz);
+      rafter.rotation.z = side * -0.52;
+      rafter.castShadow = true;
+      group.add(rafter);
+    });
+  });
 
-      // 1. 體素石木地基
-      const baseTex = createVoxelWallTexture('#78716c', '#57534e', false);
-      const baseMat = new THREE.MeshStandardMaterial({ map: baseTex, roughness: 0.9 });
-      const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.24, 2.4), baseMat);
-      base.position.y = 0.12;
-      base.receiveShadow = true;
-      group.add(base);
+  // --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
+  const npcHammer = createCharacterMesh(false, 0xF5D0A9, 0xD97706);
+  npcHammer.position.set(-0.55, 0.24, 0.85);
+  npcHammer.rotation.y = Math.PI; // 面向屋內木樑
+  const hammerTool = new THREE.Group();
+  const hHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.36, 6), logLightMat);
+  hHandle.rotation.x = Math.PI / 2;
+  hHandle.position.z = 0.15;
+  const hHead = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.08), ironMat);
+  hHead.position.z = 0.32;
+  hammerTool.add(hHandle, hHead);
+  hammerTool.position.set(0, -0.4, 0.05);
+  npcHammer.userData.limbs.rightArm.add(hammerTool);
+  group.add(npcHammer);
+  cabinBuilders.push({ mesh: npcHammer, role: 'hammer', phase: 0 });
 
-      // 2. 體素方塊原木牆
-      const logGeoLong = new THREE.BoxGeometry(2.7, 0.20, 0.22);
-      const logGeoShort = new THREE.BoxGeometry(0.22, 0.20, 2.3);
+  // --- NPC 2：右側鋸木馬前拉鋸原木的師傅 ---
+  const sawHorseLog = new THREE.Mesh(logGeoShort, logLightMat);
+  sawHorseLog.scale.set(1, 1, 0.55);
+  sawHorseLog.position.set(2.05, 0.48, 0.6);
+  group.add(sawHorseLog);
 
-      for (let layer = 0; layer < 4; layer++) {
-        const ly = 0.34 + layer * 0.21;
-        const backLog = new THREE.Mesh(logGeoLong, (layer % 2 === 0) ? logDarkMat : logLightMat);
-        backLog.position.set(0, ly, -1.05);
-        backLog.castShadow = true;
-        backLog.receiveShadow = true;
-        group.add(backLog);
+  const npcSaw = createCharacterMesh(true, 0xFFE0BD, 0x0284C7);
+  npcSaw.position.set(2.68, 0, 0.6);      // 👈 移到木頭右側正旁邊（Z 與木頭對齊 0.6）
+  npcSaw.rotation.y = -Math.PI / 2;       // 👈 面向左側（-X 方向），與 Z 軸原木呈 90 度垂直！
+  const sawBlade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.48), ironMat);
+  sawBlade.position.set(0, -0.4, 0.22);
+  npcSaw.userData.limbs.rightArm.add(sawBlade);
+  group.add(npcSaw);
+  cabinBuilders.push({ mesh: npcSaw, role: 'saw', phase: 1.5 });
 
-        if (layer < 3) {
-          [-1.25, 1.25].forEach(sx => {
-            const sideLog = new THREE.Mesh(logGeoShort, (layer % 2 === 0) ? logLightMat : logDarkMat);
-            sideLog.position.set(sx, ly + 0.1, 0);
-            sideLog.castShadow = true;
-            sideLog.receiveShadow = true;
-            group.add(sideLog);
-          });
-        }
-      }
+  // --- NPC 3：左側往返搬運木板的工匠 ---
+  const npcCarry = createCharacterMesh(false, 0x8D5524, 0x16A34A);
+  npcCarry.position.set(-2.1, 0, 1.4);
+  const carriedPlank = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 1.15), plankMat);
+  carriedPlank.position.set(0, 0.72, 0.38);
+  npcCarry.add(carriedPlank);
+  group.add(npcCarry);
+  cabinBuilders.push({ mesh: npcCarry, role: 'carry', phase: 0 });
 
-      // 3. 四角立柱與 A 字木桁架
-      [[-1.25, -1.05], [1.25, -1.05], [-1.25, 1.05], [1.25, 1.05]].forEach(([px, pz]) => {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.20, 1.55, 0.20), logDarkMat);
-        post.position.set(px, 0.9, pz);
-        post.castShadow = true;
-        group.add(post);
-      });
+  registerObstacle('wood_cabin', 0, 0, 2.3);
+  return group;
+}
 
-      [-0.9, 0, 0.9].forEach(rz => {
-        [-1, 1].forEach(side => {
-          const rafter = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.12, 0.12), plankMat);
-          rafter.position.set(side * 0.68, 2.08, rz);
-          rafter.rotation.z = side * -0.52;
-          rafter.castShadow = true;
-          group.add(rafter);
-        });
-      });
-
-      // 屋頂左側兩階體素瓦片
-      const partialRoofTex = createVoxelRoofTexture('#b45309', '#92400e');
-      const partialRoofMat = new THREE.MeshStandardMaterial({ map: partialRoofTex, roughness: 0.85 });
-      const partialPlank1 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.10, 2.35), partialRoofMat);
-      partialPlank1.position.set(-1.15, 1.78, 0);
-      partialPlank1.castShadow = true;
-      group.add(partialPlank1);
-
-      const partialPlank2 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.10, 2.35), partialRoofMat);
-      partialPlank2.position.set(-0.75, 2.02, 0);
-      partialPlank2.castShadow = true;
-      group.add(partialPlank2);
-
-      // --- NPC 1：屋架前揮鐵鎚釘木板的師傅 ---
-      const npcHammer = createBuilderSpriteMesh('hammer');
-      npcHammer.position.set(-0.55, 0.24, 0.85);
-      group.add(npcHammer);
-      cabinBuilders.push({ mesh: npcHammer, role: 'hammer', phase: 0 });
-
-      // --- NPC 2：右側鋸木馬前拉鋸原木的師傅 ---
-      const sawHorseLog = new THREE.Mesh(logGeoShort, logLightMat);
-      sawHorseLog.scale.set(1.1, 1.1, 0.55);
-      sawHorseLog.position.set(2.05, 0.48, 0.6);
-      sawHorseLog.castShadow = true;
-      group.add(sawHorseLog);
-
-      [-0.45, 0.45].forEach(lz => {
-        const legA = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
-        legA.position.set(2.05, 0.24, 0.6 + lz);
-        legA.rotation.z = 0.45;
-        group.add(legA);
-
-        const legB = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), logDarkMat);
-        legB.position.set(2.05, 0.24, 0.6 + lz);
-        legB.rotation.z = -0.45;
-        group.add(legB);
-      });
-
-      const npcSaw = createBuilderSpriteMesh('saw');
-      npcSaw.position.set(2.65, 0, 0.6);
-      group.add(npcSaw);
-      cabinBuilders.push({ mesh: npcSaw, role: 'saw', phase: 1.5 });
-
-      // --- NPC 3：左側往返雙手高舉扛木板的工匠 ---
-      const npcCarry = createBuilderSpriteMesh('carry');
-      npcCarry.position.set(-2.1, 0, 1.4);
-      group.add(npcCarry);
-      cabinBuilders.push({ mesh: npcCarry, role: 'carry', phase: 0 });
-
-      registerObstacle('wood_cabin', 0, 0, 2.3);
-      return group;
-    }
     function createReclaimLandmarkStages(parentGroup) {
       const grassMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x65A30D, roughness: 0.8, flatShading: true });
       const stoneMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x94A3B8, roughness: 0.9, flatShading: true });
@@ -6034,31 +5574,24 @@ function createCivicsLandmark() {
       stageMeshRuinTemple.visible = false;
       parentGroup.add(stageMeshRuinTemple);
 
-stageMeshNewTemple = new THREE.Group();
-      const templeStoneTex = createVoxelWallTexture('#cbd5e1', '#94a3b8', false);
-      const templeStoneMat = new THREE.MeshStandardMaterial({ map: templeStoneTex, roughness: 0.85 });
-
-      const tBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.45, 3.2), templeStoneMat);
+      stageMeshNewTemple = new THREE.Group();
+      const tBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.45, 3.2), stoneMat);
       tBase.position.y = 0.22;
-      tBase.receiveShadow = true;
       stageMeshNewTemple.add(tBase);
 
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(pos => {
-        // 體素方柱取代原本圓柱
-        const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.8, 0.26), redTempleMat);
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 1.8, 8), redTempleMat);
         pillar.position.set(pos[0], 1.25, pos[1]);
-        pillar.castShadow = true;
         stageMeshNewTemple.add(pillar);
       });
 
-      // 紅瓦體素階梯廟頂（取代原本平滑的 ConeGeometry）
-      const tRoof = buildVoxelSteppedRoof(3.4, 3.4, 1.0, '#dc2626', '#991b1b', '#fbbf24');
-      tRoof.position.y = 2.1;
+      const tRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 0.9, 4), redTempleMat);
+      tRoof.rotation.y = Math.PI / 4;
+      tRoof.position.set(0, 2.5, 0);
       stageMeshNewTemple.add(tRoof);
 
-      // 保留原本的金色屋脊與神廟能量核心
       const roofTop = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.15, 0.35), goldMat);
-      roofTop.position.set(0, 3.12, 0);
+      roofTop.position.set(0, 2.95, 0);
       stageMeshNewTemple.add(roofTop);
 
       const altarCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.4, 0), energyGlowMat);
@@ -6215,33 +5748,19 @@ stageMeshNewTemple = new THREE.Group();
       // ------------------------------------------
       // 階段 3 (60% - 600分): 溫馨微型小書店 (含木窗與紫色斜屋頂)
       // ------------------------------------------
-// ------------------------------------------
-      // 階段 3 (60% - 600分): 溫馨微型小書店 (體素原木牆 + 發光窗格 + 紫色階梯屋頂 + 磚紅煙囪)
-      // ------------------------------------------
       stageReadingBookstore = new THREE.Group();
-      const shopWallTex = createVoxelWallTexture('#c19a6b', '#a47148', true);
-      const shopWallMat = new THREE.MeshStandardMaterial({ map: shopWallTex, roughness: 0.85 });
-
-      const houseBody = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.8, 2.4), shopWallMat);
+      const houseBody = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.8, 2.4), woodLightMat);
       houseBody.position.y = 0.9;
-      houseBody.castShadow = true;
       stageReadingBookstore.add(houseBody);
 
-      // 紫色階梯體素屋頂（取代原本平滑的 ConeGeometry）
-      const cabinRoof = buildVoxelSteppedRoof(3.3, 2.7, 1.15, '#7e22ce', '#581c87', '#e9d5ff');
-      cabinRoof.position.y = 1.8;
+      // 紫色三角斜屋頂
+      const cabinRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 1.1, 4), roofMat);
+      cabinRoof.rotation.y = Math.PI / 4;
+      cabinRoof.scale.set(1.1, 1.0, 1.0);
+      cabinRoof.position.y = 2.3;
       stageReadingBookstore.add(cabinRoof);
 
-      // 體素磚紅煙囪
-      const chimney = new THREE.Mesh(
-        new THREE.BoxGeometry(0.36, 0.85, 0.36),
-        SharedPool.getMaterial('MeshStandardMaterial', { color: '#b91c1c', roughness: 0.85 })
-      );
-      chimney.position.set(0.95, 2.75, -0.45);
-      chimney.castShadow = true;
-      stageReadingBookstore.add(chimney);
-
-      // 前門與玻璃展示窗（保留原本細節）
+      // 前門與玻璃展示窗
       const door = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.08), woodDarkMat);
       door.position.set(-0.8, 0.6, 1.21);
       stageReadingBookstore.add(door);
@@ -6253,7 +5772,7 @@ stageMeshNewTemple = new THREE.Group();
       glassWin.position.set(0.55, 0.9, 1.21);
       stageReadingBookstore.add(glassWin);
 
-      // 門口遮陽木雨棚（保留原本細節）
+      // 門口遮陽木雨棚
       const awning = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.08, 0.75), woodWarmMat);
       awning.position.set(0, 1.7, 1.55);
       awning.rotation.x = 0.25;
@@ -6396,9 +5915,6 @@ stageMeshNewTemple = new THREE.Group();
           pDesc.textContent = "📖 目前由彩虹行動書車巡迴駐點，全班閱讀打卡累積能量，逐步進化島嶼！";
         }
       }
-    if (readingBuildEnergy >= 200) {
-        islandObstacles['reading'] = [{ x: 0, z: 0.2, r: readingBuildEnergy >= 600 ? 2.1 : 1.5 }];
-      }
     }
     // ==========================================
     // 🏃 運動島：五階段 Low-Poly 具象化地標工廠 (單槓/滑梯/籃球/跑鞋/PU跑道)
@@ -6532,6 +6048,7 @@ stageMeshNewTemple = new THREE.Group();
       // 👆 ----------------------------------- 👆
 
       stageSportSlide.position.set(0, 0, 0.2);
+
       stageSportSlide.position.set(0, 0, 0.2);
       stageSportSlide.visible = false;
       parentGroup.add(stageSportSlide);
@@ -6631,7 +6148,11 @@ stageMeshNewTemple = new THREE.Group();
       trackInner.receiveShadow = true;
       stageSportTrack.add(trackInner);
 
-
+      // 白色分道線與起跑標線
+      const laneLine = new THREE.Mesh(new THREE.RingGeometry(1.83, 1.87, 32), whiteLineMat);
+      laneLine.rotation.x = -Math.PI / 2;
+      laneLine.position.y = 0.055;
+      stageSportTrack.add(laneLine);
 
       // 🌟 生成 2 位小尺寸跑者 (縮小至 0.55 倍)
       sportTrackRunners = [];
@@ -6705,9 +6226,6 @@ stageMeshNewTemple = new THREE.Group();
         } else {
           pDesc.textContent = "🏋️ 目前為重訓啞鈴廣場，全班累積運動生活能量，逐步解鎖校園運動設施！";
         }
-      }
-    if (sportBuildEnergy >= 140) {
-        islandObstacles['sport'] = [{ x: 0, z: 0.2, r: sportBuildEnergy >= 700 ? 2.7 : 1.7 }];
       }
     }
 
@@ -6926,273 +6444,28 @@ stageMeshNewTemple = new THREE.Group();
       return sprite;
     }
 
-// 🌟 程序化 HD-2.5D 像素格子貼圖生成器
-    function createPixelGridTexture(baseHex, accentHex1, accentHex2, gridSize = 16, repeat = 6) {
-      const canvas = document.createElement('canvas');
-      canvas.width = gridSize;
-      canvas.height = gridSize;
-      const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = baseHex;
-      ctx.fillRect(0, 0, gridSize, gridSize);
-
-      for (let y = 0; y < gridSize; y++) {
-        for (let x = 0; x < gridSize; x++) {
-          const r = Math.random();
-          if (r < 0.22) {
-            ctx.fillStyle = accentHex1;
-            ctx.fillRect(x, y, 1, 1);
-          } else if (r < 0.36) {
-            ctx.fillStyle = accentHex2;
-            ctx.fillRect(x, y, 1, 1);
-          }
-        }
-      }
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.magFilter = THREE.NearestFilter; // 👈 關鍵：保持像素方塊銳利不模糊
-      tex.minFilter = THREE.NearestFilter;
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(repeat, repeat);
-      return tex;
-    }
-
-    // 🌟 1. 島嶼頂面貼圖：綠草坪 + 泥土小徑 + 灰白不規則石板磚小路
-    function createCobblestoneTopTexture(baseColorHex) {
-      const size = 64;
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-
-      // 底層套用各島原本的主題色
-      ctx.fillStyle = '#' + new THREE.Color(baseColorHex).getHexString();
-      ctx.fillRect(0, 0, size, size);
-
-      // 撒上像素草叢與深淺斑點
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          const r = Math.random();
-          if (r < 0.16) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.14)'; // 亮草點
-            ctx.fillRect(x, y, 1, 1);
-          } else if (r < 0.30) {
-            ctx.fillStyle = 'rgba(20, 40, 15, 0.16)';    // 暗草點
-            ctx.fillRect(x, y, 1, 1);
-          }
-        }
-      }
-
-      // 繪製交叉的暖棕色泥土小徑基底
-      ctx.fillStyle = '#a47148';
-      ctx.fillRect(24, 0, 16, size); // 縱向主幹道
-      ctx.fillRect(0, 26, size, 12); // 橫向支線道
-
-      // 在道路中央鋪設灰白色不規則像素石板磚（模擬圖核心質感）
-      const stoneColors = ['#e2e8f0', '#cbd5e1', '#f8fafc', '#94a3b8'];
-      for (let y = 2; y < size - 2; y += 4) {
-        for (let x = 26; x < 38; x += 4) {
-          if (Math.random() > 0.18) {
-            ctx.fillStyle = stoneColors[Math.floor(Math.random() * stoneColors.length)];
-            const w = (Math.random() > 0.5) ? 3 : 2;
-            const h = (Math.random() > 0.5) ? 3 : 2;
-            ctx.fillRect(x + (Math.random() > 0.5 ? 1 : 0), y, w, h);
-          }
-        }
-      }
-      // 橫向支道也鋪上部分石板磚
-      for (let x = 4; x < size - 4; x += 4) {
-        for (let y = 28; y < 36; y += 4) {
-          if (Math.random() > 0.3) {
-            ctx.fillStyle = stoneColors[Math.floor(Math.random() * stoneColors.length)];
-            ctx.fillRect(x, y, 3, 2);
-          }
-        }
-      }
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.magFilter = THREE.NearestFilter; // 保持像素方塊銳利不模糊
-      tex.minFilter = THREE.NearestFilter;
-      return tex;
-    }
-
-    // 🌟 2. 島嶼側面懸崖貼圖：上方垂掛草皮 + 中段垂直條紋深棕岩壁 + 底部灰岩塊
-    function createCliffSideTexture(topGrassHex) {
-      const w = 64, h = 32;
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-
-      // 中段主體：暖深棕色泥土岩壁
-      ctx.fillStyle = '#6f4518';
-      ctx.fillRect(0, 0, w, h);
-
-      // 垂直條紋岩壁刻痕（模擬圖中的體素懸崖垂直紋理）
-      for (let x = 0; x < w; x++) {
-        const stripeColor = (x % 3 === 0) ? '#583101' : ((x % 2 === 0) ? '#8b5e34' : '#6f4518');
-        ctx.fillStyle = stripeColor;
-        ctx.fillRect(x, 4, 1, h - 10);
-      }
-
-      // 最上方 4~7 像素：不規則鋸齒狀垂掛綠草邊緣
-      ctx.fillStyle = '#' + new THREE.Color(topGrassHex).getHexString();
-      for (let x = 0; x < w; x++) {
-        const overhang = 4 + Math.floor(Math.sin(x * 0.7) * 2 + Math.random() * 2);
-        ctx.fillRect(x, 0, 1, overhang);
-      }
-
-      // 最底部 6 像素：灰色岩石基座方塊
-      const rockColors = ['#64748b', '#94a3b8', '#475569'];
-      for (let x = 0; x < w; x += 3) {
-        ctx.fillStyle = rockColors[(x / 3) % rockColors.length];
-        const rockH = 5 + (x % 3);
-        ctx.fillRect(x, h - rockH, 3, rockH);
-      }
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.magFilter = THREE.NearestFilter;
-      tex.minFilter = THREE.NearestFilter;
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.repeat.set(3, 1); // 繞島嶼一圈重複 3 次，讓懸崖顆粒更細緻
-      return tex;
-    }
-
-    // 🌟 1. 體素建築外牆貼圖（原木橫條／石磚／發光黃色像素格子窗）
-    function createVoxelWallTexture(wallHex1, wallHex2, hasGlowingWindows = true) {
-      const w = 32, h = 32;
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-
-      // 交替橫向原木／石磚條紋
-      for (let y = 0; y < h; y += 2) {
-        ctx.fillStyle = (y % 4 === 0) ? wallHex1 : wallHex2;
-        ctx.fillRect(0, y, w, 2);
-      }
-
-      // 加上深色木縫／磚縫陰影點
-      ctx.fillStyle = 'rgba(20, 12, 5, 0.35)';
-      for (let y = 0; y < h; y += 4) {
-        for (let x = (y % 8 === 0 ? 0 : 4); x < w; x += 8) {
-          ctx.fillRect(x, y, 1, 2);
-        }
-      }
-
-      // 繪製溫暖發光的像素格子窗（HD-2.5D 靈魂細節）
-      if (hasGlowingWindows) {
-        [6, 20].forEach(wx => {
-          ctx.fillStyle = '#3e2723'; // 深棕窗框
-          ctx.fillRect(wx, 10, 6, 8);
-          ctx.fillStyle = '#fef08a'; // 暖黃燈光
-          ctx.fillRect(wx + 1, 11, 4, 6);
-          ctx.fillStyle = '#5d4037'; // 十字窗格
-          ctx.fillRect(wx + 2, 11, 1, 6);
-          ctx.fillRect(wx + 1, 13, 4, 1);
-        });
-      }
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.magFilter = THREE.NearestFilter;
-      tex.minFilter = THREE.NearestFilter;
-      return tex;
-    }
-
-    // 🌟 2. 體素屋頂瓦片貼圖（階梯波浪魚鱗瓦）
-    function createVoxelRoofTexture(roofHex1, roofHex2) {
-      const size = 16;
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = roofHex1;
-      ctx.fillRect(0, 0, size, size);
-
-      for (let y = 0; y < size; y += 2) {
-        for (let x = 0; x < size; x += 2) {
-          if ((x + y) % 4 === 0) {
-            ctx.fillStyle = roofHex2;
-            ctx.fillRect(x, y, 2, 1);
-          }
-        }
-      }
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.magFilter = THREE.NearestFilter;
-      tex.minFilter = THREE.NearestFilter;
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(4, 4);
-      return tex;
-    }
-
-    // 🌟 3. 樂高階梯狀體素斜屋頂（取代光滑四角錐 ConeGeometry）
-    function buildVoxelSteppedRoof(width, depth, height, color1, color2, trimColor = 0xd4a373) {
-      const roofGroup = new THREE.Group();
-      const roofTex = createVoxelRoofTexture(color1, color2);
-      const roofMat = new THREE.MeshStandardMaterial({ map: roofTex, roughness: 0.8 });
-      const trimMat = SharedPool.getMaterial('MeshStandardMaterial', { color: trimColor, roughness: 0.75 });
-
-      const steps = 5;
-      const stepH = height / steps;
-      for (let s = 0; s < steps; s++) {
-        const ratio = 1 - (s / steps) * 0.82;
-        const w = width * ratio;
-        const d = depth * ratio;
-        const tier = new THREE.Mesh(new THREE.BoxGeometry(w, stepH, d), roofMat);
-        tier.position.y = stepH * (s + 0.5);
-        tier.castShadow = true;
-        tier.receiveShadow = true;
-        roofGroup.add(tier);
-      }
-
-      // 最底層淺木色屋簷邊框
-      const eaves = new THREE.Mesh(new THREE.BoxGeometry(width + 0.16, 0.12, depth + 0.16), trimMat);
-      eaves.position.y = 0.06;
-      roofGroup.add(eaves);
-
-      return roofGroup;
-    }
-
     const TREE_LEAF_COLORS = [0xd97706, 0xf59e0b, 0xea580c, 0xc2410c, 0xb91c1c, 0xdc2626];
-function createTree() {
+    function createTree() {
       const tree = new THREE.Group();
-      const trunkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5c3a21, roughness: 0.9 });
-      const darkLeafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x2d6a4f, roughness: 0.8 });
-      const lightLeafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x52b788, roughness: 0.75 });
+      const trunkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5c2b0c, roughness: 0.85 });
 
-      // 體素樹幹與樹根
-      const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.36, 1.3, 0.36), trunkMat);
-      trunk.position.y = 0.65;
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.22, 1.1, 8), trunkMat);
+      trunk.position.y = 0.55;
       trunk.castShadow = true;
       tree.add(trunk);
 
-      // 階梯狀體素樹冠（模擬圖中的立體積木圓球）
-      const layers = [
-        { y: 1.25, w: 1.4, h: 0.35, mat: darkLeafMat },
-        { y: 1.55, w: 1.65, h: 0.35, mat: lightLeafMat },
-        { y: 1.85, w: 1.45, h: 0.35, mat: lightLeafMat },
-        { y: 2.15, w: 1.05, h: 0.30, mat: lightLeafMat },
-        { y: 2.40, w: 0.65, h: 0.25, mat: lightLeafMat }
-      ];
-      layers.forEach(l => {
-        const block = new THREE.Mesh(new THREE.BoxGeometry(l.w, l.h, l.w), l.mat);
-        block.position.y = l.y;
-        block.castShadow = true;
-        block.receiveShadow = true;
-        tree.add(block);
-      });
+      const leafColor = getRandomItem(TREE_LEAF_COLORS);
+      const leafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: leafColor, flatShading: true, roughness: 0.75 });
 
-      // 四周突出像素葉塊（打破單調正方體輪廓）
-      [[0.75, 1.55, 0.2], [-0.75, 1.6, -0.2], [0.2, 1.65, 0.75], [-0.2, 1.5, -0.75]].forEach(p => {
-        const nub = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), darkLeafMat);
-        nub.position.set(...p);
-        nub.castShadow = true;
-        tree.add(nub);
-      });
+      const crownLower = new THREE.Mesh(new THREE.DodecahedronGeometry(0.72, 1), leafMat);
+      crownLower.position.y = 1.25;
+      crownLower.castShadow = true;
+      tree.add(crownLower);
+
+      const crownUpper = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 1), leafMat);
+      crownUpper.position.y = 1.7;
+      crownUpper.castShadow = true;
+      tree.add(crownUpper);
 
       return tree;
     }
@@ -7315,24 +6588,24 @@ function createTree() {
         timeBadge.textContent = `🕒 ${curPhase.name} ｜ 📍 ${wData.text}`;
       }
 
-     if (wData.isRaining) {
-     if (rainSystem) rainSystem.visible = true;
-     if (scene && scene.fog) scene.fog.density = 0.013; // 原本寫 near/far 的地方改這行
-   } else if (wData.type === 'cloudy') {
-     if (rainSystem) rainSystem.visible = false;
-     if (scene && scene.fog) scene.fog.density = 0.010; // 原本寫 near/far 的地方改這行
-   } else {
-     if (rainSystem) rainSystem.visible = false;
-     if (scene && scene.fog) scene.fog.density = 0.0085;
-   }
+      if (wData.isRaining) {
+        if (rainSystem) rainSystem.visible = true;
+        if (scene && scene.fog) { scene.fog.near = 25; scene.fog.far = 100; }
+      } else if (wData.type === 'cloudy') {
+        if (rainSystem) rainSystem.visible = false;
+        if (scene && scene.fog) { scene.fog.near = 35; scene.fog.far = 130; }
+      } else {
+        if (rainSystem) rainSystem.visible = false;
+      }
     }
 
     // ⛈️ 啟動海怪暴風雨特寫：加厚迷霧、降下驟雨
 function applyStormWeather() {
-   if (rainSystem) rainSystem.visible = true;
-   if (scene && scene.fog) {
-     scene.fog.density = 0.018; // 原本寫 near=15, far=65 的地方改這行
-   }
+  if (rainSystem) rainSystem.visible = true;
+  if (scene && scene.fog) {
+    scene.fog.near = 15;
+    scene.fog.far = 65; // 大幅縮減能見度，營造狂風暴雨壓迫感
+  }
   const timeBadge = document.getElementById('time-badge');
   if (timeBadge) {
     const curPhase = getTimePhase();
@@ -8510,14 +7783,12 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       lastPhaseName = timePhase.name;
       document.getElementById('time-badge').textContent = `🕒 時段：${timePhase.name}`;
 
-      // 👇 ===【只取代從這裡開始】=== 👇
       scene = new THREE.Scene();
       scene.background = new THREE.Color(timePhase.bg);
-      // 🌟 HD-2.5D 霧效：拉近一點霧氣範圍，營造微縮模型的空氣感
-      scene.fog = new THREE.FogExp2(timePhase.bg, 0.0085);
+      scene.fog = new THREE.Fog(timePhase.bg, 40, 160);
 
-      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 1000);
-      camera.position.set(0, 24, 48);
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 1000);
+      camera.position.set(0, 22, 46);
       camera.lookAt(0, 0, 0);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -8525,8 +7796,6 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      // renderer.toneMapping = THREE.ACESFilmicToneMapping; // 👈 註解這兩行
-      // renderer.toneMappingExposure = 1.12;
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -8592,18 +7861,16 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
 
       oceanGeo.setAttribute('color', new THREE.Float32BufferAttribute(oceanColors, 3));
 
-const oceanPixelTex = createPixelGridTexture('#0e7490', '#22d3ee', '#083344', 16, 28);
-    const oceanMat = new THREE.MeshStandardMaterial({
-      map: oceanPixelTex,
-      vertexColors: true,
-      roughness: 0.15,
-      metalness: 0.1,
-      transparent: true,
-      opacity: 0.94,
-      emissive: 0x011b24,
-      emissiveIntensity: 0.35,
-      depthWrite: false
-    });
+      const oceanMat = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        roughness: 0.08,
+        metalness: 0.12,
+        transparent: true,
+        opacity: 0.92,
+        emissive: 0x011b24,
+        emissiveIntensity: 0.45,
+        depthWrite: false
+      });
 
       oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
       oceanMesh.position.y = -0.52;
@@ -8844,18 +8111,8 @@ const oceanPixelTex = createPixelGridTexture('#0e7490', '#22d3ee', '#083344', 16
           group.add(vines);
         }
 
-        const topTex = createCobblestoneTopTexture(cfg.color);
-        const sideTex = createCliffSideTexture(cfg.color);
-
-        // CylinderGeometry 材質陣列順序：[0: 側面懸崖, 1: 頂面石板草地, 2: 底面]
-        const sideMat = new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.9, flatShading: true });
-        const topMat  = new THREE.MeshStandardMaterial({ map: topTex,  roughness: 0.85, flatShading: true });
-        const botMat  = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x475569, roughness: 0.9 });
-
-        const islandBase = new THREE.Mesh(
-          new THREE.CylinderGeometry(baseRadius, baseRadius * 0.95, 0.9, 6),
-          [sideMat, topMat, botMat]
-        );
+        const baseMat = SharedPool.getMaterial('MeshStandardMaterial', { color: cfg.color, flatShading: true, roughness: 0.85 });
+        const islandBase = new THREE.Mesh(new THREE.CylinderGeometry(baseRadius, baseRadius * 0.95, 0.9, 6), baseMat);
         islandBase.position.y = -0.43;
         islandBase.rotation.y = Math.PI / 6;
         islandBase.receiveShadow = true;
@@ -8894,10 +8151,12 @@ const oceanPixelTex = createPixelGridTexture('#0e7490', '#22d3ee', '#083344', 16
           createReclaimLandmarkStages(group);
         }
         if (cfg.id === 'reading') {
+          readingIslandGroup = group;
           createReadingLandmarkStages(group);
         }
 
         if (cfg.id === 'sport') {
+          sportIslandGroup = group;
           createSportLandmarkStages(group);
         }
 
@@ -9275,58 +8534,39 @@ document.addEventListener('visibilitychange', () => {
         windTurbineBlades.forEach(blade => { blade.rotation.z += 0.04; });
 
         // 👇 「3 位木工 NPC 施工動作」 👇
-          // 👇 「3 位木工 NPC 16-bit 雙格施工動畫」 👇
-        const builderCamAng = camera ? Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z) : 0;
-        for (let i = 0; i < cabinBuilders.length; i++) {
+          for (let i = 0; i < cabinBuilders.length; i++) {
           const b = cabinBuilders[i];
-          const anim = b.mesh.userData.builderAnim;
-          if (!anim) continue;
-
-          // 讓工匠面向鏡頭並保留微側立體角度
-          anim.bodyGroup.rotation.y = builderCamAng - b.mesh.rotation.y + 0.15;
+          const limbs = b.mesh.userData.limbs;
+          if (!limbs) continue;
 
           if (b.role === 'hammer') {
-            // 師傅 1：高舉鐵鎚 -> 用力敲下（雙格切換 + 身體下壓震動）
-            const wave = Math.sin(time * 7.0 + b.phase);
-            const nextFrame = wave > 0 ? 1 : 0;
-            if (anim.currentFrame !== nextFrame) {
-              anim.currentFrame = nextFrame;
-              const tex = nextFrame === 1 ? anim.tex1 : anim.tex0;
-              anim.frontMat.map = tex; anim.frontMat.needsUpdate = true;
-              anim.midMat.map = tex; anim.midMat.needsUpdate = true;
-            }
-            anim.bodyGroup.position.y = (nextFrame === 1) ? 0.49 : 0.54;
-
-          } else if (b.role === 'saw') {
-            // 師傅 2：站在木頭旁前後推拉手鋸（雙格切換 + 左右推拉位移）
-            const pushPull = Math.sin(time * 6.5 + b.phase);
-            const nextFrame = pushPull > 0 ? 1 : 0;
-            if (anim.currentFrame !== nextFrame) {
-              anim.currentFrame = nextFrame;
-              const tex = nextFrame === 1 ? anim.tex1 : anim.tex0;
-              anim.frontMat.map = tex; anim.frontMat.needsUpdate = true;
-              anim.midMat.map = tex; anim.midMat.needsUpdate = true;
-            }
-            b.mesh.position.x = 2.62 + pushPull * 0.10;
-            anim.bodyGroup.rotation.z = pushPull * 0.08;
-
-          } else if (b.role === 'carry') {
-            // 師傅 3：雙手高舉原木板在工地左側來回搬運（雙格邁步 + 往返移動）
+            // 師傅 1：右手上下敲擊鐵鎚、身體隨節奏微傾
+            const strike = Math.sin(time * 7.5 + b.phase);
+            limbs.rightArm.rotation.x = -1.35 + strike * 0.65;
+            limbs.leftArm.rotation.x = -0.6;
+            b.mesh.rotation.x = Math.max(0, strike) * 0.08;
+            } else if (b.role === 'saw') {
+            // 師傅 2：垂直面對橫木頭，沿 X 軸前後推拉手鋸
+            const pushPull = Math.sin(time * 6.0 + b.phase);
+            limbs.rightArm.rotation.x = -1.1 + pushPull * 0.42;
+            limbs.leftArm.rotation.x = -0.9 + pushPull * 0.25;
+            b.mesh.rotation.x = 0.15 + pushPull * 0.08;
+            b.mesh.position.x = 2.68 + pushPull * 0.06; // 👈 改為沿 X 軸微幅前後推拉
+            } else if (b.role === 'carry') {
+            // 師傅 3：雙手托住木板，在木料堆與木屋間來回走動
             const walkT = (Math.sin(time * 1.4) + 1) * 0.5;
-            b.mesh.position.x = THREE.MathUtils.lerp(-2.5, -1.45, walkT);
+            b.mesh.position.x = THREE.MathUtils.lerp(-2.4, -1.35, walkT);
             b.mesh.position.z = THREE.MathUtils.lerp(1.6, 0.85, walkT);
+            const dir = Math.cos(time * 1.4) >= 0 ? 1 : -1;
+            b.mesh.rotation.y = (dir > 0) ? Math.atan2(1.05, -0.75) : Math.atan2(-1.05, 0.75);
 
-            const stepWave = Math.sin(time * 8.5);
-            const nextFrame = stepWave > 0 ? 1 : 0;
-            if (anim.currentFrame !== nextFrame) {
-              anim.currentFrame = nextFrame;
-              const tex = nextFrame === 1 ? anim.tex1 : anim.tex0;
-              anim.frontMat.map = tex; anim.frontMat.needsUpdate = true;
-              anim.midMat.map = tex; anim.midMat.needsUpdate = true;
-            }
-            anim.bodyGroup.position.y = 0.52 + Math.abs(stepWave) * 0.04;
+            const step = Math.sin(time * 9.0) * 0.45;
+            limbs.leftLeg.rotation.x = step;
+            limbs.rightLeg.rotation.x = -step;
+            limbs.leftArm.rotation.x = -1.25;
+            limbs.rightArm.rotation.x = -1.25;
+            b.mesh.position.y = Math.abs(Math.sin(time * 9.0)) * 0.035;
           }
-        
         }
 
         // 🛝 運動島溜滑梯：NPC 溜下 -> 繞回前側 -> 爬樓梯 -> 坐下再溜（12秒無縫循環）
@@ -9863,14 +9103,14 @@ if (camera && mascotLeader.parent) {
           }
         }
         
-        if (sportOriginalLandmark && sportOriginalLandmark.visible && ropeMesh && jumperMan && jumpRopeGroup) {
-          const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
-          const swingerA = jumpRopeGroup.userData.swingerA;
-          const swingerB = jumpRopeGroup.userData.swingerB;
-          const zzzA = jumpRopeGroup.userData.zzzA;
-          const zzzB = jumpRopeGroup.userData.zzzB;
-          const zzzJumper = jumpRopeGroup.userData.zzzJumper;
-          const posArr = ropeMesh.geometry.attributes.position.array;
+if (ropeMesh && jumperMan && jumpRopeGroup) {
+  const isJumperSleeping = (currentHour >= 23 || currentHour < 6);
+  const swingerA = jumpRopeGroup.userData.swingerA;
+  const swingerB = jumpRopeGroup.userData.swingerB;
+  const zzzA = jumpRopeGroup.userData.zzzA;
+  const zzzB = jumpRopeGroup.userData.zzzB;
+  const zzzJumper = jumpRopeGroup.userData.zzzJumper;
+  const posArr = ropeMesh.geometry.attributes.position.array;
 
   if (isJumperSleeping) {
     ropeCurve.points[0].set(-1.45, 0.05, 0);
@@ -10512,61 +9752,6 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
             balloonEnergyBeam.material.opacity = 0.5 + pulse * 0.3;
           }
         }
-        // 🌟 HD-2.5D 立體像素角色：依移動面向與鏡頭相對角度，自動切換正面 / 背面 / 左 / 右立繪
-        if (camera) {
-          const camAngle = Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z);
-
-          const updateEntitySpriteFacing = (entityObj) => {
-            if (!entityObj || !entityObj.userData || !entityObj.userData.voxelSprite) return;
-            const vs = entityObj.userData.voxelSprite;
-
-            // 🌟 取得父層容器的 Y 軸旋轉角度（修正島嶼之星木樁容器自帶 -135° 旋轉的問題）
-            const parentRotY = (entityObj.parent && entityObj.parent !== scene) ? entityObj.parent.rotation.y : 0;
-            const worldRotY = entityObj.rotation.y + parentRotY;
-
-            // 計算角色世界面向與鏡頭視線的相對夾角 (-PI ~ PI)
-            let relAngle = worldRotY - camAngle;
-            while (relAngle > Math.PI) relAngle -= Math.PI * 2;
-            while (relAngle < -Math.PI) relAngle += Math.PI * 2;
-
-            // 如果是島嶼之星（isMascot），永遠保持正面立繪看著玩家；其他角色依移動方向切換四面
-            let nextDir = 'front';
-            if (!entityObj.userData.isMascot) {
-              if (relAngle >= -Math.PI * 0.25 && relAngle <= Math.PI * 0.25) {
-                nextDir = 'front'; // 朝向鏡頭（正面）
-              } else if (relAngle > Math.PI * 0.25 && relAngle < Math.PI * 0.75) {
-                nextDir = 'right'; // 朝向畫面右側
-              } else if (relAngle < -Math.PI * 0.25 && relAngle > -Math.PI * 0.75) {
-                nextDir = 'left';  // 朝向畫面左側
-              } else {
-                nextDir = 'back';  // 背對鏡頭（背面）
-              }
-            }
-
-            if (vs.currentDir !== nextDir) {
-              vs.currentDir = nextDir;
-              vs.mat.map = vs.textures[nextDir];
-              vs.mat.needsUpdate = true;
-              if (vs.midMat) {
-                vs.midMat.map = vs.textures[nextDir];
-                vs.midMat.needsUpdate = true;
-              }
-            }
-
-            // 精準抵銷自身與父層的旋轉，讓正面永遠對準鏡頭（僅保留微幅 ±10° 立體側傾）
-            const tiltOffset = entityObj.userData.isMascot ? 0.08 : ((nextDir === 'right') ? 0.25 : ((nextDir === 'left') ? -0.25 : 0.10));
-            vs.mesh.rotation.y = camAngle - worldRotY + tiltOffset;
-          };
-
-          villagers.forEach(v => updateEntitySpriteFacing(v.obj));
-          if (playerVillager && playerVillager.obj) updateEntitySpriteFacing(playerVillager.obj);
-          Object.values(otherPlayers).forEach(p => updateEntitySpriteFacing(p.mesh));
-          if (mascotLeader) updateEntitySpriteFacing(mascotLeader);
-          if (readingNPC) updateEntitySpriteFacing(readingNPC);
-          if (coffeeReaderNPC) updateEntitySpriteFacing(coffeeReaderNPC);
-          if (slideNPC) updateEntitySpriteFacing(slideNPC);
-          cabinBuilders.forEach(b => updateEntitySpriteFacing(b.mesh));
-        }
         renderer.render(scene, camera);
       }
 
@@ -10644,7 +9829,6 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
             type: 'MONOPOLY_INIT',
             payload: { uid, name, energy, readCount, fitCount }
           }, window.location.origin);
-          setTimeout(() => startListeningMonopolyCoinGifts(), 300);
         }
       };
 
@@ -10856,7 +10040,10 @@ if (isEventActive) {
     }
 
     function closeDrawer() {
-      document.getElementById('side-drawer').classList.remove('open'); // 👈 【貼在這裡】：在 closeDrawer() 第一行加上這句！
+      if (typeof isPlayerFarming !== 'undefined' && isPlayerFarming) {
+        stopPlayerFarming();
+      }
+      document.getElementById('side-drawer').classList.remove('open');
       isCartPaused = false;
       isBoatPaused = false;
 
