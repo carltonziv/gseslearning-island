@@ -810,6 +810,16 @@
       text-align: left;
       margin-bottom: 14px;
     }
+    /* 🌟 HD-2.5D 微縮模型移軸景深與暖光暗角層 */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      background: radial-gradient(ellipse at center, rgba(255, 240, 200, 0.04) 45%, rgba(15, 10, 5, 0.38) 100%);
+      backdrop-filter: blur(0px);
+    }
   </style>
 </head>
 <body>
@@ -1617,20 +1627,7 @@
         <label>👥 線上連線人物管理</label>
         <button class="btn-action btn-red" style="background:#b91c1c;" onclick="adminClearAllOnlinePlayers()">🗑️ 清除所有線上使用者 NPC</button>
       </div>
-      <!-- 🪙【新增】：發送大富翁金幣給指定學生 -->
-      <hr style="margin:14px 0; border:0; border-top:1px solid #e2e8f0;">
-      <div class="form-group">
-        <label>🪙 發送大富翁專屬金幣給指定玩家</label>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <select id="admin-coin-student" style="flex:1.2; min-width:130px;">
-            <option value="">載入學生名單...</option>
-          </select>
-          <input type="number" id="admin-coin-amount" placeholder="金幣數量 (如: 100)" min="1" step="10" style="flex:1; min-width:110px;">
-          <button type="button" class="btn-action btn-green" style="width:auto; padding:0 16px;" onclick="adminSendMonopolyCoins()">
-            🎁 發送金幣
-          </button>
-        </div>
-      </div>
+
       <!-- 🌟【新增】：北荒地神廟劇情事件控制 -->
       <div class="form-group" style="margin-top: 10px;">
         <label>⛩️ 北荒地神廟劇情事件控制</label>
@@ -1663,6 +1660,20 @@
         <button class="btn-action btn-purple" style="margin-top:8px;" onclick="adminGenerateBracket()">🎲 截止報名並生成賽程</button>
       </div>
     </div>
+    <!-- 🪙【新增】：發送大富翁金幣給指定學生 -->
+      <hr style="margin:14px 0; border:0; border-top:1px solid #e2e8f0;">
+      <div class="form-group">
+        <label>🪙 發送大富翁專屬金幣給指定玩家</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <select id="admin-coin-student" style="flex:1.2; min-width:130px;">
+            <option value="">載入學生名單...</option>
+          </select>
+          <input type="number" id="admin-coin-amount" placeholder="金幣數量 (如: 100)" min="1" step="10" style="flex:1; min-width:110px;">
+          <button type="button" class="btn-action btn-green" style="width:auto; padding:0 16px;" onclick="adminSendMonopolyCoins()">
+            🎁 發送金幣
+          </button>
+        </div>
+      </div>
   </div>
 
   <script>
@@ -3450,12 +3461,12 @@ if (isCompleted) {
       sb.classList.toggle('open', (typeof forceOpen === 'boolean') ? forceOpen : undefined);
     }
 
-    function updateNightClosedState() {
+function updateNightClosedState() {
       const currentHour = new Date().getHours();
       const isNightClosed = (currentHour >= 22 || currentHour < 7);
       const isTournamentActive = bbState.isOpen || bbState.status === 'bracket_ready';
 
-      ['nature', 'sport', 'civics', 'reading'].forEach(id => {
+      ['nature', 'sport', 'civics', 'reading'].forEach(id => { // 👈 這裡只保留這四個島
         const pauseNotice = document.getElementById(`pause-notice-${id}`);
         const taskContent = document.getElementById(`task-content-${id}`);
         if (pauseNotice && taskContent) {
@@ -4433,100 +4444,113 @@ function updateBeybladeIslandDormancy() {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
+const PIXEL_SPRITE_TEMPLATES = [
+      {
+        id: 'terra_green',
+        palette: { K:'#181425', H:'#26854c', h:'#63c74d', F:'#fdd2a8', E:'#181425', C:'#d73b3e', c:'#f77622', P:'#a22633', B:'#5a3921' },
+        head: ['....KKKKKK....','...KhhhhhhK...','..KhHHHHHHhK..','.KhHHFFFFHHhK.','.KhHFFFFFFHhK.','.KhHFEFFEFHhK.','..KhFFFFFFhK..','...KFFFFFFK...','....KKKKKK....'],
+        body: ['...KccccccK...','..KcCCCCCCcK..','..KcCCCCCCcK..','..KPPPPPPPPK..','...KPPPPPPK...'],
+        arm: ['..KK..', '.KFFK.', '.KccK.', '.KFFK.', '..KK..'],
+        leg: ['..KK..', '.KPPK.', '.KPPK.', '.KBBK.', '.KKKK.']
+      },
+      {
+        id: 'celes_blonde',
+        palette: { K:'#181425', H:'#fee761', h:'#fff8b8', F:'#fdd2a8', E:'#181425', C:'#e43b44', c:'#ffffff', P:'#e43b44', B:'#ffffff' },
+        head: ['....KKKKKK....','...KhhhhhhK...','..KhHHHHHHhK..','.KhHHFFFFHHhK.','.KhHFFFFFFHhK.','.KhHFEFFEFHhK.','.KhHFFFFFFHhK.','..KhFFFFFFhK..','...KKKKKKKK...'],
+        body: ['..KcCCCCCCcK..','.KcCCCCCCCCcK.','.KcCCcCCcCCcK.','..KPPPPPPPPK..','...KPPPPPPK...'],
+        arm: ['..KK..', '.KFFK.', '.KCCK.', '.KFFK.', '..KK..'],
+        leg: ['..KK..', '.KPPK.', '.KBBK.', '.KBBK.', '.KKKK.']
+      },
+      {
+        id: 'locke_bandana',
+        palette: { K:'#181425', H:'#0099db', h:'#2ce8f5', F:'#fdd2a8', E:'#181425', C:'#124e89', c:'#fee761', P:'#181425', B:'#ffffff' },
+        head: ['....KKKKKK....','...KhhhhhhK...','..KHHHHHHHHK..','..KFFFFFFFFK..','..KFEFFFFEFK..','..KFFFFFFFFK..','...KFFFFFFK...','....KKKKKK....','..............'],
+        body: ['...KccccccK...','..KcCCCCCCcK..','..KCCcCCcCCK..','..KPPPPPPPPK..','...KPPPPPPK...'],
+        arm: ['..KK..', '.KFFK.', '.KCCK.', '.KFFK.', '..KK..'],
+        leg: ['..KK..', '.KPPK.', '.KPPK.', '.KBBK.', '.KKKK.']
+      },
+      {
+        id: 'moogle_white',
+        palette: { K:'#181425', R:'#e43b44', W:'#ffffff', w:'#c0cbdc', P:'#f6757a', E:'#181425', B:'#f77622' },
+        head: ['......KK......','.....KRRK.....','......KK......','...KK.KK.KK...','..KWWKWWKWWK..','.KWWWWWWWWWWK.','.KWWEWWWWWEWK.','.KWWWWPPWWWWK.','..KwwwwwwwwK..'],
+        body: ['...KWWWWWWK...','..KWWWWWWWWK..','..KWWWWWWWWK..','..KwwwwwwwwK..','...KwwwwwwK...'],
+        arm: ['..KK..', '.KWWK.', '.KWWK.', '.KwwK.', '..KK..'],
+        leg: ['..KK..', '.KWWK.', '.KwwK.', '.KBBK.', '.KKKK.']
+      }
+    ];
+
+    function buildVoxelPartFromMatrix(matrix, palette, voxelSize = 0.036, depth = 0.14) {
+      const group = new THREE.Group();
+      const rows = matrix.length, cols = matrix[0].length;
+      const geo = new THREE.BoxGeometry(voxelSize, voxelSize, depth);
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const hex = palette[matrix[r][c]];
+          if (!hex) continue;
+          const mat = SharedPool.getMaterial('MeshStandardMaterial', { color: hex, roughness: 0.75 });
+          const cube = new THREE.Mesh(geo, mat);
+          cube.position.set((c - (cols - 1) / 2) * voxelSize, ((rows - 1) / 2 - r) * voxelSize, 0);
+          cube.castShadow = true;
+          cube.receiveShadow = true;
+          group.add(cube);
+        }
+      }
+      return group;
+    }
+
     function createCharacterMesh(isSkirt = false, customSkin, customClothes, customHair) {
       const person = new THREE.Group();
+      const candidatePool = isSkirt
+        ? [PIXEL_SPRITE_TEMPLATES[0], PIXEL_SPRITE_TEMPLATES[1], PIXEL_SPRITE_TEMPLATES[3]]
+        : [PIXEL_SPRITE_TEMPLATES[2], PIXEL_SPRITE_TEMPLATES[3], PIXEL_SPRITE_TEMPLATES[0]];
+      const tpl = getRandomItem(candidatePool);
+      const pal = { ...tpl.palette };
+      if (customClothes !== undefined && tpl.id !== 'moogle_white') pal.C = customClothes;
 
-      const skinColor = customSkin !== undefined ? customSkin : getRandomItem(SKIN_COLORS);
-      const cColor = customClothes !== undefined ? customClothes : getRandomItem(CLOTHES_PALETTE);
-      const bColor = getRandomItem(BOTTOM_PALETTE);
+      const px = 0.042;
+      const headMesh = buildVoxelPartFromMatrix(tpl.head, pal, px, 0.22);
+      headMesh.position.set(0, 0.96, 0);
+      person.add(headMesh);
 
-      const skinMat = SharedPool.getMaterial('MeshStandardMaterial', { color: skinColor, roughness: 0.65 });
-      const clothMat = SharedPool.getMaterial('MeshStandardMaterial', { color: cColor, roughness: 0.7 });
-      const bottomMat = SharedPool.getMaterial('MeshStandardMaterial', { color: bColor, roughness: 0.75 });
-      const eyeMat = SharedPool.getMaterial('MeshBasicMaterial', { color: 0x111827 });
-
-      const torso = new THREE.Mesh(SharedPool.geometries.humanTorso, clothMat);
-      torso.position.y = 0.62;
-      torso.castShadow = true;
-      torso.receiveShadow = true;
-      person.add(torso);
-
-      const head = new THREE.Mesh(SharedPool.geometries.humanHead, skinMat);
-      head.position.y = 1.02;
-      head.castShadow = true;
-      head.receiveShadow = true;
-      person.add(head);
-
-      const leftEye = new THREE.Mesh(SharedPool.geometries.humanEye, eyeMat);
-      leftEye.position.set(-0.08, 1.03, 0.185);
-      person.add(leftEye);
-
-      const rightEye = new THREE.Mesh(SharedPool.geometries.humanEye, eyeMat);
-      rightEye.position.set(0.08, 1.03, 0.185);
-      person.add(rightEye);
+      const torsoMesh = buildVoxelPartFromMatrix(tpl.body, pal, px, 0.18);
+      torsoMesh.position.set(0, 0.65, 0);
+      person.add(torsoMesh);
 
       const leftArmPivot = new THREE.Group();
-      leftArmPivot.position.set(-0.28, 0.82, 0);
-      const leftArmMesh = new THREE.Mesh(SharedPool.geometries.humanArm, clothMat);
-      leftArmMesh.position.y = -0.22;
-      leftArmPivot.add(leftArmMesh);
+      leftArmPivot.position.set(-0.24, 0.74, 0);
+      const leftArmVoxel = buildVoxelPartFromMatrix(tpl.arm, pal, px * 0.9, 0.12);
+      leftArmVoxel.position.y = -0.10;
+      leftArmPivot.add(leftArmVoxel);
       person.add(leftArmPivot);
 
       const rightArmPivot = new THREE.Group();
-      rightArmPivot.position.set(0.28, 0.82, 0);
-      const rightArmMesh = new THREE.Mesh(SharedPool.geometries.humanArm, clothMat);
-      rightArmMesh.position.y = -0.22;
-      rightArmPivot.add(rightArmMesh);
+      rightArmPivot.position.set(0.24, 0.74, 0);
+      const rightArmVoxel = buildVoxelPartFromMatrix(tpl.arm, pal, px * 0.9, 0.12);
+      rightArmVoxel.position.y = -0.10;
+      rightArmPivot.add(rightArmVoxel);
       person.add(rightArmPivot);
 
-      let leftLegPivot, rightLegPivot, skirtPivot = null;
+      const leftLegPivot = new THREE.Group();
+      leftLegPivot.position.set(-0.10, 0.52, 0);
+      const leftLegVoxel = buildVoxelPartFromMatrix(tpl.leg, pal, px * 0.95, 0.14);
+      leftLegVoxel.position.y = -0.11;
+      leftLegPivot.add(leftLegVoxel);
+      person.add(leftLegPivot);
 
-      if (isSkirt) {
-        skirtPivot = new THREE.Group();
-        skirtPivot.position.set(0, 0.46, 0);
-        const skirtMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, 0.38, 14), bottomMat);
-        skirtMesh.position.y = -0.17;
-        skirtPivot.add(skirtMesh);
-        person.add(skirtPivot);
-
-        const legGeo = new THREE.BoxGeometry(0.1, 0.36, 0.1);
-        leftLegPivot = new THREE.Group();
-        leftLegPivot.position.set(-0.11, 0.36, 0);
-        const leftLegMesh = new THREE.Mesh(legGeo, skinMat);
-        leftLegMesh.position.y = -0.18;
-        leftLegPivot.add(leftLegMesh);
-        person.add(leftLegPivot);
-
-        rightLegPivot = new THREE.Group();
-        rightLegPivot.position.set(0.11, 0.36, 0);
-        const rightLegMesh = new THREE.Mesh(legGeo, skinMat);
-        rightLegMesh.position.y = -0.18;
-        rightLegPivot.add(rightLegMesh);
-        person.add(rightLegPivot);
-      } else {
-        leftLegPivot = new THREE.Group();
-        leftLegPivot.position.set(-0.12, 0.42, 0);
-        const leftLegMesh = new THREE.Mesh(SharedPool.geometries.humanLeg, bottomMat);
-        leftLegMesh.position.y = -0.24;
-        leftLegPivot.add(leftLegMesh);
-        person.add(leftLegPivot);
-
-        rightLegPivot = new THREE.Group();
-        rightLegPivot.position.set(0.12, 0.42, 0);
-        const rightLegMesh = new THREE.Mesh(SharedPool.geometries.humanLeg, bottomMat);
-        rightLegMesh.position.y = -0.24;
-        rightLegPivot.add(rightLegMesh);
-        person.add(rightLegPivot);
-      }
+      const rightLegPivot = new THREE.Group();
+      rightLegPivot.position.set(0.10, 0.52, 0);
+      const rightLegVoxel = buildVoxelPartFromMatrix(tpl.leg, pal, px * 0.95, 0.14);
+      rightLegVoxel.position.y = -0.11;
+      rightLegPivot.add(rightLegVoxel);
+      person.add(rightLegPivot);
 
       person.userData.limbs = {
         leftArm: leftArmPivot,
         rightArm: rightArmPivot,
         leftLeg: leftLegPivot,
         rightLeg: rightLegPivot,
-        skirt: skirtPivot
+        skirt: null
       };
-
       return person;
     }
 
@@ -6543,28 +6567,68 @@ function createWoodCabinLandmark() {
       return sprite;
     }
 
-    const TREE_LEAF_COLORS = [0xd97706, 0xf59e0b, 0xea580c, 0xc2410c, 0xb91c1c, 0xdc2626];
-    function createTree() {
-      const tree = new THREE.Group();
-      const trunkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5c2b0c, roughness: 0.85 });
+// 🌟 程序化 HD-2.5D 像素格子貼圖生成器
+    function createPixelGridTexture(baseHex, accentHex1, accentHex2, gridSize = 16, repeat = 6) {
+      const canvas = document.createElement('canvas');
+      canvas.width = gridSize;
+      canvas.height = gridSize;
+      const ctx = canvas.getContext('2d');
 
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.22, 1.1, 8), trunkMat);
-      trunk.position.y = 0.55;
+      ctx.fillStyle = baseHex;
+      ctx.fillRect(0, 0, gridSize, gridSize);
+
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          const r = Math.random();
+          if (r < 0.22) {
+            ctx.fillStyle = accentHex1;
+            ctx.fillRect(x, y, 1, 1);
+          } else if (r < 0.36) {
+            ctx.fillStyle = accentHex2;
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.magFilter = THREE.NearestFilter; // 👈 關鍵：保持像素方塊銳利不模糊
+      tex.minFilter = THREE.NearestFilter;
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(repeat, repeat);
+      return tex;
+    }
+
+    const TREE_LEAF_COLORS = [0xd97706, 0xf59e0b, 0xea580c, 0xc2410c, 0xb91c1c, 0xdc2626];
+function createTree() {
+      const tree = new THREE.Group();
+      const trunkMat = SharedPool.getMaterial('MeshStandardMaterial', { color: 0x5c2b0c, roughness: 0.9 });
+
+      // 體素方塊樹幹
+      const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.15, 0.32), trunkMat);
+      trunk.position.y = 0.575;
       trunk.castShadow = true;
+      trunk.receiveShadow = true;
       tree.add(trunk);
 
+      // 階梯狀方塊像素樹冠
       const leafColor = getRandomItem(TREE_LEAF_COLORS);
-      const leafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: leafColor, flatShading: true, roughness: 0.75 });
+      const leafMat = SharedPool.getMaterial('MeshStandardMaterial', { color: leafColor, roughness: 0.8 });
 
-      const crownLower = new THREE.Mesh(new THREE.DodecahedronGeometry(0.72, 1), leafMat);
-      crownLower.position.y = 1.25;
-      crownLower.castShadow = true;
-      tree.add(crownLower);
+      const crownBot = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.45, 1.35), leafMat);
+      crownBot.position.y = 1.15;
+      crownBot.castShadow = true;
+      tree.add(crownBot);
 
-      const crownUpper = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 1), leafMat);
-      crownUpper.position.y = 1.7;
-      crownUpper.castShadow = true;
-      tree.add(crownUpper);
+      const crownMid = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.45, 1.05), leafMat);
+      crownMid.position.y = 1.55;
+      crownMid.castShadow = true;
+      tree.add(crownMid);
+
+      const crownTop = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.35, 0.65), leafMat);
+      crownTop.position.y = 1.9;
+      crownTop.castShadow = true;
+      tree.add(crownTop);
 
       return tree;
     }
@@ -6687,24 +6751,24 @@ function createWoodCabinLandmark() {
         timeBadge.textContent = `🕒 ${curPhase.name} ｜ 📍 ${wData.text}`;
       }
 
-      if (wData.isRaining) {
-        if (rainSystem) rainSystem.visible = true;
-        if (scene && scene.fog) { scene.fog.near = 25; scene.fog.far = 100; }
-      } else if (wData.type === 'cloudy') {
-        if (rainSystem) rainSystem.visible = false;
-        if (scene && scene.fog) { scene.fog.near = 35; scene.fog.far = 130; }
-      } else {
-        if (rainSystem) rainSystem.visible = false;
-      }
+     if (wData.isRaining) {
+     if (rainSystem) rainSystem.visible = true;
+     if (scene && scene.fog) scene.fog.density = 0.013; // 原本寫 near/far 的地方改這行
+   } else if (wData.type === 'cloudy') {
+     if (rainSystem) rainSystem.visible = false;
+     if (scene && scene.fog) scene.fog.density = 0.010; // 原本寫 near/far 的地方改這行
+   } else {
+     if (rainSystem) rainSystem.visible = false;
+     if (scene && scene.fog) scene.fog.density = 0.0085;
+   }
     }
 
     // ⛈️ 啟動海怪暴風雨特寫：加厚迷霧、降下驟雨
 function applyStormWeather() {
-  if (rainSystem) rainSystem.visible = true;
-  if (scene && scene.fog) {
-    scene.fog.near = 15;
-    scene.fog.far = 65; // 大幅縮減能見度，營造狂風暴雨壓迫感
-  }
+   if (rainSystem) rainSystem.visible = true;
+   if (scene && scene.fog) {
+     scene.fog.density = 0.018; // 原本寫 near=15, far=65 的地方改這行
+   }
   const timeBadge = document.getElementById('time-badge');
   if (timeBadge) {
     const curPhase = getTimePhase();
@@ -7882,12 +7946,14 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       lastPhaseName = timePhase.name;
       document.getElementById('time-badge').textContent = `🕒 時段：${timePhase.name}`;
 
+      // 👇 ===【只取代從這裡開始】=== 👇
       scene = new THREE.Scene();
       scene.background = new THREE.Color(timePhase.bg);
-      scene.fog = new THREE.Fog(timePhase.bg, 40, 160);
+      // 🌟 HD-2.5D 霧效：拉近一點霧氣範圍，營造微縮模型的空氣感
+      scene.fog = new THREE.FogExp2(timePhase.bg, 0.0085);
 
-      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 1000);
-      camera.position.set(0, 22, 46);
+      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 1000);
+      camera.position.set(0, 24, 48);
       camera.lookAt(0, 0, 0);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -7895,6 +7961,9 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      // 🌟 開啟電影級色調映射，讓像素色彩飽滿有光澤
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.12;
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -7960,16 +8029,18 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
 
       oceanGeo.setAttribute('color', new THREE.Float32BufferAttribute(oceanColors, 3));
 
-      const oceanMat = new THREE.MeshStandardMaterial({
-        vertexColors: true,
-        roughness: 0.08,
-        metalness: 0.12,
-        transparent: true,
-        opacity: 0.92,
-        emissive: 0x011b24,
-        emissiveIntensity: 0.45,
-        depthWrite: false
-      });
+const oceanPixelTex = createPixelGridTexture('#0e7490', '#22d3ee', '#083344', 16, 28);
+    const oceanMat = new THREE.MeshStandardMaterial({
+      map: oceanPixelTex,
+      vertexColors: true,
+      roughness: 0.15,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.94,
+      emissive: 0x011b24,
+      emissiveIntensity: 0.35,
+      depthWrite: false
+    });
 
       oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
       oceanMesh.position.y = -0.52;
@@ -8210,7 +8281,13 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
           group.add(vines);
         }
 
-        const baseMat = SharedPool.getMaterial('MeshStandardMaterial', { color: cfg.color, flatShading: true, roughness: 0.85 });
+        const islandPixelTex = createPixelGridTexture('#ffffff', '#e2e8f0', '#cbd5e1', 16, 8);
+        const baseMat = new THREE.MeshStandardMaterial({
+          color: cfg.color,
+          map: islandPixelTex,
+          flatShading: true,
+          roughness: 0.88
+        });
         const islandBase = new THREE.Mesh(new THREE.CylinderGeometry(baseRadius, baseRadius * 0.95, 0.9, 6), baseMat);
         islandBase.position.y = -0.43;
         islandBase.rotation.y = Math.PI / 6;
@@ -10138,7 +10215,7 @@ if (isEventActive) {
     }
 
     function closeDrawer() {
-      document.getElementById('side-drawer').classList.remove('open');
+      document.getElementById('side-drawer').classList.remove('open'); // 👈 【貼在這裡】：在 closeDrawer() 第一行加上這句！
       isCartPaused = false;
       isBoatPaused = false;
 
