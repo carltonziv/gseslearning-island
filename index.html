@@ -4458,56 +4458,122 @@ function updateBeybladeIslandDormancy() {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-// 🌟 高精細 16-bit 像素精靈生成器（100% 還原模擬圖中的角色質感）
+// 🌟 1. 升級版 HD-2.5D 立體像素角色資料庫（含正面、背面、側面與雙色立體陰影層次）
     const HD2D_SPRITE_DATA = [
       {
-        id: 'terra', // 綠髮少女
-        pal: { K:'#141013', H:'#1e6f50', h:'#52b788', F:'#ffcdb2', E:'#141013', C:'#d62828', Y:'#fcbf49', P:'#9b2226' },
-        art: [
+        id: 'terra', // 綠髮少女（帶高光髮絲與紅披風）
+        pal: { K:'#141013', H:'#1b4332', h:'#40916c', g:'#74c69d', F:'#ffcdb2', f:'#e5989b', E:'#141013', C:'#d62828', c:'#9b2226', Y:'#fcbf49', P:'#590d22' },
+        front: [
           '.....KKKKKK.....',
-          '....KhhhhhhK....',
-          '...KhHHHHHHhK...',
+          '....KggggggK....',
+          '...KgHHHHHHgK...',
           '..KhHHFFFFHHhK..',
           '..KhHFFFFFFHhK..',
           '.KhhHFEFFEFHhhK.',
-          '.KhHHFFFFFFHHhK.',
+          '.KhHHFfFFfFHHhK.',
           '..KKhFFFFFFhKK..',
           '...KKCCCCCCKK...',
           '..KYYCCCCCCYYK..',
-          '..KFFCCCCCCFFK..',
+          '..KFFcCCCCcFFK..',
           '...KKPPPPPPKK...',
           '....KPPKKPPK....',
+          '....KccKKccK....',
+          '....KKKKKKKK....'
+        ],
+        back: [
+          '.....KKKKKK.....',
+          '....KggggggK....',
+          '...KhhhhhhhhK...',
+          '..KhhhhhhhhhhK..',
+          '..KhHHHHHHHHhK..',
+          '.KhhHHHHHHHHhhK.',
+          '.KhHHHHHHHHHHhK.',
+          '..KKhHHHHHHhKK..',
+          '...KKCCCCCCKK...',
+          '..KYYcCCCCcYYK..',
+          '..KFFcCCCCcFFK..',
+          '...KKPPPPPPKK...',
           '....KPPKKPPK....',
-          '....KKKKKKK.....'
+          '....KccKKccK....',
+          '....KKKKKKKK....'
+        ],
+        side: [
+          '.....KKKKKK.....',
+          '....KggggggK....',
+          '...KhhhhhhhhK...',
+          '..KhHHHFFFFhK...',
+          '..KhHHFFFFFEK...',
+          '.KhhHHFFFFFFK...',
+          '.KhHHHFFFFfK....',
+          '..KKhFFFFKK.....',
+          '...KKCCCCCCK....',
+          '..KYYcCCCCCcK...',
+          '..KFFcCCCCCcK...',
+          '...KKPPPPPPK....',
+          '....KPPKKPPK....',
+          '....KccKKccK....',
+          '....KKKKKKKK....'
         ]
       },
       {
-        id: 'locke', // 金髮紅披風旅人
-        pal: { K:'#141013', H:'#f77f00', h:'#fcbf49', F:'#ffcdb2', E:'#141013', C:'#d62828', B:'#0077b6', W:'#ffffff' },
-        art: [
+        id: 'locke', // 金髮冒險者（附圖上方石板路主角）
+        pal: { K:'#141013', H:'#f77f00', h:'#fcbf49', y:'#eae2b7', F:'#ffcdb2', f:'#e5989b', E:'#141013', C:'#d62828', B:'#0077b6', b:'#023e8a', W:'#ffffff' },
+        front: [
           '.....KKKKKK.....',
-          '....KhhhhhhK....',
-          '...KhHHHHHHhK...',
+          '....KyyyyyyK....',
+          '...KyhhhhhhyK...',
           '...KFFFFFFFFK...',
           '...KFEFFFFEFK...',
-          '....KFFFFFFK....',
+          '....KFfFFfFK....',
           '..KKKCCCCCCKKK..',
           '.KCCBBBBBBBBCCK.',
-          '.KCCBBWWWWBBCCK.',
-          '.KFFBBBBBBBBFFK.',
+          '.KCCBbWWWWbBCCK.',
+          '.KFFBbBBBBbBFFK.',
           '..KKBBBBBBBBKK..',
-          '....KBBKKBBK....',
+          '....KbbKKbbK....',
+          '....KWWKKWWK....',
+          '....KKKKKKKK....'
+        ],
+        back: [
+          '.....KKKKKK.....',
+          '....KyyyyyyK....',
+          '...KyhhhhhhyK...',
+          '..KhhhhhhhhhhK..',
+          '..KhHHHHHHHHhK..',
+          '...KHHHHHHHHK...',
+          '..KKKCCCCCCKKK..',
+          '.KCCCCCCCCCCCCK.',
+          '.KCcCCCCCCCCcCK.',
+          '.KFFcCCCCCCcFFK.',
+          '..KKCCCCCCCCKK..',
+          '....KbbKKbbK....',
+          '....KWWKKWWK....',
+          '....KKKKKKKK....'
+        ],
+        side: [
+          '.....KKKKKK.....',
+          '....KyyyyyyK....',
+          '...KyhhhhhhyK...',
+          '...KhhhhFFFFK...',
+          '...KhhhFFFFEK...',
+          '....KhhFFFFfK...',
+          '..KKKCCCCCCK....',
+          '.KCCBBBBBBbCK...',
+          '.KCCBbWWWWbCK...',
+          '.KFFBbBBBBbK....',
+          '..KKBBBBBBK.....',
+          '....KbbKKbbK....',
           '....KWWKKWWK....',
           '....KKKKKKKK....'
         ]
       },
       {
-        id: 'moogle', // 白毛莫古利（帶紅絨球與粉紅小翅膀）
-        pal: { K:'#141013', R:'#e63946', W:'#ffffff', g:'#cbd5e1', P:'#ff758f', Y:'#ffb703' },
-        art: [
+        id: 'moogle', // 白毛莫古利（附圖左下角經典角色）
+        pal: { K:'#141013', R:'#e63946', r:'#9b2226', W:'#ffffff', g:'#cbd5e1', P:'#ff758f', Y:'#ffb703' },
+        front: [
           '.......KK.......',
           '......KRRK......',
-          '.......KK.......',
+          '......KrRK......',
           '....KK.KK.KK....',
           '...KWWKWWKWWK...',
           '..KWWWWWWWWWWK..',
@@ -4518,19 +4584,44 @@ function updateBeybladeIslandDormancy() {
           '...KWWWWWWWWgK..',
           '....KYYKKYYKK...',
           '....KKKKKKKK....'
+        ],
+        back: [
+          '.......KK.......',
+          '......KRRK......',
+          '......KrRK......',
+          '....KK.KK.KK....',
+          '...KWWKWWKWWK...',
+          '..KWWWWWWWWWWK..',
+          '..KWWWWWWWWWWK..',
+          '.KPPWWWWWWWWPPK.',
+          '.KPPWWWWWWWWPPK.',
+          '..KKWWWWWWWWKK..',
+          '...KWWWWggggK...',
+          '....KYYKKYYKK...',
+          '....KKKKKKKK....'
+        ],
+        side: [
+          '.......KK.......',
+          '......KRRK......',
+          '.......KK.......',
+          '.....KK.KK......',
+          '....KWWKWWK.....',
+          '...KWWWWWWWK....',
+          '...KWWWWWKWWK...',
+          '..KPPWWWWWWWK...',
+          '..KPPWWWWWWgK...',
+          '...KKWWWWWWgK...',
+          '....KWWWWggK....',
+          '.....KYYKYYK....',
+          '.....KKKKKKK....'
         ]
       }
     ];
 
-    function createCharacterMesh(isSkirt = false, customSkin, customClothes) {
-      const person = new THREE.Group();
-      const tpl = getRandomItem(HD2D_SPRITE_DATA);
-      const pal = { ...tpl.pal };
-      if (customClothes !== undefined && tpl.id !== 'moogle') pal.C = customClothes;
-
-      // 將 16x15 像素圖放大繪製到離屏 Canvas（保持銳利邊緣）
+    // 🌟 2. 輔助：將像素陣列繪製成帶左右翻轉選項的 CanvasTexture
+    function buildPixelDirTexture(artRows, pal, flipX = false) {
       const scale = 8;
-      const rows = tpl.art.length, cols = tpl.art[0].length;
+      const rows = artRows.length, cols = artRows[0].length;
       const canvas = document.createElement('canvas');
       canvas.width = cols * scale;
       canvas.height = rows * scale;
@@ -4538,34 +4629,75 @@ function updateBeybladeIslandDormancy() {
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const hex = pal[tpl.art[r][c]];
+          const srcCol = flipX ? (cols - 1 - c) : c;
+          const hex = pal[artRows[r][srcCol]];
           if (hex) {
             ctx.fillStyle = hex;
             ctx.fillRect(c * scale, r * scale, scale, scale);
           }
         }
       }
-
       const tex = new THREE.CanvasTexture(canvas);
       tex.magFilter = THREE.NearestFilter;
       tex.minFilter = THREE.NearestFilter;
+      return tex;
+    }
 
-      const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-      const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(1.05, 1.0, 1);
-      sprite.position.y = 0.50; // 腳底精準踩在 Y = 0 地面！
-      person.add(sprite);
+    // 🌟 3. 立體公仔化 16-bit 角色生成器（具備真實厚度、接收光影、四方向自動轉向）
+    function createCharacterMesh(isSkirt = false, customSkin, customClothes) {
+      const person = new THREE.Group();
+      const tpl = getRandomItem(HD2D_SPRITE_DATA);
+      const pal = { ...tpl.pal };
+      if (customClothes !== undefined && tpl.id !== 'moogle') pal.C = customClothes;
 
-      // 腳底圓形接觸陰影（HD-2D 落地感關鍵）
+      // 建立四個方向的銳利像素貼圖（正面、背面、右側面、左側面）
+      const texFront = buildPixelDirTexture(tpl.front, pal, false);
+      const texBack  = buildPixelDirTexture(tpl.back,  pal, false);
+      const texRight = buildPixelDirTexture(tpl.side,  pal, false);
+      const texLeft  = buildPixelDirTexture(tpl.side,  pal, true);
+
+      // 立體像素板主體（厚度 0.24，擁有真實側面邊框與光影）
+      const depthThickness = 0.24;
+      const sideEdgeMat = SharedPool.getMaterial('MeshStandardMaterial', {
+        color: 0x1e181a, // 深黑立體像素描邊厚度
+        roughness: 0.75
+      });
+
+      const faceMat = new THREE.MeshStandardMaterial({
+        map: texFront,
+        transparent: true,
+        alphaTest: 0.5,   // 關鍵：讓透明像素完全裁切，並能投射出人形輪廓影子！
+        roughness: 0.65,
+        metalness: 0.05
+      });
+
+      // BoxGeometry 6 個面材質：[+X右, -X左, +Y頂, -Y底, +Z正面, -Z背面]
+      const bodyBox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.96, 0.96, depthThickness),
+        [sideEdgeMat, sideEdgeMat, sideEdgeMat, sideEdgeMat, faceMat, faceMat]
+      );
+      bodyBox.position.y = 0.48; // 腳底精準踩在 Y = 0 地面！
+      bodyBox.castShadow = true; // 投射真實立體人形陰影
+      bodyBox.receiveShadow = true;
+      person.add(bodyBox);
+
+      // 腳底柔和接觸陰影
       const shadowMesh = new THREE.Mesh(
-        new THREE.CircleGeometry(0.28, 12),
-        new THREE.MeshBasicMaterial({ color: 0x1a120b, transparent: true, opacity: 0.35 })
+        new THREE.CircleGeometry(0.32, 14),
+        new THREE.MeshBasicMaterial({ color: 0x1a120b, transparent: true, opacity: 0.35, depthWrite: false })
       );
       shadowMesh.rotation.x = -Math.PI / 2;
       shadowMesh.position.y = 0.01;
       person.add(shadowMesh);
 
-      // 保留虛擬關節介面，確保所有動畫程式碼不報錯
+      // 儲存貼圖與材質供主迴圈依移動面向自動切換
+      person.userData.voxelSprite = {
+        mesh: bodyBox,
+        mat: faceMat,
+        textures: { front: texFront, back: texBack, right: texRight, left: texLeft },
+        currentDir: 'front'
+      };
+
       const dummyPivot = new THREE.Group();
       person.userData.limbs = { leftArm: dummyPivot, rightArm: dummyPivot, leftLeg: dummyPivot, rightLeg: dummyPivot, skirt: null };
       return person;
@@ -10192,6 +10324,50 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
             const pulse = (Math.sin(time * 4.0) + 1) * 0.5;
             balloonEnergyBeam.material.opacity = 0.5 + pulse * 0.3;
           }
+        }
+        // 🌟 HD-2.5D 立體像素角色：依移動面向與鏡頭相對角度，自動切換正面 / 背面 / 左 / 右立繪
+        if (camera) {
+          const camAngle = Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z);
+
+          const updateEntitySpriteFacing = (entityObj) => {
+            if (!entityObj || !entityObj.userData || !entityObj.userData.voxelSprite) return;
+            const vs = entityObj.userData.voxelSprite;
+
+            // 計算角色面向（entityObj.rotation.y）與鏡頭視線的相對夾角 (-PI ~ PI)
+            let relAngle = entityObj.rotation.y - camAngle;
+            while (relAngle > Math.PI) relAngle -= Math.PI * 2;
+            while (relAngle < -Math.PI) relAngle += Math.PI * 2;
+
+            let nextDir = 'front';
+            if (relAngle >= -Math.PI * 0.25 && relAngle <= Math.PI * 0.25) {
+              nextDir = 'front'; // 朝向鏡頭（正面）
+            } else if (relAngle > Math.PI * 0.25 && relAngle < Math.PI * 0.75) {
+              nextDir = 'right'; // 朝向畫面右側
+            } else if (relAngle < -Math.PI * 0.25 && relAngle > -Math.PI * 0.75) {
+              nextDir = 'left';  // 朝向畫面左側
+            } else {
+              nextDir = 'back';  // 背對鏡頭（背面）
+            }
+
+            if (vs.currentDir !== nextDir) {
+              vs.currentDir = nextDir;
+              vs.mat.map = vs.textures[nextDir];
+              vs.mat.needsUpdate = true;
+            }
+
+            // 讓立體像素板面朝鏡頭，同時保留 ±18 度微側傾，展現立體邊框厚度！
+            const tiltOffset = (nextDir === 'right') ? 0.30 : ((nextDir === 'left') ? -0.30 : 0.12);
+            vs.mesh.rotation.y = camAngle - entityObj.rotation.y + tiltOffset;
+          };
+
+          villagers.forEach(v => updateEntitySpriteFacing(v.obj));
+          if (playerVillager && playerVillager.obj) updateEntitySpriteFacing(playerVillager.obj);
+          Object.values(otherPlayers).forEach(p => updateEntitySpriteFacing(p.mesh));
+          if (mascotLeader) updateEntitySpriteFacing(mascotLeader);
+          if (readingNPC) updateEntitySpriteFacing(readingNPC);
+          if (coffeeReaderNPC) updateEntitySpriteFacing(coffeeReaderNPC);
+          if (slideNPC) updateEntitySpriteFacing(slideNPC);
+          cabinBuilders.forEach(b => updateEntitySpriteFacing(b.mesh));
         }
         renderer.render(scene, camera);
       }
