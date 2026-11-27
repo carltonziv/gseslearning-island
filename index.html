@@ -8071,9 +8071,8 @@ const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.45, 0.85), cabinMat);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      // 🌟 開啟電影級色調映射，讓像素色彩飽滿有光澤
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.12;
+      // renderer.toneMapping = THREE.ACESFilmicToneMapping; // 👈 註解這兩行
+      // renderer.toneMappingExposure = 1.12;
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
