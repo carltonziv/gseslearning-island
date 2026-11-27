@@ -10371,6 +10371,10 @@ const currentPos = { x: playerVillager.currentX, z: playerVillager.currentZ };
               vs.currentDir = nextDir;
               vs.mat.map = vs.textures[nextDir];
               vs.mat.needsUpdate = true;
+              if (vs.midMat) {
+                vs.midMat.map = vs.textures[nextDir];
+                vs.midMat.needsUpdate = true;
+              }
             }
 
             // 讓立體像素板面朝鏡頭，同時保留 ±18 度微側傾，展現立體邊框厚度！
